@@ -21,7 +21,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
 from folio.config import Config
-from folio.modelos import LibroGuion, LibroVerificado, Pieza
+from folio.modelos import Pieza
 from folio.guion import libro_verificado
 
 _MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",

@@ -27,7 +27,7 @@ from folio import guion as guionista
 from folio import hechos
 from folio.config import Config, VarianteAB
 from folio.llm import LLM
-from folio.modelos import FuenteNoticia, GuionLLM, Historia, Pieza
+from folio.modelos import FuenteNoticia, GuionLLM, Pieza
 from pydantic import TypeAdapter
 
 LETRAS = "ABCDEFG"

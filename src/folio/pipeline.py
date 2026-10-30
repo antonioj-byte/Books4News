@@ -1,23 +1,19 @@
-"""Orquestador de la Fase 1: ingesta → selección → verificación → guion → informe.
+"""Orquestador: ingesta → selección → verificación y guion → comprobación de hechos → informe.
 
-Cada etapa guarda su resultado en data/cache/<fecha>/ para poder relanzar desde una etapa
-(`--desde seleccion`, `--desde guion`) sin repetir la ingesta ni gastar en llamadas ya hechas.
+Cada etapa guarda su resultado con folio.etapas para poder relanzar desde ella sin repetir la
+ingesta ni gastar en llamadas ya hechas.
 """
 
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from typing import Literal
-
 import numpy as np
-from pydantic import TypeAdapter
-
 from folio import guion as guionista
 from folio import hechos, informe, seleccion, textos
+from folio.etapas import ORDEN, Etapa, EtapasGuardadas
 from folio.config import Config
 from folio.historial import Historial
 from folio.ingesta import agrupacion, resumen, rss
@@ -31,25 +27,10 @@ from folio.verificacion_texto import clave_libro
 
 log = logging.getLogger(__name__)
 
-Etapa = Literal["ingesta", "seleccion", "guion", "hechos"]
-_VERSION_TEXTOS = 2  # 2: artículos elegidos por cercanía al hecho principal
-_ORDEN = {"ingesta": 0, "seleccion": 1, "guion": 2, "hechos": 3}
-
 
 def progreso(etapa: str) -> None:
     """Anuncia la etapa en curso. La web la lee del registro de la ejecución (líneas «ETAPA: …»)."""
     print(f"ETAPA: {etapa}", flush=True)
-
-
-def _guardar(ruta, datos) -> None:
-    ruta.parent.mkdir(parents=True, exist_ok=True)
-    ruta.write_text(json.dumps(datos, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
-
-
-def _cargar(ruta):
-    if not ruta.exists():
-        raise FileNotFoundError(f"No existe {ruta}: ejecuta antes las etapas anteriores")
-    return json.loads(ruta.read_text(encoding="utf-8"))
 
 
 class Pipeline:
@@ -68,6 +49,11 @@ class Pipeline:
         self.dev = dev
         self.solo_pieza = solo_pieza
         self.prueba = dev or solo_pieza is not None
+        self.etapas = EtapasGuardadas(self.cache)
+        # Estado de la ejecución: lo rellenan las etapas
+        self.stats: dict = {}
+        self.vectores_articulos: dict[str, np.ndarray] | None = None
+        self._embedder: agrupacion.Embedder | None = None
 
     @property
     def dir_informe(self):
@@ -77,27 +63,25 @@ class Pipeline:
             return self.cfg.dir_informes / self.fecha / f"solo-pieza-{self.solo_pieza}"
         return self.cfg.dir_informes / self.fecha
 
-    def _guardar_etapa(self, nombre: str, datos) -> None:
+    def _guardar_etapa(self, guardar, *datos) -> None:
         """Las ejecuciones de prueba leen las etapas guardadas, pero no las sobrescriben."""
         if not self.prueba:
-            _guardar(self.cache / nombre, datos)
+            guardar(*datos)
 
     # --- Etapa 1: ingesta y agrupación ---------------------------------------
 
     def ingesta(self, usar_cache: bool) -> list[Articulo]:
-        ruta = self.cache / "articulos.json"
-        if usar_cache and ruta.exists():
-            return TypeAdapter(list[Articulo]).validate_python(_cargar(ruta))
+        if usar_cache and self.etapas.hay_articulos():
+            return self.etapas.articulos()
         articulos, errores = rss.ingerir(self.cfg)
         self.avisos += [f"Feed fallido: {e}" for e in errores]
-        if not self.prueba:
-            _guardar(ruta, [a.model_dump(mode="json") for a in articulos])
+        self._guardar_etapa(self.etapas.guardar_articulos, articulos)
         return articulos
 
     @property
     def embedder(self) -> agrupacion.Embedder:
         """Un único modelo de embeddings por ejecución: cargarlo cuesta 2 GB de memoria."""
-        if getattr(self, "_embedder", None) is None:
+        if self._embedder is None:
             self._embedder = agrupacion.Embedder(self.cfg.pipeline.agrupacion.modelo_embeddings, self.cache)
         return self._embedder
 
@@ -139,11 +123,7 @@ class Pipeline:
             "historias_multimedio": len(candidatas),
             "historias_al_jefe": len(al_jefe),
         }
-        self._guardar_etapa("historias.json", {
-            "al_jefe": [h.model_dump(mode="json") for h in al_jefe],
-            "resumidas": [r.model_dump(mode="json") for r in resumidas],
-            "stats": self.stats,
-        })
+        self._guardar_etapa(self.etapas.guardar_historias, al_jefe, resumidas, self.stats)
         return al_jefe, resumidas
 
     # --- Etapa 2: selección -------------------------------------------------
@@ -151,7 +131,7 @@ class Pipeline:
     def seleccion(self, al_jefe: list[Historia]) -> SeleccionJefe:
         sel, avisos = seleccion.seleccionar(self.llm, al_jefe)
         self.avisos += avisos
-        self._guardar_etapa("seleccion.json", sel.model_dump(mode="json"))
+        self._guardar_etapa(self.etapas.guardar_seleccion, sel)
         return sel
 
     # --- Etapa 3: verificación y guion --------------------------------------
@@ -184,7 +164,7 @@ class Pipeline:
 
     def _puntuaciones(self, h: Historia, e: HistoriaElegida | None) -> dict[str, float] | None:
         """Similitud de cada artículo con el centro del grupo y con el hecho principal («de qué se habla»)."""
-        vectores = getattr(self, "vectores_articulos", None)
+        vectores = self.vectores_articulos
         if not vectores or not all(a.id in vectores for a in h.articulos):
             return None
         centro = agrupacion.centroide(h, vectores)
@@ -201,15 +181,11 @@ class Pipeline:
         mismos textos permite comparar guiones y comprobar hechos sobre lo que vio el guionista.
         Para descargarlos de nuevo, se borra el archivo.
         """
-        ruta = self.cache / "textos" / f"{h.id}.json"
-        if ruta.exists():
-            guardado = _cargar(ruta)
-            # Versión 1 (lista sin seleccionar por relevancia): se vuelve a elegir y descargar.
-            if isinstance(guardado, dict) and guardado.get("version") == _VERSION_TEXTOS:
-                return [(FuenteNoticia.model_validate(x["fuente"]), x["texto"]) for x in guardado["textos"]]
+        guardados = self.etapas.textos(h.id)
+        if guardados is not None:
+            return guardados
         tx = textos.textos_historia(self.cfg, h, self._puntuaciones(h, e))
-        _guardar(ruta, {"version": _VERSION_TEXTOS,
-                        "textos": [{"fuente": f.model_dump(mode="json"), "texto": t} for f, t in tx]})
+        self.etapas.guardar_textos(h.id, tx)  # también en las pruebas: son las noticias, no un resultado
         return tx
 
     def _preparar(self, pieza: Pieza, h: Historia, reservados: set[str]) -> list[tuple[FuenteNoticia, str]] | None:
@@ -318,53 +294,12 @@ class Pipeline:
     # --- Ejecución completa -------------------------------------------------
 
     def ejecutar(self, desde: Etapa = "ingesta", sin_llm: bool = False) -> tuple[InformeDiario, tuple]:
-        inicio = _ORDEN[desde]
-        progreso("Leyendo las noticias" if inicio == 0 else "Cargando las noticias guardadas")
-        articulos = self.ingesta(usar_cache=inicio > 0)
-        progreso("Agrupando las noticias por evento (embeddings)")
-        vectores = self.vectores(articulos)
-        self.vectores_articulos = vectores
-        if inicio <= 1 or sin_llm:
-            if not sin_llm:
-                progreso("Resumiendo las historias")
-            al_jefe, resumidas = self.historias(articulos, vectores, con_llm=not sin_llm)
-        else:
-            datos = _cargar(self.cache / "historias.json")
-            al_jefe = TypeAdapter(list[Historia]).validate_python(datos["al_jefe"])
-            resumidas = TypeAdapter(list[HistoriaResumida]).validate_python(datos["resumidas"])
-            self.stats = datos["stats"]
-
-        sel = None
-        piezas: list[Pieza] = []
-        if not sin_llm:
-            if inicio <= 1:
-                progreso("Eligiendo las historias (jefe de cultura)")
-                sel = self.seleccion(al_jefe)
-            else:
-                sel = SeleccionJefe.model_validate(_cargar(self.cache / "seleccion.json"))
-            if inicio <= 2:
-                piezas = self.piezas(sel, al_jefe)
-                self._guardar_etapa("piezas.json", [p.model_dump(mode="json") for p in piezas])
-            else:
-                piezas = TypeAdapter(list[Pieza]).validate_python(_cargar(self.cache / "piezas.json"))
-            self.comprobar_hechos(piezas, al_jefe)
-            buenas = [p for p in piezas if p.estado == "propuesta"]
-            if inicio <= 2 and not self.prueba:
-                por_id = {h.id: h for h in al_jefe}
-                self.historial.registrar_dia(
-                    self.fecha,
-                    [(p.historia_id, p.eleccion.titular, agrupacion.centroide(por_id[p.historia_id], vectores)) for p in buenas],
-                    [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for p in buenas for l in p.libros],
-                )
-            if self.solo_pieza is None and len(buenas) < len(sel.elegidas):
-                self.avisos.append(f"Solo {len(buenas)} piezas válidas de {len(sel.elegidas)} previstas")
-            if inicio == 3:
-                self.avisos.append("Solo se ha repetido la comprobación de hechos: el coste del informe es solo el de esa etapa")
-        if self.dev:
-            self.avisos.insert(0, "MODO DESARROLLO: modelos baratos; sirve para probar la tubería, no la calidad del texto")
-        if self.solo_pieza is not None:
-            self.avisos.insert(0, f"Ejecución de prueba: solo la pieza {self.solo_pieza}; no se registra en el historial")
-
+        """Ejecuta el pipeline desde la etapa `desde`, leyendo de data/cache/<fecha>/ las anteriores."""
+        inicio = ORDEN[desde]
+        articulos, vectores = self._noticias(inicio)
+        al_jefe, resumidas = self._historias_del_dia(inicio, articulos, vectores, sin_llm)
+        sel, piezas = (None, []) if sin_llm else self._piezas_del_dia(inicio, al_jefe, vectores)
+        self._avisos_de_prueba()
         inf = InformeDiario(
             fecha=self.fecha, generado_en=datetime.now(timezone.utc), stats=self.stats,
             top_historias=resumidas, seleccion=sel, piezas=piezas, trazas=self.llm.trazas,
@@ -377,3 +312,57 @@ class Pipeline:
             from folio.almacen import Almacen
             Almacen(self.cfg.ruta_db).registrar(inf)
         return inf, rutas
+
+    def _noticias(self, inicio: int) -> tuple[list[Articulo], dict[str, np.ndarray]]:
+        progreso("Leyendo las noticias" if inicio == 0 else "Cargando las noticias guardadas")
+        articulos = self.ingesta(usar_cache=inicio > 0)
+        progreso("Agrupando las noticias por evento (embeddings)")
+        vectores = self.vectores(articulos)
+        self.vectores_articulos = vectores
+        return articulos, vectores
+
+    def _historias_del_dia(self, inicio: int, articulos: list[Articulo], vectores,
+                           sin_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
+        if inicio <= 1 or sin_llm:
+            if not sin_llm:
+                progreso("Resumiendo las historias")
+            return self.historias(articulos, vectores, con_llm=not sin_llm)
+        al_jefe, resumidas, self.stats = self.etapas.historias()
+        return al_jefe, resumidas
+
+    def _piezas_del_dia(self, inicio: int, al_jefe: list[Historia], vectores) -> tuple[SeleccionJefe, list[Pieza]]:
+        """Selección, piezas y comprobación de hechos (cada una, nueva o la guardada)."""
+        if inicio <= 1:
+            progreso("Eligiendo las historias (jefe de cultura)")
+            sel = self.seleccion(al_jefe)
+        else:
+            sel = self.etapas.seleccion()
+        if inicio <= 2:
+            piezas = self.piezas(sel, al_jefe)
+            self._guardar_etapa(self.etapas.guardar_piezas, piezas)
+        else:
+            piezas = self.etapas.piezas()
+        self.comprobar_hechos(piezas, al_jefe)
+        buenas = [p for p in piezas if p.estado == "propuesta"]
+        if inicio <= 2 and not self.prueba:
+            self._registrar_historial(buenas, al_jefe, vectores)
+        if self.solo_pieza is None and len(buenas) < len(sel.elegidas):
+            self.avisos.append(f"Solo {len(buenas)} piezas válidas de {len(sel.elegidas)} previstas")
+        if inicio == 3:
+            self.avisos.append("Solo se ha repetido la comprobación de hechos: el coste del informe es solo el de esa etapa")
+        return sel, piezas
+
+    def _registrar_historial(self, buenas: list[Pieza], al_jefe: list[Historia], vectores) -> None:
+        """Historias y libros usados hoy, para no repetirlos en los próximos días."""
+        por_id = {h.id: h for h in al_jefe}
+        self.historial.registrar_dia(
+            self.fecha,
+            [(p.historia_id, p.eleccion.titular, agrupacion.centroide(por_id[p.historia_id], vectores)) for p in buenas],
+            [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for p in buenas for l in p.libros],
+        )
+
+    def _avisos_de_prueba(self) -> None:
+        if self.dev:
+            self.avisos.insert(0, "MODO DESARROLLO: modelos baratos; sirve para probar la tubería, no la calidad del texto")
+        if self.solo_pieza is not None:
+            self.avisos.insert(0, f"Ejecución de prueba: solo la pieza {self.solo_pieza}; no se registra en el historial")
