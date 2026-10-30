@@ -15,6 +15,10 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import threading
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -84,21 +88,69 @@ def _ahora() -> str:
 
 
 class Almacen:
+    """Acceso a la base de datos de la web.
+
+    La API atiende peticiones en varios hilos y el pipeline escribe desde otro proceso, así que:
+    una conexión por hilo, WAL (lectores y escritor no se bloquean), espera si la base está
+    ocupada y escrituras en transacciones BEGIN IMMEDIATE (leer y escribir sin que otro se cuele).
+    """
+
     def __init__(self, ruta: Path):
         ruta.parent.mkdir(parents=True, exist_ok=True)
-        self.db = sqlite3.connect(ruta, check_same_thread=False)
-        self.db.row_factory = sqlite3.Row
-        self.db.execute("PRAGMA foreign_keys = ON")
+        self.ruta = ruta
+        self._local = threading.local()
+        self._activar_wal()
         self._migrar()
+
+    def _activar_wal(self) -> None:
+        """WAL es persistente: basta con activarlo una vez. Con la base recién creada y varias
+        conexiones arrancando a la vez, el cambio puede dar «database is locked» sin esperar."""
+        for intento in range(50):
+            try:
+                if self.db.execute("PRAGMA journal_mode").fetchone()[0] == "wal":
+                    return
+                self.db.execute("PRAGMA journal_mode = WAL")
+                return
+            except sqlite3.OperationalError:
+                if intento == 49:
+                    raise
+                time.sleep(0.1)
+
+    @property
+    def db(self) -> sqlite3.Connection:
+        """Conexión de este hilo (sqlite3 no permite compartir una conexión entre hilos con seguridad)."""
+        con = getattr(self._local, "con", None)
+        if con is None:
+            con = sqlite3.connect(self.ruta, timeout=10, isolation_level=None)
+            con.row_factory = sqlite3.Row
+            con.execute("PRAGMA foreign_keys = ON")
+            con.execute("PRAGMA busy_timeout = 10000")
+            self._local.con = con
+        return con
+
+    @contextmanager
+    def _transaccion(self) -> Iterator[sqlite3.Connection]:
+        """Transacción de escritura: reserva la base desde el principio (BEGIN IMMEDIATE)."""
+        db = self.db
+        db.execute("BEGIN IMMEDIATE")
+        try:
+            yield db
+        except BaseException:
+            db.execute("ROLLBACK")
+            raise
+        db.execute("COMMIT")
 
     def _migrar(self) -> None:
         self.db.execute("CREATE TABLE IF NOT EXISTS migraciones (n INTEGER PRIMARY KEY)")
-        hechas = {f[0] for f in self.db.execute("SELECT n FROM migraciones")}
         for n, sql in enumerate(_MIGRACIONES, 1):
-            if n not in hechas:
-                with self.db:
-                    self.db.executescript(sql)
-                    self.db.execute("INSERT INTO migraciones VALUES (?)", (n,))
+            with self._transaccion() as db:
+                # Se comprueba dentro de la transacción: la API y el pipeline pueden arrancar a la vez
+                if db.execute("SELECT 1 FROM migraciones WHERE n = ?", (n,)).fetchone():
+                    continue
+                for sentencia in (x.strip() for x in sql.split(";")):
+                    if sentencia:
+                        db.execute(sentencia)
+                db.execute("INSERT INTO migraciones VALUES (?)", (n,))
 
     # --- Ejecuciones --------------------------------------------------------
 
@@ -106,19 +158,20 @@ class Almacen:
         """Guarda una ejecución con sus piezas (versión 1, origen pipeline). Idempotente por
         hora de generación: importar dos veces el mismo informe no lo duplica."""
         generado = inf.generado_en.isoformat()
-        fila = self.db.execute("SELECT id FROM ejecuciones WHERE generado_en = ?", (generado,)).fetchone()
-        if fila:
-            return fila["id"]
         sin_piezas = inf.model_dump(mode="json", exclude={"piezas"})
-        with self.db:
-            cur = self.db.execute(
+        with self._transaccion() as db:
+            # Dentro de la transacción: la API (al arrancar) y el pipeline pueden registrar el mismo informe
+            fila = db.execute("SELECT id FROM ejecuciones WHERE generado_en = ?", (generado,)).fetchone()
+            if fila:
+                return fila["id"]
+            cur = db.execute(
                 "INSERT INTO ejecuciones (fecha, generado_en, coste_usd, informe) VALUES (?, ?, ?, ?)",
                 (inf.fecha, generado, inf.coste_total_usd, json.dumps(sin_piezas, ensure_ascii=False)),
             )
             eid = cur.lastrowid
             for p in inf.piezas:
-                self.db.execute("INSERT INTO piezas VALUES (?, ?, ?, 1)", (eid, p.id, p.estado))
-                self.db.execute("INSERT INTO versiones VALUES (?, ?, 1, ?, 'pipeline', 'Generada por el pipeline', ?)",
+                db.execute("INSERT INTO piezas VALUES (?, ?, ?, 1)", (eid, p.id, p.estado))
+                db.execute("INSERT INTO versiones VALUES (?, ?, 1, ?, 'pipeline', 'Generada por el pipeline', ?)",
                                 (eid, p.id, generado, p.model_dump_json()))
         return eid
 
@@ -168,16 +221,16 @@ class Almacen:
         return next(((p, v) for p, v in self.piezas(eid) if p.id == pid), None)
 
     def cambiar_estado(self, eid: int, pid: str, estado: str) -> None:
-        with self.db:
-            self.db.execute("UPDATE piezas SET estado = ? WHERE ejecucion_id = ? AND pieza_id = ?", (estado, eid, pid))
+        with self._transaccion() as db:
+            db.execute("UPDATE piezas SET estado = ? WHERE ejecucion_id = ? AND pieza_id = ?", (estado, eid, pid))
 
     def guardar_version(self, eid: int, pid: str, pieza: Pieza, origen: str, descripcion: str) -> int:
-        with self.db:
-            n = self.db.execute("SELECT COALESCE(MAX(n), 0) + 1 FROM versiones WHERE ejecucion_id = ? AND pieza_id = ?",
+        with self._transaccion() as db:
+            n = db.execute("SELECT COALESCE(MAX(n), 0) + 1 FROM versiones WHERE ejecucion_id = ? AND pieza_id = ?",
                                 (eid, pid)).fetchone()[0]
-            self.db.execute("INSERT INTO versiones VALUES (?, ?, ?, ?, ?, ?, ?)",
+            db.execute("INSERT INTO versiones VALUES (?, ?, ?, ?, ?, ?, ?)",
                             (eid, pid, n, _ahora(), origen, descripcion, pieza.model_dump_json()))
-            self.db.execute("UPDATE piezas SET version_actual = ? WHERE ejecucion_id = ? AND pieza_id = ?", (n, eid, pid))
+            db.execute("UPDATE piezas SET version_actual = ? WHERE ejecucion_id = ? AND pieza_id = ?", (n, eid, pid))
         return n
 
     def versiones(self, eid: int, pid: str) -> list[Version]:
@@ -202,8 +255,8 @@ class Almacen:
 
     def guardar_evaluacion(self, eid: int, pid: str, ev: Evaluacion, version_n: int) -> None:
         pub = None if ev.publicaria is None else int(ev.publicaria)
-        with self.db:
-            self.db.execute(
+        with self._transaccion() as db:
+            db.execute(
                 "INSERT INTO evaluaciones VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
                 "ON CONFLICT (ejecucion_id, pieza_id) DO UPDATE SET version_n = excluded.version_n, "
                 "seleccion = excluded.seleccion, libro = excluded.libro, idea = excluded.idea, voz = excluded.voz, "

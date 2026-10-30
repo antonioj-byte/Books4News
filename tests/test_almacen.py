@@ -53,3 +53,40 @@ def test_evaluacion_en_bd_y_en_informe_md(tmp_path):
     texto = md.read_text()
     assert "- Idea nueva (1–5): 4\n" in texto and "- ¿La publicarías? (sí/no): sí\n" in texto
     assert informe.evaluacion_rellenada(texto)
+
+
+def test_escrituras_concurrentes_desde_varios_hilos(tmp_path):
+    """La API atiende en varios hilos: cada versión tiene que recibir un número distinto."""
+    from concurrent.futures import ThreadPoolExecutor
+    a = Almacen(tmp_path / "folio.db")
+    eid = a.registrar(_informe())
+    p, _ = a.pieza(eid, "2026-10-30-1")
+
+    def guardar(i):
+        return a.guardar_version(eid, p.id, p, "manual", f"edición {i}")
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        numeros = list(pool.map(guardar, range(40)))
+    assert sorted(numeros) == list(range(2, 42))
+    assert a.pieza(eid, p.id)[1] == max(numeros)
+
+
+def test_dos_almacenes_registran_el_mismo_informe_una_vez(tmp_path):
+    """El pipeline (otro proceso, otra conexión) y la API pueden registrar el mismo informe a la vez."""
+    from concurrent.futures import ThreadPoolExecutor
+    ruta = tmp_path / "folio.db"
+    inf = _informe()
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        ids = list(pool.map(lambda _: Almacen(ruta).registrar(inf), range(4)))
+    assert len(set(ids)) == 1 and len(Almacen(ruta).piezas(ids[0])) == 2
+
+
+def test_una_transaccion_fallida_no_deja_nada(tmp_path):
+    import pytest
+    a = Almacen(tmp_path / "folio.db")
+    eid = a.registrar(_informe())
+    with pytest.raises(RuntimeError):
+        with a._transaccion() as db:
+            db.execute("UPDATE piezas SET estado = 'aprobada' WHERE ejecucion_id = ?", (eid,))
+            raise RuntimeError("fallo a mitad")
+    assert {p.estado for p, _ in a.piezas(eid)} == {"propuesta"}

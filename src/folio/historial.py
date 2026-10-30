@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS libros_usados (
 class Historial:
     def __init__(self, ruta: Path):
         ruta.parent.mkdir(parents=True, exist_ok=True)
-        self.db = sqlite3.connect(ruta)
+        # Comparte archivo con la base de la web (folio.almacen): espera si está ocupada
+        self.db = sqlite3.connect(ruta, timeout=10)
         self.db.executescript(_ESQUEMA)
 
     def _desde(self, fecha: str, dias: int) -> str:
