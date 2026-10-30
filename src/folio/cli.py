@@ -96,7 +96,7 @@ def ab(
     from pydantic import TypeAdapter
     historias = {h.id: h for h in TypeAdapter(list[Historia]).validate_python(
         json.loads((cfg.dir_cache(fecha) / "historias.json").read_text(encoding="utf-8"))["al_jefe"])}
-    ruta_md, ruta_clave = generar(cfg, fecha, lambda hid: pipeline._textos(historias[hid]), reutilizar=reutilizar_llm)
+    ruta_md, ruta_clave = generar(cfg, fecha, lambda hid: pipeline.textos_de_historia(historias[hid]), reutilizar=reutilizar_llm)
     typer.echo(f"Para evaluar (a ciegas): {ruta_md}\nClave y métricas (abrir después): {ruta_clave}")
 
 

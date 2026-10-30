@@ -194,7 +194,7 @@ class Pipeline:
         return {a.id: 0.5 * float(np.dot(vectores[a.id], centro)) + 0.5 * float(np.dot(vectores[a.id], eje))
                 for a in h.articulos}
 
-    def _textos(self, h: Historia, e: HistoriaElegida | None = None) -> list[tuple[FuenteNoticia, str]]:
+    def textos_de_historia(self, h: Historia, e: HistoriaElegida | None = None) -> list[tuple[FuenteNoticia, str]]:
         """Textos de la historia, congelados en data/cache/<fecha>/textos/ la primera vez.
 
         Los medios cambian sus páginas y a veces bloquean (403): relanzar el mismo día con los
@@ -231,7 +231,7 @@ class Pipeline:
                 reservados.add(l.olid)
         if not any(l.edicion_es == "si" for l in libros):
             pieza.avisos.append("Ningún libro verificado tiene edición española")
-        textos_h = self._textos(h, e)
+        textos_h = self.textos_de_historia(h, e)
         pieza.fuentes = [f for f, _ in textos_h]
         if not any(f.texto_completo for f in pieza.fuentes):
             pieza.avisos.append("Ningún texto completo disponible: el guionista solo tuvo titulares y entradillas")
@@ -296,7 +296,7 @@ class Pipeline:
     def comprobar_hechos(self, piezas: list[Pieza], al_jefe: list[Historia]) -> None:
         """Comprobación de hechos de todas las piezas a la vez (los textos se leen antes, en orden)."""
         por_id = {h.id: h for h in al_jefe}
-        con_guion = [(p, self._textos(por_id[p.historia_id])) for p in piezas if p.guion]
+        con_guion = [(p, self.textos_de_historia(por_id[p.historia_id])) for p in piezas if p.guion]
 
         def una(pieza: Pieza, textos_h) -> None:
             pieza.avisos = [a for a in pieza.avisos if not a.startswith("No se pudo comprobar los hechos")]

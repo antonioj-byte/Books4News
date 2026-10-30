@@ -138,8 +138,8 @@ def test_textos_congelados_por_historia(cfg, monkeypatch):
                         lambda cfg, h, puntuaciones=None: descargas.append(h.id) or [(FUENTES[0], "Texto de la noticia aquí.")])
     arts = _articulos()
     h = agrupacion.agrupar(arts, _vectores(arts), 0.84)[0]
-    primero = p._textos(h)
-    segundo = p._textos(h)
+    primero = p.textos_de_historia(h)
+    segundo = p.textos_de_historia(h)
     assert descargas == [h.id]  # la segunda vez sale de data/cache/<fecha>/textos/
     assert primero == segundo and (p.cache / "textos" / f"{h.id}.json").exists()
 
@@ -186,7 +186,7 @@ def test_textos_congelados_de_la_version_anterior_se_vuelven_a_elegir(cfg, monke
     monkeypatch.setattr(textos, "textos_historia",
                         lambda cfg, h, puntuaciones=None: recibidas.append(puntuaciones) or [(FUENTES[0], "nuevo")])
     p.vectores_articulos = _vectores(arts)
-    assert p._textos(h, ELECCION)[0][1] == "nuevo"
+    assert p.textos_de_historia(h, ELECCION)[0][1] == "nuevo"
     assert recibidas[0] and set(recibidas[0]) == {a.id for a in h.articulos}
 
 

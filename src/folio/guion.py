@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 
 from folio.config import Config
-from folio.llm import LLM, _bloque, cargar_prompt, con_cache
+from folio.llm import LLM, bloque_reenviable, cargar_prompt, con_cache
 from folio.modelos import DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroGuion, LibroVerificado
 from folio.verificacion_texto import apellido, autor_coincide, normalizar, sin_subtitulo, titulos_coinciden
 
@@ -311,7 +311,7 @@ def ajustar_libros(g: GuionLLM, libros: list[LibroVerificado]) -> list[Discrepan
 
 
 def _contenido_para_reenviar(contenido: list) -> list[dict]:
-    return [_bloque(b) for b in contenido]
+    return [bloque_reenviable(b) for b in contenido]
 
 
 def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],

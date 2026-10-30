@@ -173,12 +173,12 @@ class LLM:
             ruta_cache.parent.mkdir(parents=True, exist_ok=True)
             ruta_cache.write_text(json.dumps({
                 "salida": resp.parsed_output.model_dump(mode="json"),
-                "contenido": [_bloque(b) for b in resp.content],
+                "contenido": [bloque_reenviable(b) for b in resp.content],
             }, ensure_ascii=False), encoding="utf-8")
         return resp.parsed_output, resp.content
 
 
-def _bloque(b) -> dict:
+def bloque_reenviable(b) -> dict:
     """Bloque de contenido de una respuesta como dict reenviable (sin la salida ya validada)."""
     d = b if isinstance(b, dict) else b.model_dump(mode="json", exclude_none=True)
     return {k: v for k, v in d.items() if k != "parsed_output"}
