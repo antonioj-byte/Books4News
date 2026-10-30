@@ -26,7 +26,7 @@ No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquem
 ## Decisiones tomadas
 
 - **Modelos**: `claude-opus-5-5` para selección, guion y chat de edición. `claude-haiku-5-5` para resumir y clasificar en la ingesta y para la comprobación de hechos. Los ids de modelo se leen de la configuración, nunca se escriben a fuego en el código. **El guionista sigue en Opus 5.5** salvo que una prueba A/B con las mismas historias demuestre que otro modelo escribe igual de bien: la calidad del texto no se negocia.
-- **Libros sin edición española**: se aceptan. La ficha lo indica (`edicion_es: true/false/desconocido`).
+- **Libros sin edición española**: se aceptan. La ficha lo indica (`edicion_es: si/no/desconocido`).
 - **Relevancia**: la señal principal es el número de medios distintos que cubren el evento, no el número de artículos.
 - **Salida estructurada**: los agentes devuelven JSON validado contra un esquema (structured outputs del SDK). Si no valida, la pieza se marca como fallida, no se arregla a mano en el código.
 - **Citas literales**: no se usan. El guionista parafrasea y atribuye; el código rechaza cualquier texto entre comillas que no sea el título de un libro verificado.
@@ -35,7 +35,7 @@ No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquem
 - **Embeddings**: `intfloat/multilingual-e5-large` en local (fastembed). **Al desplegar, valorar Voyage AI** por el peso del modelo (2,2 GB en disco y unos 2 minutos de CPU por ejecución).
 - **Muro de pago**: el guionista recibe los textos de todos los medios del grupo, uno por medio, priorizando los de acceso abierto (`acceso` en `config/fuentes.yaml`). De los medios con muro solo se usa titular y entradilla.
 - **Selección**: el jefe de cultura recibe las 20–25 primeras historias por número de medios.
-- **Edición española**: tres valores, `si` / `no` / `desconocido`. Solo se afirma `no` cuando Open Library y Google Books se han consultado sin errores y ninguno la tiene.
+- **Edición española**: tres valores, `si` / `no` / `desconocido`. Solo se afirma `no` cuando Open Library y Google Books se han consultado sin errores, las dos encuentran la obra y ninguna tiene la edición española (el silencio de Google Books no prueba nada: sus búsquedas fallan de forma errática).
 - **Agencias**: Reuters, AP y EFE no tienen RSS público; se usan Europa Press, BBC, DW, Al Jazeera y France 24.
 - **Enfoque de las piezas** (se publican en una sección de libros): la portada abre con la noticia o con su tensión, sin nombrar el libro; hay como mucho una diapositiva de actualidad; el libro entra en la diapositiva 2 o 3 y protagoniza el cierre, que es una recomendación de verdad (título, autor, por qué leerlo ahora y ficha española si está verificada). El pie puede empezar por la noticia, pero nombra el libro. Títulos en cursiva y, si hay edición española, con el título español. Entre 25 y 30 palabras por diapositiva. La validación del guion lo comprueba y reintenta si no se cumple.
 - **Investigaciones y procesos judiciales abiertos**: ni el jefe de cultura ni el guionista atribuyen culpas ni anticipan conclusiones.
