@@ -125,3 +125,28 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 /* Noticias graves: sin marcador; el remate, en cursiva sin subrayar */
 .grave .remate { background: none !important; color: inherit !important; padding: 0; }
 .grave .cifra__numero { color: var(--colores-papel); }
+
+/* Acento de la pieza (pluma o marcador), a lo grande como en Wired: lo elige el director de arte.
+   --acento es el color y --sobre-acento el texto que va encima. Las piezas graves no lo llevan. */
+.acento--pluma { --acento: var(--colores-pluma); --sobre-acento: var(--colores-papel); }
+.acento--marcador { --acento: var(--colores-marcador); --sobre-acento: var(--colores-tinta); }
+.acento .antetitulo, .acento.portada--sangre .antetitulo { background: var(--acento); color: var(--sobre-acento); }
+.acento .cifra__numero { color: var(--acento); }
+/* La idea: la página entera del color de la pieza */
+.acento.diapositiva--idea { background: var(--acento); color: var(--sobre-acento); }
+.acento.diapositiva--idea .glifo { color: var(--sobre-acento); opacity: 0.12; }
+.acento.diapositiva--idea .texto em { color: inherit; }
+/* El libro: bloque de color detrás de la cubierta */
+.escaparate { position: relative; }
+.escaparate__bloque { display: none; }
+.acento .escaparate__bloque { display: block; position: absolute; z-index: -1; left: 0; top: 0; width: 340px; height: 540px; background: var(--acento); }
+.acento .escaparate .cubierta { margin: 48px 0 0 48px; height: calc(100% - 48px); }
+.acento .escaparate__autor { color: var(--acento); }
+/* Portada «neón»: la foto a dos tintas (negro y el acento) y un bloque de color */
+.imagen--neon { background: var(--acento); }
+.imagen--neon img { mix-blend-mode: multiply; filter: grayscale(1) contrast(2.1) brightness(0.92); }
+.imagen--neon::after { background: linear-gradient(180deg, transparent 30%, rgba(18, 14, 15, 0.85) 52%, var(--colores-tinta-honda) 66%); }
+.bloque-neon { position: absolute; z-index: -1; left: 0; top: 14%; width: 58%; height: 7%; background: var(--colores-tinta-honda); mix-blend-mode: multiply; opacity: 0.85; }
+.acento--marcador .bloque-neon { background: var(--colores-pluma); mix-blend-mode: multiply; opacity: 1; }
+.acento--pluma .bloque-neon { background: var(--colores-marcador); mix-blend-mode: normal; }
+.portada--neon .antetitulo { background: var(--colores-papel); color: var(--colores-tinta); }

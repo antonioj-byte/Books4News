@@ -6,6 +6,9 @@ La portada (`portada`) es una imagen de archivo en blanco y negro muy contrastad
 - «sangre»: la foto ocupa toda la portada y el titular va abajo, en blanco. La de por defecto cuando la imagen es fuerte.
 - «banda»: el titular va sobre una banda de papel arriba, con borde rasgado, y la foto debajo. Para titulares largos o fotos con mucho detalle arriba.
 - «caja»: el titular va en una tarjeta de papel sobre la foto. Para fotos con un motivo en la mitad de arriba.
+- «neon»: la foto virada a dos tintas, negro y el color de la pieza, a sangre, como los collages de Wired. La más llamativa: para piezas con energía. Nunca en piezas graves.
+
+`acento`: el color de la pieza, a lo grande, como en Wired: «pluma» (magenta) o «marcador» (amarillo fluorescente). Tiñe la foto en «neon», llena la página de la idea, hace de bloque detrás de la cubierta y colorea el antetítulo y la cifra. Elige el que mejor case con el tono y varía entre las piezas del día. Si la pieza es grave, null: va en blanco y negro.
 Varía: las tres piezas del día no deberían tener la misma composición.
 
 `remate`: el final del titular de portada que irá en cursiva, como el remate de los titulares de la marca («Tres productos. *Un mismo oficio.*»). Cópialo literalmente del titular, de 2 a 6 palabras, y que sea el giro de la frase («*a quien la anotaba*»). Si el titular no tiene un final con giro, null.

@@ -77,7 +77,7 @@ arte:
   # Composiciones de portada que puede elegir el director de arte. Las del design system «Wired»:
   # sangre, banda, caja, neon. Las de la propuesta humanista: circulo, collage, ilustracion (el SVG
   # del ilustrador está desactivado: el modelo dibuja clip-art, 31/10).
-  portadas: [sangre, banda, caja]
+  portadas: [sangre, banda, caja, neon]
 
 ab:
   control: opus-high

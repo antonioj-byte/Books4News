@@ -167,7 +167,7 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
     `usadas`: imágenes ya elegidas para otras piezas del día (no se repiten); se añade la elegida."""
     usadas = usadas if usadas is not None else set()
     datos = _bloque_pieza(pieza, seccion)
-    ya = f"\ncomposiciones de portada ya elegidas hoy para otras piezas: {', '.join(portadas_del_dia)}" if portadas_del_dia else ""
+    ya = f"\ncomposiciones y colores ya elegidos hoy para otras piezas (no repitas composición ni, si puedes, color): {', '.join(portadas_del_dia)}" if portadas_del_dia else ""
     prompt = cargar_prompt(cfg, "director_arte", {"[pegar pieza]": datos + ya})
     propuesta, _ = llm.estructurado(f"arte:{pieza.id}", [{"role": "user", "content": con_cache(cfg, "director_arte", prompt)}],
                                     PropuestaArte, etapa_modelo="arte", max_tokens=4000)
@@ -208,6 +208,9 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
         arte.portada = permitidas[0]
     arte.antetitulo = validar_antetitulo(propuesta.antetitulo)
     arte.remate = validar_remate(propuesta.remate, pieza.guion.diapositivas[0].texto)
+    arte.acento = None if propuesta.suceso_con_victimas or propuesta.tono == "grave" else propuesta.acento
+    if arte.portada == "neon" and not arte.acento:
+        arte.portada = "sangre"
     if arte.portada == "collage" and not arte.imagen:
         arte.portada = "circulo"
     if arte.portada == "ilustracion":
