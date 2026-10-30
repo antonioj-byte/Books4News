@@ -204,6 +204,9 @@ class DiscrepanciaEdicion(BaseModel):
 class PropuestaArte(BaseModel):
     """Primera llamada: qué buscar y qué destacar. La imagen la busca el código."""
     tono: Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]
+    portada: Literal["ilustracion", "circulo", "collage"] = Field(
+        description="ilustracion: ilustración conceptual dibujada; circulo: imagen de archivo en círculo; "
+                    "collage: grabado a sangre sobre campo de color")
     suceso_con_victimas: bool = Field(description="La noticia trata de muertos, heridos o víctimas")
     recurso: Literal["foto", "grabado"] = Field(description="Foto de archivo o ilustración antigua (grabado, dibujo)")
     consultas: list[str] = Field(description="3 o 4 búsquedas de 1 a 3 palabras, en inglés, sueco o alemán")
@@ -222,6 +225,12 @@ class EleccionImagen(BaseModel):
     por_que: str
 
 
+class IlustracionLLM(BaseModel):
+    """Ilustración vectorial de portada (prompts/ilustrador.md)."""
+    concepto: str = Field(description="La metáfora elegida y por qué funciona, en una frase")
+    svg: str = Field(description="El SVG completo, de <svg> a </svg>")
+
+
 class Arte(BaseModel):
     """Lo que decidió la etapa de arte para una pieza (trazabilidad; la imagen vive en data/cache)."""
     tono: str
@@ -230,6 +239,10 @@ class Arte(BaseModel):
     cifra: str | None = None
     cifra_rotulo: str | None = None
     imagen: str | None = None            # clave de la imagen fijada («europeana:/…»)
+    # Composición de la portada: «circulo» (imagen en círculo), «collage» (grabado a sangre sobre
+    # campo de color) o «ilustracion» (ilustración vectorial del ilustrador)
+    portada: Literal["circulo", "collage", "ilustracion"] = "circulo"
+    concepto: str | None = None          # metáfora de la ilustración
     credito: str | None = None
     por_que: str = ""
     avisos: list[str] = Field(default_factory=list)

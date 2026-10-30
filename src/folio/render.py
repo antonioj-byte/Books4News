@@ -153,11 +153,29 @@ class Plantillas:
         return {"src": self.url_medio(imagenes.dir_imagenes(cache) / img.local), "credito": img.credito,
                 "enfoque": img.enfoque, "grabado": bool(pieza.arte and pieza.arte.recurso == "grabado")}
 
+    def _portada(self, pieza: Pieza, imagen: dict | None) -> tuple[str, Markup | None]:
+        """Estilo de portada que se puede pintar de verdad: sin SVG o sin imagen, se cae al círculo."""
+        from folio import ilustracion
+
+        estilo = pieza.arte.portada if pieza.arte else "circulo"
+        if estilo == "ilustracion":
+            ruta = ilustracion.ruta(self.cfg.dir_cache(pieza.fecha), pieza.id)
+            if ruta.exists():
+                # El SVG se guardó ya saneado (folio.ilustracion.sanear): solo formas, sin texto ni scripts
+                return estilo, Markup(ruta.read_text(encoding="utf-8"))
+            return "circulo", None
+        if estilo == "collage" and not imagen:
+            return "circulo", None
+        return estilo, None
+
     def html_diapositiva(self, pieza: Pieza, n: int, base_url: str | None = None) -> str:
         """HTML completo de la diapositiva n (1, 2, …) de la pieza."""
         d = pieza.guion.diapositivas[n - 1]
         logo = self.tokens["logotipo"].strip()
         imagen = self._imagen(pieza)
+        estilo, svg = self._portada(pieza, imagen)
+        campos = self.tokens.get("campos_portada") or {}
+        campo = campos.get(pieza.arte.tono if pieza.arte else "", campos.get("sereno"))
         paleta = self.tokens.get("paleta_piezas") or []
         portada = pieza.guion.diapositivas[0]
         libros = ficha_libros(pieza, self._cubierta)
@@ -171,7 +189,7 @@ class Plantillas:
             libros=libros if d.tipo == "cierre" else [], libros_pieza=libros,
             libro=(libro_de_diapositiva(libros, pieza, d.texto) or (libros[:1] or [None])[0]) if d.tipo == "libro" else None,
             titular=texto_html(portada.texto), imagen=imagen, anio_hoy=int(pieza.fecha[:4]),
-            tono=pieza.arte.tono if pieza.arte else None, cifra=pieza.arte.cifra if pieza.arte else None, cifra_rotulo=pieza.arte.cifra_rotulo if pieza.arte else None,
+            tono=pieza.arte.tono if pieza.arte else None, portada_estilo=estilo, ilustracion=svg, campo=campo, cifra=pieza.arte.cifra if pieza.arte else None, cifra_rotulo=pieza.arte.cifra_rotulo if pieza.arte else None,
             color=paleta[color_de_pieza(pieza, len(paleta))] if paleta else None,
         )
 

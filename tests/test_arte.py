@@ -14,7 +14,7 @@ def _pieza():
 
 
 def _propuesta(**cambios):
-    datos = dict(tono="sereno", suceso_con_victimas=False, recurso="foto", consultas=["court"], evitar=[],
+    datos = dict(tono="sereno", portada="circulo", suceso_con_victimas=False, recurso="foto", consultas=["court"], evitar=[],
                  cifra=None, cifra_rotulo=None, por_que="x")
     return PropuestaArte(**(datos | cambios))
 

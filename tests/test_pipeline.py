@@ -41,7 +41,7 @@ class LLMFalso(LLM):
                                 verificado=False, nota="Ninguna fuente lo dice"),
             ]), []
         if esquema is PropuestaArte:
-            return PropuestaArte(tono="sereno", suceso_con_victimas=False, recurso="grabado", consultas=["court"],
+            return PropuestaArte(tono="sereno", portada="circulo", suceso_con_victimas=False, recurso="grabado", consultas=["court"],
                                  evitar=[], cifra=None, por_que="Un tribunal antiguo"), []
         return self.guiones.pop(0), []
 

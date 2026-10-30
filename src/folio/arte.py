@@ -20,9 +20,10 @@ from io import BytesIO
 from pathlib import Path
 
 import httpx
+import yaml
 from PIL import Image, ImageDraw, ImageFont
 
-from folio import cubiertas, imagenes
+from folio import cubiertas, ilustracion, imagenes
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import Arte, EleccionImagen, Pieza, PropuestaArte
@@ -151,7 +152,7 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
     propuesta, _ = llm.estructurado(f"arte:{pieza.id}", [{"role": "user", "content": con_cache(cfg, "director_arte", prompt)}],
                                     PropuestaArte, etapa_modelo="arte", max_tokens=4000)
     avisos = validar_cifra(propuesta, pieza)
-    arte = Arte(tono=propuesta.tono, recurso=propuesta.recurso, consultas=propuesta.consultas,
+    arte = Arte(tono=propuesta.tono, recurso=propuesta.recurso, portada=propuesta.portada, consultas=propuesta.consultas,
                 cifra=propuesta.cifra, cifra_rotulo=propuesta.cifra_rotulo, por_que=propuesta.por_que, avisos=avisos)
     dir_fecha = cfg.dir_cache(pieza.fecha)
     imagenes.olvidar(pieza.id, dir_fecha)
@@ -181,6 +182,18 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
             _guardar_imagen(cand, im, eleccion, pieza.id, dir_fecha)
             arte.imagen, arte.credito = cand.archivo, cand.credito
             usadas |= {cand.archivo, cand.url}
+
+    if arte.portada == "collage" and not arte.imagen:
+        arte.portada = "circulo"
+    if arte.portada == "ilustracion":
+        ilustracion.ruta(dir_fecha, pieza.id).unlink(missing_ok=True)
+        try:
+            campos = yaml.safe_load((cfg.raiz / "diseno" / "tokens.yaml").read_text(encoding="utf-8")).get("campos_portada", {})
+            pieza.arte = arte        # el ilustrador lee el tono
+            arte.concepto, _ = ilustracion.dibujar(llm, cfg, pieza, campos.get(arte.tono) or campos["sereno"])
+        except Exception as exc:
+            arte.portada = "circulo"
+            arte.avisos.append(f"Sin ilustración ({type(exc).__name__}: {exc}); la portada usa la imagen en círculo")
 
     for libro in pieza.libros:      # deja las cubiertas en la caché para el render
         try:

@@ -91,9 +91,12 @@ def _pieza_md(p: Pieza) -> list[str]:
         l += [f"_Hechos comprobados contra las fuentes: {len(p.hechos) - len(no_verificados)} de {len(p.hechos)}._", ""]
     if p.arte:
         a = p.arte
-        l += [f"**Arte**: tono {a.tono}, {a.recurso}. "
-              + (f"Imagen: {a.credito}. " if a.credito else "Sin imagen. ")
+        l += [f"**Arte**: tono {a.tono}, portada {a.portada}, {a.recurso}. "
+              + (f"Ilustración: {a.concepto} " if a.concepto else "")
+              + (f"Imagen de archivo: {a.credito}. " if a.credito else "Sin imagen de archivo. ")
               + (f"Cifra destacada: {a.cifra}" + (f" ({a.cifra_rotulo})" if a.cifra_rotulo else "") + ". " if a.cifra else ""), ""]
+        if a.credito:
+            l += [f"Añadir al pie de la publicación: «{'Ilustración' if a.recurso == 'grabado' else 'Imagen'}: {a.credito}.»", ""]
         l += [f"- {x}" for x in a.avisos] + ([""] if a.avisos else [])
     if p.fuentes:
         l += ["**Fuentes**", ""]
