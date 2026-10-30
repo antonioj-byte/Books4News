@@ -17,7 +17,7 @@ from urllib.parse import unquote
 
 import httpx
 
-from folio import imagenes
+from folio.imagenes import libres as imagenes
 
 SPARQL = "https://query.wikidata.org/sparql"
 IDIOMAS = ("es", "en", "fr", "de", "it", "pt", "ru", "ca")

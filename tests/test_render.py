@@ -55,7 +55,7 @@ def test_html_de_cada_diapositiva(cfg_diseno, pieza):
 
 
 def test_imagen_cifra_antetitulo_y_cubierta(cfg_diseno, pieza):
-    from folio import cubiertas, imagenes
+    from folio.imagenes import cubiertas, libres as imagenes
     from folio.modelos import Arte
     cache = cfg_diseno.dir_cache(pieza.fecha)
     imagenes.dir_imagenes(cache).mkdir(parents=True)
@@ -82,7 +82,7 @@ def test_imagen_cifra_antetitulo_y_cubierta(cfg_diseno, pieza):
 
 def test_render_png_de_1080x1350(cfg_diseno, pieza, tmp_path, monkeypatch):
     pytest.importorskip("playwright")
-    from folio import cubiertas
+    from folio.imagenes import cubiertas
     monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)   # sin red en los tests
     from PIL import Image
     try:
@@ -100,7 +100,7 @@ def test_libro_de_la_diapositiva(pieza):
 
 
 def test_portada_con_ilustracion_en_la_propuesta_humanista(cfg_diseno, pieza):
-    from folio import ilustracion
+    from folio.imagenes import ilustracion
     from folio.modelos import Arte
     pieza.arte = Arte(tono="reflexivo", recurso="foto", portada="ilustracion")
     p = render.Plantillas(cfg_diseno, "humanista")

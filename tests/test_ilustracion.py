@@ -1,6 +1,6 @@
 import pytest
 
-from folio import ilustracion
+from folio.imagenes import ilustracion
 
 
 def test_sanear_quita_lo_peligroso():

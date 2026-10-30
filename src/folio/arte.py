@@ -23,7 +23,7 @@ import httpx
 import yaml
 from PIL import Image, ImageDraw, ImageFont
 
-from folio import cubiertas, ilustracion, imagenes, retratos
+from folio.imagenes import cubiertas, ilustracion, libres as imagenes, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import Arte, EleccionImagen, Pieza, PropuestaArte

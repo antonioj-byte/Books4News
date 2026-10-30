@@ -142,7 +142,7 @@ class Plantillas:
                                autoescape=select_autoescape(["html"]))
 
     def _cubierta(self, libro) -> str | None:
-        from folio import cubiertas
+        from folio.imagenes import cubiertas
 
         clave = libro.olid or libro.google_id or libro.titulo
         if clave not in self._cubiertas:
@@ -154,7 +154,7 @@ class Plantillas:
 
     def _imagen(self, pieza: Pieza, sufijo: str = "") -> dict | None:
         """La imagen fijada para la pieza (o su retrato, con sufijo «-retrato»), lista para la plantilla."""
-        from folio import imagenes
+        from folio.imagenes import libres as imagenes
 
         cache = self.cfg.dir_cache(pieza.fecha)
         img = imagenes.de_pieza(pieza.id + sufijo, cache)
@@ -165,7 +165,7 @@ class Plantillas:
 
     def _portada(self, pieza: Pieza, imagen: dict | None) -> tuple[str, Markup | None]:
         """Estilo de portada que se puede pintar de verdad: sin SVG o sin imagen, se cae al círculo."""
-        from folio import ilustracion
+        from folio.imagenes import ilustracion
 
         estilo = pieza.arte.portada if pieza.arte else "sangre"
         if estilo in ("sangre", "banda", "caja", "neon") and not imagen:

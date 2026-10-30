@@ -112,7 +112,7 @@ app.add_typer(imagen_app, name="imagen")
 def imagen_buscar(consulta: str, n: int = typer.Option(12, help="Resultados"),
                   fuente: str = typer.Option("europeana", help="europeana o commons")):
     """Busca imágenes libres y muestra la licencia comprobada de cada resultado."""
-    from folio import imagenes as imgs
+    from folio.imagenes import libres as imgs
 
     for c in imgs.buscar(consulta, n, fuente):
         marca = "libre" if c.libre else f"NO ({c.motivo})"
@@ -122,7 +122,7 @@ def imagen_buscar(consulta: str, n: int = typer.Option(12, help="Resultados"),
 @imagen_app.command("fijar")
 def imagen_fijar(pieza: str, archivo: str, fecha: str = typer.Option(None, help="Por defecto, la de la pieza")):
     """Descarga la imagen para la pieza (clave de «folio imagen buscar»; solo si es libre)."""
-    from folio import imagenes as imgs
+    from folio.imagenes import libres as imgs
 
     cfg = config.cargar()
     fecha = fecha or pieza[:10]

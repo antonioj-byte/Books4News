@@ -2,7 +2,7 @@ from io import BytesIO
 
 from PIL import Image
 
-from folio import cubiertas, imagenes
+from folio.imagenes import cubiertas, libres as imagenes
 
 
 def test_licencias_aceptadas_y_rechazadas():

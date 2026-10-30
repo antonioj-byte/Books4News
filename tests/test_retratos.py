@@ -1,6 +1,6 @@
 import httpx
 
-from folio import imagenes, retratos
+from folio.imagenes import libres as imagenes, retratos
 
 
 def _img(licencia, libre=False):

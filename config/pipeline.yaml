@@ -81,7 +81,7 @@ arte:
   # del ilustrador está desactivado: el modelo dibuja clip-art, 31/10).
   portadas: [sangre, banda, caja, neon]
   retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
-  retratos_cc_by_sa: false     # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia
+  retratos_cc_by_sa: true      # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia
 
 ab:
   control: opus-high
