@@ -253,3 +253,16 @@ def test_cada_regla_se_puede_probar_sola(cfg):
     assert all(regla(c) == [] for regla in guion.REGLAS)
     c.g.diapositivas[0].texto = "¿Quién obedece?"
     assert guion._portada_no_pregunta(c) == ["La portada no puede ser una pregunta retórica."]
+
+
+def test_uno_o_tres_libros_nunca_dos(cfg):
+    def lg(titulo, autor):
+        return LibroGuion(titulo=titulo, autor=autor, editorial_espanola=None, traductor=None, edicion_original="x")
+    otros = [LIBRO.model_copy(update={"titulo": t, "titulo_propuesto": t, "autores": [a], "edicion_es_detalle": None, "edicion_es": "desconocido"})
+             for t, a in (("Los orígenes del totalitarismo", "Hannah Arendt"), ("La condición humana", "Hannah Arendt"))]
+    dos = guion_valido(libros=[lg("Eichmann en Jerusalén", "Hannah Arendt"), lg("Los orígenes del totalitarismo", "Hannah Arendt")])
+    es = guion.validar(cfg, dos, [LIBRO, otros[0]], FUENTES)
+    assert any("nunca 2" in e and "tercero" not in e for e in es)
+    assert any("tercero" in e for e in guion.validar(cfg, dos, [LIBRO, *otros], FUENTES))   # hay un tercero verificado
+    tres = guion_valido(libros=[*dos.libros, lg("La condición humana", "Hannah Arendt")])
+    assert not any("libros" in e for e in guion.validar(cfg, tres, [LIBRO, *otros], FUENTES))

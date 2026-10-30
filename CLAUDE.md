@@ -54,6 +54,7 @@ No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquem
 - **Caras** (31/10): el retrato del autor del libro principal va en la portada y, en círculo, junto a la cubierta. Se busca en Wikidata (SPARQL, P18) y la licencia se comprueba en Commons como el resto de imágenes (`folio.imagenes.retratos`). Casi todos los retratos de Commons son CC BY-SA: se aceptan (decidido el 31/10, `arte.retratos_cc_by_sa: true`) y la portada se publica con esa licencia, con el crédito en el pie. Sin retrato: ilustración tipo The New Yorker con un proveedor de imágenes (decidido probarlo; pendiente de elegir proveedor y clave).
 - **Retratos generados** (31/10): el retrato libre del autor puede pasarse a uno de los cuatro estilos de la casa, low-poly, vóxel, dithering de 1 bit o render de videojuego de los 2000 (`folio.imagenes.retrato_generado`, Magnific Seedream 4.5 Edit; prueba de diez estilos en `docs/estilo-retratos.md`). Siempre se parte de la foto con la licencia comprobada, nunca de cero; el resultado hereda autor y licencia como obra derivada, con «generado con IA (Magnific)» en el crédito del pie, y la pieza pasa a revisión humana para comprobar el parecido. El original queda en `<pieza>-retrato-original.*`. Los estilos se alternan en el día (`arte.retrato_generado`, desactivado por defecto; `max_por_dia`), los prompts están en `prompts/retrato_generado.md` y el dithering se fuerza a 1 bit en código. Si falla, la pieza se queda con la foto; con 401/403/429 se desactiva el resto de la ejecución y con 503 se reintenta una vez. Caché por foto, estilo y prompt en `data/cache/retratos_generados/`. Con `--dev` no se genera. Clave en `MAGNIFIC_API_KEY`. El coste por imagen no lo da la API: hay que mirarlo en el panel de Magnific.
 - **Investigaciones y procesos judiciales abiertos**: ni el jefe de cultura ni el guionista atribuyen culpas ni anticipan conclusiones.
+- **Libros por pieza** (31/10, a petición del usuario): uno o tres, **nunca dos**. Lo normal es uno; tres solo si hay tres verificados y los tres aportan. Está en `prompts/guionista.md` y `prompts/jefe_cultura.md`, y la regla `_uno_o_tres_libros` de `guion.REGLAS` rechaza el guion con dos.
 - **Libros**: el jefe propone al menos uno con edición española (salvo que no haya buena opción) y libros que merezcan recomendarse por sí mismos, no como pretexto.
 - **Traducción**: solo se dice algo sobre la traducción si la edición española es `no` verificado («todavía sin traducir»), y aun así la pieza va siempre a revisión humana. Si es `desconocido`, no se dice nada.
 - **Datos de edición**: la ficha usa siempre los verificados. Si el guionista dio otra editorial, traductor o año, la pieza se marca «revisar edición» y el informe muestra los dos valores: no se sobrescribe en silencio. La primera edición es la más antigua en la lengua original (el idioma lo propone el jefe y solo sirve de filtro); si Open Library devuelve la ficha de una traducción, se busca la obra original. Open Library pone a los traductores como coautores: se separan.
@@ -74,6 +75,25 @@ No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquem
 7. **Secretos** solo en variables de entorno (`.env` en local, fuera de git). Nunca en el repositorio ni en los informes: los mensajes de error que llevan URLs con claves se limpian (`key=***`) antes de guardarse.
 8. **Probar los prototipos**: cada etapa se puede ejecutar sola sobre datos guardados (fixtures), y los cambios se prueban de verdad antes de darlos por buenos.
 9. No incluir identificadores de modelo en mensajes de commit ni en descripciones de PR.
+
+## Preferencias del usuario
+
+Instrucciones que el usuario ha dado y que valen para todas las sesiones. Cuando dé una nueva que deba
+durar, se apunta aquí (o en «Decisiones tomadas», si cambia el producto), con la fecha.
+
+- **Nombre**: el producto y la web son **Folio** («Folio · Mesa de edición»). Nunca «Tapablanda»,
+  que venía de un brand kit (quitado de la web el 30/10).
+- **Bloqueos**: si un servicio responde 403 o 429, parar y avisar. No esquivar bloqueos ni límites de
+  ningún servicio.
+- **Gasto**: lo mínimo en servicios de pago. Con un presupuesto dado, no pasarse; probar primero una
+  sola llamada para confirmar el formato y luego lanzar el resto.
+- **Ramas y despliegue**: commits en español y push a la rama de trabajo que indique (ahora
+  `diseno/direcciones`). No tocar `fase-3-web` ni desplegar sin que lo pida.
+- **Pruebas de diseño**: preparar las opciones, publicarlas en una página (Artifact) para que elija, y
+  no implementar nada en el pipeline hasta que elija.
+- **Imágenes de personas reales generadas con IA**: siempre a partir de una foto con la licencia
+  comprobada en su ficha (p. ej. Library of Congress, «No known restrictions on publication»), nunca
+  generando la cara desde cero; sin texto, logotipos ni nombres de artistas, juegos o marcas en el prompt.
 
 ## Cómo se trabaja
 

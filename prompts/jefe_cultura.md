@@ -30,7 +30,7 @@ Para cada historia elegida, devuelve:
 - de qué se está hablando, en dos frases
 - la cuestión de fondo, en una frase
 - el gancho del libro, en una línea: cómo entra el libro desde la portada («Perrow lo explicó en 1984: en los sistemas complejos, el accidente es lo normal»). Tiene que ser verdad del libro: «lo anticipó» o «lo predijo» solo si de verdad lo hizo; si no, «ya lo explicó», «lo contó», «lo vio». Sin citas literales
-- 2–3 libros candidatos. De cada uno: título (el español si tiene edición española; si no, el original), título original, idioma original y autor. Al menos uno debe tener edición española, salvo que no haya ninguna buena opción traducida; en ese caso, propón el mejor libro aunque no lo esté
+- 2–3 libros candidatos (la pieza llevará uno, el principal, o tres, nunca dos: si propones tres, que los tres merezcan estar). De cada uno: título (el español si tiene edición española; si no, el original), título original, idioma original y autor. Al menos uno debe tener edición española, salvo que no haya ninguna buena opción traducida; en ese caso, propón el mejor libro aunque no lo esté
 - por qué esta historia y no otra, en dos líneas
 
 Si ninguna historia de la lista tiene buena lectura lateral, dilo. Prefieres publicar dos piezas buenas a tres con una forzada.

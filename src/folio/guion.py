@@ -303,6 +303,17 @@ def _libros_verificados(c: _Guion) -> list[str]:
                       for lg in c.g.libros if libro_verificado(lg, c.libros) is None]
 
 
+def _uno_o_tres_libros(c: _Guion) -> list[str]:
+    """Una pieza lleva uno o tres libros, nunca dos (decisión del usuario, 31/10)."""
+    n = len(c.g.libros)
+    if n in (0, 1, 3):                     # sin libros ya lo dice _libros_verificados
+        return []
+    if n > 3:
+        return [f"Hay {n} libros; una pieza lleva 1 o 3."]
+    tercero = " o añade un tercero de la lista verificada que aporte de verdad" if len(c.libros) >= 3 else ""
+    return [f"Hay 2 libros; una pieza lleva 1 o 3, nunca 2: quédate con el principal{tercero}."]
+
+
 def _fuentes_conocidas(c: _Guion) -> list[str]:
     urls_validas = {f.url for f in c.fuentes}
     errores = []
@@ -317,7 +328,7 @@ REGLAS = (
     _extension, _justificacion_extra, _numeracion, _primera_es_portada, _ultima_es_cierre, _tipos_obligatorios,
     _palabras_por_diapositiva, _portada_con_libro, _cierre_nombra_libro, _una_actualidad, _libro_pronto,
     _pie_nombra_libro, _portada_no_pregunta, _firma, _frases_vetadas_y_citas, _traduccion, _longitud_pie,
-    _pie_cita_medio, _libros_verificados, _fuentes_conocidas,
+    _pie_cita_medio, _libros_verificados, _uno_o_tres_libros, _fuentes_conocidas,
 )
 
 
