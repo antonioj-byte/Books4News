@@ -130,3 +130,15 @@ def test_etapa_de_la_ejecucion(tmp_path):
 def test_portada_del_dia_trae_los_libros_para_la_estanteria(cliente):
     p1 = cliente.get("/api/dias/2026-10-30").json()["piezas"][0]
     assert p1["libros"] == [{"titulo": "Eichmann en Jerusalén", "autor": "Hannah Arendt"}]
+
+
+def test_medios_solo_imagenes_y_cubiertas(cliente, cfg):
+    raiz = cfg.dir_cache("x").parent
+    (raiz / "2026-10-30" / "imagenes").mkdir(parents=True)
+    (raiz / "2026-10-30" / "imagenes" / "2026-10-30-1.jpg").write_bytes(b"\xff\xd8jpg")
+    (raiz / "2026-10-30" / "textos").mkdir(parents=True)
+    (raiz / "2026-10-30" / "textos" / "h1.json").write_text("[]")
+    assert cliente.get("/api/medios/2026-10-30/imagenes/2026-10-30-1.jpg").status_code == 200
+    assert cliente.get("/api/medios/2026-10-30/textos/h1.json").status_code == 404
+    assert cliente.get("/api/medios/2026-10-30/imagenes/../textos/h1.json").status_code == 404
+    assert cliente.get("/api/medios/cubiertas/no-existe.jpg").status_code == 404

@@ -1,7 +1,7 @@
 """Etapas guardadas de una ejecución, en data/cache/<fecha>/.
 
 Cada etapa del pipeline deja aquí su resultado para poder relanzar desde ella (`--desde
-seleccion`, `--desde guion`, `--desde hechos`) sin repetir la ingesta ni pagar otra vez las
+seleccion`, `--desde guion`, `--desde hechos`, `--desde arte`) sin repetir la ingesta ni pagar otra vez las
 llamadas ya hechas. Los textos de cada historia se congelan aquí la primera vez que se descargan.
 """
 
@@ -15,8 +15,8 @@ from pydantic import TypeAdapter
 
 from folio.modelos import Articulo, FuenteNoticia, Historia, HistoriaResumida, Pieza, SeleccionJefe
 
-Etapa = Literal["ingesta", "seleccion", "guion", "hechos"]
-ORDEN: dict[str, int] = {"ingesta": 0, "seleccion": 1, "guion": 2, "hechos": 3}
+Etapa = Literal["ingesta", "seleccion", "guion", "hechos", "arte"]
+ORDEN: dict[str, int] = {"ingesta": 0, "seleccion": 1, "guion": 2, "hechos": 3, "arte": 4}
 VERSION_TEXTOS = 2  # 2: artículos elegidos por cercanía al hecho principal
 
 

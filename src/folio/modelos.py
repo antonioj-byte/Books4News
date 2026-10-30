@@ -199,6 +199,42 @@ class DiscrepanciaEdicion(BaseModel):
     api: str
 
 
+# --- Director de arte (prompts/director_arte.md) --------------------------------
+
+class PropuestaArte(BaseModel):
+    """Primera llamada: qué buscar y qué destacar. La imagen la busca el código."""
+    tono: Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]
+    suceso_con_victimas: bool = Field(description="La noticia trata de muertos, heridos o víctimas")
+    recurso: Literal["foto", "grabado"] = Field(description="Foto de archivo o ilustración antigua (grabado, dibujo)")
+    consultas: list[str] = Field(description="3 o 4 búsquedas de 1 a 3 palabras, en inglés, sueco o alemán")
+    evitar: list[str] = Field(description="Lo que la imagen no debe mostrar")
+    cifra: str | None = Field(default=None, description="Una cifra copiada literalmente de la diapositiva de actualidad, o null")
+    cifra_rotulo: str | None = Field(default=None, description="De 2 a 6 palabras de esa misma diapositiva que explican la cifra")
+    por_que: str
+
+
+class EleccionImagen(BaseModel):
+    """Segunda llamada: el modelo ve las candidatas (ya con licencia libre) y elige una o ninguna."""
+    elegida: int | None = Field(description="Número de la candidata elegida, o null si ninguna sirve")
+    personas_reconocibles: bool = Field(description="La elegida muestra caras reconocibles")
+    enfoque_x: int = Field(description="0–100: dónde está lo importante en horizontal")
+    enfoque_y: int = Field(description="0–100: dónde está lo importante en vertical")
+    por_que: str
+
+
+class Arte(BaseModel):
+    """Lo que decidió la etapa de arte para una pieza (trazabilidad; la imagen vive en data/cache)."""
+    tono: str
+    recurso: str
+    consultas: list[str] = Field(default_factory=list)
+    cifra: str | None = None
+    cifra_rotulo: str | None = None
+    imagen: str | None = None            # clave de la imagen fijada («europeana:/…»)
+    credito: str | None = None
+    por_que: str = ""
+    avisos: list[str] = Field(default_factory=list)
+
+
 class Pieza(BaseModel):
     id: str
     fecha: str
@@ -220,6 +256,8 @@ class Pieza(BaseModel):
     revision_humana: list[str] = Field(default_factory=list)
     # Datos de la noticia en el guion cotejados con los textos fuente (etapa de comprobación).
     hechos: list[HechoComprobado] = Field(default_factory=list)
+    # Imagen, cifra destacada y tono (etapa de arte)
+    arte: Arte | None = None
     error: str | None = None
 
 

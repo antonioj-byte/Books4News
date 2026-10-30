@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+    <p class="texto">{{ texto }}</p>
+    {% if libros %}
+    <div class="ficha">
+      {% for l in libros %}
+      <div class="ficha__libro">
+        <div class="ficha__titulo"><em>{{ l.titulo }}</em>, {{ l.autor }}</div>
+        {% if l.datos %}<div class="ficha__datos">{{ l.datos }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+{% endblock %}
+{% block pie %}
+  <footer class="pie"><span>{{ n }} / {{ total }}</span>{{ logotipo_grande }}</footer>
+{% endblock %}

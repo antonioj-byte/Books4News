@@ -10,7 +10,7 @@ from folio.ingesta import agrupacion
 from folio.historial import Historial
 from folio.libros.verificacion import Verificador
 from folio.llm import LLM
-from folio.modelos import Articulo, ComprobacionHechos, HechoComprobado, ResumenHistoria, SeleccionJefe
+from folio.modelos import Articulo, ComprobacionHechos, HechoComprobado, PropuestaArte, ResumenHistoria, SeleccionJefe
 from folio.pipeline import Pipeline
 
 from conftest import transporte_openlibrary
@@ -40,6 +40,9 @@ class LLMFalso(LLM):
                 HechoComprobado(afirmacion="El funcionario firmaba órdenes", donde="diapositiva 2", tipo="hecho",
                                 verificado=False, nota="Ninguna fuente lo dice"),
             ]), []
+        if esquema is PropuestaArte:
+            return PropuestaArte(tono="sereno", suceso_con_victimas=False, recurso="grabado", consultas=["court"],
+                                 evitar=[], cifra=None, por_que="Un tribunal antiguo"), []
         return self.guiones.pop(0), []
 
 
@@ -67,6 +70,10 @@ def _pipeline(cfg, monkeypatch, guiones, fecha="2026-10-30"):
     monkeypatch.setattr(p, "vectores", lambda a: _vectores(a))
     monkeypatch.setattr(p, "vector_texto", lambda texto: np.array([1.0, 0, 0]))
     monkeypatch.setattr(textos, "textos_historia", lambda cfg, h, puntuaciones=None: [(FUENTES[0], "Texto de la noticia aquí.")])
+    # Arte sin red: ninguna imagen candidata ni cubierta
+    from folio import arte, cubiertas
+    monkeypatch.setattr(arte, "candidatas", lambda propuesta, excluir=(): [])
+    monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)
     from folio.ingesta import agrupacion
     llm.ids = [h.id for h in agrupacion.agrupar(arts, _vectores(arts), 0.84)]
     return p, llm
@@ -172,7 +179,17 @@ def test_desde_hechos_reutiliza_los_guiones(cfg, monkeypatch):
     p2, llm2 = _pipeline(cfg, monkeypatch, [], fecha="2026-10-29")  # sin guiones: no puede escribir ninguno
     inf, _ = p2.ejecutar(desde="hechos")
     assert inf.piezas[0].guion and inf.piezas[0].hechos
-    assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["hechos"]
+    assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["hechos", "arte"]
+    assert inf.piezas[0].arte.recurso == "grabado" and "Sin imagen" in inf.piezas[0].arte.avisos[0]
+
+
+def test_desde_arte_no_repite_los_hechos(cfg, monkeypatch):
+    p, _ = _pipeline(cfg, monkeypatch, [guion_valido()], fecha="2026-10-29")
+    p.ejecutar()
+    p2, llm2 = _pipeline(cfg, monkeypatch, [], fecha="2026-10-29")
+    inf, _ = p2.ejecutar(desde="arte")
+    assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["arte"]
+    assert inf.piezas[0].hechos                      # los de la ejecución anterior, guardados con la pieza
 
 
 def test_textos_congelados_de_la_version_anterior_se_vuelven_a_elegir(cfg, monkeypatch):

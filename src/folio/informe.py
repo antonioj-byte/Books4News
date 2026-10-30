@@ -89,6 +89,12 @@ def _pieza_md(p: Pieza) -> list[str]:
         l += [f"| {h.donde} | {h.tipo} | {_celda(h.afirmacion)} | {_celda(h.nota or '')} |" for h in no_verificados] + [""]
     if p.hechos:
         l += [f"_Hechos comprobados contra las fuentes: {len(p.hechos) - len(no_verificados)} de {len(p.hechos)}._", ""]
+    if p.arte:
+        a = p.arte
+        l += [f"**Arte**: tono {a.tono}, {a.recurso}. "
+              + (f"Imagen: {a.credito}. " if a.credito else "Sin imagen. ")
+              + (f"Cifra destacada: {a.cifra}" + (f" ({a.cifra_rotulo})" if a.cifra_rotulo else "") + ". " if a.cifra else ""), ""]
+        l += [f"- {x}" for x in a.avisos] + ([""] if a.avisos else [])
     if p.fuentes:
         l += ["**Fuentes**", ""]
         l += [f"- {f.medio} ({f.acceso}{', texto completo' if f.texto_completo else ', solo titular y entradilla'}): "

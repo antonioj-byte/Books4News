@@ -1,0 +1,61 @@
+# Design system PROVISIONAL de Folio: sobrio y tipográfico, de suplemento cultural de prensa.
+# Es el único sitio donde viven colores, fuentes, tamaños, márgenes y logotipo: las plantillas
+# (diseno/plantillas/) solo usan estas variables. Cuando llegue el design system definitivo,
+# se cambia este archivo y, si hace falta, las fuentes de diseno/fuentes/.
+#
+# Cada valor de los grupos de abajo se convierte en una variable CSS: colores.papel → --colores-papel.
+
+lienzo:                      # Instagram, retrato 4:5
+  ancho: 1080px
+  alto: 1350px
+
+colores:
+  papel: "#F2EEE6"           # fondo: papel prensa claro
+  tinta: "#171615"           # texto principal
+  tinta_suave: "#6A635A"     # rótulos secundarios, paginación
+  acento: "#9A2E1F"          # rojo óxido: rótulos y filetes de acento, con mesura
+  filete: "#171615"
+  invertido_fondo: "#171615" # diapositiva de la idea
+  invertido_tinta: "#F2EEE6"
+  invertido_acento: "#D9826F"
+
+fuentes:
+  archivo: ../../fuentes/fuentes.css            # @font-face, relativo a diseno/
+  texto: "'Newsreader', 'Georgia', serif"
+  rotulos: "'Libre Franklin', 'Helvetica Neue', Arial, sans-serif"
+
+tamanos:
+  portada: 96px              # titular de portada (12 palabras como máximo)
+  cuerpo: 58px               # actualidad, libro, cierre (25–30 palabras)
+  cuerpo_minimo: 40px        # el texto se reduce hasta aquí si no cabe
+  idea: 66px
+  rotulo: 21px
+  paginacion: 20px
+  ficha: 30px
+  interlineado_titular: "1.04"
+  interlineado_texto: "1.24"
+  espaciado_rotulos: "0.16em"
+
+margenes:
+  lateral: 92px
+  superior: 84px
+  inferior: 80px
+  filete_grueso: 6px
+  filete_fino: 1.5px
+
+# Rótulos editoriales de cada tipo de diapositiva
+rotulos:
+  cabecera: Lectura lateral
+  portada: Lectura lateral
+  actualidad: La noticia
+  libro: El libro
+  idea: La idea
+  cierre: Para leer
+
+# Logotipo provisional: palabra en Newsreader cursiva con punto de acento. Es SVG en línea, así
+# que usa las fuentes y colores de arriba (currentColor = color del texto donde se coloca).
+logotipo: |
+  <svg class="logotipo" viewBox="0 0 168 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Folio">
+    <text x="0" y="44" style="font-family: var(--fuentes-texto); font-style: italic; font-weight: 500; font-size: 52px; letter-spacing: -1px" fill="currentColor">Folio</text>
+    <circle cx="124" cy="40" r="5.5" fill="var(--colores-acento)"/>
+  </svg>

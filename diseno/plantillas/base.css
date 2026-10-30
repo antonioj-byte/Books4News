@@ -1,73 +1,111 @@
-/* Estilos comunes de las diapositivas. Solo variables de diseno/tokens.yaml: nada de valores a fuego. */
+/* Folio · «Revista» (elegida el 30/10). Solo variables de tokens.yaml. */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: var(--lienzo-ancho); height: var(--lienzo-alto); background: var(--colores-papel); }
-body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-kerning: normal; }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 
 .diapositiva {
+  position: relative; isolation: isolate;
   width: var(--lienzo-ancho); height: var(--lienzo-alto); overflow: hidden;
   display: flex; flex-direction: column;
   padding: var(--margenes-superior) var(--margenes-lateral) var(--margenes-inferior);
-  background: var(--colores-papel); color: var(--colores-tinta);
-  font-family: var(--fuentes-texto); font-variant-numeric: oldstyle-nums proportional-nums;
-  hyphens: manual; /* sin guionado automático: en un carrusel se lee mal */
+  background: var(--colores-papel); color: var(--colores-tinta); font-family: var(--fuentes-texto);
 }
+.cabecera { position: relative; display: flex; align-items: center; justify-content: space-between; }
+.rotulo, .pagina, .desliza, .antetitulo {
+  font-family: var(--fuentes-rotulos); font-size: var(--tamanos-rotulo); font-weight: 800;
+  letter-spacing: 0.12em; text-transform: uppercase; line-height: 1;
+}
+.rotulo { color: var(--colores-acento); }
+.pagina { color: var(--colores-tinta-suave); font-weight: 600; }
+.credito { font-family: var(--fuentes-rotulos); font-size: var(--tamanos-credito); line-height: 1.35; color: var(--colores-tinta-suave); max-width: 66%; }
+.logotipo { display: block; height: 44px; width: auto; color: var(--colores-tinta); }
+.logotipo--grande { height: 64px; }
 
-/* Cabecera: rótulo + logotipo sobre filete grueso */
-.cabecera {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  padding-bottom: 20px; border-bottom: var(--margenes-filete-grueso) solid var(--colores-filete);
-}
-.logotipo { display: block; height: 46px; width: auto; color: var(--colores-tinta); }
-.logotipo--grande { height: 72px; }
-.rotulo {
-  font-family: var(--fuentes-rotulos); font-size: var(--tamanos-rotulo); font-weight: 600;
-  letter-spacing: var(--tamanos-espaciado-rotulos); text-transform: uppercase; color: var(--colores-acento);
-  line-height: 1;
-}
-
-/* Cuerpo: ocupa el alto disponible; el texto se ajusta si no cabe */
-.cuerpo { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 56px 0; }
-.texto {
-  font-size: var(--tamanos-cuerpo); line-height: var(--tamanos-interlineado-texto);
-  font-weight: 400; font-optical-sizing: auto; letter-spacing: -0.005em; text-wrap: pretty;
-}
+.cuerpo { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+.texto { font-size: var(--tamanos-cuerpo); line-height: 1.2; letter-spacing: -0.006em; text-wrap: pretty; }
 .texto em { font-style: italic; }
+.pie { position: relative; display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding-top: 24px; }
 
-/* Pie: fecha y paginación sobre filete fino */
-.pie {
-  display: flex; justify-content: space-between; align-items: center;
-  padding-top: 18px; border-top: var(--margenes-filete-fino) solid var(--colores-filete);
-  font-family: var(--fuentes-rotulos); font-size: var(--tamanos-paginacion); font-weight: 500;
-  letter-spacing: 0.04em; color: var(--colores-tinta-suave);
+/* Duotono: gris multiplicado sobre el claro, el oscuro entra por «screen» */
+.foto { position: absolute; z-index: -1; margin: 0; overflow: hidden; background: var(--colores-duo-claro); }
+.foto img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(1) contrast(1.25) brightness(1.05); mix-blend-mode: multiply; transform: scale(1.06); }
+.foto::after { content: ""; position: absolute; inset: 0; background: var(--colores-duo-oscuro); mix-blend-mode: screen; }
+
+/* Grabados: la línea se queda sobre el papel, sin el negro del duotono */
+.foto--grabado { background: var(--colores-papel); }
+.foto--grabado img { filter: grayscale(1) contrast(1.35); }
+.foto--grabado::after { display: none; }
+
+/* Portada: la foto en un gran círculo que se sale por la derecha; el titular se monta encima */
+.foto--circulo { width: 720px; height: 720px; border-radius: 50%; right: -150px; top: 120px; }
+/* Sin imagen, el círculo es un disco de color */
+.disco { position: absolute; z-index: -1; width: 720px; height: 720px; border-radius: 50%; right: -150px; top: 120px; background: var(--colores-acento); }
+.disco--grave { background: var(--colores-duo-claro); }   /* con víctimas, sin rojo */
+.diapositiva--portada .cabecera { justify-content: flex-start; }
+.antetitulo { position: relative; display: flex; gap: 22px; margin-top: 34px; font-weight: 600; color: var(--colores-tinta); }
+.antetitulo .rotulo { font-weight: 800; }
+.diapositiva--portada .cuerpo { justify-content: flex-end; padding-bottom: 36px; }
+.titular {
+  font-size: var(--tamanos-titular); line-height: 0.98; font-weight: 600; letter-spacing: -0.03em;
+  text-wrap: balance; color: var(--colores-tinta);
 }
+/* El titular apenas roza el círculo: la foto no compite con la lectura */
+.con-imagen .titular { position: relative; }
+.diapositiva--portada .pie { border-top: 4px solid var(--colores-tinta); padding-top: 20px; }
+.desliza { color: var(--colores-acento); }
 
-/* Portada: titular grande, apoyado abajo, como una primera de suplemento */
-.diapositiva--portada .cuerpo { justify-content: flex-end; padding-bottom: 64px; }
-.diapositiva--portada .texto {
-  font-size: var(--tamanos-portada); line-height: var(--tamanos-interlineado-titular);
-  font-weight: 500; letter-spacing: -0.02em;
+/* Noticia: columna de la foto a la izquierda, texto a la derecha */
+.foto--columna { left: 0; top: 0; bottom: 0; width: 300px; }
+.foto--columna img { object-position: 40% center; }
+.diapositiva--actualidad.con-imagen:not(:has(.cifra)) { padding-left: 380px; }
+.diapositiva--actualidad .cuerpo { justify-content: center; }
+.diapositiva--actualidad .texto { font-family: var(--fuentes-rotulos); font-size: 46px; font-weight: 500; line-height: 1.28; letter-spacing: -0.015em; }
+.cifra { margin-bottom: 44px; padding-bottom: 36px; border-bottom: 4px solid var(--colores-tinta); }
+.cifra__numero { font-family: var(--fuentes-texto); font-size: var(--tamanos-cifra); line-height: 0.92; font-weight: 600; letter-spacing: -0.035em; color: var(--colores-acento); font-variant-numeric: lining-nums; text-wrap: balance; }
+.cifra__rotulo { margin-top: 14px; font-family: var(--fuentes-rotulos); font-size: 26px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.diapositiva--actualidad .cifra ~ .texto { font-size: 40px; }
+.diapositiva--actualidad:not(.con-imagen) .texto { font-size: 54px; }
+.diapositiva--actualidad:has(.cifra) .cuerpo::before { display: none; }
+.diapositiva--actualidad .cuerpo::before { content: ""; display: block; width: 72px; height: 10px; background: var(--colores-acento); margin-bottom: 40px; }
+
+/* Cubiertas */
+.cubierta { display: block; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.08), 18px 26px 40px rgba(0, 0, 0, 0.28); }
+.cubierta--real { height: 100%; width: auto; }
+.cubierta--dibujada {
+  height: 100%; aspect-ratio: 2 / 3; background: var(--colores-tinta); color: var(--colores-papel);
+  display: flex; flex-direction: column; justify-content: space-between; padding: 8% 9%;
+  border-top: 14px solid var(--colores-acento);
 }
+.cubierta__autor { font-family: var(--fuentes-rotulos); font-weight: 800; font-size: 18px; letter-spacing: 0.14em; text-transform: uppercase; }
+.cubierta__titulo { font-size: 46px; line-height: 1.02; letter-spacing: -0.02em; }
 
-/* Libro: filete vertical de acento */
-.diapositiva--libro .texto { border-left: var(--margenes-filete-grueso) solid var(--colores-acento); padding-left: 40px; }
-
-/* Idea: la tesis, en negativo y cursiva */
-.diapositiva--idea { background: var(--colores-invertido-fondo); color: var(--colores-invertido-tinta); }
-.diapositiva--idea .cabecera { border-bottom-color: var(--colores-invertido-tinta); }
-.diapositiva--idea .logotipo { color: var(--colores-invertido-tinta); }
-.diapositiva--idea .rotulo { color: var(--colores-invertido-acento); }
-.diapositiva--idea .pie { border-top-color: var(--colores-invertido-tinta); color: var(--colores-invertido-tinta); opacity: 0.75; }
-.diapositiva--idea .texto { font-size: var(--tamanos-idea); font-style: italic; font-weight: 400; line-height: 1.16; letter-spacing: -0.012em; }
-.diapositiva--idea .texto em { font-style: normal; }
-
-/* Cierre: la recomendación y la ficha de los libros */
-.diapositiva--cierre .cuerpo { justify-content: space-between; padding-top: 48px; padding-bottom: 40px; }
-.ficha { margin-top: 40px; border-top: var(--margenes-filete-fino) solid var(--colores-filete); }
-.ficha__libro { padding: 16px 0; border-bottom: var(--margenes-filete-fino) solid var(--colores-filete); }
-.ficha__titulo { font-size: var(--tamanos-ficha); line-height: 1.2; }
-.ficha__titulo em { font-style: italic; }
-.ficha__datos {
-  margin-top: 6px; font-family: var(--fuentes-rotulos); font-size: var(--tamanos-paginacion);
-  letter-spacing: 0.02em; color: var(--colores-tinta-suave);
+/* Libro: escaparate con la cubierta sobre un campo de color */
+.diapositiva--libro .cuerpo { justify-content: flex-start; padding-top: 40px; }
+.escaparate {
+  position: relative; height: 600px; margin: 0 calc(-1 * var(--margenes-lateral)); padding: 52px var(--margenes-lateral);
+  background: var(--colores-acento); display: flex; gap: 48px; align-items: stretch;
 }
-.diapositiva--cierre .pie { border-top: 0; padding-top: 0; align-items: flex-end; }
+.escaparate__datos { display: flex; flex-direction: column; justify-content: flex-end; color: var(--colores-acento-tinta); }
+.cronologia { display: flex; align-items: center; gap: 14px; margin-bottom: auto; font-family: var(--fuentes-rotulos); font-size: 22px; font-weight: 800; letter-spacing: 0.08em; }
+.cronologia i { flex: 1; height: 3px; background: currentColor; position: relative; }
+.cronologia i::before, .cronologia i::after { content: ""; position: absolute; top: -6px; width: 15px; height: 15px; border-radius: 50%; background: currentColor; }
+.cronologia i::before { left: 0; } .cronologia i::after { right: 0; }
+.escaparate__titulo { font-size: 50px; line-height: 1.02; letter-spacing: -0.02em; }
+.escaparate__autor { margin-top: 18px; font-family: var(--fuentes-rotulos); font-size: 20px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.diapositiva--libro .texto { margin-top: auto; font-size: 48px; }
+
+/* Idea: rojo señal con un aro */
+.diapositiva--idea { background: var(--colores-acento); color: var(--colores-acento-tinta); }
+.diapositiva--idea .rotulo, .diapositiva--idea .pagina { color: var(--colores-acento-tinta); }
+.aro { position: absolute; z-index: -1; width: 1100px; height: 1100px; border-radius: 50%; border: 3px solid var(--colores-acento-tinta); opacity: 0.35; right: -520px; top: -300px; }
+.diapositiva--idea .texto { font-size: var(--tamanos-idea); font-weight: 500; line-height: 1.06; letter-spacing: -0.025em; text-wrap: balance; }
+
+/* Cierre: las cubiertas en el estante */
+.diapositiva--cierre .cuerpo { justify-content: flex-start; padding-top: 44px; }
+.diapositiva--cierre .texto { font-size: 46px; }
+.estante { margin-top: auto; display: flex; gap: 40px; align-items: flex-end; padding-bottom: 26px; border-bottom: 4px solid var(--colores-tinta); }
+.estante__libro { display: flex; flex-direction: column; gap: 18px; height: 520px; flex: 0 1 auto; min-width: 0; }
+.estante__libro .cubierta { height: 380px; flex: none; align-self: flex-start; }
+.estante__libro .cubierta__titulo { font-size: 34px; }
+.estante__ficha { font-size: 26px; line-height: 1.15; max-width: 380px; }
+.estante__ficha span { font-family: var(--fuentes-rotulos); font-size: 17px; font-weight: 600; letter-spacing: 0.04em; color: var(--colores-tinta-suave); }

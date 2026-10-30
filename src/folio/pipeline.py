@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 import numpy as np
 from folio import guion as guionista
-from folio import hechos, informe, seleccion, textos
+from folio import arte, hechos, informe, seleccion, textos
 from folio.etapas import ORDEN, Etapa, EtapasGuardadas
 from folio.config import Config
 from folio.historial import Historial
@@ -291,6 +291,26 @@ class Pipeline:
                 hechas += 1
                 progreso(f"Comprobando hechos ({hechas} de {len(con_guion)})")
 
+    # --- Etapa 5: director de arte -------------------------------------------
+
+    def dirigir_arte(self, piezas: list[Pieza], al_jefe: list[Historia]) -> None:
+        """Tono, imagen libre, cifra destacada y cubiertas de cada pieza. Una pieza tras otra, para
+        que dos piezas del día no lleven la misma imagen (unos 10 s por pieza)."""
+        por_id = {h.id: h for h in al_jefe}
+        con_guion = [p for p in piezas if p.guion and p.estado != "fallida"]
+        usadas: set[str] = set()
+        for i, pieza in enumerate(con_guion):
+            progreso(f"Dirección de arte ({i} de {len(con_guion)})")
+            pieza.avisos = [a for a in pieza.avisos if not a.startswith("Director de arte:")]
+            h = por_id.get(pieza.historia_id)
+            try:
+                pieza.arte = arte.dirigir(self.llm, self.cfg, pieza, h.seccion if h else None, usadas)
+            except Exception as exc:
+                pieza.arte = None
+                pieza.avisos.append(f"Director de arte: no se pudo ({type(exc).__name__}: {exc}); sale sin imagen")
+        if con_guion:
+            progreso(f"Dirección de arte ({len(con_guion)} de {len(con_guion)})")
+
     # --- Ejecución completa -------------------------------------------------
 
     def ejecutar(self, desde: Etapa = "ingesta", sin_llm: bool = False) -> tuple[InformeDiario, tuple]:
@@ -342,14 +362,19 @@ class Pipeline:
             self._guardar_etapa(self.etapas.guardar_piezas, piezas)
         else:
             piezas = self.etapas.piezas()
-        self.comprobar_hechos(piezas, al_jefe)
+        if inicio <= 3:
+            self.comprobar_hechos(piezas, al_jefe)
+            self._guardar_etapa(self.etapas.guardar_piezas, piezas)
+        self.dirigir_arte(piezas, al_jefe)
+        self._guardar_etapa(self.etapas.guardar_piezas, piezas)
         buenas = [p for p in piezas if p.estado == "propuesta"]
         if inicio <= 2 and not self.prueba:
             self._registrar_historial(buenas, al_jefe, vectores)
         if self.solo_pieza is None and len(buenas) < len(sel.elegidas):
             self.avisos.append(f"Solo {len(buenas)} piezas válidas de {len(sel.elegidas)} previstas")
-        if inicio == 3:
-            self.avisos.append("Solo se ha repetido la comprobación de hechos: el coste del informe es solo el de esa etapa")
+        if inicio >= 3:
+            repetidas = "la comprobación de hechos y la dirección de arte" if inicio == 3 else "la dirección de arte"
+            self.avisos.append(f"Solo se ha repetido {repetidas}: el coste del informe es solo el de esa etapa")
         return sel, piezas
 
     def _registrar_historial(self, buenas: list[Pieza], al_jefe: list[Historia], vectores) -> None:

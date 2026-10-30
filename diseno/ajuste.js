@@ -17,5 +17,10 @@ document.fonts.ready.then(() => {
     }
     if (caja.scrollHeight > caja.clientHeight + 1) document.body.dataset.desborda = "1";
   }
+  // [data-encajar]: una sola pieza (la cifra destacada) que se reduce hasta caber a lo ancho
+  for (const el of document.querySelectorAll("[data-encajar]")) {
+    let tam = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth + 1 && tam > 48) { tam -= 4; el.style.fontSize = tam + "px"; }
+  }
   document.body.dataset.listo = "1";
 });

@@ -1,0 +1,73 @@
+/* Estilos comunes de las diapositivas. Solo variables de diseno/tokens.yaml: nada de valores a fuego. */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: var(--lienzo-ancho); height: var(--lienzo-alto); background: var(--colores-papel); }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-kerning: normal; }
+
+.diapositiva {
+  width: var(--lienzo-ancho); height: var(--lienzo-alto); overflow: hidden;
+  display: flex; flex-direction: column;
+  padding: var(--margenes-superior) var(--margenes-lateral) var(--margenes-inferior);
+  background: var(--colores-papel); color: var(--colores-tinta);
+  font-family: var(--fuentes-texto); font-variant-numeric: oldstyle-nums proportional-nums;
+  hyphens: manual; /* sin guionado automático: en un carrusel se lee mal */
+}
+
+/* Cabecera: rótulo + logotipo sobre filete grueso */
+.cabecera {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding-bottom: 20px; border-bottom: var(--margenes-filete-grueso) solid var(--colores-filete);
+}
+.logotipo { display: block; height: 46px; width: auto; color: var(--colores-tinta); }
+.logotipo--grande { height: 72px; }
+.rotulo {
+  font-family: var(--fuentes-rotulos); font-size: var(--tamanos-rotulo); font-weight: 600;
+  letter-spacing: var(--tamanos-espaciado-rotulos); text-transform: uppercase; color: var(--colores-acento);
+  line-height: 1;
+}
+
+/* Cuerpo: ocupa el alto disponible; el texto se ajusta si no cabe */
+.cuerpo { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 56px 0; }
+.texto {
+  font-size: var(--tamanos-cuerpo); line-height: var(--tamanos-interlineado-texto);
+  font-weight: 400; font-optical-sizing: auto; letter-spacing: -0.005em; text-wrap: pretty;
+}
+.texto em { font-style: italic; }
+
+/* Pie: fecha y paginación sobre filete fino */
+.pie {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 18px; border-top: var(--margenes-filete-fino) solid var(--colores-filete);
+  font-family: var(--fuentes-rotulos); font-size: var(--tamanos-paginacion); font-weight: 500;
+  letter-spacing: 0.04em; color: var(--colores-tinta-suave);
+}
+
+/* Portada: titular grande, apoyado abajo, como una primera de suplemento */
+.diapositiva--portada .cuerpo { justify-content: flex-end; padding-bottom: 64px; }
+.diapositiva--portada .texto {
+  font-size: var(--tamanos-portada); line-height: var(--tamanos-interlineado-titular);
+  font-weight: 500; letter-spacing: -0.02em;
+}
+
+/* Libro: filete vertical de acento */
+.diapositiva--libro .texto { border-left: var(--margenes-filete-grueso) solid var(--colores-acento); padding-left: 40px; }
+
+/* Idea: la tesis, en negativo y cursiva */
+.diapositiva--idea { background: var(--colores-invertido-fondo); color: var(--colores-invertido-tinta); }
+.diapositiva--idea .cabecera { border-bottom-color: var(--colores-invertido-tinta); }
+.diapositiva--idea .logotipo { color: var(--colores-invertido-tinta); }
+.diapositiva--idea .rotulo { color: var(--colores-invertido-acento); }
+.diapositiva--idea .pie { border-top-color: var(--colores-invertido-tinta); color: var(--colores-invertido-tinta); opacity: 0.75; }
+.diapositiva--idea .texto { font-size: var(--tamanos-idea); font-style: italic; font-weight: 400; line-height: 1.16; letter-spacing: -0.012em; }
+.diapositiva--idea .texto em { font-style: normal; }
+
+/* Cierre: la recomendación y la ficha de los libros */
+.diapositiva--cierre .cuerpo { justify-content: space-between; padding-top: 48px; padding-bottom: 40px; }
+.ficha { margin-top: 40px; border-top: var(--margenes-filete-fino) solid var(--colores-filete); }
+.ficha__libro { padding: 16px 0; border-bottom: var(--margenes-filete-fino) solid var(--colores-filete); }
+.ficha__titulo { font-size: var(--tamanos-ficha); line-height: 1.2; }
+.ficha__titulo em { font-style: italic; }
+.ficha__datos {
+  margin-top: 6px; font-family: var(--fuentes-rotulos); font-size: var(--tamanos-paginacion);
+  letter-spacing: 0.02em; color: var(--colores-tinta-suave);
+}
+.diapositiva--cierre .pie { border-top: 0; padding-top: 0; align-items: flex-end; }

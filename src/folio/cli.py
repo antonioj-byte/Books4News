@@ -23,7 +23,7 @@ def _logging(verbose: bool):
 @app.command()
 def run(
     fecha: str = typer.Option(None, help="Fecha del informe (AAAA-MM-DD). Por defecto, hoy; con --dev, la última con selección guardada"),
-    desde: str = typer.Option(None, help="Etapa desde la que ejecutar: ingesta | seleccion | guion | hechos. Por defecto, ingesta; con --dev, guion"),
+    desde: str = typer.Option(None, help="Etapa desde la que ejecutar: ingesta | seleccion | guion | hechos | arte. Por defecto, ingesta; con --dev, guion"),
     sin_llm: bool = typer.Option(False, "--sin-llm", help="Solo ingesta y agrupación, sin llamar a modelos"),
     dev: bool = typer.Option(False, "--dev", help="Modo desarrollo: modelo barato en todas las etapas, informe en informes/<fecha>-dev/ y sin tocar historial ni etapas guardadas"),
     solo_pieza: int = typer.Option(None, "--solo-pieza", help="Genera solo la pieza N de la selección (prueba: no se registra en el historial)"),
@@ -36,8 +36,8 @@ def run(
     from folio.pipeline import Pipeline
 
     desde = desde or ("guion" if dev else "ingesta")
-    if desde not in ("ingesta", "seleccion", "guion", "hechos"):
-        raise typer.BadParameter("--desde debe ser ingesta, seleccion, guion o hechos")
+    if desde not in ("ingesta", "seleccion", "guion", "hechos", "arte"):
+        raise typer.BadParameter("--desde debe ser ingesta, seleccion, guion, hechos o arte")
     cfg = config.cargar()
     if not fecha:
         fecha = (config.ultima_fecha_con_seleccion(cfg) if dev else None) or date.today().isoformat()
@@ -63,7 +63,6 @@ def render(
 ):
     """Render de las piezas del día a PNG (1080×1350) en informes/<fecha>/render/."""
     _logging(False)
-    from folio import imagenes as imgs
     from folio.modelos import Pieza
     from folio.render import direcciones, renderizar
     from pydantic import TypeAdapter
@@ -76,16 +75,9 @@ def render(
         raise typer.Exit(1)
     piezas = TypeAdapter(list[Pieza]).validate_python(json.loads(ruta.read_text(encoding="utf-8"))["piezas"])
     piezas = [p for p in piezas if p.guion and (pieza is None or p.id == pieza)]
-    cache = cfg.dir_cache(fecha)
-    fotos = {}
-    for p in piezas:
-        img = imgs.de_pieza(p.id, cache)
-        if img and img.local:
-            fotos[p.id] = {"src": (imgs.dir_imagenes(cache) / img.local).resolve().as_uri(),
-                           "credito": img.credito, "ancho": img.ancho, "alto": img.alto}
     for d in (direcciones(cfg) if direccion == "todas" else [direccion]):
         destino = cfg.dir_informes / fecha / "render" / (d or "")
-        archivos, avisos = renderizar(cfg, piezas, destino, d, fotos)
+        archivos, avisos = renderizar(cfg, piezas, destino, d)
         for a in avisos:
             typer.echo(f"Aviso: {a}")
         typer.echo(f"{len(archivos)} diapositivas en {destino}")

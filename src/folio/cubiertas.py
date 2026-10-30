@@ -67,16 +67,29 @@ def _candidatas(libro: LibroVerificado, gb: httpx.Client, clave_gb: str | None) 
     return out
 
 
+def _nombre(libro: LibroVerificado) -> str:
+    return (libro.edicion_es_detalle.isbn if libro.edicion_es_detalle and libro.edicion_es_detalle.isbn
+            else libro.olid or libro.google_id or libro.titulo).replace("/", "_")
+
+
+def en_cache(libro: LibroVerificado, dir_cache: Path) -> Path | None:
+    """La cubierta ya buscada, sin ir a la red (None si no hay o no se ha buscado)."""
+    carpeta = dir_cache / "cubiertas"
+    meta = carpeta / f"{_nombre(libro)}.json"
+    if not meta.exists():
+        return None
+    guardado = json.loads(meta.read_text(encoding="utf-8"))
+    return carpeta / guardado["archivo"] if guardado.get("archivo") else None
+
+
 def buscar(libro: LibroVerificado, dir_cache: Path, clave_gb: str | None = None) -> Path | None:
     """Ruta de una cubierta buena del libro, o None. Usa y rellena la caché."""
     carpeta = dir_cache / "cubiertas"
     carpeta.mkdir(parents=True, exist_ok=True)
-    nombre = (libro.edicion_es_detalle.isbn if libro.edicion_es_detalle and libro.edicion_es_detalle.isbn
-              else libro.olid or libro.google_id or libro.titulo).replace("/", "_")
+    nombre = _nombre(libro)
     meta = carpeta / f"{nombre}.json"
     if meta.exists():
-        guardado = json.loads(meta.read_text(encoding="utf-8"))
-        return carpeta / guardado["archivo"] if guardado.get("archivo") else None
+        return en_cache(libro, dir_cache)
     descartes = []
     with httpx.Client(timeout=30, follow_redirects=True,
                       headers={"User-Agent": "FolioLateral/0.1 (https://github.com/antonioj-byte/Books4News)"}) as c:

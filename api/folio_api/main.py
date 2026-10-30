@@ -23,7 +23,7 @@ def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importa
         almacen.importar_informes(cfg.dir_informes)
     app = FastAPI(title="Folio · web local", version="0.1.0")
     app.state.folio = Contexto(cfg=cfg, almacen=almacen, ejecutor=ejecutor or Ejecutor(cfg.dir_datos),
-                               plantillas=Plantillas(cfg))
+                               plantillas=Plantillas(cfg, url_medio=diseno.url_medio(cfg.dir_cache("x").parent)))
     app.mount("/diseno", StaticFiles(directory=dir_diseno(cfg)), name="diseno")
     for modulo in (dias, piezas, diseno, evaluaciones, ejecuciones):
         app.include_router(modulo.router)

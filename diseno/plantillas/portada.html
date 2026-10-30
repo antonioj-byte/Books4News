@@ -1,7 +1,12 @@
 {% extends "base.html" %}
+{% block fondo %}{% if imagen %}{% with clase="foto--circulo" %}{% include "_foto.html" %}{% endwith %}{% else %}<div class="disco{% if tono == 'grave' %} disco--grave{% endif %}"></div>{% endif %}{% endblock %}
 {% block cabecera %}
-  <header class="cabecera">
-    {{ logotipo }}
-    <span class="rotulo">{{ rotulo }}</span>
-  </header>
+  <header class="cabecera">{{ logotipo }}</header>
+  <div class="antetitulo"><span class="rotulo">{{ rotulo }}</span><span>{{ fecha_larga }}</span></div>
+{% endblock %}
+{% block cuerpo %}
+    <h1 class="titular">{{ texto }}</h1>
+{% endblock %}
+{% block pie %}
+  <footer class="pie">{% if imagen %}<span class="credito">{{ 'Ilustración' if imagen.grabado else 'Foto' }}: {{ imagen.credito }}</span>{% else %}<span></span>{% endif %}<span class="desliza">Desliza →</span></footer>
 {% endblock %}

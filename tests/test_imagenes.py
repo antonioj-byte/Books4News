@@ -39,3 +39,9 @@ def test_cubiertas_buenas_y_malas():
     assert "pequeña" in cubiertas.es_buena(_jpg(128, 186, (180, 30, 30)))[1]
     assert "blanco" in cubiertas.es_buena(_jpg(600, 900, "white"))[1]
     assert not cubiertas.es_buena(b"no soy una imagen")[0]
+
+
+def test_iiif_a_mayor_resolucion():
+    assert imagenes.mayor_resolucion("https://x.org/image/V1.jpg/full/512,/0/default.jpg") == \
+        "https://x.org/image/V1.jpg/full/1600,/0/default.jpg"
+    assert imagenes.mayor_resolucion("https://mm.dimu.org/image/1?dimension=1200x1200").endswith("1200x1200")

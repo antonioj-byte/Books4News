@@ -14,6 +14,7 @@ import os
 import re
 import tempfile
 from dataclasses import dataclass
+from typing import Callable
 from pathlib import Path
 
 import yaml
@@ -111,14 +112,19 @@ def color_de_pieza(pieza: Pieza, n_colores: int) -> int:
     return sum(map(ord, pieza.id)) % n_colores if n_colores else 0
 
 
+def _como_uri(ruta: Path) -> str:
+    return ruta.resolve().as_uri()
+
+
 @dataclass
 class Plantillas:
     cfg: Config
     direccion: str | None = None
-    # Imagen libre de cada pieza (folio.imagenes), para las propuestas que la usan: id → ImagenLibre
-    imagenes: dict | None = None
-    # Usar las cubiertas reales (folio.cubiertas) cuando la plantilla las pide
-    cubiertas: bool = False
+    # Buscar en la red las cubiertas que no estén en la caché (el render sí; la vista previa de la
+    # web solo usa las que dejó la etapa de arte)
+    buscar_cubiertas: bool = False
+    # Archivo de data/cache → URL desde la que lo carga el navegador (file:// en el PNG, la API en la web)
+    url_medio: Callable[[Path], str] = _como_uri
 
     def __post_init__(self):
         self._cubiertas: dict[str, str | None] = {}
@@ -131,18 +137,30 @@ class Plantillas:
 
         clave = libro.olid or libro.google_id or libro.titulo
         if clave not in self._cubiertas:
-            ruta = cubiertas.buscar(libro, self.cfg.dir_cache("x").parent, self.cfg.google_books_api_key)
-            self._cubiertas[clave] = ruta.resolve().as_uri() if ruta else None
+            raiz = self.cfg.dir_cache("x").parent
+            ruta = (cubiertas.buscar(libro, raiz, self.cfg.google_books_api_key) if self.buscar_cubiertas
+                    else cubiertas.en_cache(libro, raiz))
+            self._cubiertas[clave] = self.url_medio(ruta) if ruta else None
         return self._cubiertas[clave]
+
+    def _imagen(self, pieza: Pieza) -> dict | None:
+        from folio import imagenes
+
+        cache = self.cfg.dir_cache(pieza.fecha)
+        img = imagenes.de_pieza(pieza.id, cache)
+        if not img or not img.local or not (imagenes.dir_imagenes(cache) / img.local).exists():
+            return None
+        return {"src": self.url_medio(imagenes.dir_imagenes(cache) / img.local), "credito": img.credito,
+                "enfoque": img.enfoque, "grabado": bool(pieza.arte and pieza.arte.recurso == "grabado")}
 
     def html_diapositiva(self, pieza: Pieza, n: int, base_url: str | None = None) -> str:
         """HTML completo de la diapositiva n (1, 2, …) de la pieza."""
         d = pieza.guion.diapositivas[n - 1]
         logo = self.tokens["logotipo"].strip()
-        imagen = (self.imagenes or {}).get(pieza.id)
+        imagen = self._imagen(pieza)
         paleta = self.tokens.get("paleta_piezas") or []
         portada = pieza.guion.diapositivas[0]
-        libros = ficha_libros(pieza, self._cubierta if self.cubiertas else None)
+        libros = ficha_libros(pieza, self._cubierta)
         return self.env.get_template(f"{d.tipo}.html").render(
             base_url=base_url or dir_diseno(self.cfg, self.direccion).resolve().as_uri() + "/",
             tokens=self.tokens, css_tokens=Markup(css_tokens(self.tokens)),
@@ -152,7 +170,8 @@ class Plantillas:
             n=n, total=len(pieza.guion.diapositivas), pieza_id=pieza.id, fecha_larga=fecha_larga(pieza.fecha),
             libros=libros if d.tipo == "cierre" else [], libros_pieza=libros,
             libro=(libro_de_diapositiva(libros, pieza, d.texto) or (libros[:1] or [None])[0]) if d.tipo == "libro" else None,
-            titular=texto_html(portada.texto), imagen=imagen,
+            titular=texto_html(portada.texto), imagen=imagen, anio_hoy=int(pieza.fecha[:4]),
+            tono=pieza.arte.tono if pieza.arte else None, cifra=pieza.arte.cifra if pieza.arte else None, cifra_rotulo=pieza.arte.cifra_rotulo if pieza.arte else None,
             color=paleta[color_de_pieza(pieza, len(paleta))] if paleta else None,
         )
 
@@ -170,12 +189,12 @@ def _lanzar(p):
         raise
 
 
-def renderizar(cfg: Config, piezas: list[Pieza], destino: Path, direccion: str | None = None,
-               imagenes: dict | None = None) -> tuple[list[Path], list[str]]:
+def renderizar(cfg: Config, piezas: list[Pieza], destino: Path,
+               direccion: str | None = None) -> tuple[list[Path], list[str]]:
     """PNG de cada diapositiva en destino/<pieza>/NN-tipo.png. Devuelve (archivos, avisos)."""
     from playwright.sync_api import sync_playwright
 
-    plantillas = Plantillas(cfg, direccion, imagenes, cubiertas=bool(direccion))
+    plantillas = Plantillas(cfg, direccion, buscar_cubiertas=True)
     ancho = int(str(plantillas.tokens["lienzo"]["ancho"]).removesuffix("px"))
     alto = int(str(plantillas.tokens["lienzo"]["alto"]).removesuffix("px"))
     archivos, avisos = [], []

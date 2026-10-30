@@ -52,6 +52,7 @@ class ImagenLibre:
     local: str | None = None   # ruta del archivo descargado
     fuente: str = "Wikimedia Commons"
     institucion: str | None = None
+    enfoque: tuple[int, int] = (50, 50)   # punto de interés en %, para recortar sin cortarlo
 
     @property
     def credito(self) -> str:
@@ -151,8 +152,17 @@ def _clave_europeana() -> str:
     return (os.getenv("EUROPEANA_API_KEY") or "").strip() or "api2demo"
 
 
+_IIIF = re.compile(r"/full/(?:\d+,\d*|,\d+|!\d+,\d+)/0/default\.(jpg|png)$")
+
+
+def mayor_resolucion(url: str) -> str:
+    """Muchas instituciones sirven por IIIF una versión pequeña (…/full/512,/0/default.jpg): se pide
+    una de 1600 px de ancho, que es lo que necesita el carrusel."""
+    return _IIIF.sub(r"/full/1600,/0/default.\1", url)
+
+
 def _de_europeana(item: dict) -> ImagenLibre | None:
-    url = (item.get("edmIsShownBy") or [None])[0]
+    url = mayor_resolucion((item.get("edmIsShownBy") or [""])[0])
     rights = (item.get("rights") or [""])[0]
     if not url or not rights:
         return None
@@ -232,12 +242,25 @@ def fijar(imagen: ImagenLibre, pieza_id: str, dir_cache_fecha: Path) -> Path:
         else:
             destino.write_bytes(r.content)
     imagen.local = destino.name
-    (carpeta / f"{pieza_id}.json").write_text(json.dumps(asdict(imagen), ensure_ascii=False, indent=2), encoding="utf-8")
+    guardar_metadatos(imagen, pieza_id, dir_cache_fecha)
     return destino
+
+
+def guardar_metadatos(imagen: ImagenLibre, pieza_id: str, dir_cache_fecha: Path) -> None:
+    carpeta = dir_imagenes(dir_cache_fecha)
+    (carpeta / f"{pieza_id}.json").write_text(json.dumps(asdict(imagen), ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def olvidar(pieza_id: str, dir_cache_fecha: Path) -> None:
+    """Quita la imagen fijada de la pieza (antes de que el director de arte elija otra)."""
+    for ruta in dir_imagenes(dir_cache_fecha).glob(f"{pieza_id}.*"):
+        ruta.unlink()
 
 
 def de_pieza(pieza_id: str, dir_cache_fecha: Path) -> ImagenLibre | None:
     ruta = dir_imagenes(dir_cache_fecha) / f"{pieza_id}.json"
     if not ruta.exists():
         return None
-    return ImagenLibre(**json.loads(ruta.read_text(encoding="utf-8")))
+    datos = json.loads(ruta.read_text(encoding="utf-8"))
+    datos["enfoque"] = tuple(datos.get("enfoque") or (50, 50))
+    return ImagenLibre(**datos)

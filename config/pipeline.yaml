@@ -3,6 +3,7 @@ modelos:
   seleccion: claude-opus-5-5    # jefe de cultura
   guion: claude-opus-5-5        # guionista
   comprobacion: claude-haiku-5-5  # comprobación de hechos del guion contra las fuentes
+  arte: claude-haiku-5-5          # director de arte: tono, búsqueda y elección de la imagen
 
 dev:                            # folio run --dev: todas las etapas con este modelo y esfuerzo bajo
   modelo: claude-haiku-5-5
@@ -12,6 +13,7 @@ esfuerzo:                       # output_config.effort
   seleccion: high
   guion: high
   comprobacion: medium
+  arte: medium
 
 # USD por millón de tokens (entrada, salida[, lectura de caché]). Solo para estimar el coste en el
 # informe. La escritura en caché cuesta 1,25 × entrada; sin tercer valor, la lectura es el 10 % de la entrada.

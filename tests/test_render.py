@@ -45,12 +45,49 @@ def test_plantillas_solo_usan_variables_de_los_tokens(cfg_diseno):
 def test_html_de_cada_diapositiva(cfg_diseno, pieza):
     p = render.Plantillas(cfg_diseno)
     portada = p.html_diapositiva(pieza, 1, base_url="/diseno/")
-    assert '<base href="/diseno/">' in portada and "diapositiva--portada" in portada and "1 / 5" in portada
+    assert '<base href="/diseno/">' in portada and "diapositiva--portada" in portada
     assert "--colores-papel" in portada and 'class="logotipo"' in portada
+    assert 'class="disco"' in portada                 # sin imagen, el disco de color
+    assert "2 / 5" in p.html_diapositiva(pieza, 2)
     cierre = p.html_diapositiva(pieza, 5)
     # Firma el logotipo: la firma del texto no se repite; la ficha lleva los datos verificados
     assert "Léelo." in cierre and "Léelo. Folio" not in cierre
-    assert "Debolsillo, 2014" in cierre and "ficha__libro" in cierre
+    assert "Debolsillo, 2014" in cierre and "estante__libro" in cierre
+    assert "cubierta--dibujada" in cierre             # sin cubierta en la caché, se dibuja
+
+
+def test_imagen_cifra_y_cubierta_de_la_pieza(cfg_diseno, pieza):
+    from folio import cubiertas, imagenes
+    from folio.modelos import Arte
+    cache = cfg_diseno.dir_cache(pieza.fecha)
+    imagenes.dir_imagenes(cache).mkdir(parents=True)
+    (imagenes.dir_imagenes(cache) / f"{pieza.id}.jpg").write_bytes(b"jpg")
+    img = imagenes.ImagenLibre(archivo="europeana:/1/x", pagina="", url="", ancho=1200, alto=900, licencia="Dominio público",
+                               licencia_url=None, autor="Ana Pérez", descripcion="", libre=True, motivo="",
+                               local=f"{pieza.id}.jpg", fuente="Europeana", institucion="Museo", enfoque=(30, 70))
+    imagenes.guardar_metadatos(img, pieza.id, cache)
+    (cache.parent / "cubiertas").mkdir()
+    (cache.parent / "cubiertas" / "c.jpg").write_bytes(b"jpg")
+    (cache.parent / "cubiertas" / f"{cubiertas._nombre(pieza.libros[0])}.json").write_text('{"archivo": "c.jpg"}')
+    pieza.arte = Arte(tono="sereno", recurso="grabado", cifra="tribunal", cifra_rotulo="juzga")
+    p = render.Plantillas(cfg_diseno, url_medio=lambda r: "/api/medios/" + r.name)
+    portada = p.html_diapositiva(pieza, 1)
+    assert "/api/medios/2026-10-30-1.jpg" in portada and "object-position: 30% 70%" in portada
+    assert "foto--grabado" in portada and "Ilustración: Ana Pérez · Museo · Dominio público" in portada
+    noticia = p.html_diapositiva(pieza, 2)
+    assert 'class="cifra__numero" data-encajar>tribunal<' in noticia and "foto--columna" not in noticia
+    assert "/api/medios/c.jpg" in p.html_diapositiva(pieza, 5)
+
+
+def test_propuestas_de_diseno(cfg_diseno, pieza):
+    """Cada propuesta pinta todas las diapositivas."""
+    assert {"suplemento", "lomo", "provisional"} <= set(render.direcciones(cfg_diseno))
+    for d in render.direcciones(cfg_diseno):
+        p = render.Plantillas(cfg_diseno, d)
+        htmls = [p.html_diapositiva(pieza, n) for n in range(1, len(pieza.guion.diapositivas) + 1)]
+        assert all("--colores-papel" in h for h in htmls)
+        if d == "lomo":
+            assert "--tela:" in htmls[0]
 
 
 def test_render_png_de_1080x1350(cfg_diseno, pieza, tmp_path):
@@ -62,23 +99,6 @@ def test_render_png_de_1080x1350(cfg_diseno, pieza, tmp_path):
         pytest.skip(f"Chromium no disponible: {exc}")
     assert [a.name for a in archivos] == ["01-portada.png", "02-actualidad.png", "03-libro.png", "04-idea.png", "05-cierre.png"]
     assert all(Image.open(a).size == (1080, 1350) for a in archivos) and avisos == []
-
-
-def test_propuestas_de_diseno(cfg_diseno, pieza):
-    """Cada propuesta pinta todas las diapositivas; las que usan imagen y cubierta las ponen si las hay."""
-    assert {"suplemento", "revista", "lomo"} <= set(render.direcciones(cfg_diseno))
-    imagen = {pieza.id: {"src": "file:///tmp/foto.jpg", "credito": "Autor · Museo · Dominio público · Europeana"}}
-    for d in render.direcciones(cfg_diseno):
-        p = render.Plantillas(cfg_diseno, d, imagen)
-        p._cubierta = lambda libro: "file:///tmp/cubierta.jpg"
-        p.cubiertas = True
-        htmls = [p.html_diapositiva(pieza, n) for n in range(1, len(pieza.guion.diapositivas) + 1)]
-        assert all("--colores-papel" in h for h in htmls)
-        if d == "revista":
-            assert "file:///tmp/foto.jpg" in htmls[0] and "Dominio público" in htmls[0]
-            assert "file:///tmp/cubierta.jpg" in htmls[-1]
-        if d == "lomo":
-            assert "--tela:" in htmls[0]
 
 
 def test_libro_de_la_diapositiva(pieza):
