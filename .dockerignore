@@ -1,0 +1,11 @@
+# Contexto de build de api/Dockerfile (raíz del repositorio)
+.git
+.venv
+**/__pycache__
+.pytest_cache
+data
+informes
+tests
+web
+docs
+.env

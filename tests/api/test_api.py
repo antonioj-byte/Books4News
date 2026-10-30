@@ -82,3 +82,30 @@ def test_hechos_ligados_en_el_pie():
     p = _pieza(1, hechos=[HechoComprobado(afirmacion="Según The Guardian", donde="pie", tipo="nombre", verificado=False)])
     [h] = hechos_ligados(p)
     assert h.diapositiva is None and "The Guardian" in h.frase
+
+
+def test_lanzar_ejecucion_una_a_la_vez(cfg, tmp_path):
+    import sys
+    import time
+
+    from folio_api.ejecutor import Ejecutor
+    (cfg.raiz / "diseno").symlink_to((type(cfg)(pipeline={}, fuentes=[]).raiz / "diseno").resolve())
+    ejecutor = Ejecutor(tmp_path, comando=[sys.executable, "-c", "import time; print('pipeline en marcha', flush=True); time.sleep(1.5)"])
+    c = TestClient(crear_app(cfg, Almacen(cfg.ruta_db), ejecutor=ejecutor))
+    assert c.get("/api/ejecuciones/en-marcha").json()["en_marcha"] is False
+    r = c.post("/api/ejecuciones/lanzar")
+    assert r.status_code == 202 and r.json()["en_marcha"] is True
+    assert c.post("/api/ejecuciones/lanzar").status_code == 409
+    for _ in range(50):
+        estado = c.get("/api/ejecuciones/en-marcha").json()
+        if not estado["en_marcha"]:
+            break
+        time.sleep(0.1)
+    assert estado["codigo"] == 0 and estado["ultimas_lineas"] == ["pipeline en marcha"]
+
+
+def test_datos_en_el_volumen(cfg, monkeypatch, tmp_path):
+    monkeypatch.setenv("FOLIO_DATOS", str(tmp_path / "volumen"))
+    assert cfg.dir_datos == tmp_path / "volumen" / "data" and cfg.ruta_db == tmp_path / "volumen" / "data" / "folio.db"
+    assert cfg.dir_informes == tmp_path / "volumen" / "informes"
+    assert (cfg.dir_prompts).exists()  # prompts, config y diseño siguen en el código

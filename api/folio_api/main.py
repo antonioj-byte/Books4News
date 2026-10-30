@@ -14,6 +14,7 @@ from folio.config import Config
 from folio.modelos import InformeDiario, Pieza
 from folio.render import Plantillas, cargar_tokens, css_tokens, dir_diseno
 from folio.verificacion_texto import normalizar
+from folio_api.ejecutor import EstadoEjecucion, Ejecutor
 from folio_api.esquemas import (
     CambioEstado, Dia, DiaDetalle, Ejecucion, HechoLigado, Marcas, PiezaDetalle, PiezaResumen, ResumenDia,
 )
@@ -50,9 +51,11 @@ def hechos_ligados(p: Pieza) -> list[HechoLigado]:
     return out
 
 
-def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importar: bool = True) -> FastAPI:
+def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importar: bool = True,
+              ejecutor: Ejecutor | None = None) -> FastAPI:
     cfg = cfg or config_folio.cargar()
     almacen = almacen or Almacen(cfg.ruta_db)
+    ejecutor = ejecutor or Ejecutor(cfg.dir_datos)
     if importar:
         almacen.importar_informes(cfg.dir_informes)
     plantillas = Plantillas(cfg)
@@ -145,6 +148,18 @@ def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importa
     @app.get("/api/evaluaciones/resumen", response_model=list[ResumenDia])
     def resumen():
         return almacen.resumen_evaluaciones()
+
+    @app.post("/api/ejecuciones/lanzar", response_model=EstadoEjecucion, status_code=202)
+    def lanzar():
+        """Lanza `folio run` (pipeline completo del día, ~1 $). Al terminar, la ejecución aparece en
+        la portada del día: el pipeline la guarda en la base de datos."""
+        if not ejecutor.lanzar():
+            raise HTTPException(409, "Ya hay una ejecución en marcha")
+        return ejecutor.estado()
+
+    @app.get("/api/ejecuciones/en-marcha", response_model=EstadoEjecucion)
+    def en_marcha():
+        return ejecutor.estado()
 
     return app
 

@@ -108,13 +108,14 @@ def ab_resultados():
 
 @app.command()
 def web(
-    puerto: int = typer.Option(8000, help="Puerto de la API"),
+    puerto: int = typer.Option(8000, envvar="PORT", help="Puerto de la API (o la variable PORT)"),
+    host: str = typer.Option("127.0.0.1", help="Dirección; en Railway, «::» para la red privada (IPv6)"),
     recargar: bool = typer.Option(False, "--recargar", help="Recarga al cambiar el código (desarrollo)"),
 ):
-    """API local de la web (Fase 3) en http://localhost:<puerto>. La web: cd web && npm run dev."""
+    """API de la web (Fase 3) en http://<host>:<puerto>. La web: cd web && npm run dev."""
     import uvicorn
 
-    uvicorn.run("folio_api.main:app_desde_entorno", factory=True, host="127.0.0.1", port=puerto, reload=recargar)
+    uvicorn.run("folio_api.main:app_desde_entorno", factory=True, host=host, port=puerto, reload=recargar)
 
 
 @app.command()

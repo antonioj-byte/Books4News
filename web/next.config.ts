@@ -5,6 +5,8 @@ import type { NextConfig } from "next";
 const API = process.env.FOLIO_API ?? "http://127.0.0.1:8000";
 
 const nextConfig: NextConfig = {
+  // Servidor autónomo para la imagen Docker (Railway)
+  output: "standalone",
   // Solo local: se abre como http://localhost:3000 o http://127.0.0.1:3000.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   cacheComponents: true,

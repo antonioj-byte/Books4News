@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Diapositiva } from "@/components/Diapositiva";
+import { LanzarEjecucion } from "@/components/LanzarEjecucion";
 import { EstadoChip, Marcas } from "@/components/Marcas";
 import { api, type Dia, type DiaDetalle } from "@/lib/api";
 
@@ -20,6 +21,9 @@ export function VistaDia() {
   const [error, setError] = useState("");
 
   useEffect(() => { api.dias().then(setDias).catch(() => setError("No responde la API (uv run folio web).")); }, []);
+  const alTerminar = useCallback(() => {
+    api.dias().then((ds) => { setDias(ds); if (ds.length) router.push(`/dia/${ds[0].fecha}`); router.refresh(); });
+  }, [router]);
   useEffect(() => {
     api.dia(fecha, ejecucion).then(setDia).catch((e) => setError(String(e)));
   }, [fecha, ejecucion]);
@@ -33,6 +37,7 @@ export function VistaDia() {
             {new Date(`${fecha}T12:00:00`).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </h1>
         </div>
+        <LanzarEjecucion alTerminar={alTerminar} />
         <div className="flex items-center gap-3 text-sm">
           <label className="flex items-center gap-2">Día
             <select value={fecha} onChange={(e) => router.push(`/dia/${e.target.value}`)}

@@ -144,6 +144,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ejecuciones/lanzar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lanzar
+         * @description Lanza `folio run` (pipeline completo del día, ~1 $). Al terminar, la ejecución aparece en
+         *     la portada del día: el pipeline la guarda en la base de datos.
+         */
+        post: operations["lanzar_api_ejecuciones_lanzar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ejecuciones/en-marcha": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** En Marcha */
+        get: operations["en_marcha_api_ejecuciones_en_marcha_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -233,6 +271,22 @@ export interface components {
             coste_usd: number;
             /** Piezas */
             piezas: number;
+        };
+        /** EstadoEjecucion */
+        EstadoEjecucion: {
+            /** En Marcha */
+            en_marcha: boolean;
+            /** Inicio */
+            inicio: string | null;
+            /** Fin */
+            fin: string | null;
+            /** Codigo */
+            codigo: number | null;
+            /**
+             * Ultimas Lineas
+             * @default []
+             */
+            ultimas_lineas: string[];
         };
         /** Evaluacion */
         "Evaluacion-Input": {
@@ -905,6 +959,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResumenDia"][];
+                };
+            };
+        };
+    };
+    lanzar_api_ejecuciones_lanzar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+        };
+    };
+    en_marcha_api_ejecuciones_en_marcha_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
                 };
             };
         };

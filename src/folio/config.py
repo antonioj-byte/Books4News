@@ -35,12 +35,18 @@ class Config:
         return self.raiz / "prompts"
 
     @property
+    def dir_persistente(self) -> Path:
+        """Dónde viven los datos que cambian (base de datos, cachés, informes). En local, la raíz
+        del repositorio; en un despliegue, el volumen que indique FOLIO_DATOS (p. ej. /datos)."""
+        return Path(os.environ["FOLIO_DATOS"]) if os.getenv("FOLIO_DATOS") else self.raiz
+
+    @property
     def dir_datos(self) -> Path:
-        return self.raiz / "data"
+        return self.dir_persistente / "data"
 
     @property
     def dir_informes(self) -> Path:
-        return self.raiz / "informes"
+        return self.dir_persistente / "informes"
 
     @property
     def ruta_db(self) -> Path:

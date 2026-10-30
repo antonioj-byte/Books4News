@@ -9,6 +9,7 @@ export type Pieza = components["schemas"]["Pieza"];
 export type Evaluacion = components["schemas"]["Evaluacion-Output"];
 export type ResumenDia = components["schemas"]["ResumenDia"];
 export type Estado = components["schemas"]["CambioEstado"]["estado"];
+export type EstadoEjecucion = components["schemas"]["EstadoEjecucion"];
 
 async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
   const r = await fetch(ruta, { cache: "no-store", ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
@@ -31,6 +32,8 @@ export const api = {
   guardarEvaluacion: (eid: number, pid: string, ev: Evaluacion) =>
     pedir<Evaluacion>(`${pieza(eid, pid)}/evaluacion`, { method: "PUT", body: JSON.stringify(ev) }),
   resumen: () => pedir<ResumenDia[]>("/api/evaluaciones/resumen"),
+  lanzarEjecucion: () => pedir<EstadoEjecucion>("/api/ejecuciones/lanzar", { method: "POST" }),
+  ejecucionEnMarcha: () => pedir<EstadoEjecucion>("/api/ejecuciones/en-marcha"),
   urlDiapositiva: (eid: number, pid: string, n: number, version: number) =>
     `${pieza(eid, pid)}/diapositivas/${n}.html?version=${version}`,
 };
