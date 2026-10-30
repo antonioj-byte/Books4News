@@ -19,12 +19,20 @@ Variables:
 | api | `OPENLIBRARY_CONTACT` | email de contacto |
 | api | `FOLIO_DATOS` | `/datos` |
 | api | `PORT` | `8000` |
+| api | `MAGNIFIC_API_KEY` | la clave de Magnific (secreta). Opcional: ilustraciones y retratos ilustrados (en preparación) |
+| api | `EUROPEANA_API_KEY` | la clave de Europeana (secreta). Opcional: sin ella se usa la clave pública de demostración |
 | web | `FOLIO_API` | `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:8000` |
 | web | `FOLIO_CLAVE_WEB` | la contraseña de la web (secreta) |
 | web | `PORT` | `3000` |
 
 `FOLIO_API` se usa al construir la web (los rewrites quedan fijados en el build): si cambia, hay que
 volver a desplegar «web». `FOLIO_CLAVE_WEB` se lee al arrancar.
+
+Actualizar: los dos servicios despliegan la rama `fase-3-web` con el autodespliegue apagado, así que
+cada versión nueva se despliega a mano (en cada servicio, «Deploy» del último commit, o «Redeploy»).
+Las variables nuevas se añaden en el servicio y Railway pide desplegar para aplicarlas. Desde el 31/10,
+cada ejecución lee también unos 1.100 artículos del carril editorial: un par de minutos más de
+embeddings, con la misma memoria.
 
 Primer uso: entrar en la URL pública con la contraseña (cualquier usuario) y pulsar «Lanzar ejecución
 del día». La primera vez descarga el modelo de embeddings (2,2 GB) al volumen: tarda más.
