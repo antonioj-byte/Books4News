@@ -10,7 +10,7 @@ from folio.ingesta import agrupacion
 from folio.historial import Historial
 from folio.libros.verificacion import Verificador
 from folio.llm import LLM
-from folio.modelos import Articulo, ResumenHistoria, SeleccionJefe
+from folio.modelos import Articulo, ComprobacionHechos, HechoComprobado, ResumenHistoria, SeleccionJefe
 from folio.pipeline import Pipeline
 
 from conftest import transporte_openlibrary
@@ -32,6 +32,14 @@ class LLMFalso(LLM):
             reserva = ELECCION.model_copy(update={"historia_id": self.ids[1], "titular": "Reserva"})
             return SeleccionJefe(elegidas=[elegida, elegida.model_copy(update={"historia_id": "inexistente"})],
                                  reserva=[reserva]), []
+        if esquema is ComprobacionHechos:
+            return ComprobacionHechos(hechos=[
+                # Sostenido por la fuente («Texto» es el texto que reciben los tests)
+                HechoComprobado(afirmacion="Un tribunal juzga", donde="diapositiva 2", tipo="hecho",
+                                verificado=True, medio="The Guardian", evidencia="Texto de la noticia aquí"),
+                HechoComprobado(afirmacion="El funcionario firmaba órdenes", donde="diapositiva 2", tipo="hecho",
+                                verificado=False, nota="Ninguna fuente lo dice"),
+            ]), []
         return self.guiones.pop(0), []
 
 
@@ -57,7 +65,7 @@ def _pipeline(cfg, monkeypatch, guiones, fecha="2026-10-30"):
     arts = _articulos()
     monkeypatch.setattr(p, "ingesta", lambda usar_cache: arts)
     monkeypatch.setattr(p, "vectores", lambda a: _vectores(a))
-    monkeypatch.setattr(textos, "textos_historia", lambda cfg, h: [(FUENTES[0], "Texto")])
+    monkeypatch.setattr(textos, "textos_historia", lambda cfg, h: [(FUENTES[0], "Texto de la noticia aquí.")])
     from folio.ingesta import agrupacion
     llm.ids = [h.id for h in agrupacion.agrupar(arts, _vectores(arts), 0.84)]
     return p, llm
@@ -77,14 +85,17 @@ def test_pipeline_completo(cfg, monkeypatch):
     assert pieza.libros_descartados[0].titulo == "El jardín de las máquinas tristes"
     # Primer guion con cita → reintento con los errores; el segundo pasa
     assert "Guion aceptado en el intento 2" in pieza.avisos
-    reintento = llm.llamadas[-1][1][-1]["content"]
+    reintento = next(m for paso, m in reversed(llm.llamadas) if paso.startswith("guion:"))[-1]["content"]
     assert "comillas" in reintento
     # Datos de edición sustituidos por los verificados, pero sin silencio: «revisar edición»
     assert pieza.guion.libros[0].editorial_espanola == "Debolsillo"
     assert pieza.revisar_edicion
     assert any(d.modelo == "Inventada" and d.api == "Debolsillo" for d in pieza.discrepancias_edicion)
     assert any("id inexistente" in a for a in inf.avisos)
+    # Comprobación de hechos: el verificado se mantiene y el que no, va al informe
+    assert [h.verificado for h in pieza.hechos] == [True, False]
     md = ruta_md.read_text()
+    assert "Hechos no verificados" in md and "El funcionario firmaba órdenes" in md
     assert md.startswith("# Folio Lateral")
     assert "revisar edición" in md and "| Inventada | Debolsillo |" in md
     assert ruta_json.exists()

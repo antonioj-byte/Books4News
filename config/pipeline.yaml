@@ -2,11 +2,13 @@ modelos:
   ingesta: claude-haiku-5-5     # resumen y clasificación de historias
   seleccion: claude-opus-5-5    # jefe de cultura
   guion: claude-opus-5-5        # guionista
+  comprobacion: claude-haiku-5-5  # comprobación de hechos del guion contra las fuentes
 
 esfuerzo:                       # output_config.effort
   ingesta: low
   seleccion: high
   guion: high
+  comprobacion: medium
 
 # USD por millón de tokens (entrada, salida). Solo para estimar el coste en el informe.
 precios:
@@ -47,7 +49,7 @@ guion:
   diapositivas_por_defecto: 5     # más exigen una línea de justificación por diapositiva extra
   palabras_max_diapositiva: 40    # tope duro; el prompt pide 25–30
   palabras_max_portada: 12
-  max_diapositivas_actualidad: 1   # la noticia es la excusa; el libro manda
-  posicion_max_primer_libro: 3     # la primera diapositiva de tipo «libro» entra como muy tarde aquí
+  max_diapositivas_actualidad: 1   # la portada ya abre con la noticia
+  posicion_max_primer_libro: 3     # el libro entra en la diapositiva 2 o 3
   pie_min_palabras: 80
   pie_max_palabras: 150

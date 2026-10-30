@@ -31,6 +31,25 @@ IDIOMAS = {
 }
 
 
+_PARTICULAS = {"de", "del", "la", "las", "los", "y", "e", "da", "das", "do", "dos", "di", "du", "le", "van", "von", "der"}
+
+
+def sin_mayusculas(texto: str | None) -> str | None:
+    """«JAMES REASON» → «James Reason»; «EDITORIAL SM» → «Editorial SM». Solo si todo viene en
+    mayúsculas: las siglas cortas (SM, RBA) se respetan y las partículas van en minúscula."""
+    if not texto or not texto.isupper():
+        return texto
+    palabras = []
+    for i, p in enumerate(texto.split()):
+        if i and p.lower() in _PARTICULAS:
+            palabras.append(p.lower())
+        elif len(p) <= 3 and p.isalpha():
+            palabras.append(p)
+        else:
+            palabras.append(p.capitalize())
+    return " ".join(palabras)
+
+
 def pais_isbn(isbn: str | None) -> str | None:
     if not isbn:
         return None
@@ -123,12 +142,22 @@ class OpenLibrary:
         for d in r.json().get("docs", []):
             olid = d["key"].split("/")[-1]
             obras.append(Obra(
-                fuente="openlibrary", id=olid, titulo=d.get("title", ""),
-                autores=d.get("author_name") or [], anio_primera_edicion=d.get("first_publish_year"),
+                fuente="openlibrary", id=olid, titulo=sin_mayusculas(d.get("title", "")),
+                autores=[sin_mayusculas(a) for a in d.get("author_name") or []], anio_primera_edicion=d.get("first_publish_year"),
                 idiomas=d.get("language") or [], url=f"{self.BASE}{d['key']}",
                 autores_claves=d.get("author_key") or [],
             ))
         return obras
+
+    def editorial_por_isbn(self, isbn: str) -> str | None:
+        """Editorial de la edición con ese ISBN, si Open Library la tiene."""
+        try:
+            r = self._get(f"{self.BASE}/isbn/{isbn}.json", {})
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 404:
+                return None
+            raise
+        return sin_mayusculas((r.json().get("publishers") or [None])[0])
 
     def ediciones(self, olid: str) -> list[Edicion]:
         r = self._get(f"{self.BASE}/works/{olid}/editions.json", {"limit": 1000})
@@ -138,8 +167,8 @@ class OpenLibrary:
             if e.get("subtitle"):
                 titulo = f"{titulo.rstrip(' :')}: {e['subtitle'].lstrip(' :')}"
             eds.append(Edicion(
-                titulo=titulo,
-                editorial=(e.get("publishers") or [None])[0],
+                titulo=sin_mayusculas(titulo),
+                editorial=sin_mayusculas((e.get("publishers") or [None])[0]),
                 anio=anio(e.get("publish_date")),
                 isbn13=e.get("isbn_13") or [],
                 idiomas=[l["key"].split("/")[-1] for l in e.get("languages", [])],
@@ -206,12 +235,13 @@ class GoogleBooks:
             titulo_v = v.get("title", "")
             isbns = [i["identifier"] for i in v.get("industryIdentifiers", []) if i.get("type") == "ISBN_13"]
             ed = Edicion(
-                titulo=f"{titulo_v}: {v['subtitle']}" if v.get("subtitle") else titulo_v,
-                editorial=v.get("publisher"), anio=anio(v.get("publishedDate")),
+                titulo=sin_mayusculas(f"{titulo_v}: {v['subtitle']}" if v.get("subtitle") else titulo_v),
+                editorial=sin_mayusculas(v.get("publisher")), anio=anio(v.get("publishedDate")),
                 isbn13=isbns, idiomas=[v["language"]] if v.get("language") else [],
             )
             obras.append(Obra(
-                fuente="googlebooks", id=it["id"], titulo=titulo_v, autores=v.get("authors") or [],
+                fuente="googlebooks", id=it["id"], titulo=sin_mayusculas(titulo_v),
+                autores=[sin_mayusculas(a) for a in v.get("authors") or []],
                 anio_primera_edicion=None, idiomas=ed.idiomas, ediciones=[ed],
                 url=v.get("infoLink"),
             ))

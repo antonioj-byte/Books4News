@@ -139,23 +139,25 @@ def test_titulo_para_pieza_quita_el_autor_como_subtitulo():
     assert guion.titulo_para_pieza(con_subtitulo) == "Eichmann en Jerusalén: un estudio sobre la banalidad del mal"
 
 
-def test_portada_y_pie_nombran_el_libro(cfg):
+def test_portada_abre_con_la_noticia_y_el_pie_nombra_el_libro(cfg):
     g = guion_valido()
-    g.diapositivas[0].texto = "La obediencia también se elige"
+    g.diapositivas[0].texto = "Arendt: la obediencia también se elige"
     g.pie_instagram = pie().replace("Arendt lo explicó.", "Un tribunal juzga.")
     es = errores(cfg, g)
-    assert any("portada debe nombrar el libro" in e for e in es)
-    assert any("pie debe empezar por el libro" in e for e in es)
-    # Vale el título en vez del autor
+    assert any("portada abre con la noticia" in e for e in es)
+    assert any("pie debe nombrar el libro" in e for e in es)
     g.diapositivas[0].texto = "*Eichmann en Jerusalén* y la obediencia"
-    g.pie_instagram = pie().replace("Arendt lo explicó.", "Eichmann en Jerusalén lo explica.")
+    assert any("portada abre con la noticia" in e for e in errores(cfg, g))
+    # El pie puede empezar por la noticia si el libro aparece después
+    g.diapositivas[0].texto = "La obediencia también se elige"
+    g.pie_instagram = pie().replace("Arendt lo explicó.", "Un tribunal juzga.") + " Lo leemos con Arendt."
     assert errores(cfg, g) == []
 
 
 def test_una_sola_actualidad_y_libro_pronto(cfg):
     g = guion_valido()
     g.diapositivas = [
-        Diapositiva(n=1, tipo="portada", texto="Arendt y un juicio"),
+        Diapositiva(n=1, tipo="portada", texto="Un juicio a la obediencia"),
         Diapositiva(n=2, tipo="actualidad", texto="Un tribunal juzga a un funcionario."),
         Diapositiva(n=3, tipo="actualidad", texto="El funcionario dice que obedecía."),
         Diapositiva(n=4, tipo="libro", texto="Arendt vio en Eichmann en Jerusalén a un hombre corriente."),
@@ -172,3 +174,11 @@ def test_cierre_nombra_el_libro(cfg):
     g = guion_valido()
     g.diapositivas[-1].texto = "Léelo ahora: un ensayo breve sobre la obediencia. Folio."
     assert any("cierre es la recomendación" in e for e in errores(cfg, g))
+
+
+def test_afirmaciones_de_traduccion_van_a_revision_humana():
+    g = guion_valido()
+    g.diapositivas[-1].texto = "Eichmann en Jerusalén, de Hannah Arendt, todavía sin traducir. Folio."
+    afirmaciones = guion.afirmaciones_traduccion(g)
+    assert len(afirmaciones) == 1 and afirmaciones[0].startswith("diapositiva 5")
+    assert guion.afirmaciones_traduccion(guion_valido()) == []

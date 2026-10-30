@@ -20,9 +20,17 @@ _FRASES_VETADAS = ("en un mundo donde", "en un mundo en el que")
 # Afirmaciones sobre traducción: solo valen si algún libro tiene «no hay edición española» verificado.
 _SOBRE_TRADUCCION = re.compile(
     r"sin traduc|no traducid|no (?:est[aá]n?|ha sido|han sido) traducid|no constan? traducid|"
-    r"sin edici[oó]n (?:en )?espa|a[uú]n no hay edici|l[eé]el[oa]s? en (?:ingl[eé]s|el original)",
+    r"sin edici[oó]n (?:en )?espa|a[uú]n no hay edici|in[eé]dit[oa]s? en (?:espa|castellano)|"
+    r"l[eé]el[oa]s? en (?:ingl[eé]s|el original)",
     re.IGNORECASE,
 )
+
+
+def afirmaciones_traduccion(g: GuionLLM) -> list[str]:
+    """Frases del guion que afirman que un libro no está traducido. Siempre van a revisión humana:
+    se apoyan en que dos catálogos no tengan la edición, y los catálogos tienen huecos."""
+    textos = [(f"diapositiva {x.n}", x.texto) for x in g.diapositivas] + [("pie", g.pie_instagram)]
+    return [f"{donde}: «{m.group(0)}…»" for donde, t in textos for m in _SOBRE_TRADUCCION.finditer(t)]
 _ANIO = re.compile(r"\b(1[5-9]\d\d|20\d\d)\b")
 # Palabras que no distinguen una editorial de otra.
 _GENERICAS_EDITORIAL = {
@@ -146,9 +154,9 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
         limite = p["palabras_max_portada"] if x.tipo == "portada" else p["palabras_max_diapositiva"]
         if _palabras(x.texto) > limite:
             errores.append(f"La diapositiva {x.n} ({x.tipo}) tiene {_palabras(x.texto)} palabras; máximo {limite}.")
-    # Sección de libros: el libro se ve desde la portada y la noticia no se come la pieza.
-    if d and d[0].tipo == "portada" and not _menciona_libro(d[0].texto, libros):
-        errores.append("La portada debe nombrar el libro o a su autor: se publica en una sección de libros.")
+    # La noticia abre la pieza, el libro entra pronto y protagoniza el cierre.
+    if d and d[0].tipo == "portada" and _menciona_libro(d[0].texto, libros):
+        errores.append("La portada abre con la noticia o con su tensión, no con el libro: quita el título y el autor.")
     if d and d[-1].tipo == "cierre" and not _menciona_libro(d[-1].texto, libros):
         errores.append("El cierre es la recomendación: nombra el libro (título en cursiva) y a su autor.")
     n_actualidad = sum(x.tipo == "actualidad" for x in d)
@@ -159,9 +167,8 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
     if primer_libro and primer_libro > p["posicion_max_primer_libro"]:
         errores.append(f"El libro entra en la diapositiva {primer_libro}; debe hacerlo como muy tarde en la "
                        f"{p['posicion_max_primer_libro']}.")
-    primera_frase = re.split(r"(?<=[.!?])\s+", g.pie_instagram.strip(), maxsplit=1)[0]
-    if not _menciona_libro(primera_frase, libros):
-        errores.append("El pie debe empezar por el libro: nómbralo, o a su autor, en la primera frase.")
+    if not _menciona_libro(g.pie_instagram, libros):
+        errores.append("El pie debe nombrar el libro que recomienda la pieza.")
     if d and d[0].texto.strip().endswith("?"):
         errores.append("La portada no puede ser una pregunta retórica.")
     if d and "folio" not in normalizar(d[-1].texto).split():

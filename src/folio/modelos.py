@@ -147,6 +147,22 @@ class GuionLLM(BaseModel):
     fuentes_noticia: list[str] = Field(description="medio + URL")
 
 
+# --- Comprobación de hechos (prompts/comprobador_hechos.md) --------------------
+
+class HechoComprobado(BaseModel):
+    afirmacion: str = Field(description="La afirmación tal como aparece en el guion")
+    donde: str = Field(description="«diapositiva N» o «pie»")
+    tipo: Literal["cifra", "fecha", "nombre", "hecho"]
+    verificado: bool
+    medio: str | None = Field(default=None, description="Medio cuyo texto la sostiene; null si no está verificada")
+    evidencia: str | None = Field(default=None, description="Fragmento literal del texto fuente; null si no está verificada")
+    nota: str | None = Field(default=None, description="Si no está verificada, qué falta o qué dice la fuente")
+
+
+class ComprobacionHechos(BaseModel):
+    hechos: list[HechoComprobado]
+
+
 # --- Pieza e informe ---------------------------------------------------------
 
 class FuenteNoticia(BaseModel):
@@ -191,6 +207,10 @@ class Pieza(BaseModel):
     # usa los verificados, pero el texto de las diapositivas puede arrastrar los del modelo.
     revisar_edicion: bool = False
     discrepancias_edicion: list[DiscrepanciaEdicion] = Field(default_factory=list)
+    # Afirmaciones que siempre necesitan ojos humanos antes de publicar («todavía sin traducir»).
+    revision_humana: list[str] = Field(default_factory=list)
+    # Datos de la noticia en el guion cotejados con los textos fuente (etapa de comprobación).
+    hechos: list[HechoComprobado] = Field(default_factory=list)
     error: str | None = None
 
 

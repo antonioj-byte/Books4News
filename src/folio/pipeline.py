@@ -15,7 +15,7 @@ import numpy as np
 from pydantic import TypeAdapter
 
 from folio import guion as guionista
-from folio import informe, seleccion, textos
+from folio import hechos, informe, seleccion, textos
 from folio.config import Config
 from folio.historial import Historial
 from folio.ingesta import agrupacion, resumen, rss
@@ -182,6 +182,12 @@ class Pipeline:
             pieza.avisos += avisos
             pieza.discrepancias_edicion = guionista.ajustar_libros(pieza.guion, libros)
             pieza.revisar_edicion = bool(pieza.discrepancias_edicion)
+            pieza.revision_humana = [f"Afirma que no hay traducción ({a}): compruébalo antes de publicar"
+                                     for a in guionista.afirmaciones_traduccion(pieza.guion)]
+            try:
+                pieza.hechos = hechos.comprobar(self.llm, pieza.id, pieza.guion, textos_h)
+            except Exception as exc:
+                pieza.avisos.append(f"No se pudo comprobar los hechos: {exc}")
             pieza.estado = "propuesta"
             usados = [l for l in libros if any(
                 guionista._es_titulo_de_libro(lg.titulo, [l]) for lg in pieza.guion.libros)]

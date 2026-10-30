@@ -270,3 +270,33 @@ def test_obra_original_sin_ediciones_en_su_lengua_no_inventa_la_primera_edicion(
                                    titulo_original="Zniewolony umysł", idioma_original="polaco"))
     assert (l.anio_primera_edicion, l.idioma_original, l.editorial_original) == (None, None, None)
     assert any("no consta" in n for n in l.notas)
+
+
+def test_nombres_en_mayusculas():
+    from folio.libros.fuentes import sin_mayusculas
+    assert sin_mayusculas("JAMES REASON") == "James Reason"
+    assert sin_mayusculas("MODUS LABORANDI") == "Modus Laborandi"
+    assert sin_mayusculas("EDITORIAL SM") == "Editorial SM"
+    assert sin_mayusculas("GABRIEL GARCÍA DE LA TORRE") == "Gabriel García de la Torre"
+    assert sin_mayusculas("Anagrama") == "Anagrama" and sin_mayusculas(None) is None
+
+
+def test_editorial_espanola_completada_por_isbn(cfg):
+    """Google Books da la edición española sin editorial; Open Library la tiene por ISBN."""
+    cfg.google_books_api_key = "x"
+    es = {"id": "g1", "volumeInfo": {"title": "Libertad de palabra", "authors": ["Timothy Garton Ash"],
+                                     "language": "es", "publishedDate": "2017",
+                                     "industryIdentifiers": [{"type": "ISBN_13", "identifier": "9788490663981"}]}}
+
+    def manejar(req):
+        if req.url.host == "www.googleapis.com":
+            return httpx.Response(200, json={"items": [es]})
+        if req.url.path == "/isbn/9788490663981.json":
+            return httpx.Response(200, json={"publishers": ["TUSQUETS EDITORES"]})
+        if req.url.path == "/search.json":
+            return httpx.Response(200, json={"docs": []})
+        return httpx.Response(404)
+
+    v = Verificador(cfg, httpx.Client(transport=httpx.MockTransport(manejar)))
+    l = v.verificar(LibroCandidato(titulo="Libertad de palabra", autor="Timothy Garton Ash"))
+    assert l.edicion_es == "si" and l.edicion_es_detalle.editorial == "Tusquets Editores"

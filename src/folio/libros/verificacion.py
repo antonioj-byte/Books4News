@@ -40,11 +40,11 @@ def _es_espanola(ed: Edicion, titulo_propuesto: str) -> tuple[bool, str]:
 
 
 def _mejor_edicion_es(eds: list[tuple[Edicion, str]]) -> tuple[Edicion, str]:
-    """Prefiere idioma confirmado, luego España, con ISBN y más reciente."""
+    """Prefiere idioma confirmado, luego con editorial, de España, con ISBN y más reciente."""
     def orden(par):
         ed, como = par
         isbn = ed.isbn13[0] if ed.isbn13 else None
-        return ("idioma" in como, pais_isbn(isbn) == "España", bool(isbn), ed.anio or "")
+        return ("idioma" in como, bool(ed.editorial), pais_isbn(isbn) == "España", bool(isbn), ed.anio or "")
     return max(eds, key=orden)
 
 
@@ -232,6 +232,14 @@ class Verificador:
             detalle, _ = _ficha_es(ed_es, como)
             edicion_es = "si"
             notas.append(f"Edición española según {como}")
+            if not detalle.editorial and detalle.isbn:
+                # Google Books no siempre trae la editorial; Open Library la tiene por ISBN.
+                try:
+                    detalle.editorial = self.ol.editorial_por_isbn(detalle.isbn)
+                except httpx.HTTPError as exc:
+                    notas.append(f"No se pudo completar la editorial por ISBN: {exc}")
+                if detalle.editorial:
+                    notas.append(f"Editorial de la edición española completada por ISBN en Open Library")
         elif ol and gb_todos and not errores and "spa" not in ol[0].idiomas:
             # Ambas fuentes consultadas sin errores, las dos encuentran la obra y ninguna tiene
             # edición española. Si Google Books no encuentra ni la obra, su silencio no prueba

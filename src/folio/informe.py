@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 from folio.modelos import HistoriaElegida, InformeDiario, LibroGuion, LibroVerificado, Pieza
@@ -49,7 +50,7 @@ def _edicion_es_guion(lg: LibroGuion, libros: list[LibroVerificado]) -> str:
 def _pieza_md(p: Pieza) -> list[str]:
     e = p.eleccion
     l = [f"### {p.id} · {e.titular}", "",
-         f"**Estado:** {_ESTADO[p.estado]}" + (" · ⚠️ revisar edición" if p.revisar_edicion else "")
+         f"**Estado:** {_ESTADO[p.estado]}" + "".join(f" · ⚠️ {m}" for m in _marcas(p))
          + (" · historia de reserva" if p.reserva else "") + f" · {p.n_medios} medios", ""]
     if p.error:
         l += [f"> ⚠️ {p.error}", ""]
@@ -80,13 +81,65 @@ def _pieza_md(p: Pieza) -> list[str]:
               "verificados; comprueba que el texto de las diapositivas no arrastre los del modelo.", "",
               "| Libro | Campo | Guionista | Fuente bibliográfica |", "|---|---|---|---|"]
         l += [f"| {d.libro} | {d.campo} | {d.modelo} | {d.api} |" for d in p.discrepancias_edicion] + [""]
+    if p.revision_humana:
+        l += ["**Para revisión humana**", ""] + [f"- {r}" for r in p.revision_humana] + [""]
+    no_verificados = [h for h in p.hechos if not h.verificado]
+    if no_verificados:
+        l += ["**Hechos no verificados**: datos de la noticia que no aparecen en los textos fuente. "
+              "Corrígelos o quítalos antes de publicar.", "",
+              "| Dónde | Tipo | Afirmación | Nota |", "|---|---|---|---|"]
+        l += [f"| {h.donde} | {h.tipo} | {_celda(h.afirmacion)} | {_celda(h.nota or '')} |" for h in no_verificados] + [""]
+    if p.hechos:
+        l += [f"_Hechos comprobados contra las fuentes: {len(p.hechos) - len(no_verificados)} de {len(p.hechos)}._", ""]
     if p.fuentes:
         l += ["**Fuentes**", ""]
         l += [f"- {f.medio} ({f.acceso}{', texto completo' if f.texto_completo else ', solo titular y entradilla'}): "
               f"[{f.titulo}]({f.url})" for f in p.fuentes] + [""]
     if p.avisos:
         l += ["**Avisos**", ""] + [f"- {a}" for a in p.avisos] + [""]
+    if p.guion:
+        l += _plantilla_evaluacion(p.id)
     return l
+
+
+def _celda(texto: str) -> str:
+    return texto.replace("|", "/").replace("\n", " ")
+
+
+def _marcas(p: Pieza) -> list[str]:
+    marcas = []
+    if p.revisar_edicion:
+        marcas.append("revisar edición")
+    no_verificados = sum(not h.verificado for h in p.hechos)
+    if no_verificados:
+        marcas.append(f"{no_verificados} hecho{'s' if no_verificados > 1 else ''} no verificado{'s' if no_verificados > 1 else ''}")
+    if p.revision_humana:
+        marcas.append("revisión humana")
+    return marcas
+
+
+# Plantilla de evaluación humana. Los marcadores permiten leer las notas más adelante.
+_CAMPOS_EVALUACION = ("Selección (1–5)", "Libro (1–5)", "Idea nueva (1–5)", "Voz (1–5)",
+                      "¿La publicarías? (sí/no)", "Comentario")
+
+
+def _plantilla_evaluacion(pieza_id: str) -> list[str]:
+    return ([f"<!-- evaluacion:{pieza_id} -->", "**Evaluación** (rellenar a mano)", ""]
+            + [f"- {c}: " for c in _CAMPOS_EVALUACION]
+            + [f"<!-- /evaluacion:{pieza_id} -->", ""])
+
+
+def evaluacion_rellenada(md: str) -> bool:
+    """¿Hay alguna evaluación con algún campo rellenado en este informe?"""
+    dentro = False
+    for linea in md.splitlines():
+        if linea.startswith("<!-- evaluacion:"):
+            dentro = True
+        elif linea.startswith("<!-- /evaluacion:"):
+            dentro = False
+        elif dentro and linea.startswith("- ") and ":" in linea and linea.split(":", 1)[1].strip():
+            return True
+    return False
 
 
 def _eleccion_md(e: HistoriaElegida) -> str:
@@ -133,6 +186,11 @@ def escribir(inf: InformeDiario, directorio: Path) -> tuple[Path, Path]:
     directorio.mkdir(parents=True, exist_ok=True)
     ruta_json = directorio / "informe.json"
     ruta_md = directorio / "informe.md"
+    if ruta_md.exists() and evaluacion_rellenada(ruta_md.read_text(encoding="utf-8")):
+        # Relanzar el mismo día no puede borrar las notas puestas a mano.
+        copia = directorio / f"informe.evaluado-{datetime.now():%H%M%S}.md"
+        ruta_md.rename(copia)
+        inf.avisos.append(f"El informe anterior tenía evaluaciones rellenadas: se ha guardado en {copia.name}")
     ruta_json.write_text(inf.model_dump_json(indent=2), encoding="utf-8")
     ruta_md.write_text(markdown(inf), encoding="utf-8")
     return ruta_json, ruta_md

@@ -35,7 +35,7 @@ def guion_valido(**cambios) -> GuionLLM:
     datos = dict(
         idea_nueva_candidatas=["a", "b", "c"], idea_elegida="b", por_que="Porque es la más defendible.",
         diapositivas=[
-            Diapositiva(n=1, tipo="portada", texto="Arendt: la obediencia también se elige"),
+            Diapositiva(n=1, tipo="portada", texto="La obediencia también se elige"),
             Diapositiva(n=2, tipo="actualidad", texto="Un tribunal juzga a un funcionario que firmaba órdenes."),
             Diapositiva(n=3, tipo="libro", texto="Arendt vio en Eichmann en Jerusalén a un hombre corriente."),
             Diapositiva(n=4, tipo="idea", texto="El mal administrativo necesita gente que no se pregunte nada."),

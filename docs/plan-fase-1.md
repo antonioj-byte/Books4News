@@ -189,4 +189,39 @@ Para los RSS no hace falta clave.
 - **Sin prompt caching.** Los prompts quedan por debajo del mínimo cacheable y solo hay una llamada por agente y pieza.
 - **Umbral de agrupación 0,84** (coseno medio), ajustado con las noticias del 30/10/2026: con 0,82 se mezclan eventos y con 0,86 se parten. Un mismo evento puede quedar partido entre la cobertura en español y en inglés; el jefe de cultura ve ambos grupos.
 - **Textos completos** extraídos con trafilatura de los medios abiertos y parciales, uno por medio y un máximo de 5 por historia.
-- **Datos de edición en el guion**: el guionista devuelve `editorial_espanola`, `traductor` y `edicion_original` (lo pide su prompt), pero el código los sustituye siempre por los de la ficha verificada. Las APIs casi nunca traen el traductor, así que normalmente queda en `null`.
+- **Datos de edición en el guion**: el guionista devuelve `editorial_espanola`, `traductor` y `edicion_original` (lo pide su prompt), y el código los sustituye siempre por los de la ficha verificada. Desde el 30/10 la sustitución no es silenciosa: ver «revisar edición» más abajo.
+
+### Tras la primera ejecución real (30/10/2026)
+
+**Entorno y seguridad**
+- `ANTHROPIC_API_KEY` o, si el entorno no la deja pasar, `FOLIO_ANTHROPIC_API_KEY`.
+- Los errores de Google Books llevaban la URL con la clave y acababan en el informe. Ahora se limpian (`key=***`).
+
+**Agrupación**
+- Segunda pasada que fusiona grupos cuyos centroides superan 0,94 (`umbral_fusion`), sin tocar el 0,84. El 30/10, Urda estaba partida en 8 grupos; fusionada pasa a 63 artículos y 10 medios. Con 0,88, 469 de los 640 artículos acababan en un único grupo.
+
+**Verificación de libros**
+- Google Books: `country=ES` (sin él responde 403 desde IPs que no sabe geolocalizar), cuatro intentos con espera creciente ante 429/5xx y búsqueda de respaldo sin `intitle:`, que devuelve 0 resultados de forma errática.
+- Open Library: los mismos reintentos, también ante cortes de conexión.
+- La edición española solo es `no` si las dos fuentes encuentran la obra y ninguna tiene esa edición.
+- Si el título propuesto no aparece, se prueba el título original. Si tampoco hay edición española con el título exacto, se busca por frase en Google Books, que marca el idioma y no confunde la edición española con la catalana. Así salió *El viejo rey en el exilio* para la propuesta «… en su exilio».
+- Primera edición: la más antigua en la lengua original (el idioma del jefe solo filtra). Si la obra encontrada es una traducción con ficha propia, se busca la obra original; si esta no tiene ediciones fechadas en su lengua, la primera edición queda como «no consta». Se descartan los audiolibros.
+- Traductores: Open Library los pone como coautores. Si solo figuran en la edición española, pasan a ser su traductor; si no, se quitan de los autores con una nota.
+- Nombres en mayúsculas normalizados («JAMES REASON» → «James Reason»). Si la edición española no trae editorial y tiene ISBN, se completa en Open Library.
+
+**Guion**
+- Enfoque de sección de libros: la portada abre con la noticia o su tensión, sin el libro; como mucho una diapositiva de actualidad; el libro entra en la 2 o la 3 y protagoniza el cierre, que es una recomendación (título, autor, por qué ahora, ficha española verificada). El pie puede empezar por la noticia, pero nombra el libro.
+- Extensión: 5 diapositivas por defecto; 6 o 7 con una línea de justificación por cada extra (`justificacion_extra`). Entre 25 y 30 palabras por diapositiva en el prompt; 40 de tope duro en el código.
+- Títulos en cursiva y en español cuando hay edición española.
+- Traducción: solo se menciona si la edición española es `no` verificado, y entonces la pieza va a revisión humana.
+- Investigaciones y procesos judiciales abiertos: sin culpas ni conclusiones anticipadas (también en el prompt del jefe).
+- «Revisar edición»: si el guionista y la ficha discrepan en editorial española, traductor, editorial original o año, la pieza se marca y el informe muestra los dos valores. El 30/10 cazó dos errores que estaban en Open Library, no en el modelo.
+
+**Comprobación de hechos (etapa nueva)**
+- Haiku 5.5 coteja cada cifra, fecha, nombre y hecho de la noticia en el guion con los textos fuente que recibió el guionista. Para dar un dato por verificado tiene que copiar un fragmento literal de la fuente, y el código comprueba que está; si no, cuenta como no verificado. Lo no verificado sale en el informe como «hecho no verificado». Si la etapa falla, la pieza no se marca como fallida: queda un aviso.
+
+**Jefe de cultura**
+- Da título original e idioma de cada libro, propone al menos uno con edición española y elige libros que merezcan recomendarse por sí mismos. El peso del número de medios no se ha tocado: se observa con más días.
+
+**Informe**
+- Cada pieza acaba con una plantilla de evaluación humana: selección, libro, idea nueva y voz del 1 al 5, si se publicaría y un comentario. Relanzar el mismo día no borra las evaluaciones rellenadas: el informe anterior se guarda aparte.
