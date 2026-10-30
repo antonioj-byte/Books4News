@@ -16,8 +16,9 @@ COPY pyproject.toml uv.lock ./
 COPY api/pyproject.toml api/pyproject.toml
 RUN uv sync --frozen --no-dev --all-packages --no-install-workspace
 
-# Chromium para el render y la exportación a PNG
-RUN uv run --no-sync playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*
+# Chromium para el render y la exportación a PNG; ffmpeg para la portada en vídeo (folio render --video)
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
+    && uv run --no-sync playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*
 
 # Código, configuración, prompts y diseño (los datos van al volumen /datos, no a la imagen)
 COPY src src
