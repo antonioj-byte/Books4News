@@ -93,6 +93,10 @@ def _pieza_md(p: Pieza) -> list[str]:
         l += [f"| {h.donde} | {h.tipo} | {_celda(h.afirmacion)} | {_celda(h.nota or '')} |" for h in no_verificados] + [""]
     if p.hechos:
         l += [f"_Hechos comprobados contra las fuentes: {len(p.hechos) - len(no_verificados)} de {len(p.hechos)}._", ""]
+    if p.citas:
+        l += ["**Citas literales verificadas** (en el texto del libro, Google Books)", ""]
+        l += [f"- «{c.texto}» — {c.autor}, *{c.libro}* (volumen {c.volumen_google}). Fragmento: «{c.fragmento}»"
+              for c in p.citas] + [""]
     if p.arte:
         a = p.arte
         l += [f"**Arte**: tono {a.tono}, portada {a.portada}, {a.recurso}. "

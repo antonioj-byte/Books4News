@@ -56,7 +56,7 @@ def _escribir(cfg: Config, nombre: str, v: VarianteAB, pieza: Pieza, textos: lis
               reutilizar: bool) -> Version:
     llm = LLM(_cfg_variante(cfg, v), reutilizar=reutilizar)
     try:
-        g, avisos = guionista.escribir(llm, f"ab:{pieza.id}:{nombre}", pieza.eleccion, textos, pieza.libros)
+        g, avisos, _ = guionista.escribir(llm, f"ab:{pieza.id}:{nombre}", pieza.eleccion, textos, pieza.libros)
     except Exception as exc:
         return Version(nombre, None, sum(t.coste_usd for t in llm.trazas), len(llm.trazas), error=str(exc))
     guionista.ajustar_libros(g, pieza.libros)

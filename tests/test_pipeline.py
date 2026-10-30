@@ -219,7 +219,7 @@ def _pipeline_tres(cfg, monkeypatch, escribir):
                         reserva=[ELECCION.model_copy(update={"historia_id": ids[0], "titular": "Reserva"})])
     from datos import LIBRO
     monkeypatch.setattr(p, "_verificar_libros", lambda e, reservados: ([LIBRO.model_copy()], []))
-    monkeypatch.setattr(guionista, "escribir", lambda llm, pid, e, t, libros: (escribir(pid), []))
+    monkeypatch.setattr(guionista, "escribir", lambda llm, pid, e, t, libros, verificar_cita=None: (escribir(pid), [], []))
     al_jefe = [h for h in agrupacion.agrupar(arts, _vectores(arts), 0.84)]
     return p, sel, al_jefe
 

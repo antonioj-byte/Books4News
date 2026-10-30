@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from folio.config import Config
 from folio.config import Guion as ConfigGuion
 from folio.llm import LLM, bloque_reenviable, cargar_prompt, con_cache
-from folio.modelos import DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroGuion, LibroVerificado
+from folio.modelos import CitaVerificada, DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroGuion, LibroVerificado
 from folio.verificacion_texto import apellido, autor_coincide, normalizar, sin_subtitulo, titulos_coinciden
 
 _COMILLAS = re.compile(r"«([^»]+)»|“([^”]+)”|\"([^\"]+)\"")
@@ -149,6 +149,7 @@ class _Guion:
     libros: list[LibroVerificado]
     fuentes: list[FuenteNoticia]
     p: ConfigGuion
+    citas_ok: frozenset[str] = frozenset()   # citas encontradas en el texto del libro (normalizadas)
 
     @property
     def d(self) -> list:
@@ -249,17 +250,30 @@ def _firma(c: _Guion) -> list[str]:
     return ["El cierre debe llevar la firma de Folio."] if c.d and "folio" not in normalizar(c.d[-1].texto).split() else []
 
 
+def citas_entre_comillas(textos: list[str], libros: list[LibroVerificado]) -> list[str]:
+    """Los fragmentos entre comillas que no son títulos de libros: posibles citas literales."""
+    return [f for t in textos for m in _COMILLAS.finditer(t)
+            if not _es_titulo_de_libro(f := next(x for x in m.groups() if x), libros)]
+
+
 def _frases_vetadas_y_citas(c: _Guion) -> list[str]:
-    """Texto a texto: primero las frases vetadas y luego los textos entre comillas que no son títulos."""
-    errores = []
+    """Texto a texto: primero las frases vetadas y luego los textos entre comillas que no son títulos
+    ni citas encontradas en el texto del libro. Después, el número y la longitud de las citas."""
+    errores, citas = [], []
     for t in c.textos:
         tn = t.lower()
         errores += [f"Frase vetada: «{frase}…»." for frase in _FRASES_VETADAS if frase in tn]
-        for m in _COMILLAS.finditer(t):
-            fragmento = next(s for s in m.groups() if s)
-            if not _es_titulo_de_libro(fragmento, c.libros):
-                errores.append(f"Texto entre comillas que no es el título de un libro: «{fragmento[:80]}». "
-                               "No se permiten citas: parafrasea sin comillas.")
+        for fragmento in citas_entre_comillas([t], c.libros):
+            if normalizar(fragmento) in c.citas_ok:
+                citas.append(fragmento)
+            else:
+                errores.append(f"Texto entre comillas que no es el título de un libro ni una cita encontrada en su "
+                               f"texto: «{fragmento[:80]}». Parafrasea sin comillas.")
+    minimo, maximo = c.p.palabras_cita
+    errores += [f"La cita «{x[:60]}» tiene {_palabras(x)} palabras; entre {minimo} y {maximo}."
+                for x in citas if not minimo <= _palabras(x) <= maximo]
+    if len(citas) > c.p.max_citas:
+        errores.append(f"Hay {len(citas)} citas literales; como mucho {c.p.max_citas}.")
     return errores
 
 
@@ -307,9 +321,11 @@ REGLAS = (
 )
 
 
-def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: list[FuenteNoticia]) -> list[str]:
-    """Errores del guion según las reglas editoriales (vacío si cumple todas)."""
-    c = _Guion(g, libros, fuentes, cfg.pipeline.guion)
+def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: list[FuenteNoticia],
+            citas_ok: frozenset[str] = frozenset()) -> list[str]:
+    """Errores del guion según las reglas editoriales (vacío si cumple todas). `citas_ok`: las citas
+    (normalizadas) que se han encontrado en el texto del libro."""
+    c = _Guion(g, libros, fuentes, cfg.pipeline.guion, citas_ok)
     return [error for regla in REGLAS for error in regla(c)]
 
 
@@ -401,11 +417,26 @@ def _contenido_para_reenviar(contenido: list) -> list[dict]:
     return [bloque_reenviable(b) for b in contenido]
 
 
-def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
-             libros: list[LibroVerificado]) -> tuple[GuionLLM, list[str]]:
-    """Devuelve (guion validado, avisos). Lanza ValueError si no pasa la validación.
+def _verificar_citas(g: GuionLLM, libros: list[LibroVerificado], verificar_cita, ya: dict[str, CitaVerificada | None],
+                     avisos: list[str]) -> dict[str, CitaVerificada | None]:
+    """Busca en el texto del libro cada cita del guion (una sola vez cada una)."""
+    textos = [t for x in g.diapositivas for t in (x.texto, x.subtitulo) if t] + [g.pie_instagram]
+    for frase in citas_entre_comillas(textos, libros):
+        if frase not in ya and verificar_cita:
+            try:
+                ya[frase] = verificar_cita(frase, libros)
+            except Exception as exc:     # sin red no se verifica: la cita no pasa
+                ya[frase] = None
+                avisos.append(f"No se pudo verificar la cita «{frase[:60]}»: {type(exc).__name__}")
+    return ya
 
-    La ficha de libros del guion sale tal como la escribió el modelo: ajustar_libros() la
+
+def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
+             libros: list[LibroVerificado], verificar_cita=None) -> tuple[GuionLLM, list[str], list[CitaVerificada]]:
+    """Devuelve (guion validado, avisos, citas verificadas). Lanza ValueError si no pasa la validación.
+
+    `verificar_cita` (folio.libros.citas) busca cada cita literal en el texto del libro; sin él, ninguna
+    cita pasa. La ficha de libros del guion sale tal como la escribió el modelo: ajustar_libros() la
     corrige después y devuelve las discrepancias.
     """
     cfg = llm.cfg
@@ -414,17 +445,21 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     mensajes = [{"role": "user", "content": con_cache(cfg, "guionista", prompt)}]
     errores: list[str] = []
     avisos: list[str] = []
+    citas: dict[str, CitaVerificada | None] = {}
     for intento in range(cfg.pipeline.guion.reintentos + 1):
         guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", mensajes, GuionLLM,
                                             etapa_modelo="guion")
         corregido = corregir_mecanico(guion)
         if corregido:
             avisos.append(f"Corregido en código en el intento {intento + 1}: {', '.join(corregido)}")
-        errores = validar(cfg, guion, libros, fuentes)
+        citas = _verificar_citas(guion, libros, verificar_cita, citas, avisos)
+        citas_ok = frozenset(normalizar(f) for f, c in citas.items() if c)
+        errores = validar(cfg, guion, libros, fuentes, citas_ok)
         if not errores:
             if intento:
                 avisos.append(f"Guion aceptado en el intento {intento + 1}")
-            return guion, avisos
+            textos_finales = " ".join(t for x in guion.diapositivas for t in (x.texto, x.subtitulo) if t) + guion.pie_instagram
+            return guion, avisos, [c for f, c in citas.items() if c and f in textos_finales]
         # Se registra por qué se rechaza cada intento: es lo que permite saber qué reglas
         # provocan los reintentos y si conviene reforzarlas en el prompt.
         avisos.append(f"Rechazado en el intento {intento + 1}: " + " | ".join(errores))

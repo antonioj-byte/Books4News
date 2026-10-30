@@ -46,7 +46,7 @@ def test_reintento_registra_por_que_se_rechazo(cfg):
     malo = guion_valido()
     malo.diapositivas[0].texto = "¿Quién obedece?"
     llm = LLMGuiones(cfg, [malo, guion_valido()])
-    g, avisos = guion.escribir(llm, "p1", ELECCION, [(FUENTES[0], "Texto")], [LIBRO])
+    g, avisos, _ = guion.escribir(llm, "p1", ELECCION, [(FUENTES[0], "Texto")], [LIBRO])
     assert any(a.startswith("Rechazado en el intento 1:") and "pregunta" in a for a in avisos)
     assert "Guion aceptado en el intento 2" in avisos
     # La primera petición lleva la parte fija marcada para la caché
@@ -59,7 +59,7 @@ def test_correcciones_mecanicas_sin_volver_a_llamar(cfg):
         x.n += 10
     g.diapositivas[-1].texto = "«Eichmann en Jerusalén», de Hannah Arendt. Léelo"
     llm = LLMGuiones(cfg, [g])
-    _, avisos = guion.escribir(llm, "p1", ELECCION, [(FUENTES[0], "Texto")], [LIBRO])
+    _, avisos, _ = guion.escribir(llm, "p1", ELECCION, [(FUENTES[0], "Texto")], [LIBRO])
     assert len(llm.mensajes) == 1  # una sola llamada
     assert [x.n for x in g.diapositivas] == [1, 2, 3, 4, 5]
     assert g.diapositivas[-1].texto.endswith("Léelo. Folio.")

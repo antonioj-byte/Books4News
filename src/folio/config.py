@@ -72,6 +72,8 @@ class Guion(_Seccion):
     palabras_max_diapositiva: int
     palabras_max_portada: int
     palabras_max_subtitulo: int = 22
+    max_citas: int = 1                  # citas literales del libro, solo si se verifican en su texto
+    palabras_cita: tuple[int, int] = (4, 30)
     max_diapositivas_actualidad: int
     posicion_max_primer_libro: int
     pie_min_palabras: int

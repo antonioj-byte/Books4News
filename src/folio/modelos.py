@@ -261,6 +261,15 @@ class Arte(BaseModel):
     avisos: list[str] = Field(default_factory=list)
 
 
+class CitaVerificada(BaseModel):
+    """Cita literal del libro encontrada letra por letra en su texto (búsqueda de Google Books)."""
+    texto: str
+    libro: str                           # título del libro verificado al que pertenece
+    autor: str
+    volumen_google: str                  # id del volumen de Google Books en cuyo texto aparece
+    fragmento: str                       # el fragmento del texto que la contiene, tal como lo devolvió
+
+
 class Pieza(BaseModel):
     id: str
     fecha: str
@@ -282,6 +291,8 @@ class Pieza(BaseModel):
     revision_humana: list[str] = Field(default_factory=list)
     # Datos de la noticia en el guion cotejados con los textos fuente (etapa de comprobación).
     hechos: list[HechoComprobado] = Field(default_factory=list)
+    # Citas literales del guion, verificadas en el texto del libro
+    citas: list[CitaVerificada] = Field(default_factory=list)
     # Imagen, cifra destacada y tono (etapa de arte)
     arte: Arte | None = None
     error: str | None = None

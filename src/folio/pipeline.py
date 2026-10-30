@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 import numpy as np
 from folio import guion as guionista
 from folio import arte, hechos, informe, seleccion, textos
+from folio.libros import citas
 from folio.etapas import ORDEN, Etapa, EtapasGuardadas
 from folio.config import Config
 from folio.historial import Historial
@@ -249,10 +250,18 @@ class Pipeline:
             pieza.avisos.append("Ningún texto completo disponible: el guionista solo tuvo titulares y entradillas")
         return textos_h
 
+    @property
+    def _verificar_cita(self):
+        """Busca las citas literales en el texto del libro (Google Books); sin clave de Google Books, ninguna pasa."""
+        if self.verificador is None:
+            self.verificador = Verificador(self.cfg)
+        return citas.verificador_google_books(self.verificador.gb) if self.verificador.gb else None
+
     def _escribir(self, pieza: Pieza, textos_h: list[tuple[FuenteNoticia, str]]) -> None:
         """Guion de una pieza (se ejecuta en paralelo con los de las demás)."""
         try:
-            pieza.guion, avisos = guionista.escribir(self.llm, pieza.id, pieza.eleccion, textos_h, pieza.libros)
+            pieza.guion, avisos, pieza.citas = guionista.escribir(self.llm, pieza.id, pieza.eleccion, textos_h, pieza.libros,
+                                                                  self._verificar_cita)
         except Exception as exc:
             pieza.error = str(exc)
             return

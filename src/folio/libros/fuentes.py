@@ -6,6 +6,7 @@ se toman en verificacion.py.
 
 from __future__ import annotations
 
+import html
 import re
 import time
 from dataclasses import dataclass, field
@@ -226,6 +227,20 @@ class GoogleBooks:
         r = self._get({"maxResults": 20, "printType": "books", "country": self.PAIS, "key": self.clave,
                        "langRestrict": "es", "q": f'"{titulo}"'})
         return self._obras(r)
+
+    def buscar_frase_en_texto(self, frase: str, autor: str) -> list[dict]:
+        """Volúmenes de ese autor en cuyo texto aparece la frase, con el fragmento que la contiene
+        (searchInfo.textSnippet, sin etiquetas). Solo sirve con libros cuyo texto indexa Google Books:
+        sobre todo los de dominio público; de los demás devuelve la sinopsis."""
+        r = self._get({"maxResults": 10, "printType": "books", "country": self.PAIS, "key": self.clave,
+                       "q": f'"{frase}" inauthor:"{autor}"'})
+        out = []
+        for it in r.json().get("items", []):
+            v = it.get("volumeInfo", {})
+            fragmento = re.sub(r"<[^>]+>", "", html.unescape((it.get("searchInfo") or {}).get("textSnippet", "")))
+            out.append({"id": it["id"], "titulo": v.get("title", ""), "autores": v.get("authors") or [],
+                        "fragmento": " ".join(fragmento.split())})
+        return out
 
     @staticmethod
     def _obras(r: httpx.Response) -> list[Obra]:
