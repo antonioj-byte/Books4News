@@ -99,8 +99,10 @@ def _pieza_md(p: Pieza) -> list[str]:
               + (f"Ilustración: {a.concepto} " if a.concepto else "")
               + (f"Imagen de archivo: {a.credito}. " if a.credito else "Sin imagen de archivo. ")
               + (f"Cifra destacada: {a.cifra}" + (f" ({a.cifra_rotulo})" if a.cifra_rotulo else "") + ". " if a.cifra else ""), ""]
-        if a.credito:
-            l += [f"Añadir al pie de la publicación: «{'Ilustración' if a.recurso == 'grabado' else 'Imagen'}: {a.credito}.»", ""]
+        creditos = ([f"Retrato: {a.retrato}"] if a.retrato else []) + \
+                   ([f"{'Ilustración' if a.recurso == 'grabado' else 'Imagen'}: {a.credito}"] if a.credito else [])
+        if creditos:
+            l += [f"Añadir al pie de la publicación: «{'. '.join(creditos)}.»", ""]
         l += [f"- {x}" for x in a.avisos] + ([""] if a.avisos else [])
     if p.fuentes:
         l += ["**Fuentes**", ""]

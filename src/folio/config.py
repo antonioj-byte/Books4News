@@ -31,6 +31,7 @@ class _Seccion(BaseModel):
 
 class Ingesta(_Seccion):
     ventana_horas: int
+    ventana_horas_editorial: int = 72   # los medios del libro publican menos
     timeout_s: float
     concurrencia_llm: int
 
@@ -44,6 +45,7 @@ class Agrupacion(_Seccion):
 
 class Seleccion(_Seccion):
     historias_al_jefe: int
+    historias_editoriales: int = 12     # contexto del mundo del libro para el jefe de cultura
     elegidas: int
     reserva: int
 
@@ -100,6 +102,10 @@ class Arte(_Seccion):
     # dibujada por el modelo se desactivó el 31/10: el resultado parece clip-art.
     portadas: list[Literal["sangre", "banda", "caja", "neon", "ilustracion", "circulo", "collage"]] = Field(
         default_factory=lambda: ["sangre", "banda", "caja", "neon"])
+    # Retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
+    retratos: bool = True
+    # Casi todos los retratos de Commons son CC BY-SA: la imagen derivada se publica con la misma licencia
+    retratos_cc_by_sa: bool = False
 
 
 class ConfigPipeline(_Seccion):
@@ -134,6 +140,8 @@ class Fuente:
     url: str
     idioma: str
     acceso: str  # abierto | parcial | muro
+    carril: str = "actualidad"   # actualidad | editorial (mundo del libro, config/fuentes_editoriales.yaml)
+    tier: int | None = None      # en el carril editorial: 1 = medio de referencia
 
 
 @dataclass
@@ -218,6 +226,10 @@ def cargar(raiz: Path = RAIZ) -> Config:
         yaml.safe_load((raiz / "config" / "pipeline.yaml").read_text(encoding="utf-8")))
     fuentes_raw = yaml.safe_load((raiz / "config" / "fuentes.yaml").read_text(encoding="utf-8"))
     fuentes = [Fuente(**f) for f in fuentes_raw["fuentes"]]
+    ruta_editoriales = raiz / "config" / "fuentes_editoriales.yaml"
+    if ruta_editoriales.exists():
+        editoriales = yaml.safe_load(ruta_editoriales.read_text(encoding="utf-8"))["fuentes"]
+        fuentes += [Fuente(**f, carril="editorial") for f in editoriales]
     return Config(
         pipeline=pipeline,
         fuentes=fuentes,

@@ -71,8 +71,9 @@ def _pipeline(cfg, monkeypatch, guiones, fecha="2026-10-30"):
     monkeypatch.setattr(p, "vector_texto", lambda texto: np.array([1.0, 0, 0]))
     monkeypatch.setattr(textos, "textos_historia", lambda cfg, h, puntuaciones=None: [(FUENTES[0], "Texto de la noticia aquí.")])
     # Arte sin red: ninguna imagen candidata ni cubierta
-    from folio import arte, cubiertas
+    from folio import arte, cubiertas, retratos
     monkeypatch.setattr(arte, "candidatas", lambda propuesta, excluir=(): [])
+    monkeypatch.setattr(retratos, "buscar_y_fijar", lambda *a, **k: (None, "sin red en los tests"))
     monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)
     from folio.ingesta import agrupacion
     llm.ids = [h.id for h in agrupacion.agrupar(arts, _vectores(arts), 0.84)]

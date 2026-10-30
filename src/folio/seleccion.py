@@ -12,7 +12,9 @@ def _desde(h: Historia) -> str:
     return min(fechas).strftime("%Y-%m-%d %H:%M UTC") if fechas else "desconocida"
 
 
-def bloque_historias(historias: list[Historia]) -> str:
+def bloque_historias(historias: list[Historia], etiqueta: str = "historias") -> str:
+    if not historias:
+        return f"<{etiqueta}>\n(ninguna hoy)\n</{etiqueta}>"
     partes = []
     for h in historias:
         titulares = "\n".join(f"    · [{a.medio}] {a.titulo}" for a in h.articulos[:5])
@@ -25,13 +27,16 @@ def bloque_historias(historias: list[Historia]) -> str:
             f"  publicada desde: {_desde(h)}\n"
             f"  titulares originales:\n{titulares}"
         )
-    return "<historias>\n" + "\n\n".join(partes) + "\n</historias>"
+    return f"<{etiqueta}>\n" + "\n\n".join(partes) + f"\n</{etiqueta}>"
 
 
 def seleccionar(llm: LLM, historias: list[Historia]) -> tuple[SeleccionJefe, list[str]]:
     """Devuelve la selección y avisos de validación (ids desconocidos, recuentos)."""
     cfg = llm.cfg.pipeline.seleccion
-    prompt = cargar_prompt(llm.cfg, "jefe_cultura", {"[pegar lista]": bloque_historias(historias)})
+    prompt = cargar_prompt(llm.cfg, "jefe_cultura", {
+        "[pegar lista]": bloque_historias([h for h in historias if h.carril == "actualidad"]),
+        "[pegar lista editorial]": bloque_historias([h for h in historias if h.carril == "editorial"], "mundo_del_libro"),
+    })
     sel, _ = llm.estructurado("seleccion", [{"role": "user", "content": prompt}], SeleccionJefe,
                               etapa_modelo="seleccion")
 

@@ -152,11 +152,12 @@ class Plantillas:
             self._cubiertas[clave] = self.url_medio(ruta) if ruta else None
         return self._cubiertas[clave]
 
-    def _imagen(self, pieza: Pieza) -> dict | None:
+    def _imagen(self, pieza: Pieza, sufijo: str = "") -> dict | None:
+        """La imagen fijada para la pieza (o su retrato, con sufijo «-retrato»), lista para la plantilla."""
         from folio import imagenes
 
         cache = self.cfg.dir_cache(pieza.fecha)
-        img = imagenes.de_pieza(pieza.id, cache)
+        img = imagenes.de_pieza(pieza.id + sufijo, cache)
         if not img or not img.local or not (imagenes.dir_imagenes(cache) / img.local).exists():
             return None
         return {"src": self.url_medio(imagenes.dir_imagenes(cache) / img.local), "credito": img.credito,
@@ -184,6 +185,11 @@ class Plantillas:
         d = pieza.guion.diapositivas[n - 1]
         logo = self.tokens["logotipo"].strip()
         imagen = self._imagen(pieza)
+        retrato = self._imagen(pieza, "-retrato")
+        if retrato:
+            retrato["grabado"] = False
+        if d.tipo == "portada" and retrato:
+            imagen = retrato        # la cara del autor manda en la portada
         estilo, svg = self._portada(pieza, imagen)
         campos = self.tokens.get("campos_portada") or {}
         campo = campos.get(pieza.arte.tono if pieza.arte else "", campos.get("sereno"))
@@ -197,7 +203,7 @@ class Plantillas:
             tipo=d.tipo, rotulo=self.tokens["rotulos"].get(d.tipo, ""),
             texto=texto_html(_FIRMA_FINAL.sub("", d.texto) if d.tipo == "cierre" else d.texto),
             n=n, total=len(pieza.guion.diapositivas), pieza_id=pieza.id, fecha_larga=fecha_larga(pieza.fecha),
-            libros=libros if d.tipo == "cierre" else [], libros_pieza=libros,
+            libros=libros if d.tipo == "cierre" else [], libros_pieza=libros, retrato=retrato,
             libro=(libro_de_diapositiva(libros, pieza, d.texto) or (libros[:1] or [None])[0]) if d.tipo == "libro" else None,
             titular=texto_html(portada.texto), imagen=imagen, anio_hoy=int(pieza.fecha[:4]),
             titular_remate=titular_con_remate(portada.texto, pieza.arte.remate if pieza.arte else None),

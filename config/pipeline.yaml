@@ -28,6 +28,7 @@ precios:
 
 ingesta:
   ventana_horas: 36             # se descartan artículos más antiguos
+  ventana_horas_editorial: 72   # carril editorial: los medios del libro publican menos
   timeout_s: 20
   concurrencia_llm: 6
 
@@ -43,6 +44,7 @@ agrupacion:
 
 seleccion:
   historias_al_jefe: 25
+  historias_editoriales: 12     # carril editorial: contexto del mundo del libro para el jefe (puede elegir una)
   elegidas: 3
   reserva: 2
 
@@ -78,6 +80,8 @@ arte:
   # sangre, banda, caja, neon. Las de la propuesta humanista: circulo, collage, ilustracion (el SVG
   # del ilustrador está desactivado: el modelo dibuja clip-art, 31/10).
   portadas: [sangre, banda, caja, neon]
+  retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
+  retratos_cc_by_sa: false     # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia
 
 ab:
   control: opus-high

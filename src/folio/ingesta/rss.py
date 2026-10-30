@@ -60,6 +60,8 @@ def parsear(contenido: bytes, fuente: Fuente) -> list[Articulo]:
             publicado_en=_fecha(e),
             idioma=fuente.idioma,
             acceso=fuente.acceso,
+            carril=fuente.carril,
+            tier=fuente.tier,
         ))
     return articulos
 
@@ -76,7 +78,8 @@ def _descargar(cliente: httpx.Client, fuente: Fuente) -> tuple[Fuente, list[Arti
 def ingerir(cfg: Config, ahora: datetime | None = None) -> tuple[list[Articulo], list[str]]:
     """Devuelve los artículos dentro de la ventana, deduplicados, y los errores por feed."""
     ahora = ahora or datetime.now(timezone.utc)
-    limite = ahora - timedelta(hours=cfg.pipeline.ingesta.ventana_horas)
+    limites = {"actualidad": ahora - timedelta(hours=cfg.pipeline.ingesta.ventana_horas),
+               "editorial": ahora - timedelta(hours=cfg.pipeline.ingesta.ventana_horas_editorial)}
     errores: list[str] = []
     vistos_url: set[str] = set()
     vistos_titulo: set[tuple[str, str]] = set()
@@ -93,7 +96,7 @@ def ingerir(cfg: Config, ahora: datetime | None = None) -> tuple[list[Articulo],
                 log.warning("Feed fallido: %s", error)
                 continue
             for a in lote:
-                if a.publicado_en and a.publicado_en < limite:
+                if a.publicado_en and a.publicado_en < limites[a.carril]:
                     continue
                 clave_titulo = (a.medio, a.titulo.lower())
                 if a.url in vistos_url or clave_titulo in vistos_titulo:

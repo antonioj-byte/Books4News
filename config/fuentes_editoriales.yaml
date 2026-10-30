@@ -1,0 +1,608 @@
+# Carril editorial: medios del mundo del libro, importados de publishing-monitor (medios.csv)
+# con `folio fuentes-editoriales`. Solo los feeds RSS activos. tier 1 = medio de referencia.
+fuentes:
+- medio: Publishing Perspectives
+  idioma: en
+  acceso: abierto
+  url: https://publishingperspectives.com/feed
+  tier: 1
+- medio: Livres Hebdo
+  idioma: fr
+  acceso: abierto
+  url: https://www.livreshebdo.fr/feed
+  tier: 1
+- medio: Publishnews
+  idioma: es
+  acceso: abierto
+  url: https://news.google.com/rss/search?q=site:publishnews.es&hl=es&gl=ES&ceid=ES:es
+  tier: 1
+- medio: ActuaLitté
+  idioma: fr
+  acceso: abierto
+  url: https://actualitte.com/rss-main.rss
+  tier: 1
+- medio: Publishers Lunch
+  idioma: en
+  acceso: abierto
+  url: https://lunch.publishersmarketplace.com/feed/
+  tier: 1
+- medio: PublishNews Brasil
+  idioma: pt
+  acceso: abierto
+  url: https://www.publishnews.com.br/rss.xml
+  tier: 1
+- medio: Giornale della Libreria
+  idioma: it
+  acceso: abierto
+  url: https://giornaledellalibreria.mediabiblos.it/feed_rss/giornale_libreria/news.xml
+  tier: 1
+- medio: Börsenblatt
+  idioma: de
+  acceso: abierto
+  url: https://news.google.com/rss/search?q=site:boersenblatt.net&hl=de&gl=DE&ceid=DE:de
+  tier: 1
+- medio: El País Babelia
+  idioma: es
+  acceso: abierto
+  url: https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/babelia/portada
+  tier: 1
+- medio: El Mundo Cultura
+  idioma: es
+  acceso: abierto
+  url: https://e00-elmundo.uecdn.es/elmundo/rss/cultura.xml
+  tier: 2
+- medio: La Vanguardia Cultura
+  idioma: es
+  acceso: abierto
+  url: https://www.lavanguardia.com/rss/cultura.xml
+  tier: 1
+- medio: ABC Cultura
+  idioma: es
+  acceso: abierto
+  url: https://www.abc.es/rss/feeds/abc_Cultura.xml
+  tier: 2
+- medio: Le Monde Livres
+  idioma: fr
+  acceso: abierto
+  url: https://www.lemonde.fr/livres/rss_full.xml
+  tier: 1
+- medio: Le Figaro Livres
+  idioma: fr
+  acceso: abierto
+  url: https://www.lefigaro.fr/rss/figaro_culture.xml
+  tier: 2
+- medio: Libération Livres
+  idioma: fr
+  acceso: abierto
+  url: https://www.liberation.fr/arc/outboundfeeds/rss/category/culture/livres/
+  tier: 2
+- medio: FAZ Feuilleton
+  idioma: de
+  acceso: abierto
+  url: https://www.faz.net/rss/aktuell/feuilleton/
+  tier: 1
+- medio: Süddeutsche Kultur
+  idioma: de
+  acceso: abierto
+  url: https://rss.sueddeutsche.de/rss/Kultur
+  tier: 2
+- medio: Die Welt Kultur
+  idioma: de
+  acceso: abierto
+  url: https://www.welt.de/feeds/section/kultur.rss
+  tier: 2
+- medio: Corriere Cultura
+  idioma: it
+  acceso: abierto
+  url: https://www.corriere.it/rss/cultura.xml
+  tier: 1
+- medio: La Repubblica Cultura
+  idioma: it
+  acceso: abierto
+  url: https://www.repubblica.it/rss/cultura/rss2.0.xml
+  tier: 1
+- medio: La Stampa Cultura
+  idioma: it
+  acceso: abierto
+  url: https://www.lastampa.it/rss/cultura.xml
+  tier: 2
+- medio: Il Sole 24 Ore Cultura
+  idioma: it
+  acceso: abierto
+  url: https://www.ilsole24ore.com/rss/cultura.xml
+  tier: 2
+- medio: Il Fatto Quotidiano Cultura
+  idioma: it
+  acceso: abierto
+  url: https://www.ilfattoquotidiano.it/cultura/feed/
+  tier: 2
+- medio: The Guardian Books
+  idioma: en
+  acceso: abierto
+  url: https://www.theguardian.com/books/rss
+  tier: 1
+- medio: The Times Books
+  idioma: en
+  acceso: abierto
+  url: https://news.google.com/rss/search?q=site:thetimes.com+culture+books+review&hl=en-GB&gl=GB&ceid=GB:en
+  tier: 2
+- medio: Financial Times Books
+  idioma: en
+  acceso: abierto
+  url: https://www.ft.com/books?format=rss
+  tier: 1
+- medio: The Telegraph Books
+  idioma: en
+  acceso: abierto
+  url: https://www.telegraph.co.uk/books/rss.xml
+  tier: 2
+- medio: Neue Zürcher Zeitung Kultur
+  idioma: de
+  acceso: abierto
+  url: https://www.nzz.ch/feuilleton.rss
+  tier: 1
+- medio: Le Temps Culture
+  idioma: fr
+  acceso: abierto
+  url: https://www.letemps.ch/rss/culture
+  tier: 2
+- medio: Le Soir Culture
+  idioma: fr
+  acceso: abierto
+  url: https://www.lesoir.be/rss/culture
+  tier: 2
+- medio: Der Standard Kultur
+  idioma: de
+  acceso: abierto
+  url: https://www.derstandard.at/rss/kultur
+  tier: 2
+- medio: Die Presse Kultur
+  idioma: de
+  acceso: abierto
+  url: https://www.diepresse.com/rss/kultur
+  tier: 2
+- medio: NYT Books
+  idioma: en
+  acceso: abierto
+  url: https://rss.nytimes.com/services/xml/rss/nyt/Books.xml
+  tier: 1
+- medio: Washington Post Books
+  idioma: en
+  acceso: abierto
+  url: https://news.google.com/rss/search?q=site:washingtonpost.com/entertainment/books&hl=en-US&gl=US&ceid=US:en
+  tier: 1
+- medio: Wall Street Journal Books
+  idioma: en
+  acceso: abierto
+  url: https://news.google.com/rss/search?q=site:wsj.com/arts-culture/books&hl=en-US&gl=US&ceid=US:en
+  tier: 2
+- medio: Los Angeles Times Books
+  idioma: en
+  acceso: abierto
+  url: https://www.latimes.com/entertainment-arts/books/rss2.0.xml
+  tier: 2
+- medio: Boston Globe Books
+  idioma: en
+  acceso: abierto
+  url: https://www.bostonglobe.com/arts/books/?p1=BGHeader_RSS
+  tier: 2
+- medio: Chicago Tribune Books
+  idioma: en
+  acceso: abierto
+  url: https://www.chicagotribune.com/entertainment/books/rss2.0.xml
+  tier: 2
+- medio: The Globe and Mail Books
+  idioma: en
+  acceso: abierto
+  url: https://news.google.com/rss/search?q=site:theglobeandmail.com/arts/books&hl=en-CA&gl=CA&ceid=CA:en
+  tier: 2
+- medio: La Presse Arts
+  idioma: fr
+  acceso: abierto
+  url: https://www.lapresse.ca/arts/rss.xml
+  tier: 2
+- medio: La Nación Libros
+  idioma: es
+  acceso: abierto
+  url: https://www.lanacion.com.ar/arc/outboundfeeds/rss/category/lifestyle/libros/
+  tier: 2
+- medio: Clarín Cultura
+  idioma: es
+  acceso: abierto
+  url: https://www.clarin.com/rss/cultura/
+  tier: 2
+- medio: Reforma Cultura
+  idioma: es
+  acceso: abierto
+  url: https://www.reforma.com/rss/cultura.xml
+  tier: 2
+- medio: El Universal Cultura
+  idioma: es
+  acceso: abierto
+  url: https://www.eluniversal.com.mx/rss/cultura.xml
+  tier: 2
+- medio: La Tercera Cultura
+  idioma: es
+  acceso: abierto
+  url: https://www.latercera.com/culto/feed/
+  tier: 2
+- medio: El Tiempo Cultura
+  idioma: es
+  acceso: abierto
+  url: https://www.eltiempo.com/rss/cultura.xml
+  tier: 2
+- medio: El Espectador Libros
+  idioma: es
+  acceso: abierto
+  url: https://www.elespectador.com/el-espectador-libros/rss.xml
+  tier: 2
+- medio: El Comercio Cultura
+  idioma: es
+  acceso: abierto
+  url: https://elcomercio.pe/arc/outboundfeeds/rss/category/cultura/
+  tier: 2
+- medio: El País Uruguay Cultura
+  idioma: es
+  acceso: abierto
+  url: https://www.elpais.com.uy/rss/cultura
+  tier: 2
+- medio: Folha de S.Paulo Ilustrada
+  idioma: pt
+  acceso: abierto
+  url: https://www1.folha.uol.com.br/ilustrada/index.rss
+  tier: 2
+- medio: O Globo Cultura
+  idioma: pt
+  acceso: abierto
+  url: https://oglobo.globo.com/cultura/rss.xml
+  tier: 2
+- medio: The Japan Times Culture
+  idioma: en
+  acceso: abierto
+  url: https://www.japantimes.co.jp/culture/feed/
+  tier: 2
+- medio: South China Morning Post Culture
+  idioma: en
+  acceso: abierto
+  url: https://www.scmp.com/rss/91/feed
+  tier: 2
+- medio: The Hindu Books
+  idioma: en
+  acceso: abierto
+  url: https://www.thehindu.com/books/?service=rss
+  tier: 2
+- medio: The New Yorker
+  idioma: en
+  acceso: abierto
+  url: https://www.newyorker.com/feed/rss
+  tier: 1
+- medio: New York Review of Books
+  idioma: en
+  acceso: abierto
+  url: https://www.nybooks.com/feed/
+  tier: 1
+- medio: The Paris Review
+  idioma: en
+  acceso: abierto
+  url: https://www.theparisreview.org/blog/feed
+  tier: 1
+- medio: Harper's Magazine
+  idioma: en
+  acceso: abierto
+  url: https://harpers.org/feed/
+  tier: 1
+- medio: The Atlantic
+  idioma: en
+  acceso: abierto
+  url: https://www.theatlantic.com/feed/all/
+  tier: 2
+- medio: London Review of Books
+  idioma: en
+  acceso: abierto
+  url: https://www.lrb.co.uk/feeds/rss
+  tier: 1
+- medio: Times Literary Supplement
+  idioma: en
+  acceso: abierto
+  url: https://news.google.com/rss/search?q=site:the-tls.com&hl=en-GB&gl=GB&ceid=GB:en
+  tier: 1
+- medio: Los Angeles Review of Books
+  idioma: en
+  acceso: abierto
+  url: https://news.google.com/rss/search?q=site:lareviewofbooks.org&hl=en-US&gl=US&ceid=US:en
+  tier: 1
+- medio: El Cultural
+  idioma: es
+  acceso: abierto
+  url: https://www.elespanol.com/rss/el-cultural/
+  tier: 1
+- medio: Granta
+  idioma: en
+  acceso: abierto
+  url: https://grantamag.substack.com/feed
+  tier: 2
+- medio: n+1
+  idioma: en
+  acceso: abierto
+  url: https://www.nplusonemag.com/feed/
+  tier: 2
+- medio: The Believer
+  idioma: en
+  acceso: abierto
+  url: https://www.thebeliever.net/feed/
+  tier: 2
+- medio: The Threepenny Review
+  idioma: en
+  acceso: abierto
+  url: https://www.threepennyreview.com/feed/
+  tier: 2
+- medio: Letras Libres
+  idioma: es
+  acceso: abierto
+  url: https://letraslibres.com/feed/
+  tier: 2
+- medio: Revista de Occidente
+  idioma: es
+  acceso: abierto
+  url: https://www.revistadeoccidente.es/feed/
+  tier: 2
+- medio: Gatopardo
+  idioma: es
+  acceso: abierto
+  url: https://gatopardo.com/feed/
+  tier: 2
+- medio: El Malpensante
+  idioma: es
+  acceso: abierto
+  url: https://www.elmalpensante.com/feed/
+  tier: 2
+- medio: Anfibia
+  idioma: es
+  acceso: abierto
+  url: https://anfibia.org/feed/
+  tier: 2
+- medio: Nexos
+  idioma: es
+  acceso: abierto
+  url: https://www.nexos.com.mx/feed/
+  tier: 2
+- medio: Jot Down
+  idioma: es
+  acceso: abierto
+  url: https://www.jotdown.es/feed/
+  tier: 2
+- medio: La Maleta de Portbou
+  idioma: es
+  acceso: abierto
+  url: https://www.lamaletadeportbou.com/feed/
+  tier: 2
+- medio: Les Temps Modernes
+  idioma: fr
+  acceso: abierto
+  url: https://www.tempsmodernes.net/feed/
+  tier: 2
+- medio: Esprit
+  idioma: fr
+  acceso: abierto
+  url: https://www.esprit.presse.fr/feed/
+  tier: 2
+- medio: La Nouvelle Revue Française
+  idioma: fr
+  acceso: abierto
+  url: https://www.nrf.fr/feed/
+  tier: 2
+- medio: Le Débat
+  idioma: fr
+  acceso: abierto
+  url: https://www.ledebactuel.fr/feed/
+  tier: 2
+- medio: XXI
+  idioma: fr
+  acceso: abierto
+  url: https://www.revue21.fr/feed/
+  tier: 2
+- medio: Nuovi Argomenti
+  idioma: it
+  acceso: abierto
+  url: https://www.nuoviargomenti.it/feed/
+  tier: 2
+- medio: MicroMega
+  idioma: it
+  acceso: abierto
+  url: https://www.micromega.net/feed/
+  tier: 2
+- medio: Il Mulino
+  idioma: it
+  acceso: abierto
+  url: https://www.ilmulino.it/feed/
+  tier: 2
+- medio: Merkur
+  idioma: de
+  acceso: abierto
+  url: https://www.merkur-zeitschrift.de/feed/
+  tier: 2
+- medio: Lettre International
+  idioma: de
+  acceso: abierto
+  url: https://www.lettreinternationale.com/feed/
+  tier: 2
+- medio: Sinn und Form
+  idioma: de
+  acceso: abierto
+  url: https://www.sinn-und-form.de/feed/
+  tier: 2
+- medio: The Economist Culture
+  idioma: en
+  acceso: abierto
+  url: https://www.economist.com/culture/rss.xml
+  tier: 2
+- medio: Time
+  idioma: en
+  acceso: abierto
+  url: https://time.com/feed/
+  tier: 2
+- medio: Newsweek
+  idioma: en
+  acceso: abierto
+  url: https://www.newsweek.com/rss
+  tier: 2
+- medio: Der Spiegel Kultur
+  idioma: de
+  acceso: abierto
+  url: https://www.spiegel.de/kultur/index.rss
+  tier: 2
+- medio: Die Zeit Kultur
+  idioma: de
+  acceso: abierto
+  url: https://newsfeed.zeit.de/kultur/index
+  tier: 2
+- medio: Focus Kultur
+  idioma: de
+  acceso: abierto
+  url: https://rss.focus.de/fol/XML/rss_folnews_kultur.xml
+  tier: 2
+- medio: Stern Kultur
+  idioma: de
+  acceso: abierto
+  url: https://www.stern.de/feed/standard/kultur/
+  tier: 2
+- medio: Courrier International
+  idioma: fr
+  acceso: abierto
+  url: https://www.courrierinternational.com/feed/all/rss.xml
+  tier: 2
+- medio: L'Obs Culture
+  idioma: fr
+  acceso: abierto
+  url: https://www.nouvelobs.com/culture/rss.xml
+  tier: 2
+- medio: Le Point Culture
+  idioma: fr
+  acceso: abierto
+  url: https://www.lepoint.fr/culture/rss.xml
+  tier: 2
+- medio: L'Express Culture
+  idioma: fr
+  acceso: abierto
+  url: https://www.lexpress.fr/rss/culture.xml
+  tier: 2
+- medio: Les Inrocks
+  idioma: fr
+  acceso: abierto
+  url: https://www.lesinrocks.com/livres/feed/
+  tier: 2
+- medio: Internazionale
+  idioma: it
+  acceso: abierto
+  url: https://www.internazionale.it/sitemaps/rss.xml
+  tier: 2
+- medio: L'Espresso Cultura
+  idioma: it
+  acceso: abierto
+  url: https://www.espresso.repubblica.it/cultura/rss
+  tier: 2
+- medio: Panorama Cultura
+  idioma: it
+  acceso: abierto
+  url: https://www.panorama.it/cultura/feed/
+  tier: 2
+- medio: Literary Hub
+  idioma: en
+  acceso: abierto
+  url: https://lithub.com/feed/
+  tier: 2
+- medio: Shelf Awareness
+  idioma: en
+  acceso: abierto
+  url: https://news.google.com/rss/search?q=site:shelf-awareness.com&hl=en-US&gl=US&ceid=US:en
+  tier: 2
+- medio: Bookselling This Week
+  idioma: en
+  acceso: abierto
+  url: https://www.bookweb.org/rss.xml
+  tier: 2
+- medio: Books+Publishing
+  idioma: en
+  acceso: abierto
+  url: https://www.booksandpublishing.com.au/feed
+  tier: 2
+- medio: Kirkus Reviews
+  idioma: en
+  acceso: abierto
+  url: https://www.kirkusreviews.com/feeds/rss/
+  tier: 2
+- medio: Words Without Borders
+  idioma: en
+  acceso: abierto
+  url: https://wordswithoutborders.org/feed/
+  tier: 2
+- medio: Zenda
+  idioma: es
+  acceso: abierto
+  url: https://www.zendalibros.com/feed/
+  tier: 2
+- medio: Revista de Libros
+  idioma: es
+  acceso: abierto
+  url: https://www.revistadelibros.com/feed/
+  tier: 2
+- medio: La Lectura (El Mundo)
+  idioma: es
+  acceso: abierto
+  url: https://www.elmundo.es/rss/googlenews/la-lectura.xml
+  tier: 2
+- medio: Revista Ñ
+  idioma: es
+  acceso: abierto
+  url: https://www.clarin.com/rss/revista-enie/
+  tier: 2
+- medio: Perlentaucher
+  idioma: de
+  acceso: abierto
+  url: https://www.perlentaucher.de/index.rss
+  tier: 2
+- medio: En attendant Nadeau
+  idioma: fr
+  acceso: abierto
+  url: https://www.en-attendant-nadeau.fr/feed/
+  tier: 2
+- medio: Book Riot
+  idioma: en
+  acceso: abierto
+  url: https://bookriot.com/feed/
+  tier: 2
+- medio: Electric Literature
+  idioma: en
+  acceso: abierto
+  url: https://electricliterature.com/feed/
+  tier: 2
+- medio: The Millions
+  idioma: en
+  acceso: abierto
+  url: https://themillions.com/feed
+  tier: 2
+- medio: Asymptote
+  idioma: en
+  acceso: abierto
+  url: https://www.asymptotejournal.com/blog/feed/
+  tier: 2
+- medio: Dosdoce
+  idioma: es
+  acceso: abierto
+  url: https://www.dosdoce.com/feed/
+  tier: 2
+- medio: Jane Friedman
+  idioma: en
+  acceso: abierto
+  url: https://janefriedman.com/feed/
+  tier: 2
+- medio: Good e-Reader
+  idioma: en
+  acceso: abierto
+  url: https://goodereader.com/blog/feed
+  tier: 2
+- medio: Infobae Cultura
+  idioma: es
+  acceso: abierto
+  url: https://www.infobae.com/arc/outboundfeeds/rss/category/cultura/
+  tier: 2

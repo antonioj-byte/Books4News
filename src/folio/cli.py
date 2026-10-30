@@ -7,6 +7,7 @@ import logging
 from datetime import date
 
 import typer
+from pathlib import Path
 
 from folio import config
 
@@ -81,6 +82,26 @@ def render(
         for a in avisos:
             typer.echo(f"Aviso: {a}")
         typer.echo(f"{len(archivos)} diapositivas en {destino}")
+
+
+@app.command("fuentes-editoriales")
+def fuentes_editoriales(csv_medios: Path = typer.Argument(..., help="medios.csv de publishing-monitor")):
+    """Importa los feeds RSS activos de publishing-monitor a config/fuentes_editoriales.yaml (carril editorial)."""
+    import csv
+
+    import yaml
+
+    cfg = config.cargar()
+    filas = [f for f in csv.DictReader(csv_medios.open(encoding="utf-8"))
+             if f.get("activo", "").lower() == "true" and f.get("metodo") == "rss" and f.get("url_rss")]
+    fuentes = [{"medio": f["nombre"], "idioma": f.get("idioma") or "en", "acceso": "abierto",
+                "url": f["url_rss"], "tier": int(f["tier"]) if (f.get("tier") or "").isdigit() else None} for f in filas]
+    destino = cfg.raiz / "config" / "fuentes_editoriales.yaml"
+    cabecera = ("# Carril editorial: medios del mundo del libro, importados de publishing-monitor (medios.csv)\n"
+                "# con `folio fuentes-editoriales`. Solo los feeds RSS activos. tier 1 = medio de referencia.\n")
+    destino.write_text(cabecera + yaml.safe_dump({"fuentes": fuentes}, allow_unicode=True, sort_keys=False, width=200),
+                       encoding="utf-8")
+    typer.echo(f"{len(fuentes)} fuentes en {destino}")
 
 
 imagen_app = typer.Typer(help="Imágenes libres de uso (Wikimedia Commons) para las piezas")

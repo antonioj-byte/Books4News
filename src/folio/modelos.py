@@ -41,6 +41,8 @@ class Articulo(BaseModel):
     publicado_en: datetime | None = None
     idioma: str
     acceso: Acceso
+    carril: Literal["actualidad", "editorial"] = "actualidad"
+    tier: int | None = None
 
 
 class Historia(BaseModel):
@@ -53,6 +55,7 @@ class Historia(BaseModel):
     titular_es: str | None = None
     resumen_es: str | None = None
     seccion: Seccion | None = None
+    carril: Literal["actualidad", "editorial"] = "actualidad"
 
 
 class ResumenHistoria(BaseModel):
@@ -250,6 +253,7 @@ class Arte(BaseModel):
     remate: str | None = None            # final del titular que va en cursiva (marca Alighieria)
     acento: Literal["pluma", "marcador"] | None = None   # color de la pieza; sin color en las graves
     concepto: str | None = None          # metáfora de la ilustración
+    retrato: str | None = None           # crédito del retrato del autor, si lo hay
     credito: str | None = None
     por_que: str = ""
     avisos: list[str] = Field(default_factory=list)
@@ -289,6 +293,7 @@ class HistoriaResumida(BaseModel):
     n_medios: int
     medios: list[str]
     excluida: str | None = None          # motivo si no pasó al jefe de cultura
+    carril: Literal["actualidad", "editorial"] = "actualidad"
 
 
 class InformeDiario(BaseModel):

@@ -23,7 +23,7 @@ import httpx
 import yaml
 from PIL import Image, ImageDraw, ImageFont
 
-from folio import cubiertas, ilustracion, imagenes
+from folio import cubiertas, ilustracion, imagenes, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import Arte, EleccionImagen, Pieza, PropuestaArte
@@ -222,6 +222,19 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
         except Exception as exc:
             arte.portada = "circulo"
             arte.avisos.append(f"Sin ilustración ({type(exc).__name__}: {exc}); la portada usa la imagen en círculo")
+
+    if cfg.pipeline.arte.retratos and pieza.libros and pieza.libros[0].autores:
+        for viejo in imagenes.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato.*"):
+            viejo.unlink()
+        autor = pieza.libros[0].autores[0]
+        try:
+            img, motivo = retratos.buscar_y_fijar(autor, pieza.id, dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
+            if img:
+                arte.retrato = img.credito
+            else:
+                arte.avisos.append(motivo)
+        except Exception as exc:
+            arte.avisos.append(f"No se pudo buscar el retrato de {autor}: {type(exc).__name__}")
 
     for libro in pieza.libros:      # deja las cubiertas en la caché para el render
         try:

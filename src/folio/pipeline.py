@@ -88,17 +88,13 @@ class Pipeline:
     def vectores(self, articulos: list[Articulo]) -> dict[str, np.ndarray]:
         return self.embedder.vectores({a.id: agrupacion.texto_articulo(a) for a in articulos})
 
-    def historias(self, articulos: list[Articulo], vectores, con_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
-        """Agrupa, excluye las ya usadas y resume las que pasan al jefe de cultura."""
+    def _no_repetidas(self, candidatas: list[Historia], vectores, maximo: int, usadas,
+                      excluidas: dict[str, str]) -> list[Historia]:
+        """Las primeras `maximo` candidatas que no se han usado en los últimos días."""
         p = self.cfg.pipeline
-        todas = agrupacion.agrupar(articulos, vectores, p.agrupacion.umbral_similitud, p.agrupacion.umbral_fusion)
-        candidatas = [h for h in todas if h.n_medios >= p.agrupacion.min_medios]
-        usadas = self.historial.centroides_recientes(self.fecha, p.exclusion.dias_historias)
-
-        al_jefe: list[Historia] = []
-        excluidas: dict[str, str] = {}
+        elegidas: list[Historia] = []
         for h in candidatas:
-            if len(al_jefe) >= p.seleccion.historias_al_jefe:
+            if len(elegidas) >= maximo:
                 break
             c = agrupacion.centroide(h, vectores)
             repetida = next(((f, t) for f, t, cu in usadas
@@ -106,7 +102,34 @@ class Pipeline:
             if repetida:
                 excluidas[h.id] = f"ya usada el {repetida[0]} («{repetida[1]}»)"
             else:
-                al_jefe.append(h)
+                elegidas.append(h)
+        return elegidas
+
+    def historias(self, articulos: list[Articulo], vectores, con_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
+        """Agrupa, excluye las ya usadas y resume las que pasan al jefe de cultura.
+
+        Dos carriles: la actualidad (historias de al menos `min_medios` medios) y el mundo del libro
+        (config/fuentes_editoriales.yaml), que se agrupa aparte y entra aunque lo cubra un solo
+        medio: es contexto para el jefe de cultura, que puede elegir una si es buena."""
+        p = self.cfg.pipeline
+        actualidad = [a for a in articulos if a.carril == "actualidad"]
+        editoriales = [a for a in articulos if a.carril == "editorial"]
+        todas = agrupacion.agrupar(actualidad, vectores, p.agrupacion.umbral_similitud, p.agrupacion.umbral_fusion)
+        candidatas = [h for h in todas if h.n_medios >= p.agrupacion.min_medios]
+        usadas = self.historial.centroides_recientes(self.fecha, p.exclusion.dias_historias)
+        excluidas: dict[str, str] = {}
+        al_jefe = self._no_repetidas(candidatas, vectores, p.seleccion.historias_al_jefe, usadas, excluidas)
+
+        del_libro: list[Historia] = []
+        if editoriales:
+            grupos = agrupacion.agrupar(editoriales, vectores, p.agrupacion.umbral_similitud, p.agrupacion.umbral_fusion)
+            grupos.sort(key=lambda h: (h.n_medios, sum(a.tier == 1 for a in h.articulos),
+                                       h.ultima_publicacion.timestamp() if h.ultima_publicacion else 0), reverse=True)
+            del_libro = self._no_repetidas(grupos, vectores, p.seleccion.historias_editoriales, usadas, excluidas)
+            for h in del_libro:
+                h.carril = "editorial"
+            candidatas += del_libro
+            al_jefe += del_libro
 
         if con_llm:
             self.avisos += resumen.resumir(self.llm, al_jefe)
@@ -114,14 +137,16 @@ class Pipeline:
         mostradas = [h for h in candidatas if h.id in ids_jefe or h.id in excluidas]
         resumidas = [HistoriaResumida(
             id=h.id, titular_es=h.titular_es or h.articulos[0].titulo, resumen_es=h.resumen_es,
-            seccion=h.seccion, n_medios=h.n_medios, medios=h.medios, excluida=excluidas.get(h.id),
+            seccion=h.seccion, n_medios=h.n_medios, medios=h.medios, excluida=excluidas.get(h.id), carril=h.carril,
         ) for h in mostradas]
         self.stats = {
             "articulos": len(articulos),
             "medios": len({a.medio for a in articulos}),
             "historias": len(todas),
             "historias_multimedio": len(candidatas),
-            "historias_al_jefe": len(al_jefe),
+            "historias_al_jefe": len(al_jefe) - len(del_libro),
+            "articulos_editoriales": len(editoriales),
+            "historias_editoriales_al_jefe": len(del_libro),
         }
         self._guardar_etapa(self.etapas.guardar_historias, al_jefe, resumidas, self.stats)
         return al_jefe, resumidas

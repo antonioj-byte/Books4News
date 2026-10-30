@@ -37,3 +37,6 @@ Si ninguna historia de la lista tiene buena lectura lateral, dilo. Prefieres pub
 
 Historias de hoy:
 [pegar lista]
+
+Del mundo del libro (de medios culturales y del sector editorial: premios, novedades, traducciones, polémicas, librerías, editoriales). Es contexto para enmarcar el día: te dice de qué se habla en la conversación literaria y te puede dar libros y autores para las historias de actualidad. No estás obligado a elegir ninguna; si una es de verdad rompehielos y tiene buena lectura lateral, puedes elegirla como una de las tres (con su id, igual que las otras):
+[pegar lista editorial]

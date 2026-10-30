@@ -80,8 +80,10 @@ def test_imagen_cifra_antetitulo_y_cubierta(cfg_diseno, pieza):
     assert "/api/medios/c.jpg" in p.html_diapositiva(pieza, 5)
 
 
-def test_render_png_de_1080x1350(cfg_diseno, pieza, tmp_path):
+def test_render_png_de_1080x1350(cfg_diseno, pieza, tmp_path, monkeypatch):
     pytest.importorskip("playwright")
+    from folio import cubiertas
+    monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)   # sin red en los tests
     from PIL import Image
     try:
         archivos, avisos = render.renderizar(cfg_diseno, [pieza], tmp_path)
