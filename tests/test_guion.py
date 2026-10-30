@@ -182,3 +182,23 @@ def test_afirmaciones_de_traduccion_van_a_revision_humana():
     afirmaciones = guion.afirmaciones_traduccion(g)
     assert len(afirmaciones) == 1 and afirmaciones[0].startswith("diapositiva 5")
     assert guion.afirmaciones_traduccion(guion_valido()) == []
+
+
+def test_libro_verificado_un_solo_criterio_para_todo():
+    """Validación, ficha del informe y PNG emparejan igual un libro del guion con su ficha."""
+    from folio import informe, render
+    from folio.modelos import Pieza
+    from datos import ELECCION
+    alice = LIBRO.model_copy(update={
+        "titulo": "Still Alice", "titulo_propuesto": "Siempre Alice", "autores": ["Lisa Genova"],
+        "edicion_es_detalle": LIBRO.edicion_es_detalle.model_copy(update={"titulo": "Siempre Alice / Still Alice",
+                                                                          "editorial": "Ediciones B"})})
+    lg = LibroGuion(titulo="Siempre Alice", autor="Lisa Genova", editorial_espanola="Ediciones B",
+                    traductor=None, edicion_original="inglés, iUniverse, 2007")
+    assert guion.libro_verificado(lg, [LIBRO, alice]) is alice
+    assert guion.libro_verificado(lg.model_copy(update={"autor": "Otra Persona"}), [alice]) is None
+    assert informe._edicion_es_guion(lg, [alice]) == "sí, Ediciones B"
+    g = guion_valido(libros=[lg])
+    pieza = Pieza(id="p", fecha="2026-10-30", estado="propuesta", historia_id="h", eleccion=ELECCION,
+                  n_medios=1, libros=[alice], guion=g)
+    assert render.ficha_libros(pieza)[0]["datos"].startswith("Ediciones B")

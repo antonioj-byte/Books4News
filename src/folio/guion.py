@@ -11,7 +11,7 @@ import re
 
 from folio.config import Config
 from folio.llm import LLM, _bloque, cargar_prompt, con_cache
-from folio.modelos import DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroVerificado
+from folio.modelos import DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroGuion, LibroVerificado
 from folio.verificacion_texto import apellido, autor_coincide, normalizar, sin_subtitulo, titulos_coinciden
 
 _COMILLAS = re.compile(r"«([^»]+)»|“([^”]+)”|\"([^\"]+)\"")
@@ -128,6 +128,13 @@ def _es_titulo_de_libro(fragmento: str, libros: list[LibroVerificado]) -> bool:
     return False
 
 
+def libro_verificado(lg: LibroGuion, libros: list[LibroVerificado]) -> LibroVerificado | None:
+    """La ficha verificada de un libro del guion: mismo autor (apellido) y uno de sus títulos (el
+    de la ficha, el propuesto, el que se usa en la pieza o el de la edición española). Es el único
+    criterio para emparejarlos: lo usan la validación, la ficha del informe, el PNG y el pipeline."""
+    return next((l for l in libros if autor_coincide(lg.autor, l.autores) and _es_titulo_de_libro(lg.titulo, [l])), None)
+
+
 def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: list[FuenteNoticia]) -> list[str]:
     p = cfg.pipeline["guion"]
     errores: list[str] = []
@@ -206,9 +213,7 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
     if not g.libros:
         errores.append("Falta la lista de libros.")
     for lg in g.libros:
-        if not any(
-            autor_coincide(lg.autor, l.autores) and _es_titulo_de_libro(lg.titulo, [l]) for l in libros
-        ):
+        if libro_verificado(lg, libros) is None:
             errores.append(f"El libro «{lg.titulo}» de {lg.autor} no está entre los verificados.")
 
     urls_validas = {f.url for f in fuentes}
@@ -245,7 +250,7 @@ def comparar_edicion(g: GuionLLM, libros: list[LibroVerificado]) -> list[Discrep
     """Datos de edición del guionista que no coinciden con los verificados (editorial, traductor, año)."""
     out: list[DiscrepanciaEdicion] = []
     for lg in g.libros:
-        l = next((l for l in libros if autor_coincide(lg.autor, l.autores) and _es_titulo_de_libro(lg.titulo, [l])), None)
+        l = libro_verificado(lg, libros)
         if l is None:
             continue
         d = l.edicion_es_detalle if l.edicion_es == "si" else None
@@ -291,7 +296,7 @@ def ajustar_libros(g: GuionLLM, libros: list[LibroVerificado]) -> list[Discrepan
     """
     discrepancias = comparar_edicion(g, libros)
     for lg in g.libros:
-        l = next((l for l in libros if autor_coincide(lg.autor, l.autores) and _es_titulo_de_libro(lg.titulo, [l])), None)
+        l = libro_verificado(lg, libros)
         if l is None:
             continue
         d = l.edicion_es_detalle if l.edicion_es == "si" else None

@@ -22,7 +22,7 @@ from markupsafe import Markup
 
 from folio.config import Config
 from folio.modelos import LibroGuion, LibroVerificado, Pieza
-from folio.verificacion_texto import autor_coincide, titulos_coinciden
+from folio.guion import libro_verificado
 
 _MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
           "octubre", "noviembre", "diciembre")
@@ -61,18 +61,11 @@ def fecha_larga(fecha: str) -> str:
     return f"{int(d)} de {_MESES[int(m) - 1]} de {a}"
 
 
-def _verificado(lg: LibroGuion, libros: list[LibroVerificado]) -> LibroVerificado | None:
-    return next((v for v in libros if autor_coincide(lg.autor, v.autores) and any(
-        titulos_coinciden(lg.titulo, t) for t in (v.titulo, v.titulo_propuesto,
-                                                  v.edicion_es_detalle.titulo if v.edicion_es_detalle else None) if t
-    )), None)
-
-
 def ficha_libros(pieza: Pieza) -> list[dict]:
     """Libros del cierre con sus datos verificados: editorial y traductor españoles, o nada."""
     out = []
     for lg in pieza.guion.libros if pieza.guion else []:
-        v = _verificado(lg, pieza.libros)
+        v = libro_verificado(lg, pieza.libros)
         datos = []
         if v and v.edicion_es == "si":
             d = v.edicion_es_detalle

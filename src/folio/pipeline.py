@@ -251,8 +251,7 @@ class Pipeline:
         pieza.revision_humana = [f"Afirma que no hay traducción ({a}): compruébalo antes de publicar"
                                  for a in guionista.afirmaciones_traduccion(pieza.guion)]
         pieza.estado = "propuesta"
-        usados = [l for l in pieza.libros if any(
-            guionista._es_titulo_de_libro(lg.titulo, [l]) for lg in pieza.guion.libros)]
+        usados = [l for l in pieza.libros if any(guionista.libro_verificado(lg, [l]) for lg in pieza.guion.libros)]
         pieza.libros = usados or pieza.libros
 
     def piezas(self, sel: SeleccionJefe, al_jefe: list[Historia]) -> list[Pieza]:

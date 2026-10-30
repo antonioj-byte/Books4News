@@ -7,7 +7,7 @@ from pathlib import Path
 
 from folio import evaluacion_md
 from folio.modelos import HistoriaElegida, InformeDiario, LibroGuion, LibroVerificado, Pieza
-from folio.verificacion_texto import autor_coincide, titulos_coinciden
+from folio.guion import libro_verificado
 
 _ESTADO = {"propuesta": "propuesta", "en_edicion": "en edición", "aprobada": "aprobada",
            "descartada": "descartada", "publicada": "publicada", "fallida": "FALLIDA"}
@@ -37,10 +37,7 @@ def _libro_md(l: LibroVerificado) -> list[str]:
 
 def _edicion_es_guion(lg: LibroGuion, libros: list[LibroVerificado]) -> str:
     """Estado de la edición española del libro del guion, según su ficha verificada."""
-    v = next((v for v in libros if autor_coincide(lg.autor, v.autores) and any(
-        titulos_coinciden(lg.titulo, t) for t in (v.titulo, v.titulo_propuesto,
-                                                  v.edicion_es_detalle.titulo if v.edicion_es_detalle else None) if t
-    )), None)
+    v = libro_verificado(lg, libros)
     if v is None or v.edicion_es == "desconocido":
         return "no consta"
     if v.edicion_es == "no":
