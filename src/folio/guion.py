@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 
 from folio.config import Config
-from folio.llm import LLM, cargar_prompt
+from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroVerificado
 from folio.verificacion_texto import apellido, autor_coincide, normalizar, sin_subtitulo, titulos_coinciden
 
@@ -267,6 +267,22 @@ def comparar_edicion(g: GuionLLM, libros: list[LibroVerificado]) -> list[Discrep
     return out
 
 
+def corregir_mecanico(g: GuionLLM) -> list[str]:
+    """Arregla en código lo puramente mecánico, sin volver a llamar al modelo: la numeración de
+    las diapositivas y la firma de Folio que falta al final del cierre. No toca nada más."""
+    hechas = []
+    if [x.n for x in g.diapositivas] != list(range(1, len(g.diapositivas) + 1)):
+        for i, x in enumerate(g.diapositivas, 1):
+            x.n = i
+        hechas.append("numeración de las diapositivas")
+    d = g.diapositivas
+    if d and d[-1].tipo == "cierre" and "folio" not in normalizar(d[-1].texto).split():
+        texto = d[-1].texto.rstrip()
+        d[-1].texto = texto + (" Folio." if texto.endswith((".", "!", "?", "…")) else ". Folio.")
+        hechas.append("firma de Folio en el cierre")
+    return hechas
+
+
 def ajustar_libros(g: GuionLLM, libros: list[LibroVerificado]) -> list[DiscrepanciaEdicion]:
     """Pone en la ficha los datos verificados y devuelve en qué discrepaba el guionista.
 
@@ -307,15 +323,24 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     """
     cfg = llm.cfg
     fuentes = [f for f, _ in textos]
-    mensajes = [{"role": "user", "content": construir_prompt(cfg, eleccion, textos, libros)}]
+    prompt = construir_prompt(cfg, eleccion, textos, libros)
+    mensajes = [{"role": "user", "content": con_cache(cfg, "guionista", prompt)}]
     errores: list[str] = []
+    avisos: list[str] = []
     for intento in range(cfg.pipeline["guion"]["reintentos"] + 1):
         guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", mensajes, GuionLLM,
                                             etapa_modelo="guion")
+        corregido = corregir_mecanico(guion)
+        if corregido:
+            avisos.append(f"Corregido en código en el intento {intento + 1}: {', '.join(corregido)}")
         errores = validar(cfg, guion, libros, fuentes)
         if not errores:
-            avisos = [f"Guion aceptado en el intento {intento + 1}"] if intento else []
+            if intento:
+                avisos.append(f"Guion aceptado en el intento {intento + 1}")
             return guion, avisos
+        # Se registra por qué se rechaza cada intento: es lo que permite saber qué reglas
+        # provocan los reintentos y si conviene reforzarlas en el prompt.
+        avisos.append(f"Rechazado en el intento {intento + 1}: " + " | ".join(errores))
         mensajes += [
             {"role": "assistant", "content": _contenido_para_reenviar(contenido)},
             {"role": "user", "content": "El guion no cumple estas condiciones:\n"

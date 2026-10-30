@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-from folio.llm import LLM, cargar_prompt
+from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import Historia, ResumenHistoria
 
 log = logging.getLogger(__name__)
@@ -30,7 +30,8 @@ def resumir(llm: LLM, historias: list[Historia]) -> list[str]:
         prompt = cargar_prompt(llm.cfg, "ingesta_resumen", {"[articulos]": _bloque_articulos(h)})
         try:
             r, _ = llm.estructurado(
-                f"resumen:{h.id}", [{"role": "user", "content": prompt}], ResumenHistoria,
+                f"resumen:{h.id}", [{"role": "user", "content": con_cache(llm.cfg, "ingesta_resumen", prompt)}],
+                ResumenHistoria,
                 etapa_modelo="ingesta", max_tokens=2000,
             )
             h.titular_es, h.resumen_es, h.seccion = r.titular_es, r.resumen_es, r.seccion

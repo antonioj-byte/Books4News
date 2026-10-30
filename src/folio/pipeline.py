@@ -22,7 +22,7 @@ from folio.ingesta import agrupacion, resumen, rss
 from folio.libros.verificacion import NoVerificado, Verificador
 from folio.llm import LLM
 from folio.modelos import (
-    Articulo, Historia, HistoriaElegida, HistoriaResumida, InformeDiario, LibroDescartado,
+    Articulo, FuenteNoticia, Historia, HistoriaElegida, HistoriaResumida, InformeDiario, LibroDescartado,
     LibroVerificado, Pieza, SeleccionJefe,
 )
 from folio.verificacion_texto import clave_libro
@@ -144,6 +144,20 @@ class Pipeline:
                 ok.append(l)
         return ok, descartes
 
+    def _textos(self, h: Historia) -> list[tuple[FuenteNoticia, str]]:
+        """Textos de la historia, congelados en data/cache/<fecha>/textos/ la primera vez.
+
+        Los medios cambian sus páginas y a veces bloquean (403): relanzar el mismo día con los
+        mismos textos permite comparar guiones y comprobar hechos sobre lo que vio el guionista.
+        Para descargarlos de nuevo, se borra el archivo.
+        """
+        ruta = self.cache / "textos" / f"{h.id}.json"
+        if ruta.exists():
+            return [(FuenteNoticia.model_validate(x["fuente"]), x["texto"]) for x in _cargar(ruta)]
+        tx = textos.textos_historia(self.cfg, h)
+        _guardar(ruta, [{"fuente": f.model_dump(mode="json"), "texto": t} for f, t in tx])
+        return tx
+
     def piezas(self, sel: SeleccionJefe, al_jefe: list[Historia]) -> list[Pieza]:
         por_id = {h.id: h for h in al_jefe}
         objetivo = len(sel.elegidas)
@@ -170,7 +184,7 @@ class Pipeline:
                     pieza.avisos.append(f"«{l.titulo_propuesto}»: edición española {l.edicion_es}")
             if not any(l.edicion_es == "si" for l in libros):
                 pieza.avisos.append("Ningún libro verificado tiene edición española")
-            textos_h = textos.textos_historia(self.cfg, h)
+            textos_h = self._textos(h)
             pieza.fuentes = [f for f, _ in textos_h]
             if not any(f.texto_completo for f in pieza.fuentes):
                 pieza.avisos.append("Ningún texto completo disponible: el guionista solo tuvo titulares y entradillas")

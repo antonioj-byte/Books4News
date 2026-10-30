@@ -21,6 +21,16 @@ Tono: el de un buen columnista de cultura. Claro, con criterio, sin solemnidad n
 
 Antes de escribir, propón tres formulaciones distintas de la idea nueva, elige la más sorprendente y defendible, y explica en una línea por qué.
 
+Antes de devolver el JSON, repasa esta lista; el guion se rechaza si no la cumple:
+- Diapositivas numeradas 1, 2, 3… La primera, de tipo portada; la última, de tipo cierre. Una de actualidad como mucho, al menos una de libro (la primera, en la 2 o la 3) y una de idea.
+- Más de 5 diapositivas solo con una línea en `justificacion_extra` por cada una de más.
+- Portada: 12 palabras como máximo, sin el libro ni el autor y sin acabar en pregunta.
+- Cierre: nombra el libro y a su autor, y termina con la firma Folio.
+- Ningún texto entre comillas salvo títulos de libros verificados. Nada de «en un mundo donde».
+- Pie: entre 80 y 150 palabras, nombra el libro y cita al menos uno de los medios de los textos recibidos.
+- Solo libros de la lista verificada. En `fuentes_noticia`, el medio y la URL exactos de los textos recibidos.
+- Sobre la traducción, nada, salvo que conste verificado que no hay edición española.
+
 Devuelve JSON:
 {
   "idea_nueva_candidatas": ["...", "...", "..."],

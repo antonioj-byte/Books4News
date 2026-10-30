@@ -176,8 +176,10 @@ class FuenteNoticia(BaseModel):
 class Traza(BaseModel):
     paso: str
     modelo: str
-    tokens_entrada: int = 0
+    tokens_entrada: int = 0              # entrada no cacheada
     tokens_salida: int = 0
+    tokens_cache_escritura: int = 0
+    tokens_cache_lectura: int = 0
     coste_usd: float = 0.0
     nota: str | None = None
 

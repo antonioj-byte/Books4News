@@ -29,7 +29,9 @@ def test_comprobar_rebaja_lo_que_no_se_sostiene(cfg):
 
         def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
             assert etapa_modelo == "comprobacion"
-            assert "<guion>" in mensajes[0]["content"] and "<fuente" in mensajes[0]["content"]
+            contenido = mensajes[0]["content"]
+            texto = "".join(b["text"] for b in contenido) if isinstance(contenido, list) else contenido
+            assert "<guion>" in texto and "<fuente" in texto
             return esquema(hechos=[_h("died at his home in Los Angeles"), _h("died in a hospital in London")]), []
 
     from datos import guion_valido

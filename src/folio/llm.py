@@ -8,6 +8,7 @@ etiquetas para que el modelo los trate como datos y no como instrucciones.
 from __future__ import annotations
 
 import logging
+import re
 from typing import TypeVar
 
 import anthropic
@@ -39,6 +40,30 @@ def cargar_prompt(cfg: Config, nombre: str, reemplazos: dict[str, str]) -> str:
     return texto
 
 
+_MARCADOR = re.compile(r"\[(?:pegar[^\]]*|articulos)\]")
+# El mínimo cacheable (512 tokens en los modelos 5.5) cuenta todo el prefijo, esquema de salida
+# incluido; por debajo, la API no cachea y no cobra nada extra. Basta con que haya parte fija.
+_MIN_CACHE_CARACTERES = 200
+
+
+def con_cache(cfg: Config, nombre: str, texto: str) -> str | list[dict]:
+    """Parte el prompt ya rellenado en dos bloques: el texto fijo de prompts/<nombre>.md hasta el
+    primer marcador, marcado para la caché de prompts, y el resto (los datos del día).
+
+    Así las llamadas seguidas con el mismo prompt (los tres guiones, los resúmenes) leen las
+    instrucciones de la caché. Si la parte fija es demasiado corta, se devuelve el texto tal cual.
+    """
+    plantilla = (cfg.dir_prompts / f"{nombre}.md").read_text(encoding="utf-8")
+    m = _MARCADOR.search(plantilla)
+    fijo = plantilla[: m.start()] if m else plantilla
+    if len(fijo) < _MIN_CACHE_CARACTERES or not texto.startswith(fijo) or len(texto) == len(fijo):
+        return texto
+    return [
+        {"type": "text", "text": fijo, "cache_control": {"type": "ephemeral"}},
+        {"type": "text", "text": texto[len(fijo):]},
+    ]
+
+
 class LLM:
     def __init__(self, cfg: Config, cliente: anthropic.Anthropic | None = None):
         self.cfg = cfg
@@ -53,11 +78,15 @@ class LLM:
             self._cliente = anthropic.Anthropic(api_key=self.cfg.anthropic_api_key, max_retries=4)
         return self._cliente
 
-    def _coste(self, modelo: str, entrada: int, salida: int) -> float:
+    def _coste(self, modelo: str, entrada: int, salida: int, escritura: int = 0, lectura: int = 0) -> float:
+        """`entrada` es la entrada no cacheada; la escritura en caché cuesta 1,25 veces la entrada
+        (caché de 5 minutos) y la lectura, el tercer precio de config (o el 10 % de la entrada)."""
         precios = self.cfg.pipeline.get("precios", {}).get(modelo)
         if not precios:
             return 0.0
-        return round(entrada / 1e6 * precios[0] + salida / 1e6 * precios[1], 5)
+        lectura_precio = precios[2] if len(precios) > 2 else precios[0] * 0.1
+        return round((entrada * precios[0] + escritura * precios[0] * 1.25
+                      + lectura * lectura_precio + salida * precios[1]) / 1e6, 5)
 
     def estructurado(
         self,
@@ -92,7 +121,11 @@ class LLM:
             modelo=modelo_real,
             tokens_entrada=resp.usage.input_tokens,
             tokens_salida=resp.usage.output_tokens,
-            coste_usd=self._coste(modelo_real, resp.usage.input_tokens, resp.usage.output_tokens),
+            tokens_cache_escritura=getattr(resp.usage, "cache_creation_input_tokens", None) or 0,
+            tokens_cache_lectura=getattr(resp.usage, "cache_read_input_tokens", None) or 0,
+            coste_usd=self._coste(modelo_real, resp.usage.input_tokens, resp.usage.output_tokens,
+                                  getattr(resp.usage, "cache_creation_input_tokens", None) or 0,
+                                  getattr(resp.usage, "cache_read_input_tokens", None) or 0),
         )
         if modelo_real != modelo:
             traza.nota = f"respondió el modelo de respaldo ({modelo_real})"

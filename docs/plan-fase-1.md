@@ -186,7 +186,7 @@ Para los RSS no hace falta clave.
 
 - **Resumen por historia, no por artículo.** El modelo barato resume solo las 25 historias que llegan al jefe de cultura (unas 25 llamadas cortas), en vez de cientos de artículos. Para agrupar basta con titular y entradilla; el resumen solo hace falta para lo que se va a leer.
 - **Llamadas directas en lugar de la Batches API.** En ejecución manual, esperar a un lote es incómodo, y con 25 llamadas de Haiku el ahorro es de céntimos.
-- **Sin prompt caching.** Los prompts quedan por debajo del mínimo cacheable y solo hay una llamada por agente y pieza.
+- **Sin prompt caching** (corregido el 30/10, ver más abajo). Con el mínimo de los modelos 4.x los prompts no llegaban; con los 5.5 (512 tokens) sí.
 - **Umbral de agrupación 0,84** (coseno medio), ajustado con las noticias del 30/10/2026: con 0,82 se mezclan eventos y con 0,86 se parten. Un mismo evento puede quedar partido entre la cobertura en español y en inglés; el jefe de cultura ve ambos grupos.
 - **Textos completos** extraídos con trafilatura de los medios abiertos y parciales, uno por medio y un máximo de 5 por historia.
 - **Datos de edición en el guion**: el guionista devuelve `editorial_espanola`, `traductor` y `edicion_original` (lo pide su prompt), y el código los sustituye siempre por los de la ficha verificada. Desde el 30/10 la sustitución no es silenciosa: ver «revisar edición» más abajo.
@@ -225,3 +225,13 @@ Para los RSS no hace falta clave.
 
 **Informe**
 - Cada pieza acaba con una plantilla de evaluación humana: selección, libro, idea nueva y voz del 1 al 5, si se publicaría y un comentario. Relanzar el mismo día no borra las evaluaciones rellenadas: el informe anterior se guarda aparte.
+
+### Coste: bloque sin riesgo para la calidad (30/10/2026)
+
+Medición del 30/10 sobre una ejecución completa (1,02 $): guion 82,5 %, selección 15,7 %, comprobación de hechos 1,2 % y resúmenes 0,6 %. El 79–84 % de la salida del guionista es razonamiento interno, que se factura como salida: las palancas sobre la entrada ahorran poco. Un tercio de los guiones necesitó reintento (~0,12 $ por ejecución).
+
+- **Caché de prompts**: la parte fija de cada prompt va en un bloque con `cache_control` (`llm.con_cache`). Comprobado con la API: el primer guion escribe 2.941 tokens y el siguiente los lee; en Haiku, 1.522 (hechos) y 677 (resúmenes). El coste del informe incluye escritura (1,25 × entrada) y lectura (0,20 $/M en Opus 5.5; 10 % de la entrada si no se indica).
+- **Reintentos**: cada intento rechazado queda en los avisos con las reglas que incumplió, para saber cuáles provocan más. El prompt del guionista acaba con una lista de comprobación que repite las reglas de la validación. Numeración y firma de Folio se corrigen en código sin volver a llamar al modelo.
+- **Textos congelados** por historia en `data/cache/<fecha>/textos/`: requisito para comparar variantes (A/B) y para que la comprobación de hechos mire lo mismo que vio el guionista.
+- **Pendiente, sin riesgo, cuando haya ejecución nocturna**: API por lotes (−50 %). No admite `fallbacks`, así que los rechazos del clasificador habría que tratarlos en el código.
+- **Pendiente, con prueba A/B**: Sonnet 5.5 o esfuerzo `medium` en el guion y en el jefe de cultura; reintento sin reenviar el razonamiento del primer intento.

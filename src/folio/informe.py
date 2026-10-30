@@ -175,10 +175,11 @@ def markdown(inf: InformeDiario) -> str:
         titular = (h.titular_es or "").replace("|", "/")
         l.append(f"| {i} | {titular} | {h.seccion or ''} | {h.n_medios}: {', '.join(h.medios)} | {h.excluida or ''} |")
     if inf.trazas:
-        l += ["", "## Llamadas a modelos", "", "| Paso | Modelo | Entrada | Salida | Coste $ |", "|---|---|---|---|---|"]
+        l += ["", "## Llamadas a modelos", "",
+              "| Paso | Modelo | Entrada | Caché (escritura / lectura) | Salida | Coste $ |", "|---|---|---|---|---|---|"]
         for t in inf.trazas:
             l.append(f"| {t.paso} | {t.modelo}{' · ' + t.nota if t.nota else ''} | {t.tokens_entrada} | "
-                     f"{t.tokens_salida} | {t.coste_usd:.4f} |")
+                     f"{t.tokens_cache_escritura} / {t.tokens_cache_lectura} | {t.tokens_salida} | {t.coste_usd:.4f} |")
     return "\n".join(l) + "\n"
 
 

@@ -128,3 +128,16 @@ def test_segunda_pasada_fusiona_grupos_del_mismo_evento():
     fusionadas = agrupacion.agrupar(arts, v, 0.99, umbral_fusion=0.92)
     grupos = sorted(sorted(a.id for a in h.articulos) for h in fusionadas)
     assert ["a1", "a2", "b1", "b2"] in grupos and ["c1", "c2"] in grupos
+
+
+def test_textos_congelados_por_historia(cfg, monkeypatch):
+    p, _ = _pipeline(cfg, monkeypatch, [])
+    descargas = []
+    monkeypatch.setattr(textos, "textos_historia",
+                        lambda cfg, h: descargas.append(h.id) or [(FUENTES[0], "Texto de la noticia aquí.")])
+    arts = _articulos()
+    h = agrupacion.agrupar(arts, _vectores(arts), 0.84)[0]
+    primero = p._textos(h)
+    segundo = p._textos(h)
+    assert descargas == [h.id]  # la segunda vez sale de data/cache/<fecha>/textos/
+    assert primero == segundo and (p.cache / "textos" / f"{h.id}.json").exists()
