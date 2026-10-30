@@ -251,13 +251,15 @@ def _cubiertas(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
 
 
 def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: set[str] | None = None,
-            portadas_del_dia: list[str] | None = None) -> Arte:
+            portadas_del_dia: list[str] | None = None, dir_fecha: Path | None = None) -> Arte:
     """Etapa de arte de una pieza: propuesta, imagen de archivo, composición, ilustración (si toca),
     retrato del autor y cubiertas. `usadas`: imágenes ya elegidas hoy (no se repiten; se añade la
-    elegida). `portadas_del_dia`: composiciones y colores ya elegidos hoy, para variar."""
+    elegida). `portadas_del_dia`: composiciones y colores ya elegidos hoy, para variar. `dir_fecha`:
+    dónde se guardan las imágenes (por defecto, data/cache/<fecha>; las ejecuciones de prueba usan otra
+    carpeta para no pisar las de las piezas de verdad, que tienen los mismos ids)."""
     usadas = usadas if usadas is not None else set()
     datos = _bloque_pieza(pieza, seccion)
-    dir_fecha = cfg.dir_cache(pieza.fecha)
+    dir_fecha = dir_fecha or cfg.dir_cache(pieza.fecha)
     propuesta = _propuesta(llm, cfg, pieza, datos, portadas_del_dia)
     arte = Arte(tono=propuesta.tono, recurso=propuesta.recurso, portada=propuesta.portada, consultas=propuesta.consultas,
                 cifra=propuesta.cifra, cifra_rotulo=propuesta.cifra_rotulo, por_que=propuesta.por_que,

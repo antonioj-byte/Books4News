@@ -265,3 +265,15 @@ def test_carril_editorial_solo_historias_de_libros(cfg, monkeypatch):
     editoriales = [h for h in al_jefe if h.carril == "editorial"]
     assert [h.articulos[0].id for h in editoriales] == ["e1"]
     assert all(a.carril == "actualidad" for h in al_jefe if h.carril == "actualidad" for a in h.articulos)
+
+
+def test_las_pruebas_guardan_las_imagenes_aparte(cfg, monkeypatch):
+    """Las piezas de prueba tienen los mismos ids que las de verdad: sus imágenes van a otra carpeta."""
+    p, llm = _pipeline(cfg, monkeypatch, [guion_valido()], fecha="2026-10-29")
+    from folio import arte
+    carpetas = []
+    real = arte.dirigir
+    monkeypatch.setattr(arte, "dirigir", lambda *a, **k: carpetas.append(a[6] if len(a) > 6 else k.get("dir_fecha")) or real(*a, **k))
+    p.prueba = True          # como --dev o --solo-pieza
+    p.ejecutar()
+    assert carpetas and all(c is not None and c.name == "prueba" for c in carpetas)
