@@ -136,17 +136,17 @@ def libro_verificado(lg: LibroGuion, libros: list[LibroVerificado]) -> LibroVeri
 
 
 def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: list[FuenteNoticia]) -> list[str]:
-    p = cfg.pipeline["guion"]
+    p = cfg.pipeline.guion
     errores: list[str] = []
     d = g.diapositivas
 
     if not 4 <= len(d) <= 7:
         errores.append(f"Hay {len(d)} diapositivas; deben ser entre 4 y 7.")
-    extra = len(d) - p["diapositivas_por_defecto"]
+    extra = len(d) - p.diapositivas_por_defecto
     if extra > 0 and len([j for j in g.justificacion_extra if j.strip()]) < extra:
         errores.append(
             f"Hay {len(d)} diapositivas: justifica en justificacion_extra, con una línea cada una, "
-            f"qué aporta cada una de las {extra} por encima de {p['diapositivas_por_defecto']}, o recorta."
+            f"qué aporta cada una de las {extra} por encima de {p.diapositivas_por_defecto}, o recorta."
         )
     if [x.n for x in d] != list(range(1, len(d) + 1)):
         errores.append("Las diapositivas deben numerarse 1, 2, 3… sin saltos.")
@@ -158,7 +158,7 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
         if not any(x.tipo == tipo for x in d):
             errores.append(f"Falta una diapositiva de tipo «{tipo}».")
     for x in d:
-        limite = p["palabras_max_portada"] if x.tipo == "portada" else p["palabras_max_diapositiva"]
+        limite = p.palabras_max_portada if x.tipo == "portada" else p.palabras_max_diapositiva
         if _palabras(x.texto) > limite:
             errores.append(f"La diapositiva {x.n} ({x.tipo}) tiene {_palabras(x.texto)} palabras; máximo {limite}.")
     # La noticia abre la pieza, el libro entra pronto y protagoniza el cierre.
@@ -167,13 +167,13 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
     if d and d[-1].tipo == "cierre" and not _menciona_libro(d[-1].texto, libros):
         errores.append("El cierre es la recomendación: nombra el libro (título en cursiva) y a su autor.")
     n_actualidad = sum(x.tipo == "actualidad" for x in d)
-    if n_actualidad > p["max_diapositivas_actualidad"]:
-        errores.append(f"Hay {n_actualidad} diapositivas de actualidad; máximo {p['max_diapositivas_actualidad']}. "
+    if n_actualidad > p.max_diapositivas_actualidad:
+        errores.append(f"Hay {n_actualidad} diapositivas de actualidad; máximo {p.max_diapositivas_actualidad}. "
                        "La noticia es la excusa: resúmela.")
     primer_libro = next((x.n for x in d if x.tipo == "libro"), None)
-    if primer_libro and primer_libro > p["posicion_max_primer_libro"]:
+    if primer_libro and primer_libro > p.posicion_max_primer_libro:
         errores.append(f"El libro entra en la diapositiva {primer_libro}; debe hacerlo como muy tarde en la "
-                       f"{p['posicion_max_primer_libro']}.")
+                       f"{p.posicion_max_primer_libro}.")
     if not _menciona_libro(g.pie_instagram, libros):
         errores.append("El pie debe nombrar el libro que recomienda la pieza.")
     if d and d[0].texto.strip().endswith("?"):
@@ -205,8 +205,8 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
                 )
 
     n_pie = _palabras(g.pie_instagram)
-    if not p["pie_min_palabras"] <= n_pie <= p["pie_max_palabras"]:
-        errores.append(f"El pie tiene {n_pie} palabras; debe tener entre {p['pie_min_palabras']} y {p['pie_max_palabras']}.")
+    if not p.pie_min_palabras <= n_pie <= p.pie_max_palabras:
+        errores.append(f"El pie tiene {n_pie} palabras; debe tener entre {p.pie_min_palabras} y {p.pie_max_palabras}.")
     if not any(normalizar(f.medio) in normalizar(g.pie_instagram) for f in fuentes):
         errores.append("El pie debe citar el medio de la noticia (uno de: " + ", ".join(f.medio for f in fuentes) + ").")
 
@@ -327,7 +327,7 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     mensajes = [{"role": "user", "content": con_cache(cfg, "guionista", prompt)}]
     errores: list[str] = []
     avisos: list[str] = []
-    for intento in range(cfg.pipeline["guion"]["reintentos"] + 1):
+    for intento in range(cfg.pipeline.guion.reintentos + 1):
         guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", mensajes, GuionLLM,
                                             etapa_modelo="guion")
         corregido = corregir_mecanico(guion)

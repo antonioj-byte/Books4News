@@ -76,14 +76,14 @@ def _descargar(cliente: httpx.Client, fuente: Fuente) -> tuple[Fuente, list[Arti
 def ingerir(cfg: Config, ahora: datetime | None = None) -> tuple[list[Articulo], list[str]]:
     """Devuelve los artículos dentro de la ventana, deduplicados, y los errores por feed."""
     ahora = ahora or datetime.now(timezone.utc)
-    limite = ahora - timedelta(hours=cfg.pipeline["ingesta"]["ventana_horas"])
+    limite = ahora - timedelta(hours=cfg.pipeline.ingesta.ventana_horas)
     errores: list[str] = []
     vistos_url: set[str] = set()
     vistos_titulo: set[tuple[str, str]] = set()
     articulos: list[Articulo] = []
 
     with httpx.Client(
-        timeout=cfg.pipeline["ingesta"]["timeout_s"],
+        timeout=cfg.pipeline.ingesta.timeout_s,
         follow_redirects=True,
         headers={"User-Agent": f"Mozilla/5.0 (compatible; {cfg.user_agent})"},
     ) as cliente, ThreadPoolExecutor(max_workers=8) as pool:

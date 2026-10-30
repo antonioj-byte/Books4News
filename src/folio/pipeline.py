@@ -98,7 +98,7 @@ class Pipeline:
     def embedder(self) -> agrupacion.Embedder:
         """Un único modelo de embeddings por ejecución: cargarlo cuesta 2 GB de memoria."""
         if getattr(self, "_embedder", None) is None:
-            self._embedder = agrupacion.Embedder(self.cfg.pipeline["agrupacion"]["modelo_embeddings"], self.cache)
+            self._embedder = agrupacion.Embedder(self.cfg.pipeline.agrupacion.modelo_embeddings, self.cache)
         return self._embedder
 
     def vectores(self, articulos: list[Articulo]) -> dict[str, np.ndarray]:
@@ -107,19 +107,18 @@ class Pipeline:
     def historias(self, articulos: list[Articulo], vectores, con_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
         """Agrupa, excluye las ya usadas y resume las que pasan al jefe de cultura."""
         p = self.cfg.pipeline
-        todas = agrupacion.agrupar(articulos, vectores, p["agrupacion"]["umbral_similitud"],
-                                   p["agrupacion"].get("umbral_fusion"))
-        candidatas = [h for h in todas if h.n_medios >= p["agrupacion"]["min_medios"]]
-        usadas = self.historial.centroides_recientes(self.fecha, p["exclusion"]["dias_historias"])
+        todas = agrupacion.agrupar(articulos, vectores, p.agrupacion.umbral_similitud, p.agrupacion.umbral_fusion)
+        candidatas = [h for h in todas if h.n_medios >= p.agrupacion.min_medios]
+        usadas = self.historial.centroides_recientes(self.fecha, p.exclusion.dias_historias)
 
         al_jefe: list[Historia] = []
         excluidas: dict[str, str] = {}
         for h in candidatas:
-            if len(al_jefe) >= p["seleccion"]["historias_al_jefe"]:
+            if len(al_jefe) >= p.seleccion.historias_al_jefe:
                 break
             c = agrupacion.centroide(h, vectores)
             repetida = next(((f, t) for f, t, cu in usadas
-                             if float(np.dot(c, cu)) >= p["exclusion"]["umbral_historia_repetida"]), None)
+                             if float(np.dot(c, cu)) >= p.exclusion.umbral_historia_repetida), None)
             if repetida:
                 excluidas[h.id] = f"ya usada el {repetida[0]} («{repetida[1]}»)"
             else:
@@ -160,7 +159,7 @@ class Pipeline:
     def _verificar_libros(self, e: HistoriaElegida, ya_usados: set[str]) -> tuple[list[LibroVerificado], list[LibroDescartado]]:
         if self.verificador is None:
             self.verificador = Verificador(self.cfg)
-        dias = self.cfg.pipeline["exclusion"]["dias_libros"]
+        dias = self.cfg.pipeline.exclusion.dias_libros
         ok, descartes = [], []
         for c in e.libros_candidatos:
             try:

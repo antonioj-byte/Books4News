@@ -23,7 +23,7 @@ def bloque_historias(historias: list[Historia]) -> str:
 
 def seleccionar(llm: LLM, historias: list[Historia]) -> tuple[SeleccionJefe, list[str]]:
     """Devuelve la selección y avisos de validación (ids desconocidos, recuentos)."""
-    cfg = llm.cfg.pipeline["seleccion"]
+    cfg = llm.cfg.pipeline.seleccion
     prompt = cargar_prompt(llm.cfg, "jefe_cultura", {"[pegar lista]": bloque_historias(historias)})
     sel, _ = llm.estructurado("seleccion", [{"role": "user", "content": prompt}], SeleccionJefe,
                               etapa_modelo="seleccion")

@@ -45,20 +45,20 @@ def elegir_articulos(cfg: Config, historia: Historia, puntuaciones: dict[str, fl
     `max_textos`: los que quedan a más de `margen` del mejor se descartan mientras queden al
     menos `min_textos`. Sin puntuaciones, se ordena solo por acceso.
     """
-    p = cfg.pipeline["guion"]
-    sel = cfg.pipeline.get("seleccion_textos", {})
-    bonus = sel.get("bonus_acceso", {"abierto": 0.02, "parcial": 0.01, "muro": 0.0})
+    p = cfg.pipeline.guion
+    sel = cfg.pipeline.seleccion_textos
+    bonus = sel.bonus_acceso
     def valor(a: Articulo) -> float:
         base = puntuaciones.get(a.id, 0.0) if puntuaciones else 0.0
         return base + bonus.get(a.acceso, 0.0)
     por_medio: dict[str, Articulo] = {}
     for a in sorted(historia.articulos, key=lambda a: (-valor(a), _PRIORIDAD[a.acceso])):
         por_medio.setdefault(a.medio, a)
-    elegidos = sorted(por_medio.values(), key=lambda a: (-valor(a), _PRIORIDAD[a.acceso]))[: p["max_textos"]]
+    elegidos = sorted(por_medio.values(), key=lambda a: (-valor(a), _PRIORIDAD[a.acceso]))[: p.max_textos]
     if puntuaciones and elegidos:
         mejor = valor(elegidos[0])
-        minimo = sel.get("min_textos", 3)
-        cercanos = [a for a in elegidos if mejor - valor(a) <= sel.get("margen", 0.06)]
+        minimo = sel.min_textos
+        cercanos = [a for a in elegidos if mejor - valor(a) <= sel.margen]
         elegidos = cercanos if len(cercanos) >= minimo else elegidos[:minimo]
     return elegidos
 
@@ -66,7 +66,7 @@ def elegir_articulos(cfg: Config, historia: Historia, puntuaciones: dict[str, fl
 def textos_historia(cfg: Config, historia: Historia, puntuaciones: dict[str, float] | None = None
                     ) -> list[tuple[FuenteNoticia, str]]:
     """Textos de los artículos elegidos (ver elegir_articulos), priorizando el acceso abierto."""
-    max_car = cfg.pipeline["guion"]["max_caracteres_texto"]
+    max_car = cfg.pipeline.guion.max_caracteres_texto
     elegidos = elegir_articulos(cfg, historia, puntuaciones)
 
     with httpx.Client(

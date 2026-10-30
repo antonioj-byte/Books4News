@@ -40,6 +40,6 @@ def resumir(llm: LLM, historias: list[Historia]) -> list[str]:
             h.titular_es = h.articulos[0].titulo  # sin resumen: se usa el titular original
             h.resumen_es = h.articulos[0].entradilla[:300]
 
-    with ThreadPoolExecutor(max_workers=llm.cfg.pipeline["ingesta"]["concurrencia_llm"]) as pool:
+    with ThreadPoolExecutor(max_workers=llm.cfg.pipeline.ingesta.concurrencia_llm) as pool:
         list(pool.map(uno, historias))
     return errores

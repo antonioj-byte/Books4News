@@ -25,7 +25,7 @@ from pathlib import Path
 from folio import evaluacion_md
 from folio import guion as guionista
 from folio import hechos
-from folio.config import Config
+from folio.config import Config, VarianteAB
 from folio.llm import LLM
 from folio.modelos import FuenteNoticia, GuionLLM, Historia, Pieza
 from pydantic import TypeAdapter
@@ -45,14 +45,14 @@ class Version:
     avisos: list[str] = field(default_factory=list)
 
 
-def _cfg_variante(cfg: Config, v: dict) -> Config:
+def _cfg_variante(cfg: Config, v: VarianteAB) -> Config:
     c = copy.deepcopy(cfg)
-    c.pipeline["modelos"]["guion"] = v["modelo"]
-    c.pipeline["esfuerzo"]["guion"] = v["esfuerzo"]
+    c.pipeline.modelos["guion"] = v.modelo
+    c.pipeline.esfuerzo["guion"] = v.esfuerzo
     return c
 
 
-def _escribir(cfg: Config, nombre: str, v: dict, pieza: Pieza, textos: list[tuple[FuenteNoticia, str]],
+def _escribir(cfg: Config, nombre: str, v: VarianteAB, pieza: Pieza, textos: list[tuple[FuenteNoticia, str]],
               reutilizar: bool) -> Version:
     llm = LLM(_cfg_variante(cfg, v), reutilizar=reutilizar)
     try:
@@ -87,7 +87,9 @@ def _md_version(pieza_id: str, letra: str, g: GuionLLM | None) -> list[str]:
 
 def generar(cfg: Config, fecha: str, textos_de, reutilizar: bool = False) -> tuple[Path, Path]:
     """`textos_de(historia_id)` devuelve los textos congelados de la historia."""
-    ab = cfg.pipeline["ab"]
+    ab = cfg.pipeline.ab
+    if ab is None:
+        raise ValueError("Falta la sección «ab» en config/pipeline.yaml")
     ruta_piezas = cfg.dir_cache(fecha) / "piezas.json"
     if not ruta_piezas.exists():
         raise FileNotFoundError(f"No existe {ruta_piezas}: ejecuta antes el pipeline del día")
@@ -102,12 +104,13 @@ def generar(cfg: Config, fecha: str, textos_de, reutilizar: bool = False) -> tup
     md = [f"# Prueba A/B del guion · {fecha}", "",
           "Cada pieza tiene varias versiones escritas con los mismos libros y las mismas noticias. "
           "No se dice qué modelo escribió cada una: evalúalas antes de abrir `ab_clave.json`.", ""]
-    clave: dict = {"fecha": fecha, "control": ab["control"], "variantes": ab["variantes"], "piezas": {}}
+    clave: dict = {"fecha": fecha, "control": ab.control,
+                   "variantes": {k: v.model_dump() for k, v in ab.variantes.items()}, "piezas": {}}
     for pieza in piezas:
         textos = textos_de(pieza.historia_id)
         versiones = []
-        for nombre, v in ab["variantes"].items():
-            if nombre == ab["control"] and ab.get("reutilizar_control", True):
+        for nombre, v in ab.variantes.items():
+            if nombre == ab.control and ab.reutilizar_control:
                 # El guion de producción ya es el control: mismas condiciones, sin pagarlo dos veces.
                 ver = Version(nombre, pieza.guion, avisos=["guion de producción"])
             else:
@@ -149,7 +152,7 @@ def _nota(v: str | None) -> float | None:
 def resultados(cfg: Config) -> str:
     """Agrega todas las pruebas A/B evaluadas y compara cada variante con el control."""
     filas: dict[str, dict] = {}
-    control = cfg.pipeline["ab"]["control"]
+    control = cfg.pipeline.ab.control if cfg.pipeline.ab else None
     for ruta_clave in sorted(cfg.dir_informes.glob("*/ab/ab_clave.json")):
         clave = json.loads(ruta_clave.read_text(encoding="utf-8"))
         evals = evaluaciones((ruta_clave.parent / "ab.md").read_text(encoding="utf-8"))

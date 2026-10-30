@@ -94,7 +94,7 @@ class LLM:
     def _coste(self, modelo: str, entrada: int, salida: int, escritura: int = 0, lectura: int = 0) -> float:
         """`entrada` es la entrada no cacheada; la escritura en caché cuesta 1,25 veces la entrada
         (caché de 5 minutos) y la lectura, el tercer precio de config (o el 10 % de la entrada)."""
-        precios = self.cfg.pipeline.get("precios", {}).get(modelo)
+        precios = self.cfg.pipeline.precios.get(modelo)
         if not precios:
             return 0.0
         lectura_precio = precios[2] if len(precios) > 2 else precios[0] * 0.1
