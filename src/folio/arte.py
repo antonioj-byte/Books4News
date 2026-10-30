@@ -23,7 +23,7 @@ import httpx
 import yaml
 from PIL import Image, ImageDraw, ImageFont
 
-from folio.imagenes import cubiertas, ilustracion, libres as imagenes, retratos
+from folio.imagenes import cubiertas, ilustracion, libres, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import Arte, EleccionImagen, Pieza, PropuestaArte
@@ -87,7 +87,7 @@ def validar_remate(remate: str | None, titular: str) -> str | None:
     return r
 
 
-def _descargar(c: httpx.Client, cand: imagenes.ImagenLibre) -> Image.Image | None:
+def _descargar(c: httpx.Client, cand: libres.ImagenLibre) -> Image.Image | None:
     try:
         r = c.get(cand.url)
         r.raise_for_status()
@@ -102,7 +102,7 @@ def _descargar(c: httpx.Client, cand: imagenes.ImagenLibre) -> Image.Image | Non
 _GRABADO = " AND (engraving OR illustration OR drawing OR lithograph OR woodcut)"
 
 
-def candidatas(propuesta: PropuestaArte, excluir: set[str] = frozenset()) -> list[tuple[imagenes.ImagenLibre, Image.Image]]:
+def candidatas(propuesta: PropuestaArte, excluir: set[str] = frozenset()) -> list[tuple[libres.ImagenLibre, Image.Image]]:
     """Imágenes libres para las consultas, ya descargadas y con tamaño suficiente. Si con el
     recurso pedido salen pocas, se completa con las mismas consultas sin restringir el tipo."""
     vistas, out = set(excluir), []
@@ -113,13 +113,13 @@ def candidatas(propuesta: PropuestaArte, excluir: set[str] = frozenset()) -> lis
         if i >= 4 and len(out) >= 3:
             break
         try:
-            encontradas = [c for c in imagenes.buscar_europeana(q, 10)
+            encontradas = [c for c in libres.buscar_europeana(q, 10)
                            if c.libre and c.archivo not in vistas and c.url not in vistas]
         except httpx.HTTPError:
             continue
         for c in encontradas:
             vistas |= {c.archivo, c.url}
-        with httpx.Client(headers={"User-Agent": imagenes.AGENTE}, timeout=30, follow_redirects=True) as cli, \
+        with httpx.Client(headers={"User-Agent": libres.AGENTE}, timeout=30, follow_redirects=True) as cli, \
                 ThreadPoolExecutor(max_workers=6) as pool:
             for c, im in zip(encontradas, pool.map(lambda x: _descargar(cli, x), encontradas)):
                 if im is not None:
@@ -151,58 +151,58 @@ def hoja_de_contactos(imgs: list[Image.Image]) -> bytes:
     return b.getvalue()
 
 
-def _guardar_imagen(cand: imagenes.ImagenLibre, im: Image.Image, eleccion: EleccionImagen,
+def _guardar_imagen(cand: libres.ImagenLibre, im: Image.Image, eleccion: EleccionImagen,
                     pieza_id: str, dir_cache_fecha: Path) -> None:
-    carpeta = imagenes.dir_imagenes(dir_cache_fecha)
+    carpeta = libres.dir_imagenes(dir_cache_fecha)
     carpeta.mkdir(parents=True, exist_ok=True)
     im.convert("RGB").save(carpeta / f"{pieza_id}.jpg", quality=92)
     cand.local = f"{pieza_id}.jpg"
     cand.enfoque = (max(0, min(100, eleccion.enfoque_x)), max(0, min(100, eleccion.enfoque_y)))
-    imagenes.guardar_metadatos(cand, pieza_id, dir_cache_fecha)
+    libres.guardar_metadatos(cand, pieza_id, dir_cache_fecha)
 
 
-def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: set[str] | None = None,
-            portadas_del_dia: list[str] | None = None) -> Arte:
-    """Etapa de arte de una pieza: propuesta, búsqueda, elección e imagen fijada (si la hay).
-    `usadas`: imágenes ya elegidas para otras piezas del día (no se repiten); se añade la elegida."""
-    usadas = usadas if usadas is not None else set()
-    datos = _bloque_pieza(pieza, seccion)
-    ya = f"\ncomposiciones y colores ya elegidos hoy para otras piezas (no repitas composición ni, si puedes, color): {', '.join(portadas_del_dia)}" if portadas_del_dia else ""
+def _propuesta(llm: LLM, cfg: Config, pieza: Pieza, datos: str, portadas_del_dia: list[str] | None) -> PropuestaArte:
+    ya = (f"\ncomposiciones y colores ya elegidos hoy para otras piezas (no repitas composición ni, si puedes, "
+          f"color): {', '.join(portadas_del_dia)}") if portadas_del_dia else ""
     prompt = cargar_prompt(cfg, "director_arte", {"[pegar pieza]": datos + ya})
     propuesta, _ = llm.estructurado(f"arte:{pieza.id}", [{"role": "user", "content": con_cache(cfg, "director_arte", prompt)}],
                                     PropuestaArte, etapa_modelo="arte", max_tokens=4000)
-    avisos = validar_cifra(propuesta, pieza)
-    arte = Arte(tono=propuesta.tono, recurso=propuesta.recurso, portada=propuesta.portada, consultas=propuesta.consultas,
-                cifra=propuesta.cifra, cifra_rotulo=propuesta.cifra_rotulo, por_que=propuesta.por_que, avisos=avisos)
-    dir_fecha = cfg.dir_cache(pieza.fecha)
-    imagenes.olvidar(pieza.id, dir_fecha)
+    return propuesta
 
+
+def _imagen_de_archivo(llm: LLM, cfg: Config, pieza: Pieza, datos: str, propuesta: PropuestaArte, arte: Arte,
+                       usadas: set[str], dir_fecha: Path) -> None:
+    """Busca candidatas libres, el modelo elige una viendo la hoja de contactos y se fija."""
+    libres.olvidar(pieza.id, dir_fecha)
     cands = candidatas(propuesta, usadas)
     if not cands:
         arte.avisos.append("Sin imagen: ninguna candidata libre y con tamaño suficiente")
+        return
+    lista = "\n".join(f"{i}. {c.descripcion[:160]} ({c.institucion or c.fuente})" for i, (c, _) in enumerate(cands, 1))
+    texto = cargar_prompt(cfg, "director_arte_eleccion", {
+        "[pegar pieza]": f"{datos}\nevitar: {', '.join(propuesta.evitar) or 'nada en particular'}\n"
+                         f"suceso con víctimas: {'sí' if propuesta.suceso_con_victimas else 'no'}",
+        "[pegar candidatas]": lista,
+    })
+    hoja = base64.b64encode(hoja_de_contactos([im for _, im in cands])).decode()
+    eleccion, _ = llm.estructurado(f"arte-eleccion:{pieza.id}", [{"role": "user", "content": [
+        {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": hoja}},
+        {"type": "text", "text": texto},
+    ]}], EleccionImagen, etapa_modelo="arte", max_tokens=2000)
+    arte.por_que += f" Imagen: {eleccion.por_que}"
+    if eleccion.elegida is None or not 1 <= eleccion.elegida <= len(cands):
+        arte.avisos.append("Sin imagen: el director de arte no vio ninguna a la altura")
+    elif propuesta.suceso_con_victimas and eleccion.personas_reconocibles:
+        arte.avisos.append("Sin imagen: la elegida tiene personas reconocibles y la noticia tiene víctimas")
     else:
-        lista = "\n".join(f"{i}. {c.descripcion[:160]} ({c.institucion or c.fuente})" for i, (c, _) in enumerate(cands, 1))
-        texto = cargar_prompt(cfg, "director_arte_eleccion", {
-            "[pegar pieza]": f"{datos}\nevitar: {', '.join(propuesta.evitar) or 'nada en particular'}\n"
-                             f"suceso con víctimas: {'sí' if propuesta.suceso_con_victimas else 'no'}",
-            "[pegar candidatas]": lista,
-        })
-        hoja = base64.b64encode(hoja_de_contactos([im for _, im in cands])).decode()
-        eleccion, _ = llm.estructurado(f"arte-eleccion:{pieza.id}", [{"role": "user", "content": [
-            {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": hoja}},
-            {"type": "text", "text": texto},
-        ]}], EleccionImagen, etapa_modelo="arte", max_tokens=2000)
-        arte.por_que += f" Imagen: {eleccion.por_que}"
-        if eleccion.elegida is None or not 1 <= eleccion.elegida <= len(cands):
-            arte.avisos.append("Sin imagen: el director de arte no vio ninguna a la altura")
-        elif propuesta.suceso_con_victimas and eleccion.personas_reconocibles:
-            arte.avisos.append("Sin imagen: la elegida tiene personas reconocibles y la noticia tiene víctimas")
-        else:
-            cand, im = cands[eleccion.elegida - 1]
-            _guardar_imagen(cand, im, eleccion, pieza.id, dir_fecha)
-            arte.imagen, arte.credito = cand.archivo, cand.credito
-            usadas |= {cand.archivo, cand.url}
+        cand, im = cands[eleccion.elegida - 1]
+        _guardar_imagen(cand, im, eleccion, pieza.id, dir_fecha)
+        arte.imagen, arte.credito = cand.archivo, cand.credito
+        usadas |= {cand.archivo, cand.url}
 
+
+def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte) -> None:
+    """Composición, antetítulo, remate y color, ajustados a lo permitido y a lo que hay."""
     permitidas = cfg.pipeline.arte.portadas
     if arte.portada not in permitidas:
         arte.portada = permitidas[0]
@@ -213,32 +213,60 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
         arte.portada = "sangre"
     if arte.portada == "collage" and not arte.imagen:
         arte.portada = "circulo"
-    if arte.portada == "ilustracion":
-        ilustracion.ruta(dir_fecha, pieza.id).unlink(missing_ok=True)
-        try:
-            campos = yaml.safe_load((cfg.raiz / "diseno" / "tokens.yaml").read_text(encoding="utf-8")).get("campos_portada", {})
-            pieza.arte = arte        # el ilustrador lee el tono
-            arte.concepto, _ = ilustracion.dibujar(llm, cfg, pieza, campos.get(arte.tono) or campos["sereno"])
-        except Exception as exc:
-            arte.portada = "circulo"
-            arte.avisos.append(f"Sin ilustración ({type(exc).__name__}: {exc}); la portada usa la imagen en círculo")
 
-    if cfg.pipeline.arte.retratos and pieza.libros and pieza.libros[0].autores:
-        for viejo in imagenes.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato.*"):
-            viejo.unlink()
-        autor = pieza.libros[0].autores[0]
-        try:
-            img, motivo = retratos.buscar_y_fijar(autor, pieza.id, dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
-            if img:
-                arte.retrato = img.credito
-            else:
-                arte.avisos.append(motivo)
-        except Exception as exc:
-            arte.avisos.append(f"No se pudo buscar el retrato de {autor}: {type(exc).__name__}")
 
-    for libro in pieza.libros:      # deja las cubiertas en la caché para el render
+def _ilustracion(llm: LLM, cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
+    ilustracion.ruta(dir_fecha, pieza.id).unlink(missing_ok=True)
+    try:
+        campos = yaml.safe_load((cfg.raiz / "diseno" / "tokens.yaml").read_text(encoding="utf-8")).get("campos_portada", {})
+        pieza.arte = arte        # el ilustrador lee el tono
+        arte.concepto, _ = ilustracion.dibujar(llm, cfg, pieza, campos.get(arte.tono) or campos["sereno"])
+    except Exception as exc:
+        arte.portada = "circulo"
+        arte.avisos.append(f"Sin ilustración ({type(exc).__name__}: {exc}); la portada usa la imagen en círculo")
+
+
+def _retrato(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
+    """El retrato del autor del libro principal (Wikidata + Commons)."""
+    for viejo in libres.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato.*"):
+        viejo.unlink()
+    autor = pieza.libros[0].autores[0]
+    try:
+        img, motivo = retratos.buscar_y_fijar(autor, pieza.id, dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
+        if img:
+            arte.retrato = img.credito
+        else:
+            arte.avisos.append(motivo)
+    except Exception as exc:
+        arte.avisos.append(f"No se pudo buscar el retrato de {autor}: {type(exc).__name__}")
+
+
+def _cubiertas(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
+    """Deja las cubiertas en la caché: el render y la vista previa de la web las leen de ahí."""
+    for libro in pieza.libros:
         try:
             cubiertas.buscar(libro, dir_fecha.parent, cfg.google_books_api_key)
         except Exception as exc:
             arte.avisos.append(f"No se pudo buscar la cubierta de {libro.titulo_propuesto}: {type(exc).__name__}")
+
+
+def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: set[str] | None = None,
+            portadas_del_dia: list[str] | None = None) -> Arte:
+    """Etapa de arte de una pieza: propuesta, imagen de archivo, composición, ilustración (si toca),
+    retrato del autor y cubiertas. `usadas`: imágenes ya elegidas hoy (no se repiten; se añade la
+    elegida). `portadas_del_dia`: composiciones y colores ya elegidos hoy, para variar."""
+    usadas = usadas if usadas is not None else set()
+    datos = _bloque_pieza(pieza, seccion)
+    dir_fecha = cfg.dir_cache(pieza.fecha)
+    propuesta = _propuesta(llm, cfg, pieza, datos, portadas_del_dia)
+    arte = Arte(tono=propuesta.tono, recurso=propuesta.recurso, portada=propuesta.portada, consultas=propuesta.consultas,
+                cifra=propuesta.cifra, cifra_rotulo=propuesta.cifra_rotulo, por_que=propuesta.por_que,
+                avisos=validar_cifra(propuesta, pieza))
+    _imagen_de_archivo(llm, cfg, pieza, datos, propuesta, arte, usadas, dir_fecha)
+    _composicion(cfg, pieza, propuesta, arte)
+    if arte.portada == "ilustracion":
+        _ilustracion(llm, cfg, pieza, arte, dir_fecha)
+    if cfg.pipeline.arte.retratos and pieza.libros and pieza.libros[0].autores:
+        _retrato(cfg, pieza, arte, dir_fecha)
+    _cubiertas(cfg, pieza, arte, dir_fecha)
     return arte
