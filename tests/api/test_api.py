@@ -125,3 +125,8 @@ def test_etapa_de_la_ejecucion(tmp_path):
         time.sleep(0.1)
     estado = e.estado()
     assert estado.etapa == "Escribiendo guiones (1 de 3)" and estado.ultimas_lineas == ["INFO algo"]
+
+
+def test_portada_del_dia_trae_los_libros_para_la_estanteria(cliente):
+    p1 = cliente.get("/api/dias/2026-10-30").json()["piezas"][0]
+    assert p1["libros"] == [{"titulo": "Eichmann en Jerusalén", "autor": "Hannah Arendt"}]

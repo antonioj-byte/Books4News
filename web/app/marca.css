@@ -1,0 +1,130 @@
+/* Marca Tapablanda para la web (la mesa de edición). Es el único sitio con colores, fuentes,
+   radios y sombras: los componentes usan las clases que salen de aquí (bg-papel, text-carmesi,
+   font-titular, .boton, .panel…). Las diapositivas de Folio tienen su propio design system
+   (diseno/tokens.yaml) y no dependen de este archivo. Fuentes en public/fuentes/ (OFL). */
+
+:root {
+  /* Paleta del brand kit */
+  --papel: #f6f3ee;
+  --papel-hondo: #ece5d9;
+  --tinta: #1c1618;
+  --carmesi: #d40549;
+  --verde: #1f4a3a;
+  --subrayador: #fff500;
+  --madera: #8a5a3b;
+  --noche: #120e0f;
+  /* Derivados para la interfaz */
+  --tinta-suave: color-mix(in srgb, var(--tinta) 62%, var(--papel));
+  --panel: #faf8f4;
+  --borde: #e6dfd3;
+  --lomo-malva: #6f5d63;
+
+  --fuente-titular: "Fraunces", Georgia, serif;
+  --fuente-texto: "Open Sans", system-ui, sans-serif;
+  --fuente-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --radio-panel: 22px;
+  --radio-boton: 14px;
+  --sombra-boton: 0 6px 16px -6px rgb(28 22 24 / 0.45);
+  --sombra-libro: 0 14px 24px -12px rgb(28 22 24 / 0.55);
+}
+
+@theme inline {
+  --color-papel: var(--papel);
+  --color-papel-hondo: var(--papel-hondo);
+  --color-tinta: var(--tinta);
+  --color-tinta-suave: var(--tinta-suave);
+  --color-carmesi: var(--carmesi);
+  --color-verde: var(--verde);
+  --color-subrayador: var(--subrayador);
+  --color-madera: var(--madera);
+  --color-noche: var(--noche);
+  --color-panel: var(--panel);
+  --color-borde: var(--borde);
+  --font-titular: var(--fuente-titular);
+  --font-texto: var(--fuente-texto);
+  --font-mono: var(--fuente-mono);
+  --radius-panel: var(--radio-panel);
+  --radius-boton: var(--radio-boton);
+}
+
+@layer components {
+  /* Antetítulos y datos: IBM Plex Mono, versalitas espaciadas, en carmesí */
+  .antetitulo {
+    font-family: var(--fuente-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--carmesi);
+  }
+  .dato {
+    font-family: var(--fuente-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--tinta-suave);
+  }
+  /* Titulares: Fraunces 600; la parte en cursiva, 400 y en carmesí */
+  .titular {
+    font-family: var(--fuente-titular);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.02;
+    color: var(--tinta);
+  }
+  .titular em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--carmesi);
+  }
+  .subrayado {
+    background: var(--subrayador);
+    padding: 0 0.15em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-panel);
+  }
+  .boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.7em 1.3em;
+    border-radius: var(--radio-boton);
+    background: var(--tinta);
+    color: var(--papel);
+    font-family: var(--fuente-texto);
+    font-weight: 600;
+    box-shadow: var(--sombra-boton);
+    transition: transform 120ms ease, background 120ms ease;
+  }
+  .boton:hover:not(:disabled) { transform: translateY(-1px); background: var(--noche); }
+  .boton:disabled { opacity: 0.55; cursor: progress; box-shadow: none; }
+  .boton-suave {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.35em 0.9em;
+    border-radius: 999px;
+    border: 1px solid var(--borde);
+    background: var(--panel);
+    font-size: 13px;
+  }
+  .boton-suave:hover { border-color: var(--tinta); }
+  .boton-suave[aria-pressed="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--papel); }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.2em 0.75em;
+    font-family: var(--fuente-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.5;
+  }
+}

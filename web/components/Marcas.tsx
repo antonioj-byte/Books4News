@@ -2,39 +2,37 @@ import type { PiezaResumen } from "@/lib/api";
 
 type Marcas = PiezaResumen["marcas"];
 
-const chip = "inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-semibold leading-tight";
-
+// Avisos de una pieza: carmesí lo grave (hechos sin comprobar, fallos), subrayador lo que hay que mirar.
 export function Marcas({ marcas, avisoJefe }: { marcas: Marcas; avisoJefe?: boolean }) {
   const lista: { texto: string; grave: boolean }[] = [];
   if (marcas.error) lista.push({ texto: "Fallida", grave: true });
-  if (marcas.hechos_no_verificados)
-    lista.push({ texto: `${marcas.hechos_no_verificados} hecho${marcas.hechos_no_verificados > 1 ? "s" : ""} no verificado${marcas.hechos_no_verificados > 1 ? "s" : ""}`, grave: true });
+  if (marcas.hechos_no_verificados) {
+    const n = marcas.hechos_no_verificados;
+    lista.push({ texto: `${n} hecho${n > 1 ? "s" : ""} sin comprobar`, grave: true });
+  }
   if (marcas.revisar_edicion) lista.push({ texto: "Revisar edición", grave: false });
-  if (marcas.revision_humana) lista.push({ texto: "«Sin traducir»: revisar", grave: false });
+  if (marcas.revision_humana) lista.push({ texto: "«Sin traducir»: mirar", grave: false });
   if (avisoJefe) lista.push({ texto: "Aviso del jefe", grave: false });
-  if (!lista.length) return <span className={`${chip} bg-[#e3eadf] text-[#3d5a33]`}>Sin avisos</span>;
+  if (!lista.length) return <span className="chip bg-verde/10 text-verde">✓ Sin avisos</span>;
   return (
-    <span className="flex flex-wrap gap-1">
+    <span className="flex flex-wrap gap-1.5">
       {lista.map((m) => (
-        <span key={m.texto} className={`${chip} ${m.grave ? "bg-acento text-papel" : "bg-[#f1dfb5] text-[#6b4b0c]"}`}>{m.texto}</span>
+        <span key={m.texto} className={`chip ${m.grave ? "bg-carmesi text-papel" : "bg-subrayador text-tinta"}`}>{m.texto}</span>
       ))}
     </span>
   );
 }
 
+const ESTADOS: Record<string, { texto: string; clase: string }> = {
+  propuesta: { texto: "Propuesta", clase: "border border-borde text-tinta-suave" },
+  en_edicion: { texto: "En edición", clase: "bg-subrayador text-tinta" },
+  aprobada: { texto: "Aprobada", clase: "bg-verde text-papel" },
+  descartada: { texto: "Descartada", clase: "bg-papel-hondo text-tinta-suave line-through" },
+  fallida: { texto: "Fallida", clase: "border border-carmesi text-carmesi" },
+  publicada: { texto: "Publicada", clase: "bg-tinta text-papel" },
+};
+
 export function EstadoChip({ estado }: { estado: string }) {
-  const estilos: Record<string, string> = {
-    propuesta: "border-tinta-suave text-tinta-suave",
-    en_edicion: "border-[#8a6a1f] text-[#8a6a1f]",
-    aprobada: "border-[#3d5a33] bg-[#3d5a33] text-papel",
-    descartada: "border-tinta-suave text-tinta-suave line-through",
-    fallida: "border-acento text-acento",
-    publicada: "border-tinta bg-tinta text-papel",
-  };
-  const texto: Record<string, string> = { en_edicion: "en edición" };
-  return (
-    <span className={`rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${estilos[estado] ?? ""}`}>
-      {texto[estado] ?? estado}
-    </span>
-  );
+  const e = ESTADOS[estado] ?? { texto: estado, clase: "border border-borde" };
+  return <span className={`chip ${e.clase}`}>{e.texto}</span>;
 }

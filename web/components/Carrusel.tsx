@@ -18,7 +18,7 @@ export function Carrusel({ total, url, ancho, inicial = 1 }: {
     return () => window.removeEventListener("keydown", tecla);
   }, [total]);
   const actual = Math.min(n, total);
-  const boton = "h-9 w-9 rounded-full border border-tinta text-lg leading-none disabled:opacity-25 hover:bg-tinta hover:text-papel";
+  const boton = "h-11 w-11 rounded-full bg-tinta text-xl leading-none text-papel shadow-[var(--sombra-boton)] disabled:opacity-20 disabled:shadow-none hover:bg-noche";
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-3">
@@ -26,10 +26,10 @@ export function Carrusel({ total, url, ancho, inicial = 1 }: {
         <Diapositiva src={url(actual)} ancho={ancho} titulo={`Diapositiva ${actual}`} />
         <button className={boton} disabled={actual >= total} onClick={() => setN(actual + 1)} aria-label="Siguiente">›</button>
       </div>
-      <div className="flex gap-2">
+      <div className="mt-2 flex gap-2.5">
         {Array.from({ length: total }, (_, i) => i + 1).map((k) => (
           <button key={k} onClick={() => setN(k)} aria-label={`Ir a la diapositiva ${k}`}
-                  className={`outline-offset-2 ${k === actual ? "outline-2 outline-acento" : "opacity-70 hover:opacity-100"}`}>
+                  className={`rounded-[6px] outline-offset-2 ${k === actual ? "outline-2 outline-carmesi" : "opacity-60 hover:opacity-100"}`}>
             <Diapositiva src={url(k)} ancho={64} titulo={`Miniatura ${k}`} />
           </button>
         ))}

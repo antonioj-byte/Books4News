@@ -28,6 +28,12 @@ class Marcas(BaseModel):
     error: str | None = None
 
 
+class Lomo(BaseModel):
+    """Un libro de la pieza tal como se recomienda: para la estantería de la portada del día."""
+    titulo: str
+    autor: str
+
+
 class PiezaResumen(BaseModel):
     ejecucion_id: int
     pieza_id: str
@@ -39,6 +45,7 @@ class PiezaResumen(BaseModel):
     version: int
     marcas: Marcas
     evaluada: bool
+    libros: list[Lomo]
 
 
 class DiaDetalle(BaseModel):

@@ -29,31 +29,33 @@ export function LanzarEjecucion({ alTerminar }: { alTerminar: () => void }) {
   }, [alTerminar]);
 
   const lanzar = async () => {
-    if (!confirm("Se lanza el pipeline completo del día: unos 10 minutos y alrededor de 1 $. ¿Seguimos?")) return;
+    if (!confirm("Se lanza el pipeline completo del día: unos 5 minutos y alrededor de 1 $. ¿Seguimos?")) return;
     setError("");
     try { setEstado(await api.lanzarEjecucion()); }
     catch (e) { setError(String(e).includes("409") ? "Ya hay una ejecución en marcha." : "No se pudo lanzar."); }
   };
 
   return (
-    <div className="flex flex-col items-end gap-1 text-sm">
-      <button onClick={lanzar} disabled={estado?.en_marcha}
-              className="rounded-sm border border-tinta px-3 py-1 hover:bg-tinta hover:text-papel disabled:opacity-50">
-        {estado?.en_marcha ? "Ejecución en marcha…" : "Lanzar ejecución del día"}
+    <div className="flex flex-col items-start gap-2 text-sm">
+      <button onClick={lanzar} disabled={estado?.en_marcha} className="boton">
+        {estado?.en_marcha ? "Ejecución en marcha…" : "Lanzar la ejecución del día →"}
       </button>
       {estado?.en_marcha && (
-        <span className="text-[13px] text-tinta-suave">
+        <span className="dato flex items-center gap-2">
+          <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-carmesi" />
           {estado.etapa ?? "Arrancando…"}
           {estado.inicio && <> · {minutos(estado.inicio)}</>}
         </span>
       )}
       {!estado?.en_marcha && estado?.codigo != null && estado.codigo !== 0 && (
-        <details className="max-w-[560px] text-[12px] text-acento">
-          <summary>La última ejecución falló{estado.etapa ? ` en «${estado.etapa}»` : ""} (código {estado.codigo})</summary>
-          <pre className="whitespace-pre-wrap">{estado.ultimas_lineas.join("\n")}</pre>
+        <details className="max-w-[560px] rounded-[14px] border border-carmesi/40 bg-panel px-3 py-2 text-[12px]">
+          <summary className="cursor-pointer text-carmesi">
+            La última ejecución falló{estado.etapa ? ` en «${estado.etapa}»` : ""} (código {estado.codigo})
+          </summary>
+          <pre className="mt-2 whitespace-pre-wrap font-mono text-tinta-suave">{estado.ultimas_lineas.join("\n")}</pre>
         </details>
       )}
-      {error && <span className="text-acento">{error}</span>}
+      {error && <span className="text-carmesi">{error}</span>}
     </div>
   );
 }

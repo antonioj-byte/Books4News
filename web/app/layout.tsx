@@ -1,31 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Isotipo } from "@/components/Isotipo";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Folio · mesa de edición",
-  description: "Herramienta local para leer, editar y evaluar las piezas de Folio.",
+  title: "Tapablanda · mesa de edición",
+  description: "Leer, evaluar y editar las piezas del día.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className="h-full antialiased">
       <head>
-        {/* Fuentes y tokens del design system: los sirve la API desde diseno/, la única fuente. */}
+        {/* Fuentes de la marca (public/fuentes, OFL): se sirven desde aquí, sin depender de la red */}
         {/* eslint-disable-next-line @next/next/no-css-tags */}
-        <link rel="stylesheet" href="/diseno/fuentes/fuentes.css" />
-        {/* eslint-disable-next-line @next/next/no-css-tags */}
-        <link rel="stylesheet" href="/api/diseno/tokens.css" />
+        <link rel="stylesheet" href="/fuentes/fuentes.css" />
       </head>
-      <body className="min-h-full flex flex-col">
-        <header className="flex items-end justify-between border-b-[3px] border-tinta px-6 pt-4 pb-2">
-          <Link href="/" className="font-texto text-[28px] italic leading-none">
-            Folio<span className="text-acento">.</span>{" "}
-            <span className="rotulo align-middle not-italic">mesa de edición</span>
+      <body className="flex min-h-full flex-col">
+        <header className="flex items-center justify-between border-b border-borde px-6 py-3">
+          <Link href="/" className="flex items-center gap-3">
+            <Isotipo />
+            <span className="titular text-[22px]">Tapablanda</span>
+            <span className="antetitulo hidden sm:inline">Mesa de edición · Folio</span>
           </Link>
-          <nav className="flex gap-6 text-sm">
-            <Link href="/" className="hover:text-acento">Portada del día</Link>
-            <Link href="/evaluacion" className="hover:text-acento">Evaluación</Link>
+          <nav className="flex gap-1 text-sm">
+            <Link href="/" className="rounded-full px-3 py-1.5 hover:bg-papel-hondo">Portada del día</Link>
+            <Link href="/evaluacion" className="rounded-full px-3 py-1.5 hover:bg-papel-hondo">Evaluación</Link>
           </nav>
         </header>
         <main className="flex-1">{children}</main>

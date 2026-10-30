@@ -7,6 +7,7 @@ import { FormEvaluacion } from "@/components/FormEvaluacion";
 import { EstadoChip } from "@/components/Marcas";
 import { PanelNoticia } from "@/components/PanelNoticia";
 import { api, ESTADOS } from "@/lib/api";
+import { conCursivas } from "@/lib/cursivas";
 import { useDatos } from "@/lib/useDatos";
 
 // Vista de pieza en tres columnas: la noticia y sus avisos, el carrusel y la evaluación (el chat
@@ -16,27 +17,27 @@ export function VistaPieza() {
   const eid = Number(eidTexto);
   const { datos: d, error, recargar: cargar } = useDatos(`pieza:${eid}:${pid}`, () => api.pieza(eid, pid));
 
-  if (error) return <p className="p-6 text-acento">{error}</p>;
-  if (!d) return <p className="p-6 text-tinta-suave">Cargando la pieza…</p>;
+  if (error) return <p className="p-6 text-carmesi">{error}</p>;
+  if (!d) return <p className="dato p-6">Cargando la pieza…</p>;
   const g = d.pieza.guion;
 
   return (
-    <div className="grid h-[calc(100vh-58px)] grid-cols-[minmax(300px,360px)_1fr_minmax(300px,340px)]">
-      <aside className="overflow-y-auto border-r border-filete px-5 py-4">
-        <Link href={`/dia/${d.fecha}?ejecucion=${eid}`} className="text-sm text-tinta-suave hover:text-acento">← Portada del día</Link>
-        <div className="mt-3"><PanelNoticia d={d} /></div>
+    <div className="grid h-[calc(100vh-61px)] grid-cols-[minmax(300px,370px)_1fr_minmax(300px,350px)]">
+      <aside className="overflow-y-auto border-r border-borde px-6 py-5">
+        <Link href={`/dia/${d.fecha}?ejecucion=${eid}`} className="dato hover:text-carmesi">← PORTADA DEL DÍA</Link>
+        <div className="mt-4"><PanelNoticia d={d} /></div>
       </aside>
 
-      <section className="overflow-y-auto px-6 py-4">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+      <section className="overflow-y-auto px-8 py-5">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <EstadoChip estado={d.pieza.estado} />
-            <span className="text-sm text-tinta-suave">{d.pieza.id} · versión {d.version}</span>
+            <span className="dato">{d.pieza.id} · versión {d.version}</span>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1.5">
             {ESTADOS.map((e) => (
               <button key={e.valor} onClick={() => api.estado(eid, pid, e.valor).then(cargar)}
-                      className={`rounded-sm border px-2 py-1 text-[12px] ${d.pieza.estado === e.valor ? "border-tinta bg-tinta text-papel" : "border-filete hover:border-tinta"}`}>
+                      aria-pressed={d.pieza.estado === e.valor} className="boton-suave">
                 {e.texto}
               </button>
             ))}
@@ -44,29 +45,30 @@ export function VistaPieza() {
         </div>
         {g ? (
           <>
-            <Carrusel total={g.diapositivas.length} ancho={460}
+            <Carrusel total={g.diapositivas.length} ancho={440}
                       url={(n) => api.urlDiapositiva(eid, pid, n, d.version)} />
-            <div className="mx-auto mt-6 max-w-[560px]">
-              <h3 className="rotulo mb-2">Pie de Instagram</h3>
-              <p className="whitespace-pre-line font-texto text-[16px] leading-relaxed">{g.pie_instagram}</p>
-              <h3 className="rotulo mb-2 mt-6">Idea nueva</h3>
-              <p className="font-texto text-[16px] italic">{g.idea_elegida}</p>
-              <p className="mt-1 text-[13px] text-tinta-suave">{g.por_que}</p>
+            <div className="mx-auto mt-8 max-w-[560px]">
+              <h3 className="antetitulo mb-2">Pie de Instagram</h3>
+              <p className="whitespace-pre-line text-[15px] leading-relaxed">{conCursivas(g.pie_instagram)}</p>
+              <h3 className="antetitulo mb-2 mt-7">Idea nueva</h3>
+              <p className="titular text-[22px] italic leading-snug" style={{ fontWeight: 400 }}>{conCursivas(g.idea_elegida)}</p>
+              <p className="mt-2 text-[13px] text-tinta-suave">{g.por_que}</p>
             </div>
           </>
         ) : (
-          <p className="text-acento">Esta pieza no tiene guion: {d.pieza.error}</p>
+          <p className="text-carmesi">Esta pieza no tiene guion: {d.pieza.error}</p>
         )}
       </section>
 
-      <aside className="overflow-y-auto border-l border-filete px-5 py-4">
-        <h3 className="rotulo mb-3">Evaluación</h3>
+      <aside className="overflow-y-auto border-l border-borde px-6 py-5">
+        <h3 className="antetitulo mb-1">Evaluación</h3>
+        <p className="titular mb-4 text-[24px]">¿La <em>publicarías</em>?</p>
         <FormEvaluacion key={`${eid}/${pid}`} eid={eid} pid={pid} inicial={d.evaluacion ?? null} />
         {d.evaluacion_version && d.evaluacion_version !== d.version && (
-          <p className="mt-2 text-[12px] text-tinta-suave">Evaluaste la versión {d.evaluacion_version}; la actual es la {d.version}.</p>
+          <p className="dato mt-2">Evaluaste la versión {d.evaluacion_version}; la actual es la {d.version}.</p>
         )}
-        <div className="mt-8 border-t border-filete pt-3 text-[13px] text-tinta-suave">
-          <h3 className="rotulo mb-1">Chat de edición</h3>
+        <div className="mt-8 border-t border-borde pt-4 text-[13px] text-tinta-suave">
+          <h3 className="antetitulo mb-1">Chat de edición</h3>
           Llega en el paso 5.
         </div>
       </aside>

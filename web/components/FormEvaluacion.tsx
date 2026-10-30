@@ -28,17 +28,18 @@ export function FormEvaluacion({ eid, pid, inicial, onGuardada }: {
   };
 
   return (
-    <div className="flex flex-col gap-3 text-[13px]">
+    <div className="flex flex-col gap-4 text-[13.5px]">
       {CRITERIOS.map((c) => (
         <div key={c.clave}>
           <div className="flex items-baseline justify-between">
             <span className="font-semibold">{c.texto}</span>
-            <span className="text-[11px] text-tinta-suave">{c.ayuda}</span>
+            <span className="dato">{c.ayuda}</span>
           </div>
-          <div className="mt-1 grid grid-cols-5 gap-1">
+          <div className="mt-1.5 grid grid-cols-5 gap-1.5">
             {[1, 2, 3, 4, 5].map((v) => (
               <button key={v} onClick={() => cambiar({ [c.clave]: ev[c.clave] === v ? null : v })}
-                      className={`h-8 rounded-sm border border-tinta font-texto text-[15px] ${ev[c.clave] === v ? "bg-tinta text-papel" : "hover:bg-[#e6e0d4]"}`}>
+                      aria-pressed={ev[c.clave] === v}
+                      className={`h-9 rounded-full border font-titular text-[16px] font-semibold transition ${ev[c.clave] === v ? "border-tinta bg-tinta text-papel" : "border-borde bg-panel hover:border-tinta"}`}>
                 {v}
               </button>
             ))}
@@ -47,25 +48,26 @@ export function FormEvaluacion({ eid, pid, inicial, onGuardada }: {
       ))}
       <div>
         <span className="font-semibold">¿La publicarías?</span>
-        <div className="mt-1 grid grid-cols-2 gap-1">
+        <div className="mt-1.5 grid grid-cols-2 gap-1.5">
           {[{ v: true, t: "Sí" }, { v: false, t: "No" }].map((o) => (
             <button key={o.t} onClick={() => cambiar({ publicaria: ev.publicaria === o.v ? null : o.v })}
-                    className={`h-8 rounded-sm border border-tinta ${ev.publicaria === o.v ? (o.v ? "bg-[#3d5a33] text-papel border-[#3d5a33]" : "bg-acento text-papel border-acento") : "hover:bg-[#e6e0d4]"}`}>
+                    aria-pressed={ev.publicaria === o.v}
+                    className={`h-9 rounded-full border font-semibold transition ${ev.publicaria === o.v ? (o.v ? "border-verde bg-verde text-papel" : "border-carmesi bg-carmesi text-papel") : "border-borde bg-panel hover:border-tinta"}`}>
               {o.t}
             </button>
           ))}
         </div>
       </div>
-      <label className="flex flex-col gap-1">
+      <label className="flex flex-col gap-1.5">
         <span className="font-semibold">Comentario</span>
         <textarea value={ev.comentario} onChange={(e) => cambiar({ comentario: e.target.value })} rows={4}
-                  className="rounded-sm border border-tinta bg-[#faf8f3] p-2 font-texto text-[14px]" />
+                  placeholder="Lo que te chirría, lo que te ha gustado…"
+                  className="rounded-[14px] border border-borde bg-panel p-3 text-[14px] outline-none focus:border-tinta" />
       </label>
-      <button onClick={guardar} disabled={estado === "guardando"}
-              className="h-9 rounded-sm bg-tinta font-semibold text-papel hover:bg-acento disabled:opacity-50">
-        {estado === "guardando" ? "Guardando…" : estado === "guardada" ? "Guardada ✓" : "Guardar evaluación"}
+      <button onClick={guardar} disabled={estado === "guardando"} className="boton justify-center">
+        {estado === "guardando" ? "Guardando…" : estado === "guardada" ? "Guardada ✓" : "Guardar evaluación →"}
       </button>
-      {estado === "error" && <p className="text-acento">No se pudo guardar. ¿Está la API en marcha?</p>}
+      {estado === "error" && <p className="text-carmesi">No se pudo guardar. ¿Está la API en marcha?</p>}
     </div>
   );
 }

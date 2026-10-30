@@ -89,6 +89,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ejecuciones/{eid}/piezas/{pid}/evaluacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leer Evaluacion */
+        get: operations["leer_evaluacion_api_ejecuciones__eid__piezas__pid__evaluacion_get"];
+        /** Guardar Evaluacion */
+        put: operations["guardar_evaluacion_api_ejecuciones__eid__piezas__pid__evaluacion_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/diseno/tokens.css": {
         parameters: {
             query?: never;
@@ -102,24 +120,6 @@ export interface paths {
          */
         get: operations["tokens_css_api_diseno_tokens_css_get"];
         put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ejecuciones/{eid}/piezas/{pid}/evaluacion": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Leer Evaluacion */
-        get: operations["leer_evaluacion_api_ejecuciones__eid__piezas__pid__evaluacion_get"];
-        /** Guardar Evaluacion */
-        put: operations["guardar_evaluacion_api_ejecuciones__eid__piezas__pid__evaluacion_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -541,6 +541,16 @@ export interface components {
             notas: string[];
         };
         /**
+         * Lomo
+         * @description Un libro de la pieza tal como se recomienda: para la estantería de la portada del día.
+         */
+        Lomo: {
+            /** Titulo */
+            titulo: string;
+            /** Autor */
+            autor: string;
+        };
+        /**
          * Marcas
          * @description Avisos que tienen que verse en la portada del día.
          */
@@ -650,6 +660,8 @@ export interface components {
             marcas: components["schemas"]["Marcas"];
             /** Evaluada */
             evaluada: boolean;
+            /** Libros */
+            libros: components["schemas"]["Lomo"][];
         };
         /** ResumenDia */
         ResumenDia: {
@@ -857,26 +869,6 @@ export interface operations {
             };
         };
     };
-    tokens_css_api_diseno_tokens_css_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/plain": string;
-                };
-            };
-        };
-    };
     leer_evaluacion_api_ejecuciones__eid__piezas__pid__evaluacion_get: {
         parameters: {
             query?: never;
@@ -941,6 +933,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tokens_css_api_diseno_tokens_css_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
                 };
             };
         };

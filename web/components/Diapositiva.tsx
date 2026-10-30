@@ -8,7 +8,7 @@ const ALTO = 1350;
 export function Diapositiva({ src, ancho, titulo }: { src: string; ancho: number; titulo: string }) {
   const escala = ancho / ANCHO;
   return (
-    <div className="relative overflow-hidden bg-papel shadow-[0_1px_3px_rgba(0,0,0,0.25)]"
+    <div className="relative overflow-hidden rounded-[6px] bg-papel shadow-[var(--sombra-libro)]"
          style={{ width: ancho, height: ALTO * escala }}>
       <iframe
         src={src}
