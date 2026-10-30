@@ -202,3 +202,42 @@ def test_libro_verificado_un_solo_criterio_para_todo():
     pieza = Pieza(id="p", fecha="2026-10-30", estado="propuesta", historia_id="h", eleccion=ELECCION,
                   n_medios=1, libros=[alice], guion=g)
     assert render.ficha_libros(pieza)[0]["datos"].startswith("Ediciones B")
+
+
+def _casos_validacion():
+    """Guiones rotos a propósito. Sus mensajes (y su orden, que va al prompt de reintento) están
+    guardados en fixtures/validar_mensajes.json, sacados de la validación anterior a las reglas."""
+    from datos import pie
+    sin_es = LIBRO.model_copy(update={"edicion_es": "desconocido", "edicion_es_detalle": None})
+    yield "valido", guion_valido(), [LIBRO]
+    g = guion_valido(); g.diapositivas = g.diapositivas[:3]
+    yield "corto", g, [LIBRO]
+    g = guion_valido()
+    for _ in range(3):
+        g.diapositivas.insert(2, Diapositiva(n=0, tipo="actualidad", texto="Una noticia más larga de la cuenta " * 3))
+    yield "largo_numeracion", g, [LIBRO]
+    g = guion_valido()
+    g.diapositivas[0].texto = "¿Arendt en «Eichmann en Jerusalén» y en un mundo donde todo vale?"
+    g.diapositivas[1].texto = "En un mundo donde «nadie decide» todo es «una cita inventada»."
+    g.diapositivas[-1].texto = "Léelo, todavía sin traducir."
+    g.pie_instagram = pie(20, "en un mundo donde «otra cita» sin traducir")
+    g.libros = [LibroGuion(titulo="Libro inventado", autor="Nadie", editorial_espanola=None, traductor=None, edicion_original="x")]
+    g.fuentes_noticia = ["Medio https://inventado.example/x", "sin url"]
+    yield "todo_mal", g, [sin_es]
+    g = guion_valido(); g.libros = []; g.fuentes_noticia = []; g.diapositivas[0].tipo = "libro"; g.diapositivas[-1].tipo = "idea"
+    yield "tipos_y_listas", g, [LIBRO]
+
+
+def test_mensajes_de_validacion_y_su_orden(cfg):
+    import json
+    from pathlib import Path
+    esperado = json.loads((Path(__file__).parent / "fixtures" / "validar_mensajes.json").read_text(encoding="utf-8"))
+    for nombre, g, libros in _casos_validacion():
+        assert guion.validar(cfg, g, libros, FUENTES) == esperado[nombre], nombre
+
+
+def test_cada_regla_se_puede_probar_sola(cfg):
+    c = guion._Guion(guion_valido(), [LIBRO], FUENTES, cfg.pipeline.guion)
+    assert all(regla(c) == [] for regla in guion.REGLAS)
+    c.g.diapositivas[0].texto = "¿Quién obedece?"
+    assert guion._portada_no_pregunta(c) == ["La portada no puede ser una pregunta retórica."]

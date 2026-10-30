@@ -8,8 +8,10 @@ como fallida. Los datos de edición de los libros se sustituyen siempre por los 
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 
 from folio.config import Config
+from folio.config import Guion as ConfigGuion
 from folio.llm import LLM, bloque_reenviable, cargar_prompt, con_cache
 from folio.modelos import DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroGuion, LibroVerificado
 from folio.verificacion_texto import apellido, autor_coincide, normalizar, sin_subtitulo, titulos_coinciden
@@ -135,95 +137,169 @@ def libro_verificado(lg: LibroGuion, libros: list[LibroVerificado]) -> LibroVeri
     return next((l for l in libros if autor_coincide(lg.autor, l.autores) and _es_titulo_de_libro(lg.titulo, [l])), None)
 
 
-def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: list[FuenteNoticia]) -> list[str]:
-    p = cfg.pipeline.guion
-    errores: list[str] = []
-    d = g.diapositivas
+# --- Validación del guion -------------------------------------------------------
+# Cada regla devuelve sus errores. El orden de REGLAS es el de los mensajes que recibe el modelo
+# en el reintento: no cambiarlo sin motivo.
 
-    if not 4 <= len(d) <= 7:
-        errores.append(f"Hay {len(d)} diapositivas; deben ser entre 4 y 7.")
-    extra = len(d) - p.diapositivas_por_defecto
-    if extra > 0 and len([j for j in g.justificacion_extra if j.strip()]) < extra:
-        errores.append(
-            f"Hay {len(d)} diapositivas: justifica en justificacion_extra, con una línea cada una, "
-            f"qué aporta cada una de las {extra} por encima de {p.diapositivas_por_defecto}, o recorta."
-        )
-    if [x.n for x in d] != list(range(1, len(d) + 1)):
-        errores.append("Las diapositivas deben numerarse 1, 2, 3… sin saltos.")
-    if d and d[0].tipo != "portada":
-        errores.append("La diapositiva 1 debe ser de tipo «portada».")
-    if d and d[-1].tipo != "cierre":
-        errores.append("La última diapositiva debe ser de tipo «cierre».")
-    for tipo in ("actualidad", "libro", "idea"):
-        if not any(x.tipo == tipo for x in d):
-            errores.append(f"Falta una diapositiva de tipo «{tipo}».")
-    for x in d:
-        limite = p.palabras_max_portada if x.tipo == "portada" else p.palabras_max_diapositiva
+@dataclass
+class _Guion:
+    """Lo que necesita cada regla: el guion, los libros verificados, las fuentes y los límites."""
+    g: GuionLLM
+    libros: list[LibroVerificado]
+    fuentes: list[FuenteNoticia]
+    p: ConfigGuion
+
+    @property
+    def d(self) -> list:
+        return self.g.diapositivas
+
+    @property
+    def textos(self) -> list[str]:
+        return [x.texto for x in self.d] + [self.g.pie_instagram]
+
+
+def _extension(c: _Guion) -> list[str]:
+    return [] if 4 <= len(c.d) <= 7 else [f"Hay {len(c.d)} diapositivas; deben ser entre 4 y 7."]
+
+
+def _justificacion_extra(c: _Guion) -> list[str]:
+    extra = len(c.d) - c.p.diapositivas_por_defecto
+    if extra > 0 and len([j for j in c.g.justificacion_extra if j.strip()]) < extra:
+        return [f"Hay {len(c.d)} diapositivas: justifica en justificacion_extra, con una línea cada una, "
+                f"qué aporta cada una de las {extra} por encima de {c.p.diapositivas_por_defecto}, o recorta."]
+    return []
+
+
+def _numeracion(c: _Guion) -> list[str]:
+    ok = [x.n for x in c.d] == list(range(1, len(c.d) + 1))
+    return [] if ok else ["Las diapositivas deben numerarse 1, 2, 3… sin saltos."]
+
+
+def _primera_es_portada(c: _Guion) -> list[str]:
+    return ["La diapositiva 1 debe ser de tipo «portada»."] if c.d and c.d[0].tipo != "portada" else []
+
+
+def _ultima_es_cierre(c: _Guion) -> list[str]:
+    return ["La última diapositiva debe ser de tipo «cierre»."] if c.d and c.d[-1].tipo != "cierre" else []
+
+
+def _tipos_obligatorios(c: _Guion) -> list[str]:
+    return [f"Falta una diapositiva de tipo «{tipo}»." for tipo in ("actualidad", "libro", "idea")
+            if not any(x.tipo == tipo for x in c.d)]
+
+
+def _palabras_por_diapositiva(c: _Guion) -> list[str]:
+    errores = []
+    for x in c.d:
+        limite = c.p.palabras_max_portada if x.tipo == "portada" else c.p.palabras_max_diapositiva
         if _palabras(x.texto) > limite:
             errores.append(f"La diapositiva {x.n} ({x.tipo}) tiene {_palabras(x.texto)} palabras; máximo {limite}.")
-    # La noticia abre la pieza, el libro entra pronto y protagoniza el cierre.
-    if d and d[0].tipo == "portada" and _menciona_libro(d[0].texto, libros):
-        errores.append("La portada abre con la noticia o con su tensión, no con el libro: quita el título y el autor.")
-    if d and d[-1].tipo == "cierre" and not _menciona_libro(d[-1].texto, libros):
-        errores.append("El cierre es la recomendación: nombra el libro (título en cursiva) y a su autor.")
-    n_actualidad = sum(x.tipo == "actualidad" for x in d)
-    if n_actualidad > p.max_diapositivas_actualidad:
-        errores.append(f"Hay {n_actualidad} diapositivas de actualidad; máximo {p.max_diapositivas_actualidad}. "
-                       "La noticia es la excusa: resúmela.")
-    primer_libro = next((x.n for x in d if x.tipo == "libro"), None)
-    if primer_libro and primer_libro > p.posicion_max_primer_libro:
-        errores.append(f"El libro entra en la diapositiva {primer_libro}; debe hacerlo como muy tarde en la "
-                       f"{p.posicion_max_primer_libro}.")
-    if not _menciona_libro(g.pie_instagram, libros):
-        errores.append("El pie debe nombrar el libro que recomienda la pieza.")
-    if d and d[0].texto.strip().endswith("?"):
-        errores.append("La portada no puede ser una pregunta retórica.")
-    if d and "folio" not in normalizar(d[-1].texto).split():
-        errores.append("El cierre debe llevar la firma de Folio.")
+    return errores
 
-    textos = [x.texto for x in d] + [g.pie_instagram]
-    for t in textos:
+
+# La noticia abre la pieza, el libro entra pronto y protagoniza el cierre.
+def _portada_sin_libro(c: _Guion) -> list[str]:
+    if c.d and c.d[0].tipo == "portada" and _menciona_libro(c.d[0].texto, c.libros):
+        return ["La portada abre con la noticia o con su tensión, no con el libro: quita el título y el autor."]
+    return []
+
+
+def _cierre_nombra_libro(c: _Guion) -> list[str]:
+    if c.d and c.d[-1].tipo == "cierre" and not _menciona_libro(c.d[-1].texto, c.libros):
+        return ["El cierre es la recomendación: nombra el libro (título en cursiva) y a su autor."]
+    return []
+
+
+def _una_actualidad(c: _Guion) -> list[str]:
+    n = sum(x.tipo == "actualidad" for x in c.d)
+    if n > c.p.max_diapositivas_actualidad:
+        return [f"Hay {n} diapositivas de actualidad; máximo {c.p.max_diapositivas_actualidad}. "
+                "La noticia es la excusa: resúmela."]
+    return []
+
+
+def _libro_pronto(c: _Guion) -> list[str]:
+    primer_libro = next((x.n for x in c.d if x.tipo == "libro"), None)
+    if primer_libro and primer_libro > c.p.posicion_max_primer_libro:
+        return [f"El libro entra en la diapositiva {primer_libro}; debe hacerlo como muy tarde en la "
+                f"{c.p.posicion_max_primer_libro}."]
+    return []
+
+
+def _pie_nombra_libro(c: _Guion) -> list[str]:
+    return [] if _menciona_libro(c.g.pie_instagram, c.libros) else ["El pie debe nombrar el libro que recomienda la pieza."]
+
+
+def _portada_no_pregunta(c: _Guion) -> list[str]:
+    return ["La portada no puede ser una pregunta retórica."] if c.d and c.d[0].texto.strip().endswith("?") else []
+
+
+def _firma(c: _Guion) -> list[str]:
+    return ["El cierre debe llevar la firma de Folio."] if c.d and "folio" not in normalizar(c.d[-1].texto).split() else []
+
+
+def _frases_vetadas_y_citas(c: _Guion) -> list[str]:
+    """Texto a texto: primero las frases vetadas y luego los textos entre comillas que no son títulos."""
+    errores = []
+    for t in c.textos:
         tn = t.lower()
-        for frase in _FRASES_VETADAS:
-            if frase in tn:
-                errores.append(f"Frase vetada: «{frase}…».")
+        errores += [f"Frase vetada: «{frase}…»." for frase in _FRASES_VETADAS if frase in tn]
         for m in _COMILLAS.finditer(t):
             fragmento = next(s for s in m.groups() if s)
-            if not _es_titulo_de_libro(fragmento, libros):
-                errores.append(
-                    f"Texto entre comillas que no es el título de un libro: «{fragmento[:80]}». "
-                    "No se permiten citas: parafrasea sin comillas."
-                )
+            if not _es_titulo_de_libro(fragmento, c.libros):
+                errores.append(f"Texto entre comillas que no es el título de un libro: «{fragmento[:80]}». "
+                               "No se permiten citas: parafrasea sin comillas.")
+    return errores
 
-    if not any(l.edicion_es == "no" for l in libros):
-        for t in textos:
-            m = _SOBRE_TRADUCCION.search(t)
-            if m:
-                errores.append(
-                    f"«{m.group(0)}»: ningún libro tiene verificado que no haya edición española; "
-                    "no digas nada sobre su traducción."
-                )
 
-    n_pie = _palabras(g.pie_instagram)
-    if not p.pie_min_palabras <= n_pie <= p.pie_max_palabras:
-        errores.append(f"El pie tiene {n_pie} palabras; debe tener entre {p.pie_min_palabras} y {p.pie_max_palabras}.")
-    if not any(normalizar(f.medio) in normalizar(g.pie_instagram) for f in fuentes):
-        errores.append("El pie debe citar el medio de la noticia (uno de: " + ", ".join(f.medio for f in fuentes) + ").")
+def _traduccion(c: _Guion) -> list[str]:
+    if any(l.edicion_es == "no" for l in c.libros):
+        return []
+    return [f"«{m.group(0)}»: ningún libro tiene verificado que no haya edición española; "
+            "no digas nada sobre su traducción." for t in c.textos if (m := _SOBRE_TRADUCCION.search(t))]
 
-    if not g.libros:
-        errores.append("Falta la lista de libros.")
-    for lg in g.libros:
-        if libro_verificado(lg, libros) is None:
-            errores.append(f"El libro «{lg.titulo}» de {lg.autor} no está entre los verificados.")
 
-    urls_validas = {f.url for f in fuentes}
-    for fn in g.fuentes_noticia:
+def _longitud_pie(c: _Guion) -> list[str]:
+    n = _palabras(c.g.pie_instagram)
+    if c.p.pie_min_palabras <= n <= c.p.pie_max_palabras:
+        return []
+    return [f"El pie tiene {n} palabras; debe tener entre {c.p.pie_min_palabras} y {c.p.pie_max_palabras}."]
+
+
+def _pie_cita_medio(c: _Guion) -> list[str]:
+    if any(normalizar(f.medio) in normalizar(c.g.pie_instagram) for f in c.fuentes):
+        return []
+    return ["El pie debe citar el medio de la noticia (uno de: " + ", ".join(f.medio for f in c.fuentes) + ")."]
+
+
+def _libros_verificados(c: _Guion) -> list[str]:
+    errores = [] if c.g.libros else ["Falta la lista de libros."]
+    return errores + [f"El libro «{lg.titulo}» de {lg.autor} no está entre los verificados."
+                      for lg in c.g.libros if libro_verificado(lg, c.libros) is None]
+
+
+def _fuentes_conocidas(c: _Guion) -> list[str]:
+    urls_validas = {f.url for f in c.fuentes}
+    errores = []
+    for fn in c.g.fuentes_noticia:
         urls = _URL.findall(fn)
         if not urls or any(u.rstrip(".,;)") not in urls_validas for u in urls):
             errores.append(f"Fuente no reconocida: «{fn}». Usa solo los medios y URLs de los textos recibidos.")
-    if not g.fuentes_noticia:
-        errores.append("Falta fuentes_noticia.")
-    return errores
+    return errores + ([] if c.g.fuentes_noticia else ["Falta fuentes_noticia."])
+
+
+REGLAS = (
+    _extension, _justificacion_extra, _numeracion, _primera_es_portada, _ultima_es_cierre, _tipos_obligatorios,
+    _palabras_por_diapositiva, _portada_sin_libro, _cierre_nombra_libro, _una_actualidad, _libro_pronto,
+    _pie_nombra_libro, _portada_no_pregunta, _firma, _frases_vetadas_y_citas, _traduccion, _longitud_pie,
+    _pie_cita_medio, _libros_verificados, _fuentes_conocidas,
+)
+
+
+def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: list[FuenteNoticia]) -> list[str]:
+    """Errores del guion según las reglas editoriales (vacío si cumple todas)."""
+    c = _Guion(g, libros, fuentes, cfg.pipeline.guion)
+    return [error for regla in REGLAS for error in regla(c)]
 
 
 def _nucleo_editorial(nombre: str) -> set[str]:

@@ -1,0 +1,39 @@
+{
+ "valido": [],
+ "corto": [
+  "Hay 3 diapositivas; deben ser entre 4 y 7.",
+  "La última diapositiva debe ser de tipo «cierre».",
+  "Falta una diapositiva de tipo «idea».",
+  "El cierre debe llevar la firma de Folio."
+ ],
+ "largo_numeracion": [
+  "Hay 8 diapositivas; deben ser entre 4 y 7.",
+  "Hay 8 diapositivas: justifica en justificacion_extra, con una línea cada una, qué aporta cada una de las 3 por encima de 5, o recorta.",
+  "Las diapositivas deben numerarse 1, 2, 3… sin saltos.",
+  "Hay 4 diapositivas de actualidad; máximo 1. La noticia es la excusa: resúmela."
+ ],
+ "todo_mal": [
+  "La portada abre con la noticia o con su tensión, no con el libro: quita el título y el autor.",
+  "El cierre es la recomendación: nombra el libro (título en cursiva) y a su autor.",
+  "La portada no puede ser una pregunta retórica.",
+  "El cierre debe llevar la firma de Folio.",
+  "Frase vetada: «en un mundo donde…».",
+  "Frase vetada: «en un mundo donde…».",
+  "Texto entre comillas que no es el título de un libro: «nadie decide». No se permiten citas: parafrasea sin comillas.",
+  "Texto entre comillas que no es el título de un libro: «una cita inventada». No se permiten citas: parafrasea sin comillas.",
+  "Frase vetada: «en un mundo donde…».",
+  "Texto entre comillas que no es el título de un libro: «otra cita». No se permiten citas: parafrasea sin comillas.",
+  "«sin traduc»: ningún libro tiene verificado que no haya edición española; no digas nada sobre su traducción.",
+  "«sin traduc»: ningún libro tiene verificado que no haya edición española; no digas nada sobre su traducción.",
+  "El pie tiene 28 palabras; debe tener entre 80 y 150.",
+  "El libro «Libro inventado» de Nadie no está entre los verificados.",
+  "Fuente no reconocida: «Medio https://inventado.example/x». Usa solo los medios y URLs de los textos recibidos.",
+  "Fuente no reconocida: «sin url». Usa solo los medios y URLs de los textos recibidos."
+ ],
+ "tipos_y_listas": [
+  "La diapositiva 1 debe ser de tipo «portada».",
+  "La última diapositiva debe ser de tipo «cierre».",
+  "Falta la lista de libros.",
+  "Falta fuentes_noticia."
+ ]
+}
