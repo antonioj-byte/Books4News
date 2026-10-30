@@ -142,3 +142,11 @@ def test_medios_solo_imagenes_y_cubiertas(cliente, cfg):
     assert cliente.get("/api/medios/2026-10-30/textos/h1.json").status_code == 404
     assert cliente.get("/api/medios/2026-10-30/imagenes/../textos/h1.json").status_code == 404
     assert cliente.get("/api/medios/cubiertas/no-existe.jpg").status_code == 404
+
+
+def test_error_interno_dice_el_motivo(cliente, monkeypatch):
+    from fastapi.testclient import TestClient
+    app = cliente.app
+    monkeypatch.setattr(app.state.folio.almacen, "dias", lambda: (_ for _ in ()).throw(ValueError("algo raro key=SECRETO")))
+    r = TestClient(app, raise_server_exceptions=False).get("/api/dias")
+    assert r.status_code == 500 and "ValueError: algo raro" in r.json()["detail"] and "SECRETO" not in r.text

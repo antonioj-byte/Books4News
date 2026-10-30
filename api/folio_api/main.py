@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+import logging
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from folio import config as config_folio
@@ -25,6 +28,15 @@ def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importa
     app.state.folio = Contexto(cfg=cfg, almacen=almacen, ejecutor=ejecutor or Ejecutor(cfg.dir_datos),
                                plantillas=Plantillas(cfg, url_medio=diseno.url_medio(cfg.dir_cache("x").parent)))
     app.mount("/diseno", StaticFiles(directory=dir_diseno(cfg)), name="diseno")
+
+    @app.exception_handler(Exception)
+    async def error_interno(request: Request, exc: Exception):
+        # La web es interna y con contraseña: el motivo del error va en la respuesta (sin claves),
+        # para que se vea en pantalla sin tener que entrar en los logs del servidor.
+        from folio.libros.fuentes import sin_clave
+        logging.getLogger("folio_api").exception("Error en %s", request.url.path)
+        return JSONResponse(status_code=500, content={"detail": sin_clave(f"{type(exc).__name__}: {exc}")[:600]})
+
     for modulo in (dias, piezas, diseno, evaluaciones, ejecuciones):
         app.include_router(modulo.router)
     return app
