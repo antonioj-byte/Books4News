@@ -14,7 +14,7 @@ def _cliente(capturas, stop_reason="end_turn"):
     def manejar(req: httpx.Request):
         capturas.append(req)
         cuerpo = json.loads(req.content)
-        texto = json.dumps({"titular_es": "T", "resumen_es": "R", "seccion": "economia"})
+        texto = json.dumps({"titular_es": "T", "resumen_es": "R", "seccion": "economia", "sobre_libros": False})
         return httpx.Response(200, json={
             "id": "msg_1", "type": "message", "role": "assistant", "model": cuerpo["model"],
             "content": [{"type": "text", "text": texto}], "stop_reason": stop_reason,

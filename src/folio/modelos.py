@@ -55,6 +55,7 @@ class Historia(BaseModel):
     titular_es: str | None = None
     resumen_es: str | None = None
     seccion: Seccion | None = None
+    sobre_libros: bool | None = None
     carril: Literal["actualidad", "editorial"] = "actualidad"
 
 
@@ -63,6 +64,7 @@ class ResumenHistoria(BaseModel):
     titular_es: str = Field(description="Titular neutro en español, una línea")
     resumen_es: str = Field(description="Qué ha pasado, en una o dos frases, en español")
     seccion: Seccion
+    sobre_libros: bool = Field(description="Trata de libros, literatura, autores o la industria editorial")
 
 
 # --- Selección (prompts/jefe_cultura.md) -------------------------------------

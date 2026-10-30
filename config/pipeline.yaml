@@ -40,6 +40,7 @@ agrupacion:
   # Datos del 30/10/2026: 0.88 junta 469 de 640 artículos en un solo grupo; 0.94 une los 8 grupos
   # del choque de Urda (63 artículos, 10 medios) sin mezclar otros eventos; 0.95 no fusiona nada.
   umbral_fusion: 0.94
+  umbral_similitud_editorial: 0.88   # carril editorial: titulares cortos en muchos idiomas; sin fusión
   min_medios: 2                 # historias con menos medios distintos no pasan al jefe
 
 seleccion:

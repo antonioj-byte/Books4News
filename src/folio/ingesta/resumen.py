@@ -34,7 +34,7 @@ def resumir(llm: LLM, historias: list[Historia]) -> list[str]:
                 ResumenHistoria,
                 etapa_modelo="ingesta", max_tokens=2000,
             )
-            h.titular_es, h.resumen_es, h.seccion = r.titular_es, r.resumen_es, r.seccion
+            h.titular_es, h.resumen_es, h.seccion, h.sobre_libros = r.titular_es, r.resumen_es, r.seccion, r.sobre_libros
         except Exception as exc:
             errores.append(f"resumen de {h.id}: {exc}")
             h.titular_es = h.articulos[0].titulo  # sin resumen: se usa el titular original

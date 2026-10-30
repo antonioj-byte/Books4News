@@ -105,6 +105,25 @@ class Pipeline:
                 elegidas.append(h)
         return elegidas
 
+    def _del_libro(self, editoriales: list[Articulo], vectores, usadas, excluidas: dict[str, str],
+                   con_llm: bool) -> list[Historia]:
+        """Carril editorial: grupos más estrictos y sin fusión, ordenados por medios, medios tier 1 y
+        fecha. Se resumen el doble de los que se necesitan y se quedan los que tratan de libros."""
+        p = self.cfg.pipeline
+        if not editoriales:
+            return []
+        grupos = agrupacion.agrupar(editoriales, vectores, p.agrupacion.umbral_similitud_editorial, None)
+        grupos.sort(key=lambda h: (h.n_medios, sum(a.tier == 1 for a in h.articulos),
+                                   h.ultima_publicacion.timestamp() if h.ultima_publicacion else 0), reverse=True)
+        maximo = p.seleccion.historias_editoriales
+        del_libro = self._no_repetidas(grupos, vectores, 2 * maximo if con_llm else maximo, usadas, excluidas)
+        for h in del_libro:
+            h.carril = "editorial"
+        if con_llm:
+            self.avisos += resumen.resumir(self.llm, del_libro)
+            del_libro = [h for h in del_libro if h.sobre_libros is not False]
+        return del_libro[:maximo]
+
     def historias(self, articulos: list[Articulo], vectores, con_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
         """Agrupa, excluye las ya usadas y resume las que pasan al jefe de cultura.
 
@@ -120,19 +139,11 @@ class Pipeline:
         excluidas: dict[str, str] = {}
         al_jefe = self._no_repetidas(candidatas, vectores, p.seleccion.historias_al_jefe, usadas, excluidas)
 
-        del_libro: list[Historia] = []
-        if editoriales:
-            grupos = agrupacion.agrupar(editoriales, vectores, p.agrupacion.umbral_similitud, p.agrupacion.umbral_fusion)
-            grupos.sort(key=lambda h: (h.n_medios, sum(a.tier == 1 for a in h.articulos),
-                                       h.ultima_publicacion.timestamp() if h.ultima_publicacion else 0), reverse=True)
-            del_libro = self._no_repetidas(grupos, vectores, p.seleccion.historias_editoriales, usadas, excluidas)
-            for h in del_libro:
-                h.carril = "editorial"
-            candidatas += del_libro
-            al_jefe += del_libro
-
         if con_llm:
             self.avisos += resumen.resumir(self.llm, al_jefe)
+        del_libro = self._del_libro(editoriales, vectores, usadas, excluidas, con_llm)
+        candidatas += del_libro
+        al_jefe += del_libro
         ids_jefe = {h.id for h in al_jefe}
         mostradas = [h for h in candidatas if h.id in ids_jefe or h.id in excluidas]
         resumidas = [HistoriaResumida(

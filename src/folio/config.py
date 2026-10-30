@@ -41,6 +41,8 @@ class Agrupacion(_Seccion):
     umbral_similitud: float
     umbral_fusion: float | None = None
     min_medios: int
+    # Carril editorial: titulares cortos en muchos idiomas; sin fusión, un umbral más estricto
+    umbral_similitud_editorial: float = 0.88
 
 
 class Seleccion(_Seccion):

@@ -26,7 +26,7 @@ class LLMFalso(LLM):
     def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
         self.llamadas.append((paso, mensajes))
         if esquema is ResumenHistoria:
-            return ResumenHistoria(titular_es="Titular", resumen_es="Resumen", seccion="sociedad"), []
+            return ResumenHistoria(titular_es="Titular", resumen_es="Resumen", seccion="sociedad", sobre_libros=False), []
         if esquema is SeleccionJefe:
             elegida = ELECCION.model_copy(update={"historia_id": self.ids[0]})
             reserva = ELECCION.model_copy(update={"historia_id": self.ids[1], "titular": "Reserva"})
@@ -249,3 +249,19 @@ def test_si_falla_un_guion_entra_la_reserva(cfg, monkeypatch):
     piezas = p.piezas(sel, al_jefe)
     assert [(x.id[-1], x.estado, x.reserva) for x in piezas] == [
         ("1", "propuesta", False), ("2", "fallida", False), ("3", "propuesta", False), ("4", "propuesta", True)]
+
+
+def test_carril_editorial_solo_historias_de_libros(cfg, monkeypatch):
+    """Los artículos del carril editorial se agrupan aparte y solo pasan los que tratan de libros."""
+    p, llm = _pipeline(cfg, monkeypatch, [])
+    arts = _articulos()
+    libro = Articulo(id="e1", medio="El Cultural", url=URL + "e1", titulo="Premio de novela", idioma="es",
+                     acceso="abierto", carril="editorial", tier=1, publicado_en=datetime.now(timezone.utc))
+    cine = libro.model_copy(update={"id": "e2", "url": URL + "e2", "titulo": "Estreno de cine"})
+    vect = _vectores(arts) | {"e1": np.array([0, 0, 1.0]), "e2": np.array([0.6, 0, 0.8])}
+    from folio.ingesta import resumen
+    monkeypatch.setattr(resumen, "resumir", lambda llm, hs: [setattr(h, "sobre_libros", h.articulos[0].id == "e1") for h in hs] and [])
+    al_jefe, _ = p.historias(arts + [libro, cine], vect, con_llm=True)
+    editoriales = [h for h in al_jefe if h.carril == "editorial"]
+    assert [h.articulos[0].id for h in editoriales] == ["e1"]
+    assert all(a.carril == "actualidad" for h in al_jefe if h.carril == "actualidad" for a in h.articulos)
