@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<base href="{{ base_url }}">
+<link rel="stylesheet" href="{{ tokens.fuentes.archivo }}">
+<style>{{ css_tokens }}</style>
+<link rel="stylesheet" href="plantillas/base.css">
+<title>{{ pieza_id }} · {{ n }}/{{ total }}</title>
+</head>
+<body>
+<main class="diapositiva diapositiva--{{ tipo }}{% if imagen %} con-imagen{% endif %}{% if tipo == 'portada' %} portada--{{ portada_estilo }}{% endif %}{% if tono == 'grave' %} grave{% endif %}" style="--neon: {{ campo.fondo }}; --neon-2: {{ campo.color }}">
+{% block fondo %}{% endblock %}
+  <section class="cuerpo" data-ajustar>
+{% block cuerpo %}
+    <p class="texto">{{ texto }}</p>
+{% endblock %}
+  </section>
+</main>
+<script src="../../ajuste.js"></script>
+</body>
+</html>

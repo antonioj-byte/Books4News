@@ -1,0 +1,58 @@
+# Design system de Folio: «Wired» (31/10), tomando como referencia el Instagram de Wired.
+# Imagen de archivo a sangre en blanco y negro muy contrastado, con grano; titulares en palo seco
+# condensado y mayúsculas; antetítulo de tema en monoespaciada; fondo oscuro; un color neón por
+# pieza según el tono (en las graves, sin neón). Sin cabecera, logotipo, fecha, paginación ni
+# créditos en las diapositivas: el crédito va en el pie de la publicación.
+# Portada en cuatro composiciones que decide el director de arte: «sangre» (foto a sangre y
+# titular abajo), «banda» (titular en banda blanca arriba y foto debajo), «caja» (titular en caja
+# negra sobre la foto) y «neon» (foto virada a neón con un bloque de color). Sin imagen: tipográfica.
+# Las propuestas anteriores siguen en diseno/propuestas/.
+
+lienzo:
+  ancho: 1080px
+  alto: 1350px
+
+colores:
+  papel: "#0D0D0D"           # fondo de las diapositivas
+  tinta: "#F4F4F2"           # texto sobre el fondo
+  tinta_suave: "#9A9A96"
+  negro: "#0D0D0D"
+  blanco: "#F4F4F2"
+  acento: "#F2E205"          # neón por defecto (se cambia por pieza: campos_portada)
+
+fuentes:
+  archivo: ../../fuentes/fuentes.css
+  titular: "'Barlow Condensed', 'Arial Narrow', sans-serif"
+  texto: "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif"
+  rotulos: "'IBM Plex Mono', 'Courier New', monospace"
+
+tamanos:
+  titular: 118px
+  cuerpo: 50px
+  cuerpo_minimo: 34px
+  idea: 92px
+  cifra: 300px
+  antetitulo: 26px
+  dato: 22px
+
+margenes:
+  lateral: 72px
+  superior: 72px
+  inferior: 80px
+
+# Neón de cada pieza según el tono. fondo: el neón principal; color: el segundo, para los bloques.
+campos_portada:
+  reflexivo: {fondo: "#F2E205", color: "#FF3EA5"}   # amarillo y magenta
+  sereno: {fondo: "#3D6BFF", color: "#F2E205"}      # azul eléctrico
+  ironico: {fondo: "#FF3EA5", color: "#F2E205"}     # magenta
+  luminoso: {fondo: "#F2E205", color: "#3D6BFF"}
+  grave: {fondo: "#C8C8C4", color: "#C8C8C4"}       # sin neón
+
+rotulos:
+  portada: ""
+  actualidad: ""
+  libro: ""
+  idea: ""
+  cierre: ""
+
+logotipo: ""

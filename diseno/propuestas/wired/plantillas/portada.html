@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block fondo %}
+{%- if portada_estilo == "neon" %}{% with clase="imagen--sangre imagen--neon" %}{% include "_imagen.html" %}{% endwith %}<span class="bloque"></span>
+{%- elif portada_estilo == "banda" %}{% with clase="imagen--abajo" %}{% include "_imagen.html" %}{% endwith %}
+{%- elif portada_estilo in ("sangre", "caja") %}{% with clase="imagen--sangre" %}{% include "_imagen.html" %}{% endwith %}
+{%- else %}<span class="bloque bloque--tipografica"></span>{% endif %}
+{% endblock %}
+{% block cuerpo %}
+    <div class="titulo">
+      {% if antetitulo %}<div class="antetitulo">{{ antetitulo }}</div>{% endif %}
+      <h1 class="titular">{{ texto }}</h1>
+    </div>
+{% endblock %}

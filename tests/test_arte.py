@@ -47,3 +47,11 @@ def test_antetitulo():
     assert arte.validar_antetitulo(" prensa y poder. ") == "PRENSA Y PODER"
     assert arte.validar_antetitulo("una etiqueta demasiado larga") is None
     assert arte.validar_antetitulo(None) is None
+
+
+def test_remate_literal_al_final_del_titular():
+    t = "Nóvaya Gazeta apaga la luz y Rusia pierde a quien la anotaba."
+    assert arte.validar_remate("a quien la anotaba.", t) == "a quien la anotaba"
+    assert arte.validar_remate("pierde a quien", t) is None          # no es el final
+    assert arte.validar_remate("anotaba", t) is None                 # una sola palabra
+    assert arte.validar_remate(t, t) is None                         # el titular entero

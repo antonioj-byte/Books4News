@@ -107,6 +107,15 @@ def libro_de_diapositiva(libros: list[dict], pieza: Pieza, texto: str) -> dict |
     return None
 
 
+def titular_con_remate(texto: str, remate: str | None) -> Markup:
+    """El titular con su remate (el final, en cursiva) si el remate es literalmente el final del titular."""
+    if remate:
+        corte = texto.rstrip().rstrip(".").rfind(remate.rstrip().rstrip("."))
+        if corte > 0 and texto[:corte].strip():
+            return Markup(f'{texto_html(texto[:corte])}<span class="remate">{texto_html(texto[corte:])}</span>')
+    return texto_html(texto)
+
+
 def color_de_pieza(pieza: Pieza, n_colores: int) -> int:
     """Índice estable de color para la pieza (las propuestas que cambian de color por pieza)."""
     return sum(map(ord, pieza.id)) % n_colores if n_colores else 0
@@ -191,6 +200,7 @@ class Plantillas:
             libros=libros if d.tipo == "cierre" else [], libros_pieza=libros,
             libro=(libro_de_diapositiva(libros, pieza, d.texto) or (libros[:1] or [None])[0]) if d.tipo == "libro" else None,
             titular=texto_html(portada.texto), imagen=imagen, anio_hoy=int(pieza.fecha[:4]),
+            titular_remate=titular_con_remate(portada.texto, pieza.arte.remate if pieza.arte else None),
             tono=pieza.arte.tono if pieza.arte else None, antetitulo=pieza.arte.antetitulo if pieza.arte else None, portada_estilo=estilo, ilustracion=svg, campo=campo, cifra=pieza.arte.cifra if pieza.arte else None, cifra_rotulo=pieza.arte.cifra_rotulo if pieza.arte else None,
             color=paleta[color_de_pieza(pieza, len(paleta))] if paleta else None,
         )

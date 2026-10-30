@@ -77,6 +77,16 @@ def validar_antetitulo(texto: str | None) -> str | None:
     return texto if 1 <= len(texto.split()) <= 3 and len(texto) <= 26 else None
 
 
+def validar_remate(remate: str | None, titular: str) -> str | None:
+    """El remate tiene que ser literalmente el final del titular, de 2 a 6 palabras, y no todo él."""
+    if not remate:
+        return None
+    r, t = remate.strip().rstrip("."), titular.strip().rstrip(".")
+    if not t.endswith(r) or t == r or not 2 <= len(r.split()) <= 6:
+        return None
+    return r
+
+
 def _descargar(c: httpx.Client, cand: imagenes.ImagenLibre) -> Image.Image | None:
     try:
         r = c.get(cand.url)
@@ -197,6 +207,7 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
     if arte.portada not in permitidas:
         arte.portada = permitidas[0]
     arte.antetitulo = validar_antetitulo(propuesta.antetitulo)
+    arte.remate = validar_remate(propuesta.remate, pieza.guion.diapositivas[0].texto)
     if arte.portada == "collage" and not arte.imagen:
         arte.portada = "circulo"
     if arte.portada == "ilustracion":

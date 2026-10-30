@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+    {% if libro %}{% with l=libro %}
+    <div class="escaparate"><span class="escaparate__bloque"></span>{% include "_cubierta.html" %}
+      <div class="escaparate__datos">
+        <div class="escaparate__titulo">{{ l.titulo }}</div>
+        <div class="escaparate__autor">{{ l.autor }}{% if l.anio and l.anio < anio_hoy %} · {{ l.anio }}{% endif %}</div>
+      </div>
+    </div>
+    {% endwith %}{% endif %}
+    <p class="texto">{{ texto }}</p>
+{% endblock %}

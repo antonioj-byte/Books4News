@@ -1,13 +1,12 @@
 {% extends "base.html" %}
 {% block fondo %}
-{%- if portada_estilo == "neon" %}{% with clase="imagen--sangre imagen--neon" %}{% include "_imagen.html" %}{% endwith %}<span class="bloque"></span>
-{%- elif portada_estilo == "banda" %}{% with clase="imagen--abajo" %}{% include "_imagen.html" %}{% endwith %}
-{%- elif portada_estilo in ("sangre", "caja") %}{% with clase="imagen--sangre" %}{% include "_imagen.html" %}{% endwith %}
-{%- else %}<span class="bloque bloque--tipografica"></span>{% endif %}
+{%- if portada_estilo == "banda" %}{% with clase="imagen--abajo" %}{% include "_imagen.html" %}{% endwith %}<div class="banda"></div>
+{%- elif portada_estilo in ("sangre", "caja", "neon") %}{% with clase="imagen--sangre" %}{% include "_imagen.html" %}{% endwith %}
+{%- else %}<div class="muro" aria-hidden="true">{% for i in range(14) %}<p class="muro__fila muro__fila--{{ i % 3 }}">{{ tokens.vocabulario }} · {{ tokens.vocabulario }}</p>{% endfor %}</div><div class="velo"></div>{% endif %}
 {% endblock %}
 {% block cuerpo %}
     <div class="titulo">
       {% if antetitulo %}<div class="antetitulo">{{ antetitulo }}</div>{% endif %}
-      <h1 class="titular">{{ texto }}</h1>
+      <h1 class="titular">{{ titular_remate }}</h1>
     </div>
 {% endblock %}

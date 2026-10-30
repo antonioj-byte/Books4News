@@ -1,52 +1,60 @@
-# Design system de Folio: «Wired» (31/10), tomando como referencia el Instagram de Wired.
-# Imagen de archivo a sangre en blanco y negro muy contrastado, con grano; titulares en palo seco
-# condensado y mayúsculas; antetítulo de tema en monoespaciada; fondo oscuro; un color neón por
-# pieza según el tono (en las graves, sin neón). Sin cabecera, logotipo, fecha, paginación ni
-# créditos en las diapositivas: el crédito va en el pie de la publicación.
-# Portada en cuatro composiciones que decide el director de arte: «sangre» (foto a sangre y
-# titular abajo), «banda» (titular en banda blanca arriba y foto debajo), «caja» (titular en caja
-# negra sobre la foto) y «neon» (foto virada a neón con un bloque de color). Sin imagen: tipográfica.
-# Las propuestas anteriores siguen en diseno/propuestas/.
+# Design system de Folio: Wired + marca Alighieria (31/10).
+# De Wired: imagen a sangre en blanco y negro con grano, titular grande y apretado, antetítulo de
+# tema, composiciones de portada. De Alighieria (brandbook v2): los cuatro materiales del oficio
+# (papel, tinta, la pluma roja del corrector y el marcador fluorescente), Alexandria 600 con un
+# remate en EB Garamond cursiva, Open Sans para el texto, borde de papel rasgado entre claro y
+# oscuro, tarjetas de papel rosado, muro de vocabulario del oficio. Reglas de la marca: nunca negro
+# puro; fotografía solo en blanco y negro; el marcador nunca de fondo de bloque; un remate por
+# titular; por diapositiva, como mucho un acento amarillo y uno rojo.
+# Sin cabecera, logotipo, fecha, paginación ni créditos: el crédito va en el pie de la publicación.
 
 lienzo:
   ancho: 1080px
   alto: 1350px
 
 colores:
-  papel: "#0D0D0D"           # fondo de las diapositivas
-  tinta: "#F4F4F2"           # texto sobre el fondo
-  tinta_suave: "#9A9A96"
-  negro: "#0D0D0D"
-  blanco: "#F4F4F2"
-  acento: "#F2E205"          # neón por defecto (se cambia por pieza: campos_portada)
+  papel: "#F6F3EE"
+  papel_rosa: "#F8F0EE"
+  tinta: "#1C1618"
+  tinta_honda: "#120E0F"
+  tinta_elevada: "#2C2427"
+  tinta_60: "rgba(28, 22, 24, 0.62)"
+  tinta_8: "rgba(28, 22, 24, 0.08)"
+  papel_64: "rgba(246, 243, 238, 0.64)"
+  pluma: "#D40549"
+  marcador: "#FFF500"
 
 fuentes:
   archivo: fuentes/fuentes.css
-  titular: "'Barlow Condensed', 'Arial Narrow', sans-serif"
-  texto: "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif"
-  rotulos: "'IBM Plex Mono', 'Courier New', monospace"
+  titular: "'Alexandria', 'Helvetica Neue', Arial, sans-serif"
+  remate: "'EB Garamond', Garamond, Georgia, serif"
+  texto: "'Open Sans', system-ui, sans-serif"
 
 tamanos:
-  titular: 118px
-  cuerpo: 50px
-  cuerpo_minimo: 34px
-  idea: 92px
-  cifra: 300px
-  antetitulo: 26px
-  dato: 22px
+  titular: 112px
+  cuerpo: 48px
+  cuerpo_minimo: 32px
+  idea: 84px
+  cifra: 260px
+  antetitulo: 22px
+  dato: 24px
 
 margenes:
-  lateral: 72px
-  superior: 72px
-  inferior: 80px
+  lateral: 80px
+  superior: 80px
+  inferior: 84px
+  radio: 12px
 
-# Neón de cada pieza según el tono. fondo: el neón principal; color: el segundo, para los bloques.
+# El color ya no cambia por pieza (la marca tiene una paleta cerrada); se deja la clave para el render.
 campos_portada:
-  reflexivo: {fondo: "#F2E205", color: "#FF3EA5"}   # amarillo y magenta
-  sereno: {fondo: "#3D6BFF", color: "#F2E205"}      # azul eléctrico
-  ironico: {fondo: "#FF3EA5", color: "#F2E205"}     # magenta
-  luminoso: {fondo: "#F2E205", color: "#3D6BFF"}
-  grave: {fondo: "#C8C8C4", color: "#C8C8C4"}       # sin neón
+  reflexivo: {fondo: "#D40549", color: "#FFF500"}
+  sereno: {fondo: "#D40549", color: "#FFF500"}
+  ironico: {fondo: "#D40549", color: "#FFF500"}
+  luminoso: {fondo: "#D40549", color: "#FFF500"}
+  grave: {fondo: "#1C1618", color: "#F6F3EE"}
+
+# Muro de vocabulario (portada sin imagen): términos del oficio, como textura
+vocabulario: "galeradas · colofón · raccord · isbn · fe de erratas · regalías · tirada · pliego · sangría · viuda · huérfana · cícero · lomo · solapa · capitular · epígrafe · maqueta · prólogo · errata · imprenta · derechos · cubierta · índice · colección · reseña · traducción · edición · librería · lector · página"
 
 rotulos:
   portada: ""

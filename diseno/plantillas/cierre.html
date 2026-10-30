@@ -3,8 +3,8 @@
     <p class="texto">{{ texto }}</p>
     <div class="estante">
       {% for l in libros %}
-      <div class="estante__libro">{% include "_cubierta.html" %}
-        <div class="estante__ficha"><b>{{ l.titulo }}</b><span>{{ l.autor }}{% if l.datos %} · {{ l.datos }}{% endif %}</span></div>
+      <div class="tarjeta">{% include "_cubierta.html" %}
+        <div class="tarjeta__ficha"><b>{{ l.titulo }}</b><i>{{ l.autor }}</i>{% if l.datos %}<span>{{ l.datos }}</span>{% endif %}</div>
       </div>
       {% endfor %}
     </div>

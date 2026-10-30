@@ -1,0 +1,105 @@
+/* Folio · «Wired». Solo variables de tokens.yaml; el neón de la pieza llega como --neon y --neon-2. */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: var(--lienzo-ancho); height: var(--lienzo-alto); background: var(--colores-negro); }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+.diapositiva {
+  position: relative; isolation: isolate;
+  width: var(--lienzo-ancho); height: var(--lienzo-alto); overflow: hidden;
+  display: flex; flex-direction: column;
+  padding: var(--margenes-superior) var(--margenes-lateral) var(--margenes-inferior);
+  background: var(--colores-negro); color: var(--colores-blanco); font-family: var(--fuentes-texto);
+}
+/* Grano de película sobre todo */
+.diapositiva::after {
+  content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.22; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+}
+.cuerpo { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+.texto { font-size: var(--tamanos-cuerpo); line-height: 1.24; font-weight: 500; letter-spacing: -0.01em; text-wrap: pretty; }
+.texto em { font-style: italic; }
+
+/* Imagen de archivo: blanco y negro muy contrastado */
+.imagen { position: absolute; z-index: -1; margin: 0; overflow: hidden; background: var(--colores-negro); }
+.imagen img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(1) contrast(1.45) brightness(0.92); }
+.imagen--sangre { inset: 0; }
+.imagen--sangre::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(13, 13, 13, 0.55) 62%, var(--colores-negro) 96%); }
+
+/* Titular: palo seco condensado, mayúsculas, muy apretado */
+.titulo { margin-top: auto; }
+.antetitulo { font-family: var(--fuentes-rotulos); font-size: var(--tamanos-antetitulo); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 18px; }
+.titular {
+  font-family: var(--fuentes-titular); font-size: var(--tamanos-titular); font-weight: 700; line-height: 0.92;
+  letter-spacing: -0.005em; text-transform: uppercase; text-wrap: balance; font-variant-numeric: lining-nums;
+  padding-bottom: 0.14em;   /* con interlineado tan cerrado, los trazos bajos salen de la caja: el ajuste lo tomaría por desborde */
+}
+.diapositiva--portada .cuerpo { justify-content: flex-start; }
+
+/* Banda: titular negro sobre banda blanca arriba, foto debajo */
+.portada--banda { background: var(--colores-blanco); color: var(--colores-negro); }
+.imagen--abajo { left: 0; right: 0; bottom: 0; height: 56%; }
+.portada--banda .cuerpo { flex: none; height: 38%; }
+.portada--banda .titulo { margin: auto 0; text-align: center; }
+.portada--banda .titular { font-size: 96px; }
+
+/* Caja: titular en caja negra con borde blanco, centrada sobre la foto */
+.portada--caja .imagen--sangre::after { background: rgba(13, 13, 13, 0.18); }
+.portada--caja .cuerpo { justify-content: center; align-items: center; }
+.portada--caja .titulo { margin: 0; display: flex; flex-direction: column; align-items: center; }
+.portada--caja .antetitulo { background: var(--colores-blanco); color: var(--colores-negro); padding: 10px 16px 8px; margin-bottom: 0; }
+.portada--caja .titular { background: var(--colores-negro); border: 5px solid var(--colores-blanco); padding: 22px 30px 16px; text-align: center; font-size: 92px; }
+
+/* Neón: la foto virada a neón y un bloque de color, como un collage */
+.imagen--neon { background: var(--neon); }
+.imagen--neon img { mix-blend-mode: multiply; filter: grayscale(1) contrast(1.7) brightness(1.08); }
+.imagen--neon::after { background: linear-gradient(180deg, transparent 45%, rgba(13, 13, 13, 0.7) 70%, var(--colores-negro) 96%); }
+.bloque { position: absolute; z-index: -1; left: 0; width: 64%; top: 34%; height: 9%; background: var(--neon-2); mix-blend-mode: multiply; }
+.grave .bloque { display: none; }
+.bloque--tipografica { left: var(--margenes-lateral); width: 180px; top: var(--margenes-superior); height: 24px; background: var(--neon); mix-blend-mode: normal; display: block !important; }
+.portada--tipografica .titular { font-size: 150px; }
+
+/* La noticia: foto arriba, texto abajo; o una cifra gigante en neón */
+.imagen--arriba { left: 0; right: 0; top: 0; height: 46%; }
+.imagen--arriba::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, var(--colores-negro) 100%); }
+.diapositiva--actualidad.con-imagen:not(:has(.cifra)) .cuerpo { justify-content: flex-end; }
+.diapositiva--actualidad .texto { font-size: 48px; }
+.cifra { margin-bottom: 40px; }
+.cifra__numero { font-family: var(--fuentes-titular); font-size: var(--tamanos-cifra); line-height: 0.86; font-weight: 800; letter-spacing: -0.01em; color: var(--neon); text-transform: uppercase; text-wrap: balance; }
+.cifra__rotulo { margin-top: 16px; font-family: var(--fuentes-rotulos); font-size: var(--tamanos-antetitulo); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.diapositiva--actualidad .cifra ~ .texto { font-size: 40px; color: var(--colores-tinta-suave); }
+
+/* Cubiertas */
+.cubierta { display: block; box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.7); }
+.cubierta--real { height: 100%; width: auto; }
+.cubierta--dibujada {
+  height: 100%; aspect-ratio: 2 / 3; background: var(--colores-blanco); color: var(--colores-negro);
+  display: flex; flex-direction: column; justify-content: space-between; padding: 9% 10%;
+}
+.cubierta__autor { font-family: var(--fuentes-rotulos); font-weight: 600; font-size: 18px; letter-spacing: 0.06em; text-transform: uppercase; }
+.cubierta__titulo { font-family: var(--fuentes-titular); font-weight: 700; font-size: 58px; line-height: 0.95; text-transform: uppercase; }
+
+/* El libro: la cubierta sobre un bloque de neón, ficha en condensada */
+.diapositiva--libro .cuerpo { justify-content: flex-start; }
+.escaparate { position: relative; height: 640px; display: flex; gap: 48px; align-items: stretch; margin-bottom: 48px; }
+.escaparate__bloque { position: absolute; z-index: -1; left: -72px; top: 70px; width: 560px; height: 500px; background: var(--neon); }
+.escaparate .cubierta { height: 560px; margin-top: 40px; margin-left: 40px; }
+.escaparate__datos { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+.escaparate__titulo { font-family: var(--fuentes-titular); font-size: 60px; line-height: 0.95; font-weight: 700; text-transform: uppercase; }
+.escaparate__autor { margin-top: 16px; font-family: var(--fuentes-rotulos); font-size: var(--tamanos-dato); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--colores-tinta-suave); }
+.diapositiva--libro .texto { margin-top: auto; font-size: 44px; }
+
+/* La idea: neón a página completa, en condensada negra */
+.diapositiva--idea { background: var(--neon); color: var(--colores-negro); }
+.diapositiva--idea .texto { padding-bottom: 0.14em; font-family: var(--fuentes-titular); font-size: var(--tamanos-idea); line-height: 0.96; font-weight: 700; text-transform: uppercase; letter-spacing: -0.005em; text-wrap: balance; }
+.diapositiva--idea .texto em { font-style: normal; }
+
+/* Cierre */
+.diapositiva--cierre .cuerpo { justify-content: flex-start; }
+.diapositiva--cierre .texto { font-size: 46px; }
+.estante { margin-top: auto; display: flex; gap: 44px; align-items: flex-end; }
+.estante__libro { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.estante__libro .cubierta { height: 420px; flex: none; align-self: flex-start; }
+.estante__libro .cubierta__titulo { font-size: 44px; }
+.estante__ficha { display: flex; flex-direction: column; gap: 6px; max-width: 420px; }
+.estante__ficha b { font-family: var(--fuentes-titular); font-size: 38px; line-height: 0.98; font-weight: 700; text-transform: uppercase; }
+.estante__ficha span { font-family: var(--fuentes-rotulos); font-size: 18px; letter-spacing: 0.03em; color: var(--colores-tinta-suave); }

@@ -45,12 +45,12 @@ def test_plantillas_solo_usan_variables_de_los_tokens(cfg_diseno):
 def test_html_de_cada_diapositiva(cfg_diseno, pieza):
     p = render.Plantillas(cfg_diseno)
     portada = p.html_diapositiva(pieza, 1, base_url="/diseno/")
-    assert '<base href="/diseno/">' in portada and "diapositiva--portada" in portada and "--colores-negro" in portada
+    assert '<base href="/diseno/">' in portada and "diapositiva--portada" in portada and "--colores-pluma" in portada
     assert "portada--tipografica" in portada          # sin imagen, portada tipográfica
     cierre = p.html_diapositiva(pieza, 5)
     # La firma del texto no se repite; la ficha lleva los datos verificados
     assert "Léelo." in cierre and "Léelo. Folio" not in cierre
-    assert "Debolsillo, 2014" in cierre and "estante__libro" in cierre
+    assert "Debolsillo, 2014" in cierre and "tarjeta" in cierre
     assert "cubierta--dibujada" in cierre             # sin cubierta en la caché, se dibuja
 
 
@@ -67,11 +67,13 @@ def test_imagen_cifra_antetitulo_y_cubierta(cfg_diseno, pieza):
     (cache.parent / "cubiertas").mkdir()
     (cache.parent / "cubiertas" / "c.jpg").write_bytes(b"jpg")
     (cache.parent / "cubiertas" / f"{cubiertas._nombre(pieza.libros[0])}.json").write_text('{"archivo": "c.jpg"}')
-    pieza.arte = Arte(tono="ironico", recurso="foto", portada="neon", antetitulo="PODER", cifra="tribunal", cifra_rotulo="juzga")
+    pieza.arte = Arte(tono="ironico", recurso="foto", portada="sangre", antetitulo="PODER", cifra="tribunal", cifra_rotulo="juzga",
+                      remate="se elige")
     p = render.Plantillas(cfg_diseno, url_medio=lambda r: "/api/medios/" + r.name)
     portada = p.html_diapositiva(pieza, 1)
     assert "/api/medios/2026-10-30-1.jpg" in portada and "object-position: 30% 70%" in portada
-    assert "portada--neon" in portada and "--neon: #FF3EA5" in portada and ">PODER<" in portada
+    assert "portada--sangre" in portada and ">PODER<" in portada
+    assert 'La obediencia también <span class="remate">se elige</span>' in portada
     assert "Ana Pérez" not in portada                  # el crédito va en el pie de la publicación
     noticia = p.html_diapositiva(pieza, 2)
     assert 'class="cifra__numero" data-encajar>tribunal<' in noticia and "imagen--arriba" not in noticia

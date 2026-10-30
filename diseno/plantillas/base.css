@@ -1,6 +1,6 @@
-/* Folio · «Wired». Solo variables de tokens.yaml; el neón de la pieza llega como --neon y --neon-2. */
+/* Folio · Wired + marca Alighieria. Solo variables de tokens.yaml. */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: var(--lienzo-ancho); height: var(--lienzo-alto); background: var(--colores-negro); }
+html, body { width: var(--lienzo-ancho); height: var(--lienzo-alto); background: var(--colores-papel); }
 body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 
 .diapositiva {
@@ -8,98 +8,114 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
   width: var(--lienzo-ancho); height: var(--lienzo-alto); overflow: hidden;
   display: flex; flex-direction: column;
   padding: var(--margenes-superior) var(--margenes-lateral) var(--margenes-inferior);
-  background: var(--colores-negro); color: var(--colores-blanco); font-family: var(--fuentes-texto);
-}
-/* Grano de película sobre todo */
-.diapositiva::after {
-  content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0.22; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+  background: var(--colores-papel); color: var(--colores-tinta); font-family: var(--fuentes-texto);
 }
 .cuerpo { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
-.texto { font-size: var(--tamanos-cuerpo); line-height: 1.24; font-weight: 500; letter-spacing: -0.01em; text-wrap: pretty; }
-.texto em { font-style: italic; }
+.texto { font-size: var(--tamanos-cuerpo); line-height: 1.4; font-weight: 400; letter-spacing: -0.005em; text-wrap: pretty; }
+.texto em { font-family: var(--fuentes-remate); font-style: italic; font-size: 1.08em; }
 
-/* Imagen de archivo: blanco y negro muy contrastado */
-.imagen { position: absolute; z-index: -1; margin: 0; overflow: hidden; background: var(--colores-negro); }
-.imagen img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(1) contrast(1.45) brightness(0.92); }
-.imagen--sangre { inset: 0; }
-.imagen--sangre::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(13, 13, 13, 0.55) 62%, var(--colores-negro) 96%); }
-
-/* Titular: palo seco condensado, mayúsculas, muy apretado */
-.titulo { margin-top: auto; }
-.antetitulo { font-family: var(--fuentes-rotulos); font-size: var(--tamanos-antetitulo); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 18px; }
-.titular {
-  font-family: var(--fuentes-titular); font-size: var(--tamanos-titular); font-weight: 700; line-height: 0.92;
-  letter-spacing: -0.005em; text-transform: uppercase; text-wrap: balance; font-variant-numeric: lining-nums;
-  padding-bottom: 0.14em;   /* con interlineado tan cerrado, los trazos bajos salen de la caja: el ajuste lo tomaría por desborde */
+/* Fotografía: siempre en blanco y negro, con grano de impresión */
+.imagen { position: absolute; z-index: -1; margin: 0; overflow: hidden; background: var(--colores-tinta-honda); }
+.imagen img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(1) contrast(1.35) brightness(0.95); }
+.imagen::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; opacity: 0.2; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
 }
+.imagen--sangre { inset: 0; }
+.imagen--sangre::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 38%, rgba(18, 14, 15, 0.6) 64%, var(--colores-tinta-honda) 97%); }
+
+/* Titular: Alexandria 600 muy apretada, con un remate en EB Garamond cursiva */
+.titulo { margin-top: auto; }
+.antetitulo {
+  display: inline-block; font-family: var(--fuentes-titular); font-size: var(--tamanos-antetitulo); font-weight: 500; letter-spacing: 0.2em;
+  text-transform: uppercase; background: var(--colores-tinta); color: var(--colores-papel); border-radius: 999px; padding: 12px 22px 10px; margin-bottom: 28px;
+}
+.titular {
+  font-family: var(--fuentes-titular); font-size: var(--tamanos-titular); font-weight: 700; line-height: 1.0;
+  letter-spacing: -0.05em; text-wrap: balance; font-variant-numeric: lining-nums; padding-bottom: 0.18em;
+}
+.remate { font-family: var(--fuentes-remate); font-style: italic; font-weight: 400; letter-spacing: -0.02em; font-size: 1.06em; color: var(--colores-pluma); }
 .diapositiva--portada .cuerpo { justify-content: flex-start; }
 
-/* Banda: titular negro sobre banda blanca arriba, foto debajo */
-.portada--banda { background: var(--colores-blanco); color: var(--colores-negro); }
+/* Sangre y caja: foto oscura, texto en papel; el antetítulo en marcador, el remate en papel */
+/* «neon» (de Wired) no existe en la marca: se pinta como sangre */
+.portada--sangre, .portada--neon, .portada--caja { background: var(--colores-tinta-honda); color: var(--colores-papel); }
+/* Sobre oscuro: la píldora en papel y el remate subrayado con marcador (el amarillo de Wired, a la manera de la marca) */
+.portada--sangre .antetitulo, .portada--neon .antetitulo { background: var(--colores-papel); color: var(--colores-tinta); }
+.portada--sangre .remate, .portada--neon .remate {
+  color: var(--colores-tinta); padding: 0 0.12em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: linear-gradient(100deg, rgba(255, 245, 0, 0) 0.9%, rgba(255, 245, 0, 1) 2.4%, rgba(255, 245, 0, 0.88) 5.8%, rgba(255, 245, 0, 0.78) 93%, rgba(255, 245, 0, 0.95) 96%, rgba(255, 245, 0, 0) 98%);
+  background-size: 100% 78%; background-position: 0 70%; background-repeat: no-repeat;
+}
+
+/* Caja: el titular en una tarjeta de papel rosado sobre la foto */
+.portada--caja .imagen--sangre::after { background: rgba(18, 14, 15, 0.12); }
+.portada--caja .titulo { margin-top: auto; background: var(--colores-papel-rosa); color: var(--colores-tinta); border-radius: var(--margenes-radio); padding: 44px 48px 36px; box-shadow: 0 30px 80px -20px rgba(18, 14, 15, 0.6); }
+.portada--caja .titular { font-size: 92px; }
+
+/* Banda: papel arriba con borde rasgado sobre la foto */
+.banda { position: absolute; z-index: -1; left: 0; right: 0; top: 0; height: 50%; background: var(--colores-papel); clip-path: polygon(0 0, 100% 0, 100.00% calc(100% - 7px), 98.21% calc(100% - 3px), 96.43% calc(100% - 20px), 94.64% calc(100% - 2px), 92.86% calc(100% - 12px), 91.07% calc(100% - 14px), 89.29% calc(100% - 1px), 87.50% calc(100% - 11px), 85.71% calc(100% - 7px), 83.93% calc(100% - 10px), 82.14% calc(100% - 2px), 80.36% calc(100% - 8px), 78.57% calc(100% - 9px), 76.79% calc(100% - 18px), 75.00% calc(100% - 9px), 73.21% calc(100% - 5px), 71.43% calc(100% - 14px), 69.64% calc(100% - 27px), 67.86% calc(100% - 13px), 66.07% calc(100% - 9px), 64.29% calc(100% - 27px), 62.50% calc(100% - 1px), 60.71% calc(100% - 19px), 58.93% calc(100% - 12px), 57.14% calc(100% - 3px), 55.36% calc(100% - 3px), 53.57% calc(100% - 13px), 51.79% calc(100% - 18px), 50.00% calc(100% - 4px), 48.21% calc(100% - 19px), 46.43% calc(100% - 14px), 44.64% calc(100% - 8px), 42.86% calc(100% - 18px), 41.07% calc(100% - 1px), 39.29% calc(100% - 1px), 37.50% calc(100% - 11px), 35.71% calc(100% - 15px), 33.93% calc(100% - 9px), 32.14% calc(100% - 13px), 30.36% calc(100% - 13px), 28.57% calc(100% - 10px), 26.79% calc(100% - 13px), 25.00% calc(100% - 17px), 23.21% calc(100% - 15px), 21.43% calc(100% - 11px), 19.64% calc(100% - 13px), 17.86% calc(100% - 12px), 16.07% calc(100% - 25px), 14.29% calc(100% - 16px), 12.50% calc(100% - 6px), 10.71% calc(100% - 28px), 8.93% calc(100% - 3px), 7.14% calc(100% - 9px), 5.36% calc(100% - 23px), 3.57% calc(100% - 3px), 1.79% calc(100% - 11px), 0.00% calc(100% - 7px)); }
 .imagen--abajo { left: 0; right: 0; bottom: 0; height: 56%; }
-.portada--banda .cuerpo { flex: none; height: 38%; }
-.portada--banda .titulo { margin: auto 0; text-align: center; }
-.portada--banda .titular { font-size: 96px; }
+.portada--banda .cuerpo { flex: none; height: calc(50% - var(--margenes-superior) - 24px); }
+.portada--banda .titulo { margin: auto 0 0; }
+.portada--banda .titular { font-size: 92px; }
 
-/* Caja: titular en caja negra con borde blanco, centrada sobre la foto */
-.portada--caja .imagen--sangre::after { background: rgba(13, 13, 13, 0.18); }
-.portada--caja .cuerpo { justify-content: center; align-items: center; }
-.portada--caja .titulo { margin: 0; display: flex; flex-direction: column; align-items: center; }
-.portada--caja .antetitulo { background: var(--colores-blanco); color: var(--colores-negro); padding: 10px 16px 8px; margin-bottom: 0; }
-.portada--caja .titular { background: var(--colores-negro); border: 5px solid var(--colores-blanco); padding: 22px 30px 16px; text-align: center; font-size: 92px; }
+/* Sin imagen: muro de vocabulario del oficio bajo un velo de papel */
+.muro { position: absolute; inset: -40px -200px; z-index: -2; display: flex; flex-direction: column; justify-content: space-between; transform: rotate(-4deg); opacity: 0.12; white-space: nowrap; }
+.muro__fila { font-size: 64px; line-height: 1; }
+.muro__fila--0 { font-family: var(--fuentes-titular); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; font-size: 52px; }
+.muro__fila--1 { font-family: var(--fuentes-remate); font-style: italic; margin-left: -300px; }
+.muro__fila--2 { font-family: var(--fuentes-titular); font-weight: 300; margin-left: -120px; }
+.velo { position: absolute; inset: 0; z-index: -1; background: radial-gradient(ellipse at 40% 75%, rgba(246, 243, 238, 0.97) 0%, rgba(246, 243, 238, 0.9) 40%, rgba(246, 243, 238, 0.55) 75%, rgba(246, 243, 238, 0) 100%); }
+.portada--tipografica .titular { font-size: 128px; }
 
-/* Neón: la foto virada a neón y un bloque de color, como un collage */
-.imagen--neon { background: var(--neon); }
-.imagen--neon img { mix-blend-mode: multiply; filter: grayscale(1) contrast(1.7) brightness(1.08); }
-.imagen--neon::after { background: linear-gradient(180deg, transparent 45%, rgba(13, 13, 13, 0.7) 70%, var(--colores-negro) 96%); }
-.bloque { position: absolute; z-index: -1; left: 0; width: 64%; top: 34%; height: 9%; background: var(--neon-2); mix-blend-mode: multiply; }
-.grave .bloque { display: none; }
-.bloque--tipografica { left: var(--margenes-lateral); width: 180px; top: var(--margenes-superior); height: 24px; background: var(--neon); mix-blend-mode: normal; display: block !important; }
-.portada--tipografica .titular { font-size: 150px; }
-
-/* La noticia: foto arriba, texto abajo; o una cifra gigante en neón */
-.imagen--arriba { left: 0; right: 0; top: 0; height: 46%; }
-.imagen--arriba::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, var(--colores-negro) 100%); }
+/* La noticia: papel; foto arriba con borde rasgado, o la cifra en pluma */
+.imagen--arriba { left: 0; right: 0; top: 0; height: 48%; clip-path: polygon(0 0, 100% 0, 100.00% calc(100% - 7px), 98.21% calc(100% - 3px), 96.43% calc(100% - 20px), 94.64% calc(100% - 2px), 92.86% calc(100% - 12px), 91.07% calc(100% - 14px), 89.29% calc(100% - 1px), 87.50% calc(100% - 11px), 85.71% calc(100% - 7px), 83.93% calc(100% - 10px), 82.14% calc(100% - 2px), 80.36% calc(100% - 8px), 78.57% calc(100% - 9px), 76.79% calc(100% - 18px), 75.00% calc(100% - 9px), 73.21% calc(100% - 5px), 71.43% calc(100% - 14px), 69.64% calc(100% - 27px), 67.86% calc(100% - 13px), 66.07% calc(100% - 9px), 64.29% calc(100% - 27px), 62.50% calc(100% - 1px), 60.71% calc(100% - 19px), 58.93% calc(100% - 12px), 57.14% calc(100% - 3px), 55.36% calc(100% - 3px), 53.57% calc(100% - 13px), 51.79% calc(100% - 18px), 50.00% calc(100% - 4px), 48.21% calc(100% - 19px), 46.43% calc(100% - 14px), 44.64% calc(100% - 8px), 42.86% calc(100% - 18px), 41.07% calc(100% - 1px), 39.29% calc(100% - 1px), 37.50% calc(100% - 11px), 35.71% calc(100% - 15px), 33.93% calc(100% - 9px), 32.14% calc(100% - 13px), 30.36% calc(100% - 13px), 28.57% calc(100% - 10px), 26.79% calc(100% - 13px), 25.00% calc(100% - 17px), 23.21% calc(100% - 15px), 21.43% calc(100% - 11px), 19.64% calc(100% - 13px), 17.86% calc(100% - 12px), 16.07% calc(100% - 25px), 14.29% calc(100% - 16px), 12.50% calc(100% - 6px), 10.71% calc(100% - 28px), 8.93% calc(100% - 3px), 7.14% calc(100% - 9px), 5.36% calc(100% - 23px), 3.57% calc(100% - 3px), 1.79% calc(100% - 11px), 0.00% calc(100% - 7px)); }
+.imagen--arriba::after { content: none; }
 .diapositiva--actualidad.con-imagen:not(:has(.cifra)) .cuerpo { justify-content: flex-end; }
-.diapositiva--actualidad .texto { font-size: 48px; }
-.cifra { margin-bottom: 40px; }
-.cifra__numero { font-family: var(--fuentes-titular); font-size: var(--tamanos-cifra); line-height: 0.86; font-weight: 800; letter-spacing: -0.01em; color: var(--neon); text-transform: uppercase; text-wrap: balance; }
-.cifra__rotulo { margin-top: 16px; font-family: var(--fuentes-rotulos); font-size: var(--tamanos-antetitulo); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
-.diapositiva--actualidad .cifra ~ .texto { font-size: 40px; color: var(--colores-tinta-suave); }
+.diapositiva--actualidad { background: var(--colores-tinta-honda); color: var(--colores-papel); }
+.diapositiva--actualidad .texto { font-size: 46px; }
+.cifra { margin-bottom: 44px; }
+.cifra__numero { font-family: var(--fuentes-titular); font-size: var(--tamanos-cifra); line-height: 0.9; font-weight: 700; letter-spacing: -0.055em; color: var(--colores-marcador); text-wrap: balance; padding-bottom: 0.08em; }
+.cifra__rotulo { margin-top: 10px; font-family: var(--fuentes-remate); font-style: italic; font-size: 48px; color: var(--colores-papel); }
+.diapositiva--actualidad .cifra ~ .texto { font-size: 40px; color: var(--colores-papel-64); }
 
 /* Cubiertas */
-.cubierta { display: block; box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.7); }
+.cubierta { display: block; border-radius: 3px; box-shadow: 0 2px 4px rgba(18, 14, 15, 0.2), 0 34px 70px -18px rgba(18, 14, 15, 0.55); }
 .cubierta--real { height: 100%; width: auto; }
-.cubierta--dibujada {
-  height: 100%; aspect-ratio: 2 / 3; background: var(--colores-blanco); color: var(--colores-negro);
-  display: flex; flex-direction: column; justify-content: space-between; padding: 9% 10%;
-}
-.cubierta__autor { font-family: var(--fuentes-rotulos); font-weight: 600; font-size: 18px; letter-spacing: 0.06em; text-transform: uppercase; }
-.cubierta__titulo { font-family: var(--fuentes-titular); font-weight: 700; font-size: 58px; line-height: 0.95; text-transform: uppercase; }
+.cubierta--dibujada { height: 100%; aspect-ratio: 2 / 3; background: var(--colores-papel); color: var(--colores-tinta); display: flex; flex-direction: column; justify-content: space-between; padding: 10% 10%; }
+.cubierta__autor { font-family: var(--fuentes-titular); font-weight: 500; font-size: 17px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--colores-pluma); }
+.cubierta__titulo { font-family: var(--fuentes-titular); font-weight: 600; font-size: 50px; line-height: 1; letter-spacing: -0.045em; }
 
-/* El libro: la cubierta sobre un bloque de neón, ficha en condensada */
+/* El libro: tinta honda, la cubierta como objeto, título en Alexandria y autor en Garamond */
+.diapositiva--libro { background: var(--colores-tinta-honda); color: var(--colores-papel); }
 .diapositiva--libro .cuerpo { justify-content: flex-start; }
-.escaparate { position: relative; height: 640px; display: flex; gap: 48px; align-items: stretch; margin-bottom: 48px; }
-.escaparate__bloque { position: absolute; z-index: -1; left: -72px; top: 70px; width: 560px; height: 500px; background: var(--neon); }
-.escaparate .cubierta { height: 560px; margin-top: 40px; margin-left: 40px; }
+.escaparate { height: 600px; display: flex; gap: 52px; align-items: stretch; margin-bottom: 56px; }
+.escaparate .cubierta { height: 100%; flex: none; }
 .escaparate__datos { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
-.escaparate__titulo { font-family: var(--fuentes-titular); font-size: 60px; line-height: 0.95; font-weight: 700; text-transform: uppercase; }
-.escaparate__autor { margin-top: 16px; font-family: var(--fuentes-rotulos); font-size: var(--tamanos-dato); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--colores-tinta-suave); }
-.diapositiva--libro .texto { margin-top: auto; font-size: 44px; }
+.escaparate__anio { margin-bottom: auto; font-family: var(--fuentes-remate); font-style: italic; font-size: 96px; line-height: 1; color: var(--colores-papel-64); }
+.escaparate__titulo { font-family: var(--fuentes-titular); font-size: 52px; line-height: 1.02; font-weight: 600; letter-spacing: -0.045em; }
+.escaparate__autor { margin-top: 14px; font-family: var(--fuentes-remate); font-style: italic; font-size: 38px; color: var(--colores-marcador); }
+.diapositiva--libro .texto { margin-top: auto; font-size: 42px; color: var(--colores-papel); }
 
-/* La idea: neón a página completa, en condensada negra */
-.diapositiva--idea { background: var(--neon); color: var(--colores-negro); }
-.diapositiva--idea .texto { padding-bottom: 0.14em; font-family: var(--fuentes-titular); font-size: var(--tamanos-idea); line-height: 0.96; font-weight: 700; text-transform: uppercase; letter-spacing: -0.005em; text-wrap: balance; }
-.diapositiva--idea .texto em { font-style: normal; }
+/* La idea: papel, Alexandria grande; un calderón flotante como recurso gráfico */
+.diapositiva--idea { background: var(--colores-tinta-honda); color: var(--colores-papel); }
+.diapositiva--idea .texto { font-family: var(--fuentes-titular); font-size: var(--tamanos-idea); line-height: 1.04; font-weight: 700; letter-spacing: -0.045em; text-wrap: balance; padding-bottom: 0.08em; }
+.diapositiva--idea .texto em { font-family: var(--fuentes-remate); font-weight: 400; color: var(--colores-pluma); }
+.glifo { position: absolute; z-index: -1; right: -10px; top: -160px; font-family: var(--fuentes-remate); font-style: normal; font-size: 820px; line-height: 1; color: var(--colores-pluma); opacity: 0.22; transform: rotate(-8deg); }
 
-/* Cierre */
+/* Cierre: tarjetas de papel rosado con las cubiertas */
 .diapositiva--cierre .cuerpo { justify-content: flex-start; }
-.diapositiva--cierre .texto { font-size: 46px; }
-.estante { margin-top: auto; display: flex; gap: 44px; align-items: flex-end; }
-.estante__libro { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.estante__libro .cubierta { height: 420px; flex: none; align-self: flex-start; }
-.estante__libro .cubierta__titulo { font-size: 44px; }
-.estante__ficha { display: flex; flex-direction: column; gap: 6px; max-width: 420px; }
-.estante__ficha b { font-family: var(--fuentes-titular); font-size: 38px; line-height: 0.98; font-weight: 700; text-transform: uppercase; }
-.estante__ficha span { font-family: var(--fuentes-rotulos); font-size: 18px; letter-spacing: 0.03em; color: var(--colores-tinta-suave); }
+.diapositiva--cierre .texto { font-size: 44px; }
+.estante { margin-top: auto; display: flex; gap: 28px; align-items: stretch; }
+.tarjeta { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 22px; background: var(--colores-papel-rosa); border: 1px solid var(--colores-tinta-8); border-radius: var(--margenes-radio); padding: 32px; box-shadow: 0 20px 60px -24px rgba(28, 22, 24, 0.3); }
+.tarjeta .cubierta { height: 330px; flex: none; align-self: flex-start; }
+.tarjeta .cubierta__titulo { font-size: 38px; }
+.tarjeta__ficha { display: flex; flex-direction: column; gap: 4px; }
+.tarjeta__ficha b { font-family: var(--fuentes-titular); font-size: 30px; line-height: 1.05; font-weight: 600; letter-spacing: -0.03em; }
+.tarjeta__ficha i { font-family: var(--fuentes-remate); font-size: 28px; }
+.tarjeta__ficha span { font-size: 18px; color: var(--colores-tinta-60); }
+
+/* Noticias graves: sin marcador; el remate, en cursiva sin subrayar */
+.grave .remate { background: none !important; color: inherit !important; padding: 0; }
+.grave .cifra__numero { color: var(--colores-papel); }
