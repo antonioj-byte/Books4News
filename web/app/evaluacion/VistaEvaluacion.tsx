@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { api, type ResumenDia } from "@/lib/api";
+import { useDatos } from "@/lib/useDatos";
 
 const CRITERIOS = [
   { clave: "seleccion", texto: "Selección" },
@@ -22,8 +22,8 @@ function Barra({ valor }: { valor: number | null }) {
 
 // Medias por criterio a lo largo de los días de evaluación.
 export function VistaEvaluacion() {
-  const [filas, setFilas] = useState<ResumenDia[] | null>(null);
-  useEffect(() => { api.resumen().then(setFilas).catch(() => setFilas([])); }, []);
+  const { datos, error } = useDatos("resumen", api.resumen);
+  const filas: ResumenDia[] | null = error ? [] : datos;
   const total = (filas ?? []).reduce((s, f) => s + f.n, 0);
   const media = (clave: (typeof CRITERIOS)[number]["clave"] | "publicaria") => {
     const conDato = (filas ?? []).filter((f) => f[clave] != null);

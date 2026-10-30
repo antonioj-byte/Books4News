@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { Diapositiva } from "@/components/Diapositiva";
 import { LanzarEjecucion } from "@/components/LanzarEjecucion";
 import { EstadoChip, Marcas } from "@/components/Marcas";
-import { api, type Dia, type DiaDetalle } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useDatos } from "@/lib/useDatos";
 
 const hora = (iso: string) => new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
@@ -16,17 +17,14 @@ export function VistaDia() {
   const busqueda = useSearchParams();
   const router = useRouter();
   const ejecucion = busqueda.get("ejecucion") ? Number(busqueda.get("ejecucion")) : undefined;
-  const [dias, setDias] = useState<Dia[]>([]);
-  const [dia, setDia] = useState<DiaDetalle | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => { api.dias().then(setDias).catch(() => setError("No responde la API (uv run folio web).")); }, []);
+  const { datos: listaDias, error: errorDias, recargar: recargarDias } = useDatos("dias", api.dias);
+  const { datos: dia, error: errorDia } = useDatos(`dia:${fecha}:${ejecucion ?? ""}`, () => api.dia(fecha, ejecucion));
+  const dias = listaDias ?? [];
+  const error = errorDias ? "No responde la API (uv run folio web)." : errorDia;
   const alTerminar = useCallback(() => {
-    api.dias().then((ds) => { setDias(ds); if (ds.length) router.push(`/dia/${ds[0].fecha}`); router.refresh(); });
-  }, [router]);
-  useEffect(() => {
-    api.dia(fecha, ejecucion).then(setDia).catch((e) => setError(String(e)));
-  }, [fecha, ejecucion]);
+    recargarDias();
+    api.dias().then((ds) => { if (ds.length) router.push(`/dia/${ds[0].fecha}`); router.refresh(); });
+  }, [router, recargarDias]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-6">

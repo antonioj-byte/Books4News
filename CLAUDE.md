@@ -91,6 +91,10 @@ uv run pytest                            # tests (sin red ni gasto)
 ```
 
 - Código en `src/folio/`. Configuración en `config/` (`pipeline.yaml`: modelos, umbrales, límites; `fuentes.yaml`: feeds). Diseño en `diseno/` (`tokens.yaml`, `plantillas/`, `fuentes/`).
+- `pipeline.yaml` se valida al cargar (`config.ConfigPipeline`): una clave nueva hay que añadirla también al modelo; una desconocida es un error.
+- Etapas guardadas (artículos, historias, selección, piezas, textos congelados): `folio.etapas`. Bloques de evaluación en markdown (informe y A/B): `folio.evaluacion_md`. Emparejar un libro del guion con su ficha: solo con `guion.libro_verificado()`.
+- Reglas del guion: `guion.REGLAS`, una función por regla. Su orden es el de los mensajes del prompt de reintento; `tests/fixtures/validar_mensajes.json` lo fija.
+- API: una ruta por área en `api/folio_api/rutas/`; lo compartido en `dependencias.Contexto`. Web: `lib/useDatos.ts` para cargar datos de la API.
 - Los prompts tienen marcadores (`[pegar lista]`, `[pegar]`, `[pegar o «propón tú»]`) que el código sustituye por los datos del día. Si se cambia un marcador en el `.md`, hay que cambiarlo en el código; la carga falla si falta.
 - Los esquemas de salida de los agentes están en `src/folio/modelos.py` y deben reflejar lo que pide cada prompt.
 - El plan de la Fase 1 está en `docs/plan-fase-1.md`.

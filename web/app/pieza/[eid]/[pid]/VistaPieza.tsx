@@ -2,24 +2,19 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 import { Carrusel } from "@/components/Carrusel";
 import { FormEvaluacion } from "@/components/FormEvaluacion";
 import { EstadoChip } from "@/components/Marcas";
 import { PanelNoticia } from "@/components/PanelNoticia";
-import { api, ESTADOS, type PiezaDetalle } from "@/lib/api";
+import { api, ESTADOS } from "@/lib/api";
+import { useDatos } from "@/lib/useDatos";
 
 // Vista de pieza en tres columnas: la noticia y sus avisos, el carrusel y la evaluación (el chat
 // de edición llega en el paso 5).
 export function VistaPieza() {
   const { eid: eidTexto, pid } = useParams<{ eid: string; pid: string }>();
   const eid = Number(eidTexto);
-  const [d, setD] = useState<PiezaDetalle | null>(null);
-  const [error, setError] = useState("");
-  const cargar = useCallback(() => {
-    api.pieza(eid, pid).then(setD).catch((e) => setError(String(e)));
-  }, [eid, pid]);
-  useEffect(cargar, [cargar]);
+  const { datos: d, error, recargar: cargar } = useDatos(`pieza:${eid}:${pid}`, () => api.pieza(eid, pid));
 
   if (error) return <p className="p-6 text-acento">{error}</p>;
   if (!d) return <p className="p-6 text-tinta-suave">Cargando la pieza…</p>;
