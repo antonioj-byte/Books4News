@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from folio_api.dependencias import Contexto, contexto
 from folio_api.ejecutor import EstadoEjecucion
+from folio_api.programador import EstadoProgramada
 
 router = APIRouter()
 
@@ -20,3 +21,9 @@ def lanzar(ctx: Contexto = Depends(contexto)):
 @router.get("/api/ejecuciones/en-marcha", response_model=EstadoEjecucion)
 def en_marcha(ctx: Contexto = Depends(contexto)):
     return ctx.ejecutor.estado()
+
+
+@router.get("/api/ejecuciones/programada", response_model=EstadoProgramada)
+def programada(ctx: Contexto = Depends(contexto)):
+    """La ejecución diaria automática (FOLIO_EJECUCION_DIARIA): si está activa, a qué hora y cuándo toca."""
+    return ctx.programador.estado() if ctx.programador else EstadoProgramada(activa=False)

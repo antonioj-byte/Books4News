@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from fastapi import HTTPException, Request
 
@@ -11,6 +11,7 @@ from folio.config import Config
 from folio.modelos import InformeDiario, Pieza
 from folio.render import Plantillas
 from folio_api.ejecutor import Ejecutor
+from folio_api.programador import Programador
 
 
 @dataclass
@@ -19,6 +20,7 @@ class Contexto:
     almacen: Almacen
     ejecutor: Ejecutor
     plantillas: Plantillas
+    programador: Programador | None = field(default=None)
 
     def ejecucion(self, eid: int) -> tuple[str, InformeDiario]:
         e = self.almacen.ejecucion(eid)

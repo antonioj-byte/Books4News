@@ -1,5 +1,8 @@
 """Lanzar `folio run` desde la web: un proceso aparte (el pipeline carga 2 GB de embeddings y no
-debe vivir en el servidor), una sola ejecución a la vez y su registro en el volumen de datos."""
+debe vivir en el servidor), una sola ejecución a la vez y su registro en el volumen de datos.
+
+Una ejecución puede tener varios pasos seguidos (la diaria: el pipeline y después el render de PNG y
+vídeo); si un paso falla, los siguientes no se lanzan."""
 
 from __future__ import annotations
 
@@ -25,30 +28,43 @@ class Ejecutor:
     def __init__(self, dir_datos: Path, comando: list[str] | None = None):
         self.registro = dir_datos / "ejecucion.log"
         self.comando = comando or [sys.executable, "-m", "folio.cli", "run", "--quiet"]
+        # La ejecución diaria programada: el pipeline y, si sale bien, PNG y portada en vídeo
+        self.diaria = [self.comando, [sys.executable, "-m", "folio.cli", "render", "--video"]]
         self._proceso: subprocess.Popen | None = None
         self._inicio: str | None = None
         self._fin: str | None = None
+        self._pendientes: list[list[str]] = []
         self._cerrojo = threading.Lock()
 
-    def lanzar(self) -> bool:
-        """Lanza la ejecución del día. False si ya hay una en marcha."""
+    def lanzar(self, pasos: list[list[str]] | None = None) -> bool:
+        """Lanza la ejecución del día (por defecto, solo el pipeline). False si ya hay una en marcha."""
+        pasos = pasos or [self.comando]
         with self._cerrojo:
-            if self._proceso and self._proceso.poll() is None:
+            if self.ocupado():
                 return False
             self.registro.parent.mkdir(parents=True, exist_ok=True)
             salida = self.registro.open("w", encoding="utf-8")
-            self._proceso = subprocess.Popen(self.comando, stdout=salida, stderr=subprocess.STDOUT)
+            self._proceso = subprocess.Popen(pasos[0], stdout=salida, stderr=subprocess.STDOUT)
+            self._pendientes = pasos[1:]
             self._inicio, self._fin = datetime.now(timezone.utc).isoformat(timespec="seconds"), None
-            threading.Thread(target=self._esperar, args=(self._proceso, salida), daemon=True).start()
+            threading.Thread(target=self._esperar, args=(salida,), daemon=True).start()
             return True
 
-    def _esperar(self, proceso: subprocess.Popen, salida) -> None:
-        proceso.wait()
+    def ocupado(self) -> bool:
+        return bool(self._proceso and (self._proceso.poll() is None or self._fin is None))
+
+    def _esperar(self, salida) -> None:
+        while True:
+            self._proceso.wait()
+            if self._proceso.returncode != 0 or not self._pendientes:
+                break
+            salida.flush()
+            self._proceso = subprocess.Popen(self._pendientes.pop(0), stdout=salida, stderr=subprocess.STDOUT)
         salida.close()
         self._fin = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     def estado(self) -> EstadoEjecucion:
-        en_marcha = bool(self._proceso and self._proceso.poll() is None)
+        en_marcha = self.ocupado()
         lineas: list[str] = []
         etapa = None
         if self.registro.exists():
