@@ -18,6 +18,7 @@ esfuerzo:                       # output_config.effort
 precios:
   claude-haiku-5-5: [0.10, 0.50]
   claude-opus-5-5: [4.00, 20.00, 0.20]
+  claude-sonnet-5-5: [2.00, 10.00, 0.20]
   claude-opus-5: [5.00, 25.00]
   claude-opus-4-8: [5.00, 25.00]
 
@@ -57,3 +58,13 @@ guion:
   posicion_max_primer_libro: 3     # el libro entra en la diapositiva 2 o 3
   pie_min_palabras: 80
   pie_max_palabras: 150
+
+# Prueba A/B del guionista (folio ab / folio ab-resultados). El control es el de producción y se
+# reutiliza su guion; las demás variantes reescriben con los mismos libros y textos.
+ab:
+  control: opus-high
+  reutilizar_control: true
+  variantes:
+    opus-high: {modelo: claude-opus-5-5, esfuerzo: high}
+    sonnet-high: {modelo: claude-sonnet-5-5, esfuerzo: high}
+    opus-medium: {modelo: claude-opus-5-5, esfuerzo: medium}

@@ -54,6 +54,34 @@ def run(
 
 
 @app.command()
+def ab(
+    fecha: str = typer.Option(None, help="Fecha (AAAA-MM-DD). Por defecto, la última con selección guardada"),
+    reutilizar_llm: bool = typer.Option(False, "--reutilizar-llm", help="Sirve de data/cache/llm/ las peticiones ya hechas"),
+):
+    """Prueba A/B del guion: reescribe las piezas del día con cada variante de config `ab`."""
+    _logging(True)
+    from folio.ab import generar
+    from folio.pipeline import Pipeline
+
+    cfg = config.cargar()
+    fecha = fecha or config.ultima_fecha_con_seleccion(cfg) or date.today().isoformat()
+    pipeline = Pipeline(cfg, fecha)
+    from folio.modelos import Historia
+    from pydantic import TypeAdapter
+    historias = {h.id: h for h in TypeAdapter(list[Historia]).validate_python(
+        json.loads((cfg.dir_cache(fecha) / "historias.json").read_text(encoding="utf-8"))["al_jefe"])}
+    ruta_md, ruta_clave = generar(cfg, fecha, lambda hid: pipeline._textos(historias[hid]), reutilizar=reutilizar_llm)
+    typer.echo(f"Para evaluar (a ciegas): {ruta_md}\nClave y métricas (abrir después): {ruta_clave}")
+
+
+@app.command("ab-resultados")
+def ab_resultados():
+    """Agrega las pruebas A/B evaluadas y compara cada variante con el control."""
+    from folio.ab import resultados
+    typer.echo(resultados(config.cargar()))
+
+
+@app.command()
 def libro(titulo: str, autor: str):
     """Verifica un libro contra Open Library / Google Books y muestra la ficha."""
     _logging(False)
