@@ -169,7 +169,7 @@ class Traza(BaseModel):
 class DiscrepanciaEdicion(BaseModel):
     """Dato de edición en que el guionista y la fuente bibliográfica no coinciden."""
     libro: str
-    campo: Literal["editorial española", "editorial original", "año original"]
+    campo: Literal["editorial española", "traductor", "editorial original", "año original"]
     modelo: str
     api: str
 

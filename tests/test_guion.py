@@ -116,3 +116,24 @@ def test_prompt_contiene_datos_delimitados(cfg):
     p = guion.construir_prompt(cfg, ELECCION, [(FUENTES[0], "Texto de la noticia")], [LIBRO])
     assert "[pegar]" not in p and "<noticia>" in p and "<libros_verificados>" in p
     assert "Debolsillo" in p
+
+
+def test_discrepancia_de_traductor():
+    con_trad = LIBRO.model_copy(update={"edicion_es_detalle": LIBRO.edicion_es_detalle.model_copy(
+        update={"traductor": "Carlos Ribalta"})})
+    def g(trad):
+        return guion_valido(libros=[LibroGuion(titulo="Eichmann en Jerusalén", autor="Hannah Arendt",
+                                               editorial_espanola="Debolsillo", traductor=trad,
+                                               edicion_original="inglés, Viking, 1963")])
+    assert guion.ajustar_libros(g("Carlos Ribalta"), [con_trad]) == []
+    assert [(d.campo, d.api) for d in guion.ajustar_libros(g("Otra Persona"), [con_trad])] == [("traductor", "Carlos Ribalta")]
+    assert [(d.campo, d.api) for d in guion.ajustar_libros(g("Carlos Ribalta"), [LIBRO])] == [("traductor", "sin traductor verificado")]
+
+
+def test_titulo_para_pieza_quita_el_autor_como_subtitulo():
+    havel = LIBRO.model_copy(update={"autores": ["Václav Havel"], "edicion_es_detalle": LIBRO.edicion_es_detalle.model_copy(
+        update={"titulo": "El poder de los sin poder: Václav Havel"})})
+    assert guion.titulo_para_pieza(havel) == "El poder de los sin poder"
+    con_subtitulo = LIBRO.model_copy(update={"edicion_es_detalle": LIBRO.edicion_es_detalle.model_copy(
+        update={"titulo": "Eichmann en Jerusalén: un estudio sobre la banalidad del mal"})})
+    assert guion.titulo_para_pieza(con_subtitulo) == "Eichmann en Jerusalén: un estudio sobre la banalidad del mal"

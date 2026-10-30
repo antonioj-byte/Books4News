@@ -10,9 +10,10 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 @pytest.fixture(autouse=True)
 def sin_esperas(monkeypatch):
-    """Los reintentos de Google Books esperan entre llamadas; en los tests, no."""
-    from folio.libros.fuentes import GoogleBooks
+    """Los reintentos de las APIs bibliográficas esperan entre llamadas; en los tests, no."""
+    from folio.libros.fuentes import GoogleBooks, OpenLibrary
     monkeypatch.setattr(GoogleBooks, "ESPERA_S", 0)
+    monkeypatch.setattr(OpenLibrary, "ESPERA_S", 0)
 
 
 @pytest.fixture

@@ -36,8 +36,12 @@ def titulo_para_pieza(l: LibroVerificado) -> str:
     """El título español si hay edición española; si no, el de la ficha (el original)."""
     if l.edicion_es == "si":
         if l.edicion_es_detalle and l.edicion_es_detalle.titulo:
-            # Open Library da a veces «Siempre Alice / Still Alice»
-            return l.edicion_es_detalle.titulo.split(" / ")[0].strip()
+            # Las fichas traen a veces «Siempre Alice / Still Alice» o «El poder de los sin poder: Václav Havel»
+            titulo = l.edicion_es_detalle.titulo.split(" / ")[0].strip()
+            base, _, sub = titulo.partition(":")
+            if sub and any(autor_coincide(sub, [a]) for a in l.autores):
+                titulo = base.strip()
+            return titulo
         return l.titulo_propuesto
     return l.titulo
 
@@ -201,7 +205,7 @@ def _partes_original(texto: str) -> tuple[str | None, str | None]:
 
 
 def comparar_edicion(g: GuionLLM, libros: list[LibroVerificado]) -> list[DiscrepanciaEdicion]:
-    """Datos de edición del guionista que no coinciden con los verificados (editorial, año)."""
+    """Datos de edición del guionista que no coinciden con los verificados (editorial, traductor, año)."""
     out: list[DiscrepanciaEdicion] = []
     for lg in g.libros:
         l = next((l for l in libros if autor_coincide(lg.autor, l.autores) and _es_titulo_de_libro(lg.titulo, [l])), None)
@@ -212,6 +216,10 @@ def comparar_edicion(g: GuionLLM, libros: list[LibroVerificado]) -> list[Discrep
         if lg.editorial_espanola and (not api_es or not _editoriales_coinciden(lg.editorial_espanola, api_es)):
             out.append(DiscrepanciaEdicion(libro=lg.titulo, campo="editorial española", modelo=lg.editorial_espanola,
                                            api=api_es or "sin edición española verificada"))
+        api_trad = d.traductor if d else None
+        if lg.traductor and (not api_trad or not autor_coincide(lg.traductor, [api_trad])):
+            out.append(DiscrepanciaEdicion(libro=lg.titulo, campo="traductor", modelo=lg.traductor,
+                                           api=api_trad or "sin traductor verificado"))
         editorial_m, anio_m = _partes_original(lg.edicion_original)
         if editorial_m and l.editorial_original and not _editoriales_coinciden(editorial_m, l.editorial_original):
             out.append(DiscrepanciaEdicion(libro=lg.titulo, campo="editorial original", modelo=editorial_m,

@@ -56,17 +56,53 @@ def _ficha_es(ed: Edicion, como: str) -> EdicionEspanola:
     ), como
 
 
-def _original(obra: Obra) -> tuple[str | None, str | None]:
-    """Idioma y editorial de la primera edición, solo si una edición con idioma conocido
-    es del mismo año que la primera edición de la obra."""
+def _codigos_idioma(nombre: str | None) -> set[str]:
+    """Códigos (spa, es…) de un idioma dado por su nombre en español («polaco» → {"pol"})."""
+    n = (nombre or "").strip().lower()
+    return {codigo for codigo, nombre_es in IDIOMAS.items() if nombre_es == n}
+
+
+def _original_en_su_idioma(obra: Obra, idioma_original: str | None) -> tuple[str, str | None, int] | None:
+    """Edición más antigua en la lengua original (la propone el jefe de cultura).
+
+    Open Library tiene fechas erróneas (una traducción de Knopf «de 1900»), así que el año de
+    la obra no basta. El idioma del jefe solo filtra; los datos salen de la edición.
+    """
+    codigos = _codigos_idioma(idioma_original)
+    ediciones = [e for e in obra.ediciones if e.anio and not e.es_audiolibro and codigos & set(e.idiomas)]
+    if not ediciones:
+        return None
+    e = min(ediciones, key=lambda e: e.anio)
+    return IDIOMAS.get(e.idiomas[0], e.idiomas[0]), e.editorial, int(e.anio)
+
+
+def _original(obra: Obra, idioma_original: str | None = None) -> tuple[str | None, str | None, int | None]:
+    """Idioma, editorial y año de la primera edición.
+
+    Primero, la edición más antigua en la lengua original. Si no hay, el año de la obra y una
+    edición con idioma conocido de ese mismo año.
+    """
+    en_su_idioma = _original_en_su_idioma(obra, idioma_original)
+    if en_su_idioma:
+        return en_su_idioma
     if not obra.anio_primera_edicion:
-        return None, None
+        return None, None, None
     candidatas = [e for e in obra.ediciones
                   if e.anio == str(obra.anio_primera_edicion) and e.idiomas and not e.es_audiolibro]
     if not candidatas:
-        return None, None
+        return None, None, obra.anio_primera_edicion
     e = candidatas[0]
-    return IDIOMAS.get(e.idiomas[0], e.idiomas[0]), e.editorial
+    return IDIOMAS.get(e.idiomas[0], e.idiomas[0]), e.editorial, obra.anio_primera_edicion
+
+
+def _separar_autores(cand: LibroCandidato, obra: Obra) -> tuple[list[str], dict[str, str]]:
+    """(autores, otros nombres → id OL). Open Library pone a menudo al traductor como coautor."""
+    principales = [n for n in obra.autores if autor_coincide(cand.autor, [n])]
+    if not principales:
+        return obra.autores, {}
+    claves = dict(zip(obra.autores, obra.autores_claves)) if len(obra.autores_claves) == len(obra.autores) else {}
+    otros = {n: claves.get(n, "") for n in obra.autores if n not in principales}
+    return principales, otros
 
 
 def _titulos(cand: LibroCandidato) -> list[str]:
@@ -116,6 +152,34 @@ class Verificador:
               if autor_coincide(cand.autor, o.autores)]
         return todos, es
 
+    def _edicion_es_aproximada(self, cand: LibroCandidato) -> list[tuple[Edicion, str]]:
+        """Ediciones en español con un título parecido al propuesto, según Google Books.
+
+        Solo Google Books: marca el idioma de cada volumen y así no se confunde una edición
+        española con una catalana o gallega de título casi igual (Open Library no siempre lo da).
+        """
+        out = []
+        for o in self.gb.buscar_frase_es(cand.titulo):
+            ed = o.ediciones[0]
+            if (ed.idiomas == ["es"] and autor_coincide(cand.autor, o.autores)
+                    and titulos_coinciden(o.titulo, cand.titulo, umbral=0.85)):
+                out.append((ed, f"Google Books (idioma de la edición; título aproximado: «{o.titulo}»)"))
+        return out
+
+    def _obra_original(self, cand: LibroCandidato, obra: Obra, notas: list[str]) -> Obra | None:
+        """Si la obra encontrada es una traducción con ficha propia, busca la obra original."""
+        if not cand.titulo_original or titulos_coinciden(cand.titulo_original, obra.titulo):
+            return None
+        try:
+            for o in self.ol.buscar(cand.titulo_original, cand.autor):
+                if (o.id != obra.id and autor_coincide(cand.autor, o.autores)
+                        and titulos_coinciden(cand.titulo_original, o.titulo)):
+                    o.ediciones = self.ol.ediciones(o.id)
+                    return o
+        except httpx.HTTPError as exc:
+            notas.append(f"No se pudo buscar la obra original en Open Library: {exc}")
+        return None
+
     def verificar(self, cand: LibroCandidato) -> LibroVerificado:
         notas: list[str] = []
         errores: list[str] = []
@@ -152,10 +216,20 @@ class Verificador:
             if ed.idiomas == ["es"]:
                 ediciones_es.append((ed, "Google Books (idioma de la edición)"))
 
+        titulo_obra = ol[0].titulo if ol else gb_todos[0].titulo
+        if not ediciones_es and self.gb and not titulos_coinciden(cand.titulo, titulo_obra, umbral=1.0):
+            # El título propuesto es una traducción y no aparece tal cual: puede que la edición
+            # española exista con un título algo distinto («en el exilio» por «en su exilio»).
+            try:
+                ediciones_es += self._edicion_es_aproximada(cand)
+            except httpx.HTTPError as exc:
+                errores.append(f"Google Books: {exc}")
+
         detalle = None
+        ed_es = None
         if ediciones_es:
-            ed, como = _mejor_edicion_es(ediciones_es)
-            detalle, _ = _ficha_es(ed, como)
+            ed_es, como = _mejor_edicion_es(ediciones_es)
+            detalle, _ = _ficha_es(ed_es, como)
             edicion_es = "si"
             notas.append(f"Edición española según {como}")
         elif ol and gb_todos and not errores and "spa" not in ol[0].idiomas:
@@ -167,16 +241,40 @@ class Verificador:
             edicion_es = "desconocido"
             if not self.gb:
                 notas.append("Sin clave de Google Books: solo se ha consultado Open Library")
-        if errores:
-            notas.extend(errores)
 
         if ol:
             obra, _ = ol
-            idioma_orig, editorial_orig = _original(obra)
+            autores, otros = _separar_autores(cand, obra)
+            if otros:
+                traductores_es = [n for n, k in otros.items() if ed_es is not None and k and k in ed_es.autores_claves]
+                if detalle and not detalle.traductor and traductores_es:
+                    detalle.traductor = ", ".join(traductores_es)
+                    notas.append(f"Traductor deducido: {detalle.traductor} figura en Open Library como "
+                                 "coautor solo de la edición española")
+                resto = [n for n in otros if n not in traductores_es]
+                if resto:
+                    notas.append(f"Open Library lo da como coautor, pero no es el autor propuesto "
+                                 f"(probablemente traductor): {', '.join(resto)}")
+            idioma_orig, editorial_orig, anio_orig = _original(obra, cand.idioma_original)
+            original = self._obra_original(cand, obra, notas)
+            if original:
+                # La obra encontrada es una traducción: sus fechas son las de la traducción.
+                datos = (_original_en_su_idioma(original, cand.idioma_original) if cand.idioma_original
+                         else _original(original))
+                if datos and datos[2]:
+                    idioma_orig, editorial_orig, anio_orig = datos
+                    notas.append(f"Primera edición tomada de la obra original «{original.titulo}» ({original.url}): "
+                                 "la que encuentra Open Library con el título propuesto es una traducción")
+                else:
+                    idioma_orig, editorial_orig, anio_orig = None, None, None
+                    notas.append(f"La obra original «{original.titulo}» ({original.url}) no tiene ediciones fechadas "
+                                 f"en {cand.idioma_original or 'su lengua'}: la primera edición no consta")
+            if errores:
+                notas.extend(errores)
             isbns = sorted({i for e in obra.ediciones for i in e.isbn13})[:20]
             return LibroVerificado(
-                titulo=obra.titulo, titulo_propuesto=cand.titulo, autores=obra.autores,
-                anio_primera_edicion=obra.anio_primera_edicion,
+                titulo=obra.titulo, titulo_propuesto=cand.titulo, autores=autores,
+                anio_primera_edicion=anio_orig,
                 idioma_original=idioma_orig, editorial_original=editorial_orig,
                 edicion_es=edicion_es, edicion_es_detalle=detalle,
                 olid=obra.id, google_id=gb_todos[0].id if gb_todos else None, isbn13=isbns,
@@ -184,6 +282,8 @@ class Verificador:
                 confianza="alta" if (gb_todos or len(obra.ediciones) >= 2) else "media",
                 notas=notas,
             )
+        if errores:
+            notas.extend(errores)
         # Solo Google Books
         o = gb_todos[0]
         return LibroVerificado(

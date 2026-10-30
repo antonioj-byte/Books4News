@@ -55,6 +55,7 @@ class Edicion:
     idiomas: list[str]           # códigos (spa, eng…); puede estar vacío
     traductor: str | None = None
     formato: str | None = None   # physical_format de Open Library («Paperback», «Audio CD»…)
+    autores_claves: list[str] = field(default_factory=list)  # ids de autor de Open Library (OL…A)
 
     @property
     def es_audiolibro(self) -> bool:
@@ -72,20 +73,52 @@ class Obra:
     idiomas: list[str] = field(default_factory=list)
     ediciones: list[Edicion] = field(default_factory=list)
     url: str | None = None
+    autores_claves: list[str] = field(default_factory=list)  # paralelo a `autores` (Open Library)
+
+
+def _reintentar(peticion, intentos: int, espera_s: float) -> httpx.Response:
+    """Repite la petición ante 429, 5xx o un corte de conexión, con espera creciente."""
+    for intento in range(intentos):
+        ultimo = intento == intentos - 1
+        try:
+            r = peticion()
+        except httpx.TransportError:
+            if ultimo:
+                raise
+        else:
+            if r.status_code not in (429, 500, 502, 503) or ultimo:
+                return r
+        time.sleep(espera_s * 2 ** intento)
+    raise AssertionError("inalcanzable")
+
+
+def _traductores(e: dict) -> str | None:
+    nombres = list(e.get("translated_by") or [])
+    for c in e.get("contributors") or []:
+        if isinstance(c, dict) and (c.get("role") or "").lower() in ("translator", "traductor", "traducción"):
+            nombres.append(c.get("name", ""))
+    nombres = [n for n in nombres if n]
+    return ", ".join(nombres) or None
 
 
 class OpenLibrary:
     BASE = "https://openlibrary.org"
+    INTENTOS = 4  # corta conexiones de vez en cuando («Connection reset by peer»)
+    ESPERA_S = 1.5  # se duplica en cada reintento
 
     def __init__(self, cliente: httpx.Client):
         self.c = cliente
 
-    def buscar(self, titulo: str, autor: str, limite: int = 5) -> list[Obra]:
-        r = self.c.get(f"{self.BASE}/search.json", params={
-            "q": titulo, "author": autor, "limit": limite,
-            "fields": "key,title,subtitle,author_name,first_publish_year,language,edition_count",
-        })
+    def _get(self, url: str, params: dict) -> httpx.Response:
+        r = _reintentar(lambda: self.c.get(url, params=params), self.INTENTOS, self.ESPERA_S)
         r.raise_for_status()
+        return r
+
+    def buscar(self, titulo: str, autor: str, limite: int = 5) -> list[Obra]:
+        r = self._get(f"{self.BASE}/search.json", {
+            "q": titulo, "author": autor, "limit": limite,
+            "fields": "key,title,subtitle,author_name,author_key,first_publish_year,language,edition_count",
+        })
         obras = []
         for d in r.json().get("docs", []):
             olid = d["key"].split("/")[-1]
@@ -93,17 +126,14 @@ class OpenLibrary:
                 fuente="openlibrary", id=olid, titulo=d.get("title", ""),
                 autores=d.get("author_name") or [], anio_primera_edicion=d.get("first_publish_year"),
                 idiomas=d.get("language") or [], url=f"{self.BASE}{d['key']}",
+                autores_claves=d.get("author_key") or [],
             ))
         return obras
 
     def ediciones(self, olid: str) -> list[Edicion]:
-        r = self.c.get(f"{self.BASE}/works/{olid}/editions.json", params={"limit": 1000})
-        r.raise_for_status()
+        r = self._get(f"{self.BASE}/works/{olid}/editions.json", {"limit": 1000})
         eds = []
         for e in r.json().get("entries", []):
-            traductor = None
-            if e.get("translated_by"):
-                traductor = ", ".join(e["translated_by"])
             titulo = e.get("title", "")
             if e.get("subtitle"):
                 titulo = f"{titulo.rstrip(' :')}: {e['subtitle'].lstrip(' :')}"
@@ -113,8 +143,9 @@ class OpenLibrary:
                 anio=anio(e.get("publish_date")),
                 isbn13=e.get("isbn_13") or [],
                 idiomas=[l["key"].split("/")[-1] for l in e.get("languages", [])],
-                traductor=traductor,
+                traductor=_traductores(e),
                 formato=e.get("physical_format"),
+                autores_claves=[a["key"].split("/")[-1] for a in e.get("authors") or [] if a.get("key")],
             ))
         return eds
 
@@ -139,11 +170,7 @@ class GoogleBooks:
         self.clave = clave
 
     def _get(self, params: dict) -> httpx.Response:
-        for intento in range(self.INTENTOS):
-            r = self.c.get(self.BASE, params=params)
-            if r.status_code not in (429, 500, 502, 503) or intento == self.INTENTOS - 1:
-                break
-            time.sleep(self.ESPERA_S * 2 ** intento)
+        r = _reintentar(lambda: self.c.get(self.BASE, params=params), self.INTENTOS, self.ESPERA_S)
         try:
             r.raise_for_status()
         except httpx.HTTPStatusError as exc:
@@ -159,6 +186,20 @@ class GoogleBooks:
         r = self._get({**params, "q": f'intitle:"{titulo}" inauthor:"{autor}"'})
         if not r.json().get("items"):
             r = self._get({**params, "q": f'{titulo} inauthor:"{autor}"'})
+        return self._obras(r)
+
+    def buscar_frase_es(self, titulo: str) -> list[Obra]:
+        """Volúmenes en español que se parecen al título, sin filtrar por autor en la consulta.
+
+        Sirve cuando el título español propuesto no es exacto («El viejo rey en su exilio» frente
+        a «El viejo rey en el exilio»): Google Books tolera la diferencia y marca el idioma.
+        """
+        r = self._get({"maxResults": 20, "printType": "books", "country": self.PAIS, "key": self.clave,
+                       "langRestrict": "es", "q": f'"{titulo}"'})
+        return self._obras(r)
+
+    @staticmethod
+    def _obras(r: httpx.Response) -> list[Obra]:
         obras = []
         for it in r.json().get("items", []):
             v = it.get("volumeInfo", {})
