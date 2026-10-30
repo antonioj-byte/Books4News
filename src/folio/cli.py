@@ -61,11 +61,12 @@ def render(
     pieza: str = typer.Option(None, help="Solo esta pieza (p. ej. 2026-10-30-1)"),
     direccion: str = typer.Option(None, help="Propuesta de diseno/propuestas/ («todas» para todas); "
                                              "sin ella, el design system en uso"),
+    video: bool = typer.Option(False, "--video", help="También la portada en MP4 (solo las que tienen imagen)"),
 ):
     """Render de las piezas del día a PNG (1080×1350) en informes/<fecha>/render/."""
     _logging(False)
     from folio.modelos import Pieza
-    from folio.render import direcciones, renderizar
+    from folio.render import direcciones, renderizar, renderizar_video
     from pydantic import TypeAdapter
 
     cfg = config.cargar()
@@ -82,6 +83,11 @@ def render(
         for a in avisos:
             typer.echo(f"Aviso: {a}")
         typer.echo(f"{len(archivos)} diapositivas en {destino}")
+        if video:
+            videos, avisos = renderizar_video(cfg, piezas, destino, d)
+            for a in avisos:
+                typer.echo(f"Aviso: {a}")
+            typer.echo(f"{len(videos)} portadas en vídeo en {destino}")
 
 
 @app.command("fuentes-editoriales")

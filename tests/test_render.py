@@ -110,3 +110,34 @@ def test_portada_con_ilustracion_en_la_propuesta_humanista(cfg_diseno, pieza):
     destino.write_text(ilustracion.sanear('<svg><rect width="9" height="9"/><circle r="3"/><path d="M0 0"/></svg>'))
     portada = p.html_diapositiva(pieza, 1)
     assert "portada--revista" in portada and "<circle" in portada and "--campo: #EFC77A" in portada
+
+
+def test_video_de_portada(cfg_diseno, pieza, tmp_path, monkeypatch):
+    """MP4 de 1080×1350 solo si la portada tiene imagen; el PNG no se anima (en-video lo pone el vídeo)."""
+    import shutil
+    import subprocess
+    pytest.importorskip("playwright")
+    if not shutil.which("ffmpeg"):
+        pytest.skip("sin ffmpeg")
+    from PIL import Image
+    from folio.imagenes import cubiertas, libres as imagenes
+    from folio.modelos import Arte
+    monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)
+    cache = cfg_diseno.dir_cache(pieza.fecha)
+    imagenes.dir_imagenes(cache).mkdir(parents=True)
+    Image.new("RGB", (1200, 1500), (120, 90, 60)).save(imagenes.dir_imagenes(cache) / f"{pieza.id}.jpg")
+    imagenes.guardar_metadatos(imagenes.ImagenLibre(
+        archivo="x", pagina="", url="", ancho=1200, alto=1500, licencia="Dominio público", licencia_url=None, autor="A",
+        descripcion="", libre=True, motivo="", local=f"{pieza.id}.jpg"), pieza.id, cache)
+    sin_imagen = pieza.model_copy(update={"id": "2026-10-30-2"})
+    pieza.arte = Arte(tono="sereno", recurso="foto", portada="sangre")
+    try:
+        archivos, avisos = render.renderizar_video(cfg_diseno, [pieza, sin_imagen], tmp_path, fps=4, segundos=1)
+    except Exception as exc:  # sin navegador en este entorno
+        pytest.skip(f"Chromium no disponible: {exc}")
+    assert archivos == [tmp_path / pieza.id / "01-portada.mp4"] and "sin vídeo" in avisos[0]
+    datos = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=width,height,nb_frames", "-of", "csv=p=0",
+                            str(archivos[0])], capture_output=True, text=True).stdout.strip()
+    assert datos == "1080,1350,4"
+    assert ".en-video .imagen img" in (render.dir_diseno(cfg_diseno) / "plantillas" / "base.css").read_text()
+    assert "--video-segundos: 6;" in render.css_tokens(render.cargar_tokens(cfg_diseno))

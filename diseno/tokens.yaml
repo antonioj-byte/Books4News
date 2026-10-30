@@ -12,6 +12,14 @@ lienzo:
   ancho: 1080px
   alto: 1350px
 
+# Portada en vídeo (folio render --video), elegida el 31/10: la foto se aleja despacio y el texto queda
+# fijo desde el primer fotograma, para que la miniatura del feed se lea. Solo con imagen.
+video:
+  segundos: 6
+  fps: 30
+  zoom: 1.14                 # escala de la foto al empezar; acaba en 1
+  desplazamiento: -1.5%      # la foto empieza un poco más arriba
+
 colores:
   papel: "#F6F3EE"
   papel_rosa: "#F8F0EE"
