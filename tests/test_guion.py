@@ -166,3 +166,9 @@ def test_una_sola_actualidad_y_libro_pronto(cfg):
     es = errores(cfg, g)
     assert any("2 diapositivas de actualidad" in e for e in es)
     assert any("entra en la diapositiva 4" in e for e in es)
+
+
+def test_cierre_nombra_el_libro(cfg):
+    g = guion_valido()
+    g.diapositivas[-1].texto = "Léelo ahora: un ensayo breve sobre la obediencia. Folio."
+    assert any("cierre es la recomendación" in e for e in errores(cfg, g))

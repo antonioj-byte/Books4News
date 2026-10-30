@@ -149,6 +149,8 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
     # Sección de libros: el libro se ve desde la portada y la noticia no se come la pieza.
     if d and d[0].tipo == "portada" and not _menciona_libro(d[0].texto, libros):
         errores.append("La portada debe nombrar el libro o a su autor: se publica en una sección de libros.")
+    if d and d[-1].tipo == "cierre" and not _menciona_libro(d[-1].texto, libros):
+        errores.append("El cierre es la recomendación: nombra el libro (título en cursiva) y a su autor.")
     n_actualidad = sum(x.tipo == "actualidad" for x in d)
     if n_actualidad > p["max_diapositivas_actualidad"]:
         errores.append(f"Hay {n_actualidad} diapositivas de actualidad; máximo {p['max_diapositivas_actualidad']}. "
