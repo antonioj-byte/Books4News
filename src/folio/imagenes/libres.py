@@ -53,6 +53,7 @@ class ImagenLibre:
     fuente: str = "Wikimedia Commons"
     institucion: str | None = None
     enfoque: tuple[int, int] = (50, 50)   # punto de interés en %, para recortar sin cortarlo
+    generado: dict | None = None          # retrato generado con IA a partir de esta foto (folio.imagenes.retrato_generado)
 
     @property
     def credito(self) -> str:

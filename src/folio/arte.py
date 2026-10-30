@@ -23,7 +23,7 @@ import httpx
 import yaml
 from PIL import Image, ImageDraw, ImageFont
 
-from folio.imagenes import cubiertas, ilustracion, libres, retratos
+from folio.imagenes import cubiertas, ilustracion, libres, retrato_generado, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import Arte, EleccionImagen, Pieza, PropuestaArte
@@ -226,10 +226,16 @@ def _ilustracion(llm: LLM, cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Pat
         arte.avisos.append(f"Sin ilustración ({type(exc).__name__}: {exc}); la portada usa la imagen en círculo")
 
 
+AVISO_RETRATO_GENERADO = "Retrato generado con IA: comprueba el parecido con la foto original antes de publicar"
+
+
 def _retrato(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
-    """El retrato del autor del libro principal (Wikidata + Commons)."""
-    for viejo in libres.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato.*"):
+    """El retrato del autor del libro principal (Wikidata + Commons) y, si está activo, su versión
+    generada en un estilo de la casa (folio.imagenes.retrato_generado)."""
+    for viejo in [*libres.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato.*"),
+                  *libres.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato-original.*")]:
         viejo.unlink()
+    pieza.revision_humana = [r for r in pieza.revision_humana if r != AVISO_RETRATO_GENERADO]
     autor = pieza.libros[0].autores[0]
     try:
         img, motivo = retratos.buscar_y_fijar(autor, pieza.id, dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
@@ -239,6 +245,24 @@ def _retrato(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
             arte.avisos.append(motivo)
     except Exception as exc:
         arte.avisos.append(f"No se pudo buscar el retrato de {autor}: {type(exc).__name__}")
+        return
+    if img and cfg.pipeline.arte.retrato_generado.activo:
+        _retrato_generado(cfg, pieza, arte, dir_fecha)
+
+
+def _retrato_generado(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
+    """Pasa el retrato al estilo que toca hoy. Si falla, la pieza se queda con la foto."""
+    estilo, hechos = retrato_generado.estilo_del_dia(cfg, pieza.id, dir_fecha)
+    if not estilo:
+        arte.avisos.append(f"Retrato generado: ya hay {hechos} hoy (máximo del día); se usa la foto")
+        return
+    try:
+        img = retrato_generado.aplicar(cfg, pieza.id, dir_fecha, estilo)
+    except Exception as exc:
+        arte.avisos.append(f"Retrato generado: no se pudo ({exc}); se usa la foto")
+        return
+    arte.retrato = img.credito
+    pieza.revision_humana.append(AVISO_RETRATO_GENERADO)
 
 
 def _cubiertas(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:

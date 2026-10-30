@@ -135,6 +135,39 @@ def imagen_fijar(pieza: str, archivo: str, fecha: str = typer.Option(None, help=
     typer.echo(f"{ruta} · {img.credito}")
 
 
+retrato_app = typer.Typer(help="Retratos de autor generados con IA a partir de su foto libre (Magnific)")
+app.add_typer(retrato_app, name="retrato")
+
+
+@retrato_app.command("generar")
+def retrato_generar(pieza: str, estilo: str = typer.Option(..., help="low_poly, voxel o dithering"),
+                    fecha: str = typer.Option(None, help="Por defecto, la de la pieza")):
+    """Pasa el retrato fijado de la pieza a un estilo de la casa (aunque arte.retrato_generado esté
+    desactivado) y actualiza el crédito en piezas.json. Parte siempre de la foto original."""
+    from folio.arte import AVISO_RETRATO_GENERADO
+    from folio.etapas import EtapasGuardadas
+    from folio.imagenes import retrato_generado
+
+    cfg = config.cargar()
+    fecha = fecha or pieza[:10]
+    try:
+        img = retrato_generado.aplicar(cfg, pieza, cfg.dir_cache(fecha), estilo)
+    except (ValueError, retrato_generado.ErrorMagnific) as e:
+        typer.echo(f"No se pudo: {e}", err=True)
+        raise typer.Exit(1)
+    etapas = EtapasGuardadas(cfg.dir_cache(fecha))
+    if (etapas.directorio / "piezas.json").exists():
+        piezas = etapas.piezas()
+        for p in piezas:
+            if p.id == pieza and p.arte:
+                p.arte.retrato = img.credito
+                if AVISO_RETRATO_GENERADO not in p.revision_humana:
+                    p.revision_humana.append(AVISO_RETRATO_GENERADO)
+        etapas.guardar_piezas(piezas)
+    origen = "caché" if img.generado["desde_cache"] else f"{img.generado['segundos']} s"
+    typer.echo(f"{img.local} ({origen}) · {img.credito}")
+
+
 @app.command()
 def ab(
     fecha: str = typer.Option(None, help="Fecha (AAAA-MM-DD). Por defecto, la última con selección guardada"),

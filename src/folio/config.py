@@ -101,6 +101,17 @@ class AB(_Seccion):
         return self
 
 
+class RetratoGenerado(_Seccion):
+    """Retrato del autor generado con IA a partir de su foto libre (folio.imagenes.retrato_generado)."""
+    activo: bool = False
+    # Estilos de la casa (prompts/retrato_generado.md), alternados en el día en este orden
+    estilos: list[Literal["low_poly", "voxel", "dithering"]] = Field(
+        default_factory=lambda: ["low_poly", "voxel", "dithering"], min_length=1)
+    aspecto: Literal["traditional_3_4", "portrait_2_3", "square_1_1"] = "traditional_3_4"
+    espera_max_s: int = Field(default=180, gt=0)
+    max_por_dia: int = Field(default=5, ge=0)
+
+
 class Arte(_Seccion):
     # Composiciones de portada que puede elegir el director de arte. La ilustración vectorial
     # dibujada por el modelo se desactivó el 31/10: el resultado parece clip-art.
@@ -110,6 +121,7 @@ class Arte(_Seccion):
     retratos: bool = True
     # Casi todos los retratos de Commons son CC BY-SA: la imagen derivada se publica con la misma licencia
     retratos_cc_by_sa: bool = False
+    retrato_generado: RetratoGenerado = Field(default_factory=RetratoGenerado)
 
 
 class ConfigPipeline(_Seccion):
@@ -156,6 +168,7 @@ class Config:
     anthropic_api_key: str | None = None
     google_books_api_key: str | None = None
     openlibrary_contact: str | None = None
+    magnific_api_key: str | None = None
     extra: dict = field(default_factory=dict)
 
     @property
@@ -204,6 +217,7 @@ def perfil_dev(cfg: Config) -> Config:
     dev = copy.deepcopy(cfg)
     dev.pipeline.modelos = {etapa: dev.pipeline.dev.modelo for etapa in dev.pipeline.modelos}
     dev.pipeline.esfuerzo = {etapa: "low" for etapa in dev.pipeline.esfuerzo}
+    dev.pipeline.arte.retrato_generado.activo = False      # tampoco se pagan retratos generados
     return dev
 
 
@@ -241,4 +255,5 @@ def cargar(raiz: Path = RAIZ) -> Config:
         anthropic_api_key=_clave_anthropic(),
         google_books_api_key=_limpia("GOOGLE_BOOKS_API_KEY"),
         openlibrary_contact=_limpia("OPENLIBRARY_CONTACT"),
+        magnific_api_key=_limpia("MAGNIFIC_API_KEY"),
     )

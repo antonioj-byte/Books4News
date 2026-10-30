@@ -1,5 +1,8 @@
 # Retrato ilustrado con Magnific: prueba y propuesta
 
+> Superada el 31/10: el estilo editorial no se adoptó. Los retratos generados usan los estilos de
+> `docs/estilo-retratos.md` y se implementaron en `folio.imagenes.retrato_generado`.
+
 Prueba del 30/10. Objetivo: convertir una foto real de un autor en un retrato ilustrado de estilo
 editorial, para las piezas sin retrato libre o con más carácter. **Solo propuesta: nada integrado.**
 

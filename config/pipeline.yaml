@@ -85,6 +85,14 @@ arte:
   portadas: [sangre, banda, caja, neon]
   retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
   retratos_cc_by_sa: true      # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia
+  # Retrato generado con IA a partir de la foto libre del autor (Magnific, Seedream 4.5 Edit), en un
+  # estilo de la casa, alternando en el día. Prompts en prompts/retrato_generado.md; prueba y criterios
+  # en docs/estilo-retratos.md. Necesita MAGNIFIC_API_KEY; con --dev no se genera. A mano, para una
+  # pieza: folio retrato generar <pieza> --estilo voxel.
+  retrato_generado:
+    activo: false
+    estilos: [low_poly, voxel, dithering]
+    max_por_dia: 5             # tope de retratos generados por día
 
 ab:
   control: opus-high

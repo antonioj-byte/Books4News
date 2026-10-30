@@ -1,7 +1,8 @@
 # Estilo de la casa para los retratos generados: prueba del 30/10
 
-Pendiente de elección: **no hay nada implementado en el pipeline**. La hoja de contactos con las
-imágenes está en una página privada (Artifact) del usuario. Las imágenes no se guardan en el repo.
+**Elegidos (31/10): low-poly, vóxel y dithering de 1 bit**, integrados en `folio.imagenes.retrato_generado`
+(ver CLAUDE.md, «Retratos generados»). La hoja de contactos con las imágenes está en una página
+privada (Artifact) del usuario. Las imágenes no se guardan en el repo.
 
 - **Foto de partida**: Philip Roth por Bernard Gotfryd (Library of Congress, `gtfy/03200/03254v.jpg`,
   «No known restrictions on publication»), enviada en base64. Por URL, la LoC responde 403 al
