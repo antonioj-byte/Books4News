@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<base href="{{ base_url }}">
+<link rel="stylesheet" href="{{ tokens.fuentes.archivo }}">
+<style>{{ css_tokens }}
+:root { --tela: {{ color.fondo }}; --sobre: {{ color.sobre }}; --vivo: {{ color.vivo }}; }</style>
+<link rel="stylesheet" href="plantillas/base.css">
+<title>{{ pieza_id }} · {{ n }}/{{ total }}</title>
+</head>
+<body>
+<main class="diapositiva diapositiva--{{ tipo }}">
+  <aside class="lomo"><span>Folio · {{ rotulo }}</span><span>{{ n }}/{{ total }}</span></aside>
+  <div class="pagina">
+{% block cabecera %}
+    <header class="cabecera"><span class="rotulo">{{ rotulo }}</span></header>
+{% endblock %}
+    <section class="cuerpo" data-ajustar>
+{% block cuerpo %}
+      <p class="texto">{{ texto }}</p>
+{% endblock %}
+    </section>
+{% block pie %}{% endblock %}
+  </div>
+</main>
+<script src="../ajuste.js"></script>
+</body>
+</html>

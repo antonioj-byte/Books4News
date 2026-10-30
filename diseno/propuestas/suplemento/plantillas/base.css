@@ -1,0 +1,72 @@
+/* Dirección A · Suplemento. Solo variables de tokens.yaml. */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: var(--lienzo-ancho); height: var(--lienzo-alto); background: var(--colores-papel); }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+.diapositiva {
+  width: var(--lienzo-ancho); height: var(--lienzo-alto); overflow: hidden;
+  display: flex; flex-direction: column;
+  padding: var(--margenes-superior) var(--margenes-lateral) var(--margenes-inferior);
+  background: var(--colores-papel); color: var(--colores-tinta);
+  font-family: var(--fuentes-texto); font-variant-numeric: oldstyle-nums proportional-nums;
+}
+.cabecera { display: flex; align-items: baseline; justify-content: space-between; }
+.rotulo, .pagina, .pie {
+  font-family: var(--fuentes-rotulos); font-size: var(--tamanos-rotulo); font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; line-height: 1;
+}
+.rotulo { color: var(--colores-acento); }
+.pagina { color: var(--colores-tinta-suave); font-weight: 500; letter-spacing: 0.08em; font-variant-numeric: lining-nums; }
+.pagina i { font-style: normal; margin: 0 0.25em; opacity: 0.5; }
+.logotipo { display: block; height: 48px; width: auto; color: var(--colores-tinta); }
+.logotipo--grande { height: 84px; }
+.logotipo text { text-transform: none; letter-spacing: -1.5px; }
+
+.cuerpo { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; padding-top: 120px; }
+.texto { font-size: var(--tamanos-cuerpo); line-height: 1.22; letter-spacing: -0.006em; text-wrap: pretty; }
+.texto em { font-style: italic; }
+
+/* Portada: el titular llena la página desde arriba */
+.diapositiva--portada .cabecera { padding-bottom: 28px; border-bottom: 2px solid var(--colores-filete); align-items: center; }
+.diapositiva--portada .cuerpo { padding-top: 64px; padding-bottom: 32px; }
+.titular {
+  font-size: var(--tamanos-titular); line-height: 0.98; font-weight: 500;
+  letter-spacing: -0.028em; text-wrap: balance; font-variant-numeric: lining-nums;
+}
+.pie { display: flex; justify-content: space-between; align-items: center; padding-top: 26px; border-top: 2px solid var(--colores-filete); color: var(--colores-tinta); }
+.flecha { font-size: 44px; letter-spacing: 0; color: var(--colores-acento); }
+
+/* La noticia: voz de teletipo, en palo seco */
+.diapositiva--actualidad .texto {
+  font-family: var(--fuentes-rotulos); font-size: var(--tamanos-noticia); font-weight: 500;
+  line-height: 1.26; letter-spacing: -0.012em; font-variant-numeric: lining-nums;
+}
+.diapositiva--actualidad .cuerpo { padding-top: 0; justify-content: center; border-left: 8px solid var(--colores-acento); padding-left: 44px; margin: 80px 0 40px; }
+
+/* El libro: el título como objeto */
+.objeto-libro { padding-bottom: 36px; margin-bottom: 44px; border-bottom: 2px solid var(--colores-filete); }
+.objeto-libro__titulo { font-size: var(--tamanos-libro-titulo); line-height: 1.0; letter-spacing: -0.02em; text-wrap: balance; }
+.objeto-libro__autor {
+  margin-top: 22px; display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--fuentes-rotulos); font-size: 26px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.objeto-libro__anio { color: var(--colores-acento); font-variant-numeric: lining-nums; }
+.diapositiva--libro .cuerpo { padding-top: 72px; padding-bottom: 8px; }
+.diapositiva--libro .texto { font-size: 60px; line-height: 1.18; margin-top: auto; }
+
+/* La idea: página en bermellón */
+.diapositiva--idea { background: var(--colores-acento); color: var(--colores-acento-tinta); }
+.diapositiva--idea .rotulo, .diapositiva--idea .pagina { color: var(--colores-acento-tinta); }
+.diapositiva--idea .cuerpo { justify-content: center; padding-top: 0; }
+.diapositiva--idea .texto { font-size: var(--tamanos-idea); font-style: italic; line-height: 1.1; letter-spacing: -0.018em; text-wrap: balance; }
+.diapositiva--idea .texto em { font-style: normal; }
+
+/* Para leer: recomendación + ficha grande */
+.diapositiva--cierre .cuerpo { padding-top: 56px; }
+.diapositiva--cierre .texto { font-size: 54px; line-height: 1.18; }
+.ficha { margin-top: auto; }
+.ficha__libro { padding: 24px 0 26px; border-top: 2px solid var(--colores-filete); }
+.ficha__titulo { font-size: var(--tamanos-ficha); line-height: 1.04; letter-spacing: -0.015em; }
+.ficha__autor { margin-top: 8px; font-size: 30px; }
+.ficha__datos { margin-top: 10px; font-family: var(--fuentes-rotulos); font-size: 22px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--colores-acento); }
+.pie--cierre { border-top: 2px solid var(--colores-filete); padding-top: 22px; align-items: flex-end; color: var(--colores-tinta-suave); }

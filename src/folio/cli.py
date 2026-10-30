@@ -58,11 +58,14 @@ def run(
 def render(
     fecha: str = typer.Option(None, help="Fecha (AAAA-MM-DD). Por defecto, la última con selección guardada"),
     pieza: str = typer.Option(None, help="Solo esta pieza (p. ej. 2026-10-30-1)"),
+    direccion: str = typer.Option(None, help="Propuesta de diseno/propuestas/ («todas» para todas); "
+                                             "sin ella, el design system en uso"),
 ):
     """Render de las piezas del día a PNG (1080×1350) en informes/<fecha>/render/."""
     _logging(False)
+    from folio import imagenes as imgs
     from folio.modelos import Pieza
-    from folio.render import renderizar
+    from folio.render import direcciones, renderizar
     from pydantic import TypeAdapter
 
     cfg = config.cargar()
@@ -73,10 +76,50 @@ def render(
         raise typer.Exit(1)
     piezas = TypeAdapter(list[Pieza]).validate_python(json.loads(ruta.read_text(encoding="utf-8"))["piezas"])
     piezas = [p for p in piezas if p.guion and (pieza is None or p.id == pieza)]
-    archivos, avisos = renderizar(cfg, piezas, cfg.dir_informes / fecha / "render")
-    for a in avisos:
-        typer.echo(f"Aviso: {a}")
-    typer.echo(f"{len(archivos)} diapositivas en {cfg.dir_informes / fecha / 'render'}")
+    cache = cfg.dir_cache(fecha)
+    fotos = {}
+    for p in piezas:
+        img = imgs.de_pieza(p.id, cache)
+        if img and img.local:
+            fotos[p.id] = {"src": (imgs.dir_imagenes(cache) / img.local).resolve().as_uri(),
+                           "credito": img.credito, "ancho": img.ancho, "alto": img.alto}
+    for d in (direcciones(cfg) if direccion == "todas" else [direccion]):
+        destino = cfg.dir_informes / fecha / "render" / (d or "")
+        archivos, avisos = renderizar(cfg, piezas, destino, d, fotos)
+        for a in avisos:
+            typer.echo(f"Aviso: {a}")
+        typer.echo(f"{len(archivos)} diapositivas en {destino}")
+
+
+imagen_app = typer.Typer(help="Imágenes libres de uso (Wikimedia Commons) para las piezas")
+app.add_typer(imagen_app, name="imagen")
+
+
+@imagen_app.command("buscar")
+def imagen_buscar(consulta: str, n: int = typer.Option(12, help="Resultados"),
+                  fuente: str = typer.Option("europeana", help="europeana o commons")):
+    """Busca imágenes libres y muestra la licencia comprobada de cada resultado."""
+    from folio import imagenes as imgs
+
+    for c in imgs.buscar(consulta, n, fuente):
+        marca = "libre" if c.libre else f"NO ({c.motivo})"
+        typer.echo(f"{c.archivo}\n    {c.descripcion[:90]}\n    {c.licencia} · {marca} · {c.credito[:90]}")
+
+
+@imagen_app.command("fijar")
+def imagen_fijar(pieza: str, archivo: str, fecha: str = typer.Option(None, help="Por defecto, la de la pieza")):
+    """Descarga la imagen para la pieza (clave de «folio imagen buscar»; solo si es libre)."""
+    from folio import imagenes as imgs
+
+    cfg = config.cargar()
+    fecha = fecha or pieza[:10]
+    try:
+        img = imgs.ficha(archivo)
+        ruta = imgs.fijar(img, pieza, cfg.dir_cache(fecha))
+    except ValueError as e:
+        typer.echo(f"Rechazada: {e}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"{ruta} · {img.credito}")
 
 
 @app.command()

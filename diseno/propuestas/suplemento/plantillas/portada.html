@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block cabecera %}
+  <header class="cabecera">{{ logotipo }}<span class="rotulo">{{ rotulo }} · {{ fecha_larga }}</span></header>
+{% endblock %}
+{% block cuerpo %}
+    <h1 class="titular">{{ texto }}</h1>
+{% endblock %}
+{% block pie %}
+  <footer class="pie"><span>{{ tokens.rotulos.aviso_portada }}</span><span class="flecha">→</span></footer>
+{% endblock %}

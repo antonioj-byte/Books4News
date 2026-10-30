@@ -1,0 +1,51 @@
+# Dirección C · «Lomo» — gráfica, sin fotografías. Cada pieza tiene un color de tela de
+# encuadernación (paleta_piezas, elegido de forma estable por el id) y un lomo vertical que recorre
+# el carrusel. El libro se dibuja como objeto (cubierta tipográfica propia, nunca la real) y el
+# cierre es una pila de lomos con los libros recomendados.
+
+lienzo:
+  ancho: 1080px
+  alto: 1350px
+
+colores:
+  papel: "#F5F0E6"
+  tinta: "#1C1917"
+  tinta_suave: "#6B645B"
+
+fuentes:
+  archivo: ../../fuentes/fuentes.css
+  texto: "'Fraunces', 'Georgia', serif"
+  rotulos: "'IBM Plex Mono', 'Courier New', monospace"
+
+tamanos:
+  titular: 112px
+  cuerpo: 54px
+  cuerpo_minimo: 36px
+  idea: 76px
+  rotulo: 20px
+  lomo: 120px
+
+margenes:
+  lateral: 80px
+  superior: 80px
+  inferior: 76px
+
+# Telas: fondo (tela), sobre (texto sobre la tela), vivo (acento)
+paleta_piezas:
+  - {nombre: verde botella, fondo: "#1E4636", sobre: "#F3EEDF", vivo: "#E8B04B"}
+  - {nombre: granate, fondo: "#6B1E2A", sobre: "#F6E9DE", vivo: "#F0A88F"}
+  - {nombre: azul prusia, fondo: "#1B3354", sobre: "#EEF0EE", vivo: "#E9C46A"}
+  - {nombre: ocre, fondo: "#C4862B", sobre: "#1E1A16", vivo: "#FFF6E3"}
+  - {nombre: tierra, fondo: "#8A4B2C", sobre: "#F7EDE2", vivo: "#F4C27A"}
+
+rotulos:
+  portada: Lectura lateral
+  actualidad: La noticia
+  libro: El libro
+  idea: La idea
+  cierre: Para leer
+
+logotipo: |
+  <svg class="logotipo" viewBox="0 0 150 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Folio">
+    <text x="0" y="45" style="font-family: var(--fuentes-texto); font-weight: 700; font-size: 52px; letter-spacing: -2px" fill="currentColor">folio</text>
+  </svg>

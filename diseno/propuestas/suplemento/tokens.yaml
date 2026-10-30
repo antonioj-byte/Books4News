@@ -1,0 +1,51 @@
+# Dirección A · «Suplemento» — tipográfica, sin imágenes.
+# Dos voces: la noticia en palo seco (teletipo), la lectura en serif (ensayo). El libro aparece
+# como objeto tipográfico (título grande, autor, año) y la idea se separa en bermellón.
+# Ritmo: cada tipo de diapositiva tiene su composición; el logotipo solo abre y cierra.
+
+lienzo:
+  ancho: 1080px
+  alto: 1350px
+
+colores:
+  papel: "#F4F0E8"
+  tinta: "#151413"
+  tinta_suave: "#6F685E"
+  acento: "#C0391B"          # bermellón de imprenta
+  acento_tinta: "#F7EFE6"    # texto sobre el bermellón
+  filete: "#151413"
+
+fuentes:
+  archivo: ../../fuentes/fuentes.css
+  texto: "'Newsreader', 'Georgia', serif"
+  rotulos: "'Libre Franklin', 'Helvetica Neue', Arial, sans-serif"
+
+tamanos:
+  titular: 116px
+  noticia: 54px             # actualidad, en palo seco
+  cuerpo: 56px
+  cuerpo_minimo: 38px
+  idea: 74px
+  libro_titulo: 82px
+  rotulo: 22px
+  paginacion: 22px
+  ficha: 52px
+
+margenes:
+  lateral: 88px
+  superior: 80px
+  inferior: 76px
+
+rotulos:
+  portada: Lectura lateral
+  actualidad: La noticia
+  libro: El libro
+  idea: La idea
+  cierre: Para leer
+  aviso_portada: Una noticia leída a través de un libro
+
+logotipo: |
+  <svg class="logotipo" viewBox="0 0 150 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Folio">
+    <text x="0" y="44" style="font-family: var(--fuentes-texto); font-weight: 600; font-size: 50px; letter-spacing: -1.5px" fill="currentColor">Folio</text>
+    <rect x="118" y="36" width="9" height="9" fill="var(--colores-acento)"/>
+  </svg>

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+      {% if libro %}
+      <div class="cubierta">
+        <div class="cubierta__autor">{{ libro.autor }}</div>
+        <div class="cubierta__titulo"><em>{{ libro.titulo }}</em></div>
+        {% if libro.anio %}<div class="cubierta__anio">{{ libro.anio }}</div>{% endif %}
+      </div>
+      {% endif %}
+      <p class="texto">{{ texto }}</p>
+{% endblock %}

@@ -31,12 +31,18 @@ _CURSIVA = re.compile(r"\*([^*\n]+)\*")
 _FIRMA_FINAL = re.compile(r"\s*(?:[—–-]\s*)?Folio\.?\s*$")
 
 
-def dir_diseno(cfg: Config) -> Path:
-    return cfg.raiz / "diseno"
+def dir_diseno(cfg: Config, direccion: str | None = None) -> Path:
+    """diseno/ (el design system en uso) o diseno/propuestas/<direccion>/ (una propuesta)."""
+    return cfg.raiz / "diseno" if not direccion else cfg.raiz / "diseno" / "propuestas" / direccion
 
 
-def cargar_tokens(cfg: Config) -> dict:
-    return yaml.safe_load((dir_diseno(cfg) / "tokens.yaml").read_text(encoding="utf-8"))
+def direcciones(cfg: Config) -> list[str]:
+    carpeta = cfg.raiz / "diseno" / "propuestas"
+    return sorted(d.name for d in carpeta.iterdir() if (d / "tokens.yaml").exists()) if carpeta.exists() else []
+
+
+def cargar_tokens(cfg: Config, direccion: str | None = None) -> dict:
+    return yaml.safe_load((dir_diseno(cfg, direccion) / "tokens.yaml").read_text(encoding="utf-8"))
 
 
 def css_tokens(tokens: dict) -> str:
@@ -61,8 +67,10 @@ def fecha_larga(fecha: str) -> str:
     return f"{int(d)} de {_MESES[int(m) - 1]} de {a}"
 
 
-def ficha_libros(pieza: Pieza) -> list[dict]:
-    """Libros del cierre con sus datos verificados: editorial y traductor españoles, o nada."""
+def ficha_libros(pieza: Pieza, cubierta=None) -> list[dict]:
+    """Libros del cierre con sus datos verificados: editorial y traductor españoles, o nada.
+
+    `cubierta`, si se da, es una función LibroVerificado → URL de su cubierta (o None)."""
     out = []
     for lg in pieza.guion.libros if pieza.guion else []:
         v = libro_verificado(lg, pieza.libros)
@@ -76,31 +84,76 @@ def ficha_libros(pieza: Pieza) -> list[dict]:
                 datos.append(f"Traducción de {lg.traductor}")
         elif v and v.edicion_es == "no":
             datos.append("Sin edición en español")
-        out.append({"titulo": texto_html(lg.titulo.replace("*", "")), "autor": lg.autor, "datos": " · ".join(datos)})
+        out.append({"titulo": texto_html(lg.titulo.replace("*", "")), "autor": lg.autor, "datos": " · ".join(datos),
+                    "anio": v.anio_primera_edicion if v else None,
+                    "editorial": lg.editorial_espanola if v and v.edicion_es == "si" else None,
+                    "edicion_es": v.edicion_es if v else "desconocido",
+                    "cubierta": cubierta(v) if cubierta and v else None})
     return out
+
+
+def _sin_marcas(texto: str) -> str:
+    return re.sub(r"\W+", " ", texto.replace("*", "")).strip().lower()
+
+
+def libro_de_diapositiva(libros: list[dict], pieza: Pieza, texto: str) -> dict | None:
+    """El libro del que habla una diapositiva: el primero cuyo título aparece en el texto."""
+    plano = _sin_marcas(texto)
+    for libro, lg in zip(libros, pieza.guion.libros):
+        corto = _sin_marcas(lg.titulo.split(":")[0])   # sin subtítulo
+        if corto and corto in plano:
+            return libro
+    return None
+
+
+def color_de_pieza(pieza: Pieza, n_colores: int) -> int:
+    """Índice estable de color para la pieza (las propuestas que cambian de color por pieza)."""
+    return sum(map(ord, pieza.id)) % n_colores if n_colores else 0
 
 
 @dataclass
 class Plantillas:
     cfg: Config
+    direccion: str | None = None
+    # Imagen libre de cada pieza (folio.imagenes), para las propuestas que la usan: id → ImagenLibre
+    imagenes: dict | None = None
+    # Usar las cubiertas reales (folio.cubiertas) cuando la plantilla las pide
+    cubiertas: bool = False
 
     def __post_init__(self):
-        self.tokens = cargar_tokens(self.cfg)
-        self.env = Environment(loader=FileSystemLoader(dir_diseno(self.cfg) / "plantillas"),
+        self._cubiertas: dict[str, str | None] = {}
+        self.tokens = cargar_tokens(self.cfg, self.direccion)
+        self.env = Environment(loader=FileSystemLoader(dir_diseno(self.cfg, self.direccion) / "plantillas"),
                                autoescape=select_autoescape(["html"]))
+
+    def _cubierta(self, libro) -> str | None:
+        from folio import cubiertas
+
+        clave = libro.olid or libro.google_id or libro.titulo
+        if clave not in self._cubiertas:
+            ruta = cubiertas.buscar(libro, self.cfg.dir_cache("x").parent, self.cfg.google_books_api_key)
+            self._cubiertas[clave] = ruta.resolve().as_uri() if ruta else None
+        return self._cubiertas[clave]
 
     def html_diapositiva(self, pieza: Pieza, n: int, base_url: str | None = None) -> str:
         """HTML completo de la diapositiva n (1, 2, …) de la pieza."""
         d = pieza.guion.diapositivas[n - 1]
         logo = self.tokens["logotipo"].strip()
+        imagen = (self.imagenes or {}).get(pieza.id)
+        paleta = self.tokens.get("paleta_piezas") or []
+        portada = pieza.guion.diapositivas[0]
+        libros = ficha_libros(pieza, self._cubierta if self.cubiertas else None)
         return self.env.get_template(f"{d.tipo}.html").render(
-            base_url=base_url or dir_diseno(self.cfg).resolve().as_uri() + "/",
+            base_url=base_url or dir_diseno(self.cfg, self.direccion).resolve().as_uri() + "/",
             tokens=self.tokens, css_tokens=Markup(css_tokens(self.tokens)),
             logotipo=Markup(logo), logotipo_grande=Markup(logo.replace('class="logotipo"', 'class="logotipo logotipo--grande"', 1)),
             tipo=d.tipo, rotulo=self.tokens["rotulos"].get(d.tipo, ""),
             texto=texto_html(_FIRMA_FINAL.sub("", d.texto) if d.tipo == "cierre" else d.texto),
             n=n, total=len(pieza.guion.diapositivas), pieza_id=pieza.id, fecha_larga=fecha_larga(pieza.fecha),
-            libros=ficha_libros(pieza) if d.tipo == "cierre" else [],
+            libros=libros if d.tipo == "cierre" else [], libros_pieza=libros,
+            libro=(libro_de_diapositiva(libros, pieza, d.texto) or (libros[:1] or [None])[0]) if d.tipo == "libro" else None,
+            titular=texto_html(portada.texto), imagen=imagen,
+            color=paleta[color_de_pieza(pieza, len(paleta))] if paleta else None,
         )
 
 
@@ -117,11 +170,12 @@ def _lanzar(p):
         raise
 
 
-def renderizar(cfg: Config, piezas: list[Pieza], destino: Path) -> tuple[list[Path], list[str]]:
+def renderizar(cfg: Config, piezas: list[Pieza], destino: Path, direccion: str | None = None,
+               imagenes: dict | None = None) -> tuple[list[Path], list[str]]:
     """PNG de cada diapositiva en destino/<pieza>/NN-tipo.png. Devuelve (archivos, avisos)."""
     from playwright.sync_api import sync_playwright
 
-    plantillas = Plantillas(cfg)
+    plantillas = Plantillas(cfg, direccion, imagenes, cubiertas=bool(direccion))
     ancho = int(str(plantillas.tokens["lienzo"]["ancho"]).removesuffix("px"))
     alto = int(str(plantillas.tokens["lienzo"]["alto"]).removesuffix("px"))
     archivos, avisos = [], []

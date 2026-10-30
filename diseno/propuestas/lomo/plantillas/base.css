@@ -1,0 +1,81 @@
+/* Dirección C · Lomo. Solo variables de tokens.yaml (la tela de la pieza llega como --tela, --sobre, --vivo). */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: var(--lienzo-ancho); height: var(--lienzo-alto); background: var(--colores-papel); }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+.diapositiva {
+  width: var(--lienzo-ancho); height: var(--lienzo-alto); overflow: hidden; display: flex;
+  background: var(--colores-papel); color: var(--colores-tinta); font-family: var(--fuentes-texto);
+  font-optical-sizing: auto;
+}
+/* El lomo: banda vertical con la tela de la pieza, igual en todo el carrusel */
+.lomo {
+  width: var(--tamanos-lomo); flex: none; background: var(--tela); color: var(--sobre);
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--margenes-inferior) 0 var(--margenes-superior);
+  font-family: var(--fuentes-rotulos); font-size: var(--tamanos-rotulo); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+}
+.pagina { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: var(--margenes-superior) var(--margenes-lateral) var(--margenes-inferior) 72px; }
+.cabecera { display: flex; justify-content: space-between; align-items: center; }
+.rotulo { font-family: var(--fuentes-rotulos); font-size: var(--tamanos-rotulo); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; }
+.logotipo { display: block; height: 56px; width: auto; color: currentColor; }
+.logotipo--grande { height: 80px; }
+.cuerpo { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+.texto { font-size: var(--tamanos-cuerpo); line-height: 1.2; font-weight: 400; letter-spacing: -0.01em; text-wrap: pretty; }
+.texto em, .cubierta__titulo em, .pila__titulo em { font-style: italic; }
+/* La cursiva de Fraunces cambia a formas «wonky» en los tamaños ópticos grandes: se fija un tamaño óptico de texto */
+em, .diapositiva--idea .texto { font-variation-settings: "opsz" 14; }
+.pie { display: flex; justify-content: space-between; align-items: flex-end; }
+
+/* Portada: toda la página es tela; el lomo, un tono más oscuro */
+.diapositiva--portada .pagina { background: var(--tela); color: var(--sobre); }
+.diapositiva--portada .lomo { filter: brightness(0.78); }
+.diapositiva--portada .cuerpo { justify-content: flex-end; padding-bottom: 56px; }
+.titular { font-size: var(--tamanos-titular); line-height: 0.98; font-weight: 600; letter-spacing: -0.03em; text-wrap: balance; }
+.diapositiva--portada .pie { border-top: 3px solid var(--vivo); padding-top: 22px; }
+.diapositiva--portada .pie .rotulo:last-child { color: var(--vivo); }
+
+/* Noticia: papel, texto con marca de la tela */
+.diapositiva--actualidad .texto { font-size: 52px; }
+.diapositiva--actualidad .cabecera .rotulo { color: var(--tela); }
+.diapositiva--actualidad .cuerpo::before { content: ""; width: 120px; height: 10px; background: var(--tela); margin-bottom: 48px; }
+
+/* Libro: cubierta tipográfica propia en la tela de la pieza */
+.diapositiva--libro .cabecera .rotulo { color: var(--tela); }
+.diapositiva--libro .cuerpo { justify-content: flex-start; padding-top: 48px; }
+.cubierta {
+  width: 600px; min-height: 640px; align-self: flex-start; display: flex; flex-direction: column;
+  background: var(--tela); color: var(--sobre); padding: 44px 40px 36px; border-radius: 4px 14px 14px 4px;
+  box-shadow: inset 18px 0 0 rgba(0, 0, 0, 0.16), 18px 22px 0 rgba(0, 0, 0, 0.08);
+  margin-bottom: 48px;
+}
+.cubierta__autor { font-family: var(--fuentes-rotulos); font-size: 20px; letter-spacing: 0.14em; text-transform: uppercase; padding-bottom: 18px; border-bottom: 2px solid var(--vivo); }
+.cubierta__titulo { margin-top: 32px; font-size: 64px; line-height: 1.02; letter-spacing: -0.02em; font-weight: 500; }
+.cubierta__anio { margin-top: auto; font-family: var(--fuentes-rotulos); font-size: 22px; color: var(--vivo); }
+.diapositiva--libro .texto { font-size: 46px; margin-top: auto; }
+
+/* Idea: tela a página completa */
+.diapositiva--idea .pagina { background: var(--tela); color: var(--sobre); }
+.diapositiva--idea .lomo { filter: brightness(0.78); }
+.diapositiva--idea .cabecera .rotulo { color: var(--vivo); }
+.diapositiva--idea .texto { font-size: var(--tamanos-idea); line-height: 1.06; font-weight: 500; font-style: italic; letter-spacing: -0.025em; text-wrap: balance; }
+.diapositiva--idea .texto em { font-style: normal; }
+
+/* Cierre: pila de lomos */
+.diapositiva--cierre .cabecera .rotulo { color: var(--tela); }
+.diapositiva--cierre .cuerpo { justify-content: flex-start; padding-top: 40px; }
+.diapositiva--cierre .texto { font-size: 46px; }
+.pila { margin-top: auto; padding-top: 36px; }
+.pila__lomo {
+  display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  background: var(--tela); color: var(--sobre); padding: 22px 30px; border-radius: 3px;
+  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.14);
+}
+.pila__lomo--2 { margin-left: 46px; filter: brightness(0.82); }
+.pila__lomo--3 { margin-left: 18px; filter: brightness(1.12); }
+.pila__titulo { font-size: 36px; line-height: 1.05; }
+.pila__autor { font-family: var(--fuentes-rotulos); font-size: 17px; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; color: var(--vivo); }
+.pila__datos { font-family: var(--fuentes-rotulos); font-size: 17px; letter-spacing: 0.04em; color: var(--colores-tinta-suave); margin: 8px 0 14px 4px; }
+.diapositiva--cierre .pie { padding-top: 28px; }

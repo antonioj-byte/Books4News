@@ -34,9 +34,9 @@ def test_texto_escapado_y_cursivas():
 
 
 def test_plantillas_solo_usan_variables_de_los_tokens(cfg_diseno):
-    """Cambiar el design system es cambiar diseno/tokens.yaml, no las plantillas."""
-    dir_plantillas = render.dir_diseno(cfg_diseno) / "plantillas"
-    for archivo in dir_plantillas.iterdir():
+    """Cambiar el design system es cambiar diseno/tokens.yaml, no las plantillas (también en las propuestas)."""
+    carpetas = [render.dir_diseno(cfg_diseno)] + [render.dir_diseno(cfg_diseno, d) for d in render.direcciones(cfg_diseno)]
+    for archivo in (a for c in carpetas for a in (c / "plantillas").iterdir()):
         texto = archivo.read_text(encoding="utf-8")
         assert not re.search(r"#[0-9a-fA-F]{3,6}\b", texto), f"color a fuego en {archivo.name}"
         assert not re.search(r"font-family:\s*(?!var\()['\"A-Za-z]", texto), f"fuente a fuego en {archivo.name}"
@@ -62,3 +62,26 @@ def test_render_png_de_1080x1350(cfg_diseno, pieza, tmp_path):
         pytest.skip(f"Chromium no disponible: {exc}")
     assert [a.name for a in archivos] == ["01-portada.png", "02-actualidad.png", "03-libro.png", "04-idea.png", "05-cierre.png"]
     assert all(Image.open(a).size == (1080, 1350) for a in archivos) and avisos == []
+
+
+def test_propuestas_de_diseno(cfg_diseno, pieza):
+    """Cada propuesta pinta todas las diapositivas; las que usan imagen y cubierta las ponen si las hay."""
+    assert {"suplemento", "revista", "lomo"} <= set(render.direcciones(cfg_diseno))
+    imagen = {pieza.id: {"src": "file:///tmp/foto.jpg", "credito": "Autor · Museo · Dominio público · Europeana"}}
+    for d in render.direcciones(cfg_diseno):
+        p = render.Plantillas(cfg_diseno, d, imagen)
+        p._cubierta = lambda libro: "file:///tmp/cubierta.jpg"
+        p.cubiertas = True
+        htmls = [p.html_diapositiva(pieza, n) for n in range(1, len(pieza.guion.diapositivas) + 1)]
+        assert all("--colores-papel" in h for h in htmls)
+        if d == "revista":
+            assert "file:///tmp/foto.jpg" in htmls[0] and "Dominio público" in htmls[0]
+            assert "file:///tmp/cubierta.jpg" in htmls[-1]
+        if d == "lomo":
+            assert "--tela:" in htmls[0]
+
+
+def test_libro_de_la_diapositiva(pieza):
+    libros = render.ficha_libros(pieza)
+    assert render.libro_de_diapositiva(libros, pieza, "Arendt vio en *Eichmann en Jerusalén* a un hombre corriente.")["autor"]
+    assert render.libro_de_diapositiva(libros, pieza, "Nada que ver") is None

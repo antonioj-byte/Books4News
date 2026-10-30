@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block cabecera %}
+    <header class="cabecera">{{ logotipo }}<span class="rotulo">{{ fecha_larga }}</span></header>
+{% endblock %}
+{% block cuerpo %}
+      <h1 class="titular">{{ texto }}</h1>
+{% endblock %}
+{% block pie %}
+    <footer class="pie"><span class="rotulo">Un libro para leer esta noticia</span><span class="rotulo">Desliza →</span></footer>
+{% endblock %}

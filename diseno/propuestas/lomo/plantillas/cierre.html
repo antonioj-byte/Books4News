@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+      <p class="texto">{{ texto }}</p>
+      <div class="pila">
+        {% for l in libros %}
+        <div class="pila__lomo pila__lomo--{{ loop.index }}">
+          <span class="pila__titulo"><em>{{ l.titulo }}</em></span>
+          <span class="pila__autor">{{ l.autor }}</span>
+        </div>
+        {% if l.datos %}<div class="pila__datos">{{ l.datos }}</div>{% endif %}
+        {% endfor %}
+      </div>
+{% endblock %}
+{% block pie %}
+    <footer class="pie">{{ logotipo_grande }}<span class="rotulo">Lectura lateral</span></footer>
+{% endblock %}

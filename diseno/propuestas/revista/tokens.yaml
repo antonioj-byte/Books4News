@@ -1,0 +1,49 @@
+# Dirección B · «Revista» — composición con imágenes, a la manera de las portadas de revista:
+# una foto libre de uso (dominio público, CC0 o CC BY, licencia comprobada por API: ver
+# src/folio/imagenes.py) recortada en una forma (círculo), virada a duotono, y un titular que
+# se monta sobre ella. Las cubiertas reales de los libros (src/folio/cubiertas.py) entran como
+# objetos con sombra; si no hay una buena, se dibuja una tipográfica.
+
+lienzo:
+  ancho: 1080px
+  alto: 1350px
+
+colores:
+  papel: "#F2EDE3"
+  tinta: "#111111"
+  tinta_suave: "#5F5A53"
+  acento: "#E4432A"          # rojo señal
+  acento_tinta: "#FFF4EC"
+  duo_oscuro: "#14161B"
+  duo_claro: "#EADFCB"
+
+fuentes:
+  archivo: ../../fuentes/fuentes.css
+  texto: "'Newsreader', 'Georgia', serif"
+  rotulos: "'Libre Franklin', 'Helvetica Neue', Arial, sans-serif"
+
+tamanos:
+  titular: 104px
+  cuerpo: 54px
+  cuerpo_minimo: 36px
+  idea: 76px
+  rotulo: 22px
+  credito: 15px
+
+margenes:
+  lateral: 80px
+  superior: 76px
+  inferior: 70px
+
+rotulos:
+  portada: Lectura lateral
+  actualidad: La noticia
+  libro: El libro
+  idea: La idea
+  cierre: Para leer
+
+logotipo: |
+  <svg class="logotipo" viewBox="0 0 160 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Folio">
+    <text x="0" y="45" style="font-family: var(--fuentes-rotulos); font-weight: 800; font-size: 46px; letter-spacing: -2px; text-transform: none" fill="currentColor">FOLIO</text>
+    <rect x="150" y="12" width="9" height="33" fill="var(--colores-acento)"/>
+  </svg>

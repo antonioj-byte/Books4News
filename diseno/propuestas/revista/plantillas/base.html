@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<base href="{{ base_url }}">
+<link rel="stylesheet" href="{{ tokens.fuentes.archivo }}">
+<style>{{ css_tokens }}</style>
+<link rel="stylesheet" href="plantillas/base.css">
+<title>{{ pieza_id }} · {{ n }}/{{ total }}</title>
+</head>
+<body>
+<main class="diapositiva diapositiva--{{ tipo }}{% if imagen %} con-imagen{% endif %}">
+{% block fondo %}{% endblock %}
+{% block cabecera %}
+  <header class="cabecera"><span class="rotulo">{{ rotulo }}</span><span class="pagina">{{ n }} / {{ total }}</span></header>
+{% endblock %}
+  <section class="cuerpo" data-ajustar>
+{% block cuerpo %}
+    <p class="texto">{{ texto }}</p>
+{% endblock %}
+  </section>
+{% block pie %}{% endblock %}
+</main>
+<script src="../ajuste.js"></script>
+</body>
+</html>
