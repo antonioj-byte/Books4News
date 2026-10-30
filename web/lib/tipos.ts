@@ -127,6 +127,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/medios/{ruta}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Medio
+         * @description Imagen de una pieza o cubierta de un libro.
+         */
+        get: operations["medio_api_medios__ruta__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/evaluaciones/resumen": {
         parameters: {
             query?: never;
@@ -186,6 +206,49 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * Arte
+         * @description Lo que decidió la etapa de arte para una pieza (trazabilidad; la imagen vive en data/cache).
+         */
+        Arte: {
+            /** Tono */
+            tono: string;
+            /** Recurso */
+            recurso: string;
+            /** Consultas */
+            consultas: string[];
+            /** Cifra */
+            cifra: string | null;
+            /** Cifra Rotulo */
+            cifra_rotulo: string | null;
+            /** Imagen */
+            imagen: string | null;
+            /**
+             * Portada
+             * @default sangre
+             * @enum {string}
+             */
+            portada: "sangre" | "banda" | "caja" | "neon" | "circulo" | "collage" | "ilustracion";
+            /** Antetitulo */
+            antetitulo: string | null;
+            /** Remate */
+            remate: string | null;
+            /** Acento */
+            acento: ("pluma" | "marcador") | null;
+            /** Concepto */
+            concepto: string | null;
+            /** Retrato */
+            retrato: string | null;
+            /** Credito */
+            credito: string | null;
+            /**
+             * Por Que
+             * @default
+             */
+            por_que: string;
+            /** Avisos */
+            avisos: string[];
+        };
         /** CambioEstado */
         CambioEstado: {
             /**
@@ -228,6 +291,11 @@ export interface components {
             tipo: "portada" | "actualidad" | "libro" | "idea" | "cierre";
             /** Texto */
             texto: string;
+            /**
+             * Subtitulo
+             * @description Solo en la portada: el subtítulo, que trae el libro o a su autor
+             */
+            subtitulo: string | null;
         };
         /**
          * DiscrepanciaEdicion
@@ -452,6 +520,12 @@ export interface components {
              */
             libros_candidatos: components["schemas"]["LibroCandidato"][];
             /**
+             * Gancho Libro
+             * @description En una línea, cómo entra el libro desde la portada: qué vio, explicó o anticipó su autor
+             * @default
+             */
+            gancho_libro: string;
+            /**
              * Por Que
              * @description Por qué esta historia y no otra, en dos líneas
              */
@@ -614,6 +688,7 @@ export interface components {
             revision_humana: string[];
             /** Hechos */
             hechos: components["schemas"]["HechoComprobado"][];
+            arte: components["schemas"]["Arte"] | null;
             /** Error */
             error: string | null;
         };
@@ -953,6 +1028,37 @@ export interface operations {
                 };
                 content: {
                     "text/plain": string;
+                };
+            };
+        };
+    };
+    medio_api_medios__ruta__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruta: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -98,6 +98,25 @@ export function PanelNoticia({ d }: { d: PiezaDetalle }) {
         </ul>
       </Seccion>
 
+      {p.arte && (
+        <Seccion titulo="Arte">
+          <p className="text-tinta-suave">
+            Portada «{p.arte.portada}»{p.arte.acento ? ` en ${p.arte.acento}` : ""} · tono {p.arte.tono}
+          </p>
+          {(p.arte.retrato || p.arte.credito) && (
+            <p className="mt-2">
+              <b>Para el pie:</b> {[p.arte.retrato && `Retrato: ${p.arte.retrato}`, p.arte.credito && `Imagen: ${p.arte.credito}`]
+                .filter(Boolean).join(". ")}.
+            </p>
+          )}
+          {p.arte.avisos.length > 0 && (
+            <ul className="mt-2 flex list-disc flex-col gap-1 pl-4 text-tinta-suave">
+              {p.arte.avisos.map((a) => <li key={a}>{a}</li>)}
+            </ul>
+          )}
+        </Seccion>
+      )}
+
       {p.avisos.length > 0 && (
         <Seccion titulo="Avisos del pipeline">
           <ul className="flex list-disc flex-col gap-1 pl-4 text-tinta-suave">
