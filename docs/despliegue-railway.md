@@ -19,7 +19,12 @@ Variables:
 | api | `OPENLIBRARY_CONTACT` | email de contacto |
 | api | `FOLIO_DATOS` | `/datos` |
 | api | `PORT` | `8000` |
-| api | `MAGNIFIC_API_KEY` | la clave de Magnific (secreta). Opcional: ilustraciones y retratos ilustrados (en preparación) |
+| api | `MAGNIFIC_API_KEY` | la clave de Magnific (secreta). Opcional: retratos generados (`arte.retrato_generado`) |
+| api | `FOLIO_EJECUCION_DIARIA` | opcional: `04:30` para lanzar cada día el pipeline y el render (hora de Madrid) |
+| api | `INSTAGRAM_TOKEN` | opcional: token de la cuenta de Instagram de Folio (secreto; caduca a los 60 días). Ver `docs/instagram.md` |
+| api | `INSTAGRAM_USER_ID` | opcional: id de la cuenta de Instagram (si falta, se pide a la API) |
+| api | `FOLIO_URL_PUBLICA` | para publicar: la URL pública del servicio «web» |
+| api | `FOLIO_CLAVE_ENLACES` | para publicar: clave larga y aleatoria con que se firman los enlaces (secreta) |
 | api | `EUROPEANA_API_KEY` | la clave de Europeana (secreta). Opcional: sin ella se usa la clave pública de demostración |
 | web | `FOLIO_API` | `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:8000` |
 | web | `FOLIO_CLAVE_WEB` | la contraseña de la web (secreta) |

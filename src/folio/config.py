@@ -169,6 +169,12 @@ class Config:
     google_books_api_key: str | None = None
     openlibrary_contact: str | None = None
     magnific_api_key: str | None = None
+    # Publicación en Instagram (folio.publicacion): token de la cuenta de Folio, su id (opcional: se pide a
+    # la API), la URL pública de la web y la clave con que se firman los enlaces de los archivos
+    instagram_token: str | None = None
+    instagram_usuario: str | None = None
+    url_publica: str | None = None
+    clave_enlaces: str | None = None
     extra: dict = field(default_factory=dict)
 
     @property
@@ -256,4 +262,8 @@ def cargar(raiz: Path = RAIZ) -> Config:
         google_books_api_key=_limpia("GOOGLE_BOOKS_API_KEY"),
         openlibrary_contact=_limpia("OPENLIBRARY_CONTACT"),
         magnific_api_key=_limpia("MAGNIFIC_API_KEY"),
+        instagram_token=_limpia("INSTAGRAM_TOKEN"),
+        instagram_usuario=_limpia("INSTAGRAM_USER_ID"),
+        url_publica=_limpia("FOLIO_URL_PUBLICA"),
+        clave_enlaces=_limpia("FOLIO_CLAVE_ENLACES"),
     )

@@ -22,9 +22,12 @@ from folio.render.png import _lanzar
 
 
 def comando_ffmpeg(fotogramas: Path, fps: int, salida: Path) -> list[str]:
+    # Con una pista de audio muda (AAC): las especificaciones de vídeo de Instagram cuentan con audio AAC,
+    # y así no dependemos de cómo trate un vídeo sin pista de audio
     return ["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(fps), "-i", str(fotogramas / "%04d.png"),
-            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "slow", "-movflags", "+faststart",
-            str(salida)]
+            "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-shortest",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "slow", "-c:a", "aac", "-b:a", "64k",
+            "-movflags", "+faststart", str(salida)]
 
 
 def renderizar_video(cfg: Config, piezas: list[Pieza], destino: Path, direccion: str | None = None,

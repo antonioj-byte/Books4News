@@ -6,12 +6,19 @@ from datetime import datetime
 from pathlib import Path
 
 from folio import evaluacion_md
-from folio.modelos import HistoriaElegida, InformeDiario, LibroGuion, LibroVerificado, Pieza
+from folio.modelos import Arte, HistoriaElegida, InformeDiario, LibroGuion, LibroVerificado, Pieza
 from folio.guion import libro_verificado
 
 _ESTADO = {"propuesta": "propuesta", "en_edicion": "en edición", "aprobada": "aprobada",
            "descartada": "descartada", "publicada": "publicada", "fallida": "FALLIDA"}
 _EDICION_ES = {"si": "sí", "no": "no", "desconocido": "no consta"}
+
+
+def creditos_pie(a: Arte) -> list[str]:
+    """Los créditos de imagen que van en el pie de la publicación (en las diapositivas no hay créditos)."""
+    sa = " (la portada se publica con la misma licencia, CC BY-SA)" if a.retrato and "SA" in a.retrato.upper().replace("-", " ").split() else ""
+    return ([f"Retrato: {a.retrato}{sa}"] if a.retrato else []) + \
+           ([f"{'Ilustración' if a.recurso == 'grabado' else 'Imagen'}: {a.credito}"] if a.credito else [])
 
 
 def _libro_md(l: LibroVerificado) -> list[str]:
@@ -103,9 +110,7 @@ def _pieza_md(p: Pieza) -> list[str]:
               + (f"Ilustración: {a.concepto} " if a.concepto else "")
               + (f"Imagen de archivo: {a.credito}. " if a.credito else "Sin imagen de archivo. ")
               + (f"Cifra destacada: {a.cifra}" + (f" ({a.cifra_rotulo})" if a.cifra_rotulo else "") + ". " if a.cifra else ""), ""]
-        sa = " (la portada se publica con la misma licencia, CC BY-SA)" if a.retrato and "SA" in a.retrato.upper().replace("-", " ").split() else ""
-        creditos = ([f"Retrato: {a.retrato}{sa}"] if a.retrato else []) + \
-                   ([f"{'Ilustración' if a.recurso == 'grabado' else 'Imagen'}: {a.credito}"] if a.credito else [])
+        creditos = creditos_pie(a)
         if creditos:
             l += [f"Añadir al pie de la publicación: «{'. '.join(creditos)}.»", ""]
         l += [f"- {x}" for x in a.avisos] + ([""] if a.avisos else [])

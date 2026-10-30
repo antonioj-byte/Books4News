@@ -174,6 +174,93 @@ def retrato_generar(pieza: str, estilo: str = typer.Option(..., help="low_poly, 
     typer.echo(f"{img.local} ({origen}) · {img.credito}")
 
 
+instagram_app = typer.Typer(help="Publicación en la cuenta de Instagram de Folio (docs/instagram.md)")
+app.add_typer(instagram_app, name="instagram")
+
+
+def _instagram(cfg):
+    from folio.publicacion.instagram import ErrorInstagram, Instagram
+    try:
+        return Instagram(cfg.instagram_token, cfg.instagram_usuario)
+    except ErrorInstagram as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(1)
+
+
+@instagram_app.command("comprobar")
+def instagram_comprobar():
+    """Comprueba la conexión con la cuenta (solo lectura): usuario, tipo de cuenta y publicaciones en 24 h."""
+    from folio.publicacion.instagram import ErrorInstagram
+
+    cfg = config.cargar()
+    ig = _instagram(cfg)
+    try:
+        c = ig.cuenta()
+        usadas, maximo = ig.limite()
+    except ErrorInstagram as e:
+        typer.echo(f"No se pudo: {e}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"Conectada: @{c.get('username')} ({c.get('account_type', 'tipo desconocido')}), id {ig.usuario}")
+    typer.echo(f"Publicaciones por la API en las últimas 24 h: {usadas} de {maximo}")
+    for nombre, valor in (("FOLIO_URL_PUBLICA", cfg.url_publica), ("FOLIO_CLAVE_ENLACES", cfg.clave_enlaces)):
+        if not valor:
+            typer.echo(f"Falta {nombre}: sin ella no se puede publicar (Instagram descarga las imágenes de ahí)")
+
+
+@instagram_app.command("publicar")
+def instagram_publicar(pieza: str, fecha: str = typer.Option(None, help="Por defecto, la de la pieza"),
+                       confirmar: bool = typer.Option(False, "--confirmar", help="Publicar de verdad; sin él, solo prepara y comprueba"),
+                       sin_video: bool = typer.Option(False, "--sin-video", help="La portada en imagen, no en vídeo")):
+    """Publica una pieza «aprobada» (en su versión actual de la web) como carrusel en Instagram.
+
+    Sin --confirmar no publica nada: prepara los archivos, enseña el pie y comprueba la cuenta."""
+    import json as _json
+
+    from folio.almacen import Almacen
+    from folio.publicacion import enlaces
+    from folio.publicacion.instagram import ErrorInstagram
+    from folio.publicacion.preparar import preparar
+
+    cfg = config.cargar()
+    fecha = fecha or pieza[:10]
+    almacen = Almacen(cfg.ruta_db)
+    eid = almacen.ultima_ejecucion(fecha)
+    r = almacen.pieza(eid, pieza) if eid else None
+    if not r:
+        typer.echo(f"No encuentro la pieza {pieza} en la última ejecución del {fecha}", err=True)
+        raise typer.Exit(1)
+    p, version = r
+    if p.estado != "aprobada":
+        typer.echo(f"La pieza está «{p.estado}»: solo se publican las aprobadas (apruébala en la web)", err=True)
+        raise typer.Exit(1)
+    if not (cfg.url_publica and cfg.clave_enlaces):
+        typer.echo("Faltan FOLIO_URL_PUBLICA o FOLIO_CLAVE_ENLACES (docs/instagram.md)", err=True)
+        raise typer.Exit(1)
+    ig = _instagram(cfg)
+    lista = preparar(cfg, p, con_video=not sin_video)
+    for a in lista.avisos:
+        typer.echo(f"Aviso: {a}")
+    typer.echo(f"Pieza {pieza} (versión {version}): {len(lista.medios)} diapositivas"
+               f"{', portada en vídeo' if lista.medios[0][0] == 'video' else ''}; archivos en {lista.carpeta}")
+    typer.echo(f"Pie ({len(lista.pie)} caracteres):\n{lista.pie}\n")
+    try:
+        c = ig.cuenta()
+        usadas, maximo = ig.limite()
+        typer.echo(f"Cuenta: @{c.get('username')} · {usadas} de {maximo} publicaciones en 24 h")
+        if not confirmar:
+            typer.echo("Prueba: no se ha publicado nada. Repite con --confirmar para publicar.")
+            return
+        medios = [(tipo, enlaces.firmar(cfg.url_publica, cfg.clave_enlaces, f"{fecha}/{pieza}/{archivo}"))
+                  for tipo, archivo in lista.medios]
+        publicada = ig.publicar_carrusel(medios, lista.pie)
+    except ErrorInstagram as e:
+        typer.echo(f"No se pudo: {e}", err=True)
+        raise typer.Exit(1)
+    almacen.cambiar_estado(eid, pieza, "publicada")
+    (lista.carpeta / "publicada.json").write_text(_json.dumps({**publicada, "version": version}, ensure_ascii=False), encoding="utf-8")
+    typer.echo(f"Publicada: {publicada.get('permalink') or publicada['id']}")
+
+
 @app.command()
 def ab(
     fecha: str = typer.Option(None, help="Fecha (AAAA-MM-DD). Por defecto, la última con selección guardada"),

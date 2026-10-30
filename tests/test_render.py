@@ -136,7 +136,7 @@ def test_video_de_portada(cfg_diseno, pieza, tmp_path, monkeypatch):
     except Exception as exc:  # sin navegador en este entorno
         pytest.skip(f"Chromium no disponible: {exc}")
     assert archivos == [tmp_path / pieza.id / "01-portada.mp4"] and "sin vídeo" in avisos[0]
-    datos = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=width,height,nb_frames", "-of", "csv=p=0",
+    datos = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height,nb_frames", "-of", "csv=p=0",
                             str(archivos[0])], capture_output=True, text=True).stdout.strip()
     assert datos == "1080,1350,4"
     assert ".en-video .imagen img" in (render.dir_diseno(cfg_diseno) / "plantillas" / "base.css").read_text()

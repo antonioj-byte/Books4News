@@ -3,10 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Contraseña de la web desplegada (FOLIO_CLAVE_WEB): autenticación básica del navegador, cualquier
 // usuario. Protege también /api y /diseno, que se reenvían a la API. Sin la variable (en local),
-// no se pide nada.
+// no se pide nada. Excepción: /api/publico/, los archivos que Instagram descarga al publicar; la API
+// solo los sirve con una firma válida y sin caducar (folio.publicacion.enlaces).
 export function proxy(request: NextRequest) {
   const clave = process.env.FOLIO_CLAVE_WEB;
-  if (!clave) return NextResponse.next();
+  if (!clave || request.nextUrl.pathname.startsWith("/api/publico/")) return NextResponse.next();
   const cabecera = request.headers.get("authorization") ?? "";
   if (cabecera.startsWith("Basic ")) {
     const credenciales = Buffer.from(cabecera.slice(6), "base64").toString("utf8");
