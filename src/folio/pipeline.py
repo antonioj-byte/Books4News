@@ -73,7 +73,8 @@ class Pipeline:
     def historias(self, articulos: list[Articulo], vectores, con_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
         """Agrupa, excluye las ya usadas y resume las que pasan al jefe de cultura."""
         p = self.cfg.pipeline
-        todas = agrupacion.agrupar(articulos, vectores, p["agrupacion"]["umbral_similitud"])
+        todas = agrupacion.agrupar(articulos, vectores, p["agrupacion"]["umbral_similitud"],
+                                   p["agrupacion"].get("umbral_fusion"))
         candidatas = [h for h in todas if h.n_medios >= p["agrupacion"]["min_medios"]]
         usadas = self.historial.centroides_recientes(self.fecha, p["exclusion"]["dias_historias"])
 
@@ -167,6 +168,8 @@ class Pipeline:
             for l in libros:
                 if l.edicion_es != "si":
                     pieza.avisos.append(f"«{l.titulo_propuesto}»: edición española {l.edicion_es}")
+            if not any(l.edicion_es == "si" for l in libros):
+                pieza.avisos.append("Ningún libro verificado tiene edición española")
             textos_h = textos.textos_historia(self.cfg, h)
             pieza.fuentes = [f for f, _ in textos_h]
             if not any(f.texto_completo for f in pieza.fuentes):
@@ -177,6 +180,8 @@ class Pipeline:
                 pieza.error = str(exc)
                 continue
             pieza.avisos += avisos
+            pieza.discrepancias_edicion = guionista.ajustar_libros(pieza.guion, libros)
+            pieza.revisar_edicion = bool(pieza.discrepancias_edicion)
             pieza.estado = "propuesta"
             usados = [l for l in libros if any(
                 guionista._es_titulo_de_libro(lg.titulo, [l]) for lg in pieza.guion.libros)]

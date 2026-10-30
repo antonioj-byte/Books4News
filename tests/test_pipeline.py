@@ -6,6 +6,7 @@ import httpx
 import numpy as np
 
 from folio import textos
+from folio.ingesta import agrupacion
 from folio.historial import Historial
 from folio.libros.verificacion import Verificador
 from folio.llm import LLM
@@ -78,10 +79,14 @@ def test_pipeline_completo(cfg, monkeypatch):
     assert "Guion aceptado en el intento 2" in pieza.avisos
     reintento = llm.llamadas[-1][1][-1]["content"]
     assert "comillas" in reintento
-    # Datos de edición sustituidos por los verificados
+    # Datos de edición sustituidos por los verificados, pero sin silencio: «revisar edición»
     assert pieza.guion.libros[0].editorial_espanola == "Debolsillo"
+    assert pieza.revisar_edicion
+    assert any(d.modelo == "Inventada" and d.api == "Debolsillo" for d in pieza.discrepancias_edicion)
     assert any("id inexistente" in a for a in inf.avisos)
-    assert ruta_md.read_text().startswith("# Folio Lateral")
+    md = ruta_md.read_text()
+    assert md.startswith("# Folio Lateral")
+    assert "revisar edición" in md and "| Inventada | Debolsillo |" in md
     assert ruta_json.exists()
 
 
@@ -95,3 +100,20 @@ def test_exclusion_de_historias_y_libros_usados(cfg, monkeypatch):
     assert p2.historial.libro_usado("2026-10-30", 60, "Eichmann en Jerusalén", "Hannah Arendt", None) == "2026-10-29"
     # Relanzar el mismo día no se excluye a sí mismo
     assert p.historial.libro_usado("2026-10-29", 60, "Eichmann en Jerusalén", "Hannah Arendt", None) is None
+
+
+def test_segunda_pasada_fusiona_grupos_del_mismo_evento():
+    """Dos grupos que la primera pasada separa se unen si sus centroides superan el umbral de fusión."""
+    ahora = datetime.now(timezone.utc)
+    vecs = {
+        "a1": [1.0, 0.0, 0.0], "a2": [0.97, 0.243, 0.0],   # evento A, primer ángulo
+        "b1": [0.90, 0.436, 0.0], "b2": [0.85, 0.527, 0.0],  # evento A, segundo ángulo
+        "c1": [0.0, 0.0, 1.0], "c2": [0.0, 0.1, 0.995],    # otro evento
+    }
+    arts = [Articulo(id=i, medio=f"M{i}", url=URL, titulo=i, publicado_en=ahora, idioma="es", acceso="abierto")
+            for i in vecs]
+    v = {i: np.array(x) / np.linalg.norm(x) for i, x in vecs.items()}
+    assert len(agrupacion.agrupar(arts, v, 0.99)) > 2
+    fusionadas = agrupacion.agrupar(arts, v, 0.99, umbral_fusion=0.92)
+    grupos = sorted(sorted(a.id for a in h.articulos) for h in fusionadas)
+    assert ["a1", "a2", "b1", "b2"] in grupos and ["c1", "c2"] in grupos

@@ -6,7 +6,13 @@ Estructura:
 - Idea nueva: la tesis propia de la pieza. No es un resumen de la noticia ni del libro, sino lo que aparece al juntarlos. Debe poder sostenerse sola como un tuit.
 - Cierre: el libro (o los libros) y una invitación a leerlo, con la firma de Folio.
 
-Extensión: entre 4 y 7 diapositivas. Usa las que la historia necesite, no más. Máximo 40 palabras por diapositiva y, en la portada, máximo 12.
+Extensión: piensa en 5 diapositivas por defecto. Usa 6 o 7 solo si la historia lo exige y, en ese caso, justifica en una línea qué aporta cada diapositiva extra. Entre 25 y 30 palabras por diapositiva y, en la portada, máximo 12.
+
+Libros:
+- Escribe los títulos en cursiva (*Así*), sin comillas. Usa el título español cuando exista edición española; si no, el original.
+- Edición española: si consta verificado que no la hay, puedes mencionarlo y convertirlo en valor («todavía sin traducir»). Si no consta, no digas nada sobre su traducción.
+
+Investigaciones y procesos judiciales abiertos: nunca atribuyas culpas ni anticipes sus conclusiones. Cuenta lo que se sabe y atribúyelo a quien lo dice.
 
 Tono: el de un buen columnista de cultura. Claro, con criterio, sin solemnidad ni frases de autoayuda. Nada de «en un mundo donde…», preguntas retóricas en la portada ni moralejas.
 
@@ -20,6 +26,7 @@ Devuelve JSON:
   "diapositivas": [
     {"n": 1, "tipo": "portada|actualidad|libro|idea|cierre", "texto": "..."}
   ],
+  "justificacion_extra": ["solo si hay más de 5 diapositivas: «n: qué aporta», una por cada diapositiva extra"],
   "pie_instagram": "texto de 80–150 palabras, con fuente de la noticia",
   "libros": [
     {"titulo": "...", "autor": "...", "editorial_espanola": "... o null", "traductor": "... o null", "edicion_original": "idioma, editorial, año"}

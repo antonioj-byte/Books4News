@@ -55,13 +55,61 @@ def test_fuente_inventada_y_pie(cfg):
     assert any("entre 80 y 150" in e for e in es)
 
 
-def test_ajustar_libros_usa_datos_verificados():
+def test_ajustar_libros_usa_datos_verificados_y_marca_discrepancias():
     g = guion_valido()
-    avisos = guion.ajustar_libros(g, [LIBRO])
+    discrepancias = guion.ajustar_libros(g, [LIBRO])
     assert g.libros[0].editorial_espanola == "Debolsillo"
     assert g.libros[0].traductor is None
     assert g.libros[0].edicion_original == "inglés, Viking, 1963"
-    assert avisos
+    # El guionista decía «Inventada» y «X»: no se sobrescribe en silencio
+    campos = {(d.campo, d.modelo, d.api) for d in discrepancias}
+    assert ("editorial española", "Inventada", "Debolsillo") in campos
+    assert ("editorial original", "X", "Viking") in campos
+
+
+def test_sin_discrepancias_si_los_datos_coinciden():
+    g = guion_valido(libros=[LibroGuion(titulo="Eichmann en Jerusalén", autor="Hannah Arendt",
+                                        editorial_espanola="DeBolsillo", traductor=None,
+                                        edicion_original="inglés, The Viking Press, 1963")])
+    assert guion.ajustar_libros(g, [LIBRO]) == []
+
+
+def test_discrepancia_de_anio_y_editorial_espanola_sin_verificar():
+    sin_es = LIBRO.model_copy(update={"edicion_es": "desconocido", "edicion_es_detalle": None})
+    g = guion_valido(libros=[LibroGuion(titulo="Eichmann en Jerusalén", autor="Hannah Arendt",
+                                        editorial_espanola="Lumen", traductor=None,
+                                        edicion_original="inglés, Viking, 1961")])
+    campos = {(d.campo, d.modelo, d.api) for d in guion.ajustar_libros(g, [sin_es])}
+    assert ("año original", "1961", "1963") in campos
+    assert ("editorial española", "Lumen", "sin edición española verificada") in campos
+
+
+def test_mas_de_cinco_diapositivas_exigen_justificacion(cfg):
+    g = guion_valido()
+    g.diapositivas.insert(3, Diapositiva(n=4, tipo="libro", texto="Otra diapositiva sobre el libro."))
+    for i, d in enumerate(g.diapositivas, 1):
+        d.n = i
+    assert any("justificacion_extra" in e for e in errores(cfg, g))
+    g.justificacion_extra = ["4: el segundo argumento del libro, que la idea necesita."]
+    assert errores(cfg, g) == []
+
+
+def test_no_habla_de_traduccion_si_no_esta_verificado(cfg):
+    sin_es = LIBRO.model_copy(update={"edicion_es": "desconocido", "edicion_es_detalle": None})
+    g = guion_valido()
+    g.diapositivas[-1].texto = "Eichmann en Jerusalén, de Hannah Arendt, aún sin traducir. Léelo. Folio."
+    assert any("traducción" in e for e in guion.validar(cfg, g, [sin_es], FUENTES))
+    no_es = LIBRO.model_copy(update={"edicion_es": "no", "edicion_es_detalle": None})
+    assert guion.validar(cfg, g, [no_es], FUENTES) == []
+
+
+def test_titulo_para_pieza():
+    assert guion.titulo_para_pieza(LIBRO) == "Eichmann en Jerusalén"
+    alice = LIBRO.model_copy(update={"edicion_es_detalle": LIBRO.edicion_es_detalle.model_copy(
+        update={"titulo": "Siempre Alice / Still Alice"})})
+    assert guion.titulo_para_pieza(alice) == "Siempre Alice"
+    sin_es = LIBRO.model_copy(update={"edicion_es": "no", "edicion_es_detalle": None})
+    assert guion.titulo_para_pieza(sin_es) == "Eichmann in Jerusalem"
 
 
 def test_prompt_contiene_datos_delimitados(cfg):

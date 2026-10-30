@@ -58,8 +58,10 @@ class ResumenHistoria(BaseModel):
 # --- Selección (prompts/jefe_cultura.md) -------------------------------------
 
 class LibroCandidato(BaseModel):
-    titulo: str
+    titulo: str = Field(description="Título en español si hay edición española; si no, el original")
     autor: str
+    titulo_original: str | None = Field(default=None, description="Título en la lengua original")
+    idioma_original: str | None = Field(default=None, description="Lengua original de la obra, en español (inglés, alemán…)")
 
 
 class HistoriaElegida(BaseModel):
@@ -136,6 +138,10 @@ class GuionLLM(BaseModel):
     idea_elegida: str
     por_que: str
     diapositivas: list[Diapositiva]
+    justificacion_extra: list[str] = Field(
+        default_factory=list,
+        description="Solo si usas más de 5 diapositivas: una línea por cada diapositiva extra con lo que aporta",
+    )
     pie_instagram: str = Field(description="Texto de 80–150 palabras, con fuente de la noticia")
     libros: list[LibroGuion]
     fuentes_noticia: list[str] = Field(description="medio + URL")
@@ -160,6 +166,14 @@ class Traza(BaseModel):
     nota: str | None = None
 
 
+class DiscrepanciaEdicion(BaseModel):
+    """Dato de edición en que el guionista y la fuente bibliográfica no coinciden."""
+    libro: str
+    campo: Literal["editorial española", "editorial original", "año original"]
+    modelo: str
+    api: str
+
+
 class Pieza(BaseModel):
     id: str
     fecha: str
@@ -173,6 +187,10 @@ class Pieza(BaseModel):
     guion: GuionLLM | None = None
     fuentes: list[FuenteNoticia] = Field(default_factory=list)
     avisos: list[str] = Field(default_factory=list)
+    # «Revisar edición»: el guionista dio datos de edición distintos de los verificados. La ficha
+    # usa los verificados, pero el texto de las diapositivas puede arrastrar los del modelo.
+    revisar_edicion: bool = False
+    discrepancias_edicion: list[DiscrepanciaEdicion] = Field(default_factory=list)
     error: str | None = None
 
 

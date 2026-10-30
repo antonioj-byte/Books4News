@@ -7,6 +7,7 @@ se toman en verificacion.py.
 from __future__ import annotations
 
 import re
+import time
 from dataclasses import dataclass, field
 
 import httpx
@@ -53,6 +54,12 @@ class Edicion:
     isbn13: list[str]
     idiomas: list[str]           # códigos (spa, eng…); puede estar vacío
     traductor: str | None = None
+    formato: str | None = None   # physical_format de Open Library («Paperback», «Audio CD»…)
+
+    @property
+    def es_audiolibro(self) -> bool:
+        texto = f"{self.formato or ''} {self.editorial or ''}".lower()
+        return any(p in texto for p in ("audio", "mp3", "cassette", "audible"))
 
 
 @dataclass
@@ -107,6 +114,7 @@ class OpenLibrary:
                 isbn13=e.get("isbn_13") or [],
                 idiomas=[l["key"].split("/")[-1] for l in e.get("languages", [])],
                 traductor=traductor,
+                formato=e.get("physical_format"),
             ))
         return eds
 
@@ -123,28 +131,34 @@ class GoogleBooks:
     BASE = "https://www.googleapis.com/books/v1/volumes"
     # Sin país, Google Books responde 403 «unknownLocation» desde IPs que no sabe geolocalizar.
     PAIS = "ES"
-    INTENTOS = 2  # da 503 y 429 esporádicos
+    INTENTOS = 4  # da 503 y 429 a menudo
+    ESPERA_S = 1.5  # se duplica en cada reintento
 
     def __init__(self, cliente: httpx.Client, clave: str):
         self.c = cliente
         self.clave = clave
 
-    def buscar(self, titulo: str, autor: str, solo_espanol: bool = False) -> list[Obra]:
-        params = {
-            "q": f'intitle:"{titulo}" inauthor:"{autor}"',
-            "maxResults": 20, "printType": "books", "country": self.PAIS, "key": self.clave,
-        }
-        if solo_espanol:
-            params["langRestrict"] = "es"
+    def _get(self, params: dict) -> httpx.Response:
         for intento in range(self.INTENTOS):
             r = self.c.get(self.BASE, params=params)
             if r.status_code not in (429, 500, 502, 503) or intento == self.INTENTOS - 1:
                 break
+            time.sleep(self.ESPERA_S * 2 ** intento)
         try:
             r.raise_for_status()
         except httpx.HTTPStatusError as exc:
             # El mensaje de httpx lleva la URL con la clave, y acaba en las notas del informe.
             raise httpx.HTTPStatusError(sin_clave(str(exc)), request=exc.request, response=exc.response) from None
+        return r
+
+    def buscar(self, titulo: str, autor: str, solo_espanol: bool = False) -> list[Obra]:
+        params = {"maxResults": 20, "printType": "books", "country": self.PAIS, "key": self.clave}
+        if solo_espanol:
+            params["langRestrict"] = "es"
+        # intitle: devuelve 0 resultados de forma errática; si pasa, se repite sin él.
+        r = self._get({**params, "q": f'intitle:"{titulo}" inauthor:"{autor}"'})
+        if not r.json().get("items"):
+            r = self._get({**params, "q": f'{titulo} inauthor:"{autor}"'})
         obras = []
         for it in r.json().get("items", []):
             v = it.get("volumeInfo", {})

@@ -61,11 +61,20 @@ def _original(obra: Obra) -> tuple[str | None, str | None]:
     es del mismo año que la primera edición de la obra."""
     if not obra.anio_primera_edicion:
         return None, None
-    candidatas = [e for e in obra.ediciones if e.anio == str(obra.anio_primera_edicion) and e.idiomas]
+    candidatas = [e for e in obra.ediciones
+                  if e.anio == str(obra.anio_primera_edicion) and e.idiomas and not e.es_audiolibro]
     if not candidatas:
         return None, None
     e = candidatas[0]
     return IDIOMAS.get(e.idiomas[0], e.idiomas[0]), e.editorial
+
+
+def _titulos(cand: LibroCandidato) -> list[str]:
+    """Título propuesto y, si es distinto, el original: Open Library no siempre tiene el español."""
+    t = [cand.titulo]
+    if cand.titulo_original and not titulos_coinciden(cand.titulo_original, cand.titulo, umbral=1.0):
+        t.append(cand.titulo_original)
+    return t
 
 
 class Verificador:
@@ -79,23 +88,30 @@ class Verificador:
 
     def _openlibrary(self, cand: LibroCandidato) -> tuple[Obra, Edicion | None] | None:
         """Busca la obra en Open Library. Devuelve (obra con ediciones, edición que coincide)."""
-        for obra in self.ol.buscar(cand.titulo, cand.autor):
-            if not autor_coincide(cand.autor, obra.autores):
-                continue
-            obra.ediciones = self.ol.ediciones(obra.id)
-            if titulos_coinciden(cand.titulo, obra.titulo):
-                return obra, None
-            for ed in obra.ediciones:
-                if titulos_coinciden(cand.titulo, ed.titulo):
-                    return obra, ed
+        titulos = _titulos(cand)
+        for titulo in titulos:
+            for obra in self.ol.buscar(titulo, cand.autor):
+                if not autor_coincide(cand.autor, obra.autores):
+                    continue
+                obra.ediciones = self.ol.ediciones(obra.id)
+                if any(titulos_coinciden(t, obra.titulo) for t in titulos):
+                    return obra, None
+                for ed in obra.ediciones:
+                    if any(titulos_coinciden(t, ed.titulo) for t in titulos):
+                        return obra, ed
         return None
 
     def _googlebooks(self, cand: LibroCandidato) -> tuple[list[Obra], list[Obra]]:
         """(volúmenes que coinciden en cualquier idioma, volúmenes en español del mismo autor)."""
         if not self.gb:
             return [], []
-        todos = [o for o in self.gb.buscar(cand.titulo, cand.autor)
-                 if autor_coincide(cand.autor, o.autores) and titulos_coinciden(cand.titulo, o.titulo)]
+        titulos = _titulos(cand)
+        todos: list[Obra] = []
+        for titulo in titulos:
+            todos = [o for o in self.gb.buscar(titulo, cand.autor)
+                     if autor_coincide(cand.autor, o.autores) and any(titulos_coinciden(t, o.titulo) for t in titulos)]
+            if todos:
+                break
         es = [o for o in self.gb.buscar(cand.titulo, cand.autor, solo_espanol=True)
               if autor_coincide(cand.autor, o.autores)]
         return todos, es

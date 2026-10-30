@@ -10,11 +10,13 @@ Criterios, por orden de peso:
 
 Ningún tema está vetado. Si eliges una tragedia, el ángulo debe iluminar el problema y nunca usar a las víctimas como gancho.
 
+Si hay una investigación o un proceso judicial abierto, el ángulo no puede atribuir culpas ni anticipar sus conclusiones: piensa sobre lo que ya se sabe, no sobre lo que se dictaminará.
+
 Para cada historia elegida, devuelve:
 - titular en una línea
 - de qué se está hablando, en dos frases
 - la cuestión de fondo, en una frase
-- 2–3 libros candidatos (título, autor), sin preocuparte todavía por la edición
+- 2–3 libros candidatos. De cada uno: título (el español si tiene edición española; si no, el original), título original, idioma original y autor. Al menos uno debe tener edición española, salvo que no haya ninguna buena opción traducida; en ese caso, propón el mejor libro aunque no lo esté
 - por qué esta historia y no otra, en dos líneas
 
 Si ninguna historia de la lista tiene buena lectura lateral, dilo. Prefieres publicar dos piezas buenas a tres con una forzada.

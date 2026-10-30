@@ -24,6 +24,10 @@ agrupacion:
   # e5 local para la Fase 1. Al desplegar (Fase 3) valorar Voyage por el peso del modelo (2,2 GB).
   modelo_embeddings: intfloat/multilingual-e5-large
   umbral_similitud: 0.84        # coseno medio mínimo para tratar dos artículos como el mismo evento (ajustado con datos del 30/10/2026: 0.82 mezcla eventos, 0.86 parte demasiado)
+  # Segunda pasada: fusiona grupos con centroides por encima de este coseno (null = desactivada).
+  # Datos del 30/10/2026: 0.88 junta 469 de 640 artículos en un solo grupo; 0.94 une los 8 grupos
+  # del choque de Urda (63 artículos, 10 medios) sin mezclar otros eventos; 0.95 no fusiona nada.
+  umbral_fusion: 0.94
   min_medios: 2                 # historias con menos medios distintos no pasan al jefe
 
 seleccion:
@@ -40,7 +44,8 @@ guion:
   max_textos: 5                 # textos de la historia que recibe el guionista
   max_caracteres_texto: 6000
   reintentos: 1
-  palabras_max_diapositiva: 40
+  diapositivas_por_defecto: 5     # más exigen una línea de justificación por diapositiva extra
+  palabras_max_diapositiva: 40    # tope duro; el prompt pide 25–30
   palabras_max_portada: 12
   pie_min_palabras: 80
   pie_max_palabras: 150

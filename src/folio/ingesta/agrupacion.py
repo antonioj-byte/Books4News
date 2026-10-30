@@ -61,8 +61,13 @@ def agrupar(
     articulos: list[Articulo],
     vectores: dict[str, np.ndarray],
     umbral_similitud: float,
+    umbral_fusion: float | None = None,
 ) -> list[Historia]:
     """Agrupación aglomerativa (enlace medio, distancia coseno) con umbral fijo.
+
+    Si se da `umbral_fusion`, una segunda pasada fusiona los grupos cuyos centroides superan
+    ese coseno: un mismo evento grande (crónica, análisis, víctimas, política) sale partido
+    en la primera.
 
     Devuelve historias ordenadas por relevancia: medios distintos, luego nº de artículos,
     luego la publicación más reciente.
@@ -85,8 +90,12 @@ def agrupar(
     for a, e in zip(articulos, etiquetas):
         grupos.setdefault(int(e), []).append(a)
 
+    lista = list(grupos.values())
+    if umbral_fusion is not None:
+        lista = fusionar(lista, vectores, umbral_fusion)
+
     historias = []
-    for miembros in grupos.values():
+    for miembros in lista:
         medios = sorted({a.medio for a in miembros})
         fechas = [a.publicado_en for a in miembros if a.publicado_en]
         ids = sorted(a.id for a in miembros)
@@ -105,6 +114,25 @@ def agrupar(
     return historias
 
 
-def centroide(historia: Historia, vectores: dict[str, np.ndarray]) -> np.ndarray:
-    v = np.mean([vectores[a.id] for a in historia.articulos], axis=0)
+def _centroide(articulos: list[Articulo], vectores: dict[str, np.ndarray]) -> np.ndarray:
+    v = np.mean([vectores[a.id] for a in articulos], axis=0)
     return v / (np.linalg.norm(v) or 1.0)
+
+
+def fusionar(grupos: list[list[Articulo]], vectores: dict[str, np.ndarray], umbral: float) -> list[list[Articulo]]:
+    """Fusiona de dos en dos los grupos con centroides más parecidos mientras superen `umbral`."""
+    grupos = [list(g) for g in grupos]
+    while len(grupos) > 1:
+        C = np.stack([_centroide(g, vectores) for g in grupos])
+        S = C @ C.T
+        np.fill_diagonal(S, -1.0)
+        i, j = np.unravel_index(int(np.argmax(S)), S.shape)
+        if S[i, j] < umbral:
+            break
+        grupos[i] += grupos[j]
+        del grupos[j]
+    return grupos
+
+
+def centroide(historia: Historia, vectores: dict[str, np.ndarray]) -> np.ndarray:
+    return _centroide(historia.articulos, vectores)

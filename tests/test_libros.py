@@ -83,11 +83,61 @@ def test_error_de_google_books_no_filtra_la_clave(cfg):
     assert all(u.params.get("country") == "ES" for u in pedidas)
 
 
-def test_google_books_reintenta_un_503(cfg):
-    cfg.google_books_api_key = "x"
-    respuestas = iter([httpx.Response(503), httpx.Response(200, json={"items": []})])
-    gb = GoogleBooks(httpx.Client(transport=httpx.MockTransport(lambda r: next(respuestas))), "x")
-    assert gb.buscar("La peste", "Albert Camus") == []
+def test_google_books_reintenta_y_repite_sin_intitle():
+    item = {"id": "g1", "volumeInfo": {"title": "La peste", "authors": ["Albert Camus"], "language": "es"}}
+    respuestas = iter([httpx.Response(503), httpx.Response(503), httpx.Response(200, json={"totalItems": 0}),
+                       httpx.Response(200, json={"items": [item]})])
+    pedidas = []
+
+    def manejar(req):
+        pedidas.append(req.url.params["q"])
+        return next(respuestas)
+
+    gb = GoogleBooks(httpx.Client(transport=httpx.MockTransport(manejar)), "x")
+    obras = gb.buscar("La peste", "Albert Camus")
+    assert [o.id for o in obras] == ["g1"]
+    assert pedidas[0].startswith("intitle:") and not pedidas[-1].startswith("intitle:")
+
+
+def test_google_books_se_rinde_tras_los_reintentos():
+    llamadas = []
+    gb = GoogleBooks(httpx.Client(transport=httpx.MockTransport(lambda r: llamadas.append(r) or httpx.Response(503))), "x")
+    with pytest.raises(httpx.HTTPStatusError):
+        gb.buscar("La peste", "Albert Camus")
+    assert len(llamadas) == GoogleBooks.INTENTOS
+
+
+def test_verifica_con_el_titulo_original_si_el_espanol_no_esta(cfg):
+    """Open Library no tiene «El viejo rey en su exilio», pero sí «Der alte König in seinem Exil»."""
+    def manejar(req):
+        if req.url.path == "/search.json":
+            if "König" not in req.url.params["q"]:
+                return httpx.Response(200, json={"docs": []})
+            return httpx.Response(200, json={"docs": [{"key": "/works/OL2W", "title": "Der alte König in seinem Exil",
+                                                       "author_name": ["Arno Geiger"], "language": ["ger"]}]})
+        return httpx.Response(200, json={"entries": []})
+
+    v = Verificador(cfg, httpx.Client(transport=httpx.MockTransport(manejar)))
+    l = v.verificar(LibroCandidato(titulo="El viejo rey en su exilio", autor="Arno Geiger",
+                                   titulo_original="Der alte König in seinem Exil", idioma_original="alemán"))
+    assert l.olid == "OL2W" and l.titulo_propuesto == "El viejo rey en su exilio"
+
+
+def test_edicion_original_no_es_un_audiolibro(cfg):
+    def manejar(req):
+        if req.url.path == "/search.json":
+            return httpx.Response(200, json={"docs": [{"key": "/works/OL3W", "title": "Number Go Up",
+                                                       "author_name": ["Zeke Faux"], "first_publish_year": 2023,
+                                                       "language": ["eng"]}]})
+        return httpx.Response(200, json={"entries": [
+            {"title": "Number Go Up", "publishers": ["Random House Audio"], "publish_date": "2023",
+             "languages": [{"key": "/languages/eng"}], "physical_format": "Audio CD"},
+            {"title": "Number Go Up", "publishers": ["Currency"], "publish_date": "Sep 2023",
+             "languages": [{"key": "/languages/eng"}], "physical_format": "Hardcover"},
+        ]})
+
+    v = Verificador(cfg, httpx.Client(transport=httpx.MockTransport(manejar)))
+    assert v.verificar(LibroCandidato(titulo="Number Go Up", autor="Zeke Faux")).editorial_original == "Currency"
 
 
 def _transporte_ol_ingles_y_gb(items_gb):

@@ -11,12 +11,35 @@ import re
 
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt
-from folio.modelos import FuenteNoticia, GuionLLM, HistoriaElegida, LibroVerificado
+from folio.modelos import DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroVerificado
 from folio.verificacion_texto import autor_coincide, normalizar, titulos_coinciden
 
 _COMILLAS = re.compile(r"«([^»]+)»|“([^”]+)”|\"([^\"]+)\"")
 _URL = re.compile(r"https?://\S+")
 _FRASES_VETADAS = ("en un mundo donde", "en un mundo en el que")
+# Afirmaciones sobre traducción: solo valen si algún libro tiene «no hay edición española» verificado.
+_SOBRE_TRADUCCION = re.compile(
+    r"sin traduc|no traducid|no (?:est[aá]n?|ha sido|han sido) traducid|no constan? traducid|"
+    r"sin edici[oó]n (?:en )?espa|a[uú]n no hay edici|l[eé]el[oa]s? en (?:ingl[eé]s|el original)",
+    re.IGNORECASE,
+)
+_ANIO = re.compile(r"\b(1[5-9]\d\d|20\d\d)\b")
+# Palabras que no distinguen una editorial de otra.
+_GENERICAS_EDITORIAL = {
+    "editorial", "ediciones", "edicions", "edizioni", "editions", "editores", "books", "press",
+    "publishing", "publishers", "inc", "ltd", "limited", "llc", "co", "company", "sa", "sl", "s", "a", "l",
+    "verlag", "grupo", "group", "de", "del", "the", "and", "y", "house",
+}
+
+
+def titulo_para_pieza(l: LibroVerificado) -> str:
+    """El título español si hay edición española; si no, el de la ficha (el original)."""
+    if l.edicion_es == "si":
+        if l.edicion_es_detalle and l.edicion_es_detalle.titulo:
+            # Open Library da a veces «Siempre Alice / Still Alice»
+            return l.edicion_es_detalle.titulo.split(" / ")[0].strip()
+        return l.titulo_propuesto
+    return l.titulo
 
 
 def _linea_libro(l: LibroVerificado) -> str:
@@ -29,11 +52,12 @@ def _linea_libro(l: LibroVerificado) -> str:
         es = ", ".join(x for x in (d.titulo, d.editorial, d.anio, f"trad. {d.traductor}" if d.traductor else None) if x)
         es = f"sí ({es})"
     elif l.edicion_es == "no":
-        es = "no hay edición española"
+        es = "no hay edición española (verificado: puedes presentarlo como libro todavía sin traducir)"
     else:
-        es = "no consta"
+        es = "no consta (no digas nada sobre su traducción)"
     return (
-        f"- Título propuesto: {l.titulo_propuesto}\n"
+        f"- Título que debes usar en la pieza: {titulo_para_pieza(l)}\n"
+        f"  Título propuesto: {l.titulo_propuesto}\n"
         f"  Título en la ficha: {l.titulo}\n"
         f"  Autor(es): {', '.join(l.autores)}\n"
         f"  Primera edición: {original}\n"
@@ -70,7 +94,7 @@ def _palabras(texto: str) -> int:
 
 def _es_titulo_de_libro(fragmento: str, libros: list[LibroVerificado]) -> bool:
     for l in libros:
-        titulos = [l.titulo, l.titulo_propuesto]
+        titulos = [l.titulo, l.titulo_propuesto, titulo_para_pieza(l)]
         if l.edicion_es_detalle and l.edicion_es_detalle.titulo:
             titulos.append(l.edicion_es_detalle.titulo)
         if any(titulos_coinciden(fragmento, t, umbral=0.9) for t in titulos):
@@ -85,6 +109,12 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
 
     if not 4 <= len(d) <= 7:
         errores.append(f"Hay {len(d)} diapositivas; deben ser entre 4 y 7.")
+    extra = len(d) - p["diapositivas_por_defecto"]
+    if extra > 0 and len([j for j in g.justificacion_extra if j.strip()]) < extra:
+        errores.append(
+            f"Hay {len(d)} diapositivas: justifica en justificacion_extra, con una línea cada una, "
+            f"qué aporta cada una de las {extra} por encima de {p['diapositivas_por_defecto']}, o recorta."
+        )
     if [x.n for x in d] != list(range(1, len(d) + 1)):
         errores.append("Las diapositivas deben numerarse 1, 2, 3… sin saltos.")
     if d and d[0].tipo != "portada":
@@ -117,6 +147,15 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
                     "No se permiten citas: parafrasea sin comillas."
                 )
 
+    if not any(l.edicion_es == "no" for l in libros):
+        for t in textos:
+            m = _SOBRE_TRADUCCION.search(t)
+            if m:
+                errores.append(
+                    f"«{m.group(0)}»: ningún libro tiene verificado que no haya edición española; "
+                    "no digas nada sobre su traducción."
+                )
+
     n_pie = _palabras(g.pie_instagram)
     if not p["pie_min_palabras"] <= n_pie <= p["pie_max_palabras"]:
         errores.append(f"El pie tiene {n_pie} palabras; debe tener entre {p['pie_min_palabras']} y {p['pie_max_palabras']}.")
@@ -141,25 +180,68 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
     return errores
 
 
-def ajustar_libros(g: GuionLLM, libros: list[LibroVerificado]) -> list[str]:
-    """Sustituye editorial, traductor y edición original por los datos verificados."""
-    avisos = []
+def _nucleo_editorial(nombre: str) -> set[str]:
+    return {p for p in normalizar(nombre).split() if p not in _GENERICAS_EDITORIAL}
+
+
+def _editoriales_coinciden(a: str, b: str) -> bool:
+    na, nb = _nucleo_editorial(a), _nucleo_editorial(b)
+    if not na or not nb:
+        return normalizar(a) == normalizar(b)
+    return bool(na & nb)
+
+
+def _partes_original(texto: str) -> tuple[str | None, str | None]:
+    """(editorial, año) de «idioma, editorial, año» tal como lo escribe el guionista."""
+    anio_m = _ANIO.search(texto or "")
+    partes = [x.strip() for x in (texto or "").split(",") if x.strip()]
+    partes = [x for x in partes if not _ANIO.fullmatch(x)]
+    editorial = ", ".join(partes[1:]) if len(partes) >= 2 else None
+    return editorial, anio_m.group(1) if anio_m else None
+
+
+def comparar_edicion(g: GuionLLM, libros: list[LibroVerificado]) -> list[DiscrepanciaEdicion]:
+    """Datos de edición del guionista que no coinciden con los verificados (editorial, año)."""
+    out: list[DiscrepanciaEdicion] = []
     for lg in g.libros:
         l = next((l for l in libros if autor_coincide(lg.autor, l.autores) and _es_titulo_de_libro(lg.titulo, [l])), None)
         if l is None:
             continue
         d = l.edicion_es_detalle if l.edicion_es == "si" else None
-        nuevo_editorial = d.editorial if d else None
-        nuevo_traductor = d.traductor if d else None
-        nuevo_original = ", ".join([
+        api_es = d.editorial if d else None
+        if lg.editorial_espanola and (not api_es or not _editoriales_coinciden(lg.editorial_espanola, api_es)):
+            out.append(DiscrepanciaEdicion(libro=lg.titulo, campo="editorial española", modelo=lg.editorial_espanola,
+                                           api=api_es or "sin edición española verificada"))
+        editorial_m, anio_m = _partes_original(lg.edicion_original)
+        if editorial_m and l.editorial_original and not _editoriales_coinciden(editorial_m, l.editorial_original):
+            out.append(DiscrepanciaEdicion(libro=lg.titulo, campo="editorial original", modelo=editorial_m,
+                                           api=l.editorial_original))
+        if anio_m and l.anio_primera_edicion and anio_m != str(l.anio_primera_edicion):
+            out.append(DiscrepanciaEdicion(libro=lg.titulo, campo="año original", modelo=anio_m,
+                                           api=str(l.anio_primera_edicion)))
+    return out
+
+
+def ajustar_libros(g: GuionLLM, libros: list[LibroVerificado]) -> list[DiscrepanciaEdicion]:
+    """Pone en la ficha los datos verificados y devuelve en qué discrepaba el guionista.
+
+    La sustitución no es silenciosa: si hay discrepancias, la pieza se marca «revisar edición»
+    y el informe muestra los dos valores.
+    """
+    discrepancias = comparar_edicion(g, libros)
+    for lg in g.libros:
+        l = next((l for l in libros if autor_coincide(lg.autor, l.autores) and _es_titulo_de_libro(lg.titulo, [l])), None)
+        if l is None:
+            continue
+        d = l.edicion_es_detalle if l.edicion_es == "si" else None
+        lg.editorial_espanola = d.editorial if d else None
+        lg.traductor = d.traductor if d else None
+        lg.edicion_original = ", ".join([
             l.idioma_original or "idioma no consta",
             l.editorial_original or "editorial no consta",
             str(l.anio_primera_edicion) if l.anio_primera_edicion else "año no consta",
         ])
-        if (lg.editorial_espanola or None) != nuevo_editorial or (lg.traductor or None) != nuevo_traductor:
-            avisos.append(f"«{lg.titulo}»: datos de edición del guionista sustituidos por los verificados")
-        lg.editorial_espanola, lg.traductor, lg.edicion_original = nuevo_editorial, nuevo_traductor, nuevo_original
-    return avisos
+    return discrepancias
 
 
 def _contenido_para_reenviar(contenido: list) -> list[dict]:
@@ -173,7 +255,11 @@ def _contenido_para_reenviar(contenido: list) -> list[dict]:
 
 def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
              libros: list[LibroVerificado]) -> tuple[GuionLLM, list[str]]:
-    """Devuelve (guion validado, avisos). Lanza ValueError si no pasa la validación."""
+    """Devuelve (guion validado, avisos). Lanza ValueError si no pasa la validación.
+
+    La ficha de libros del guion sale tal como la escribió el modelo: ajustar_libros() la
+    corrige después y devuelve las discrepancias.
+    """
     cfg = llm.cfg
     fuentes = [f for f, _ in textos]
     mensajes = [{"role": "user", "content": construir_prompt(cfg, eleccion, textos, libros)}]
@@ -183,9 +269,7 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
                                             etapa_modelo="guion")
         errores = validar(cfg, guion, libros, fuentes)
         if not errores:
-            avisos = ajustar_libros(guion, libros)
-            if intento:
-                avisos.append(f"Guion aceptado en el intento {intento + 1}")
+            avisos = [f"Guion aceptado en el intento {intento + 1}"] if intento else []
             return guion, avisos
         mensajes += [
             {"role": "assistant", "content": _contenido_para_reenviar(contenido)},

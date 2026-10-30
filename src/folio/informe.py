@@ -35,8 +35,8 @@ def _libro_md(l: LibroVerificado) -> list[str]:
 def _pieza_md(p: Pieza) -> list[str]:
     e = p.eleccion
     l = [f"### {p.id} · {e.titular}", "",
-         f"**Estado:** {_ESTADO[p.estado]}" + (" · historia de reserva" if p.reserva else "")
-         + f" · {p.n_medios} medios", ""]
+         f"**Estado:** {_ESTADO[p.estado]}" + (" · ⚠️ revisar edición" if p.revisar_edicion else "")
+         + (" · historia de reserva" if p.reserva else "") + f" · {p.n_medios} medios", ""]
     if p.error:
         l += [f"> ⚠️ {p.error}", ""]
     l += [f"**De qué se habla.** {e.de_que_se_habla}", "",
@@ -54,11 +54,18 @@ def _pieza_md(p: Pieza) -> list[str]:
         for d in g.diapositivas:
             l.append(f"{d.n}. _{d.tipo}_ ({len(d.texto.split())} pal.) — {d.texto}")
         l += ["", "**Pie de Instagram**", ""] + [f"> {linea}" if linea else ">" for linea in g.pie_instagram.split("\n")]
-        l += ["", "**Ficha de libros en el guion**", ""]
+        if g.justificacion_extra:
+            l += ["", "**Diapositivas por encima de 5**", ""] + [f"- {j}" for j in g.justificacion_extra]
+        l += ["", "**Ficha de libros en el guion** (datos verificados)", ""]
         for lg in g.libros:
             l.append(f"- {lg.titulo} — {lg.autor} · ed. española: {lg.editorial_espanola or 'no consta'}"
                      f" · trad.: {lg.traductor or 'no consta'} · original: {lg.edicion_original}")
         l.append("")
+    if p.discrepancias_edicion:
+        l += ["**Revisar edición**: el guionista dio datos distintos de los verificados. La ficha usa los "
+              "verificados; comprueba que el texto de las diapositivas no arrastre los del modelo.", "",
+              "| Libro | Campo | Guionista | Fuente bibliográfica |", "|---|---|---|---|"]
+        l += [f"| {d.libro} | {d.campo} | {d.modelo} | {d.api} |" for d in p.discrepancias_edicion] + [""]
     if p.fuentes:
         l += ["**Fuentes**", ""]
         l += [f"- {f.medio} ({f.acceso}{', texto completo' if f.texto_completo else ', solo titular y entradilla'}): "
@@ -69,7 +76,11 @@ def _pieza_md(p: Pieza) -> list[str]:
 
 
 def _eleccion_md(e: HistoriaElegida) -> str:
-    libros = "; ".join(f"{c.titulo} ({c.autor})" for c in e.libros_candidatos)
+    def _c(c):
+        original = ", ".join(x for x in (c.titulo_original if c.titulo_original != c.titulo else None,
+                                         c.idioma_original) if x)
+        return f"{c.titulo} ({c.autor}{'; ' + original if original else ''})"
+    libros = "; ".join(_c(c) for c in e.libros_candidatos)
     return f"- **{e.titular}** (`{e.historia_id}`) — {e.por_que} · Libros: {libros}"
 
 
