@@ -1,5 +1,8 @@
+import json
 from io import BytesIO
 
+import httpx
+import pytest
 from PIL import Image
 
 from folio.imagenes import cubiertas, libres as imagenes
@@ -45,3 +48,74 @@ def test_iiif_a_mayor_resolucion():
     assert imagenes.mayor_resolucion("https://x.org/image/V1.jpg/full/512,/0/default.jpg") == \
         "https://x.org/image/V1.jpg/full/1600,/0/default.jpg"
     assert imagenes.mayor_resolucion("https://mm.dimu.org/image/1?dimension=1200x1200").endswith("1200x1200")
+
+
+# --- Búsqueda de cubiertas (sin red) ---------------------------------------------
+
+def _servidor(rutas: dict, llamadas: list):
+    """MockTransport: cada clave es un trozo de URL y su valor una lista de respuestas que se van gastando."""
+    def manejar(req):
+        llamadas.append(str(req.url))
+        for trozo, respuestas in rutas.items():
+            if trozo in str(req.url):
+                return respuestas.pop(0) if len(respuestas) > 1 else respuestas[0]
+        return httpx.Response(404)
+    return httpx.Client(transport=httpx.MockTransport(manejar))
+
+
+def _libro_es():
+    from datos import LIBRO
+    return LIBRO.model_copy(update={"isbn13": []})          # edición española 9788483460627, obra OL1386647W
+
+
+@pytest.fixture(autouse=True)
+def _sin_espera(monkeypatch):
+    monkeypatch.setattr(cubiertas, "ESPERA_S", 0)
+
+
+def test_cubierta_de_open_library_de_300_px_vale():
+    assert cubiertas.es_buena(_jpg(298, 475, (180, 30, 30)))[0]           # El profesor y el loco, Debate
+
+
+def test_un_5xx_se_reintenta_en_el_momento(tmp_path):
+    llamadas = []
+    rutas = {"isbn/9788483460627": [httpx.Response(502), httpx.Response(200, content=_jpg(298, 475, (180, 30, 30)))]}
+    ruta = cubiertas.buscar(_libro_es(), tmp_path, cliente=_servidor(rutas, llamadas))
+    assert ruta and ruta.exists()
+    assert "edición española" in json.loads((tmp_path / "cubiertas" / "9788483460627.json").read_text())["origen"]
+
+
+def test_fallo_pasajero_no_se_guarda_como_no_hay(tmp_path):
+    rutas = {"covers.openlibrary.org": [httpx.Response(502)], "openlibrary.org/works": [httpx.Response(503)]}
+    assert cubiertas.buscar(_libro_es(), tmp_path, cliente=_servidor(rutas, [])) is None
+    llamadas = []
+    rutas = {"isbn/9788483460627": [httpx.Response(200, content=_jpg(300, 470, (20, 60, 160)))]}
+    assert cubiertas.buscar(_libro_es(), tmp_path, cliente=_servidor(rutas, llamadas))      # la siguiente vez, sí
+    assert llamadas
+
+
+def test_no_hay_definitivo_se_guarda_y_no_se_repite(tmp_path):
+    cubiertas.buscar(_libro_es(), tmp_path, cliente=_servidor({}, []))                       # todo 404
+    llamadas = []
+    assert cubiertas.buscar(_libro_es(), tmp_path, cliente=_servidor({}, llamadas)) is None and llamadas == []
+
+
+def test_no_hay_de_un_criterio_anterior_se_vuelve_a_buscar(tmp_path):
+    (tmp_path / "cubiertas").mkdir()
+    (tmp_path / "cubiertas" / "9788483460627.json").write_text(json.dumps(
+        {"archivo": None, "descartes": ["Open Library (edición española, 9788483460627): demasiado pequeña (298 px)"]}))
+    rutas = {"isbn/9788483460627": [httpx.Response(200, content=_jpg(298, 475, (180, 30, 30)))]}
+    assert cubiertas.buscar(_libro_es(), tmp_path, cliente=_servidor(rutas, []))
+
+
+def test_cubiertas_de_la_obra_y_403_de_google_books_a_la_vista(tmp_path):
+    llamadas = []
+    rutas = {"googleapis.com/books": [httpx.Response(403, json={"error": {"message": "forbidden"}})],
+             "openlibrary.org/works/OL1386647W.json": [httpx.Response(200, json={"covers": [-1, 3332121]})],
+             "b/id/3332121": [httpx.Response(200, content=_jpg(298, 475, (180, 30, 30)))]}
+    assert cubiertas.buscar(_libro_es(), tmp_path, clave_gb="k", cliente=_servidor(rutas, llamadas))
+    meta = json.loads((tmp_path / "cubiertas" / "9788483460627.json").read_text())
+    assert "cubierta 3332121" in meta["origen"]
+    assert any("Google Books" in d and "HTTP 403" in d for d in meta["descartes"])
+    assert not cubiertas.es_pasajero("Google Books (edición española, 1): HTTP 403")
+    assert cubiertas.es_pasajero("Open Library (1): HTTP 502") and cubiertas.es_pasajero("Open Library (1): ConnectTimeout")
