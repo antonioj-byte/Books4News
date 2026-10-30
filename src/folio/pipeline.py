@@ -34,6 +34,23 @@ def progreso(etapa: str) -> None:
     print(f"ETAPA: {etapa}", flush=True)
 
 
+
+def anio_de_publicacion(l: LibroVerificado) -> int | None:
+    """El año más reciente entre la primera edición y la edición española verificada (una traducción
+    nueva también es novedad para el lector de Folio)."""
+    anios = [l.anio_primera_edicion] if l.anio_primera_edicion else []
+    if l.edicion_es == "si" and l.edicion_es_detalle and (l.edicion_es_detalle.anio or "")[:4].isdigit():
+        anios.append(int(l.edicion_es_detalle.anio[:4]))
+    return max(anios) if anios else None
+
+
+def fuera_de_novedad(l: LibroVerificado, desde: int) -> str | None:
+    """Motivo de descarte si el libro no es novedad (publicado antes de `desde` o sin año verificado)."""
+    anio = anio_de_publicacion(l)
+    if anio is None:
+        return "sin año de publicación verificado: no se puede comprobar que sea novedad"
+    return None if anio >= desde else f"publicado en {anio}: Folio va de novedades (desde {desde})"
+
 class Pipeline:
     def __init__(self, cfg: Config, fecha: str, llm: LLM | None = None,
                  verificador: Verificador | None = None, historial: Historial | None = None,
@@ -166,7 +183,7 @@ class Pipeline:
     # --- Etapa 2: selección -------------------------------------------------
 
     def seleccion(self, al_jefe: list[Historia]) -> SeleccionJefe:
-        sel, avisos = seleccion.seleccionar(self.llm, al_jefe)
+        sel, avisos = seleccion.seleccionar(self.llm, al_jefe, self.fecha)
         self.avisos += avisos
         self._guardar_etapa(self.etapas.guardar_seleccion, sel)
         return sel
@@ -183,6 +200,10 @@ class Pipeline:
                 l = self.verificador.verificar(c)
             except NoVerificado as exc:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=exc.motivo))
+                continue
+            viejo = fuera_de_novedad(l, seleccion.anio_minimo(self.fecha, self.cfg.pipeline.seleccion.antiguedad_libros))
+            if viejo:
+                descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=viejo))
                 continue
             clave = clave_libro(c.titulo, c.autor)
             usado = self.historial.libro_usado(self.fecha, dias, c.titulo, c.autor, l.olid)

@@ -13,6 +13,7 @@ Pie de Instagram: puede empezar por la noticia; el libro tiene que aparecer y qu
 Extensión: piensa en 5 diapositivas por defecto. Usa 6 o 7 solo si la historia lo exige y, en ese caso, justifica en una línea qué aporta cada diapositiva extra. Entre 25 y 30 palabras por diapositiva; en la portada, máximo 12 en el titular y entre 10 y 22 en el subtítulo.
 
 Libros:
+- Una sola diapositiva de libro por cada libro: lleva su cubierta y no se repite. Si hay más que contar del libro, va en una diapositiva de idea.
 - Uno o tres libros, nunca dos. Lo normal es uno; tres solo si la lista verificada trae tres y los tres aportan algo distinto a la idea. Con dos verificados, quédate con el principal.
 - Escribe los títulos en cursiva (*Así*), sin comillas. Usa el título español cuando exista edición española; si no, el original.
 - Edición española: si consta verificado que no la hay, puedes mencionarlo y convertirlo en valor («todavía sin traducir»). Si no consta, no digas nada sobre su traducción.

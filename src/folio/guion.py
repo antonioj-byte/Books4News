@@ -303,6 +303,16 @@ def _libros_verificados(c: _Guion) -> list[str]:
                       for lg in c.g.libros if libro_verificado(lg, c.libros) is None]
 
 
+def _una_de_libro_por_libro(c: _Guion) -> list[str]:
+    """Cada libro tiene una sola diapositiva de libro: la cubierta no se repite (decisión del usuario, 31/10)."""
+    n = sum(1 for x in c.d if x.tipo == "libro")
+    libros = len(c.g.libros)
+    if not libros or n <= libros:          # sin libros ya lo dice _libros_verificados
+        return []
+    return [f"Hay {n} diapositivas de libro y {libros} libro{'s' if libros > 1 else ''}: cada libro tiene una sola "
+            "(con su cubierta, que no se repite); lo demás sobre el libro va en una diapositiva de idea."]
+
+
 def _uno_o_tres_libros(c: _Guion) -> list[str]:
     """Una pieza lleva uno o tres libros, nunca dos (decisión del usuario, 31/10)."""
     n = len(c.g.libros)
@@ -328,7 +338,7 @@ REGLAS = (
     _extension, _justificacion_extra, _numeracion, _primera_es_portada, _ultima_es_cierre, _tipos_obligatorios,
     _palabras_por_diapositiva, _portada_con_libro, _cierre_nombra_libro, _una_actualidad, _libro_pronto,
     _pie_nombra_libro, _portada_no_pregunta, _firma, _frases_vetadas_y_citas, _traduccion, _longitud_pie,
-    _pie_cita_medio, _libros_verificados, _uno_o_tres_libros, _fuentes_conocidas,
+    _pie_cita_medio, _libros_verificados, _uno_o_tres_libros, _una_de_libro_por_libro, _fuentes_conocidas,
 )
 
 

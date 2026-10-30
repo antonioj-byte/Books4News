@@ -141,3 +141,15 @@ def test_video_de_portada(cfg_diseno, pieza, tmp_path, monkeypatch):
     assert datos == "1080,1350,4"
     assert ".en-video .imagen img" in (render.dir_diseno(cfg_diseno) / "plantillas" / "base.css").read_text()
     assert "--video-segundos: 6;" in render.css_tokens(render.cargar_tokens(cfg_diseno))
+
+
+def test_la_cubierta_no_se_repite_en_el_carrusel(cfg_diseno, pieza):
+    """Si dos diapositivas de libro hablan del mismo libro, la segunda sale solo con el texto."""
+    from folio.modelos import Diapositiva
+    pieza.guion.diapositivas.insert(3, Diapositiva(n=4, tipo="libro", texto="Eichmann en Jerusalén vuelve a la obediencia."))
+    for i, d in enumerate(pieza.guion.diapositivas, 1):
+        d.n = i
+    p = render.Plantillas(cfg_diseno)
+    assert 'class="escaparate"' in p.html_diapositiva(pieza, 3)
+    segunda = p.html_diapositiva(pieza, 4)
+    assert 'class="escaparate"' not in segunda and "vuelve a la obediencia" in segunda

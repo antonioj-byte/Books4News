@@ -10,5 +10,5 @@
       </div>
     </div>
     {% endwith %}{% endif %}
-    <p class="texto">{{ texto }}</p>
+    <p class="texto{% if not libro %} texto--solo{% endif %}">{{ texto }}</p>
 {% endblock %}

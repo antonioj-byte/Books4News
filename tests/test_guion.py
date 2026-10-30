@@ -86,7 +86,7 @@ def test_discrepancia_de_anio_y_editorial_espanola_sin_verificar():
 
 def test_mas_de_cinco_diapositivas_exigen_justificacion(cfg):
     g = guion_valido()
-    g.diapositivas.insert(3, Diapositiva(n=4, tipo="libro", texto="Otra diapositiva sobre el libro."))
+    g.diapositivas.insert(3, Diapositiva(n=4, tipo="idea", texto="Otra idea que sale del libro."))
     for i, d in enumerate(g.diapositivas, 1):
         d.n = i
     assert any("justificacion_extra" in e for e in errores(cfg, g))
@@ -266,3 +266,12 @@ def test_uno_o_tres_libros_nunca_dos(cfg):
     assert any("tercero" in e for e in guion.validar(cfg, dos, [LIBRO, *otros], FUENTES))   # hay un tercero verificado
     tres = guion_valido(libros=[*dos.libros, lg("La condición humana", "Hannah Arendt")])
     assert not any("libros" in e for e in guion.validar(cfg, tres, [LIBRO, *otros], FUENTES))
+
+
+def test_una_diapositiva_de_libro_por_libro(cfg):
+    g = guion_valido()
+    g.diapositivas.insert(3, Diapositiva(n=4, tipo="libro", texto="Arendt vuelve en Eichmann en Jerusalén a la obediencia."))
+    for i, d in enumerate(g.diapositivas, 1):
+        d.n = i
+    g.justificacion_extra = ["4: otro argumento del libro."]
+    assert any("una sola" in e and "cubierta" in e for e in errores(cfg, g))

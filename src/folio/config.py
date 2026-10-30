@@ -50,6 +50,9 @@ class Seleccion(_Seccion):
     historias_editoriales: int = 12     # contexto del mundo del libro para el jefe de cultura
     elegidas: int
     reserva: int
+    # Novedad (31/10, a petición del usuario): solo libros publicados en los últimos N años (primera edición
+    # o edición española); los anteriores se descartan al verificar
+    antiguedad_libros: int = Field(default=2, ge=0)
 
 
 class Exclusion(_Seccion):

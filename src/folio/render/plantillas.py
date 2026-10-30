@@ -63,7 +63,7 @@ class Plantillas:
         """HTML completo de la diapositiva n (1, 2, …) de la pieza."""
         d = pieza.guion.diapositivas[n - 1]
         return self.env.get_template(f"{d.tipo}.html").render(
-            **self._base(base_url), **self._texto(pieza, d, n), **self._medios_y_arte(pieza, d))
+            **self._base(base_url), **self._texto(pieza, d, n), **self._medios_y_arte(pieza, d, n))
 
     def _base(self, base_url: str | None) -> dict:
         logo = self.tokens["logotipo"].strip()
@@ -86,7 +86,17 @@ class Plantillas:
             "subtitulo": texto_html(portada.subtitulo) if portada.subtitulo else None,
         }
 
-    def _medios_y_arte(self, pieza: Pieza, d: Diapositiva) -> dict:
+    @staticmethod
+    def _libro(libros: list[dict], pieza: Pieza, n: int) -> dict | None:
+        """El libro de la diapositiva n, o None si ya salió en una diapositiva de libro anterior: la
+        cubierta no se repite en el carrusel (la diapositiva sale solo con el texto)."""
+        def de(x: Diapositiva) -> dict | None:
+            return libro_de_diapositiva(libros, pieza, x.texto) or (libros[:1] or [None])[0]
+        libro = de(pieza.guion.diapositivas[n - 1])
+        antes = [de(x) for x in pieza.guion.diapositivas[:n - 1] if x.tipo == "libro"]
+        return None if libro and any(a and a["titulo"] == libro["titulo"] for a in antes) else libro
+
+    def _medios_y_arte(self, pieza: Pieza, d: Diapositiva, n: int) -> dict:
         a = pieza.arte
         imagen = self.medios.imagen(pieza)
         retrato = self.medios.retrato(pieza)
@@ -99,7 +109,7 @@ class Plantillas:
         return {
             "imagen": imagen, "retrato": retrato, "portada_estilo": estilo, "ilustracion": svg,
             "libros": libros if d.tipo == "cierre" else [], "libros_pieza": libros,
-            "libro": (libro_de_diapositiva(libros, pieza, d.texto) or (libros[:1] or [None])[0]) if d.tipo == "libro" else None,
+            "libro": self._libro(libros, pieza, n) if d.tipo == "libro" else None,
             "tono": a.tono if a else None, "acento": a.acento if a else None, "antetitulo": a.antetitulo if a else None,
             "cifra": a.cifra if a else None, "cifra_rotulo": a.cifra_rotulo if a else None,
             "campo": campos.get(a.tono if a else "", campos.get("sereno")),

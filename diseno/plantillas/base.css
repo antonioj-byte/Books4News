@@ -107,6 +107,8 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .escaparate__titulo { font-family: var(--fuentes-titular); font-size: 52px; line-height: 1.02; font-weight: 600; letter-spacing: -0.045em; }
 .escaparate__autor { margin-top: 14px; font-family: var(--fuentes-remate); font-style: italic; font-size: 38px; color: var(--colores-marcador); }
 .diapositiva--libro .texto { margin-top: auto; font-size: 42px; color: var(--colores-papel); }
+/* Sin cubierta (el libro ya salió antes en el carrusel): el texto ocupa la página, en la letra del texto */
+.diapositiva--libro .texto--solo { margin-block: auto; font-size: 56px; line-height: 1.3; }
 .escaparate__bloque { display: none; }
 /* La cara del autor junto a la cubierta: retrato en círculo, en blanco y negro, montado sobre la esquina */
 .cara { position: absolute; z-index: 2; left: -24px; top: 410px; width: 210px; height: 210px; margin: 0; border-radius: 50%; overflow: hidden; border: 6px solid var(--colores-tinta-honda); background: var(--colores-tinta-honda); }

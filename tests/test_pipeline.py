@@ -14,7 +14,7 @@ from folio.modelos import Articulo, ComprobacionHechos, HechoComprobado, Propues
 from folio.pipeline import Pipeline
 
 from conftest import transporte_openlibrary
-from datos import ELECCION, FUENTES, URL, guion_valido
+from datos import ELECCION, FUENTES, LIBRO, URL, guion_valido
 
 
 class LLMFalso(LLM):
@@ -62,6 +62,7 @@ def _vectores(arts):
 
 
 def _pipeline(cfg, monkeypatch, guiones, fecha="2026-10-30"):
+    cfg.pipeline.seleccion.antiguedad_libros = 100     # el libro de las pruebas es de 1963 (la novedad, en su test)
     llm = LLMFalso(cfg, guiones)
     p = Pipeline(cfg, fecha, llm=llm, verificador=Verificador(cfg, httpx.Client(transport=transporte_openlibrary())),
                  historial=Historial(cfg.ruta_db))
@@ -277,3 +278,27 @@ def test_las_pruebas_guardan_las_imagenes_aparte(cfg, monkeypatch):
     p.prueba = True          # como --dev o --solo-pieza
     p.ejecutar()
     assert carpetas and all(c is not None and c.name == "prueba" for c in carpetas)
+
+
+def test_solo_libros_novedad(cfg, monkeypatch):
+    from folio.pipeline import anio_de_publicacion, fuera_de_novedad
+    from folio.modelos import EdicionEspanola
+    assert anio_de_publicacion(LIBRO) == 2014                       # 1963, edición española de 2014
+    assert "publicado en 2014" in fuera_de_novedad(LIBRO, 2024)
+    nuevo = LIBRO.model_copy(update={"edicion_es_detalle": EdicionEspanola(titulo="X", editorial="Y", anio="2025", isbn="1", pais="España")})
+    assert anio_de_publicacion(nuevo) == 2025 and fuera_de_novedad(nuevo, 2024) is None      # traducción nueva
+    sin_anio = LIBRO.model_copy(update={"anio_primera_edicion": None, "edicion_es": "desconocido", "edicion_es_detalle": None})
+    assert "sin año" in fuera_de_novedad(sin_anio, 2024)
+    # En el pipeline: el libro de 1963/2014 se descarta con su motivo
+    p, _ = _pipeline(cfg, monkeypatch, [])
+    cfg.pipeline.seleccion.antiguedad_libros = 2
+    ok, descartes = p._verificar_libros(ELECCION, set())
+    assert ok == [] and any("Folio va de novedades (desde 2024)" in d.motivo for d in descartes)
+
+
+def test_el_jefe_recibe_el_anio_minimo(cfg):
+    from folio import seleccion
+    from folio.llm import cargar_prompt
+    assert seleccion.anio_minimo("2026-10-31", 2) == 2024
+    texto = cargar_prompt(cfg, "jefe_cultura", {"[pegar año mínimo]": "2024", "[pegar lista]": "", "[pegar lista editorial]": ""})
+    assert "publicados en 2024 o después" in texto

@@ -30,10 +30,16 @@ def bloque_historias(historias: list[Historia], etiqueta: str = "historias") -> 
     return f"<{etiqueta}>\n" + "\n\n".join(partes) + f"\n</{etiqueta}>"
 
 
-def seleccionar(llm: LLM, historias: list[Historia]) -> tuple[SeleccionJefe, list[str]]:
+def anio_minimo(fecha: str, anios: int) -> int:
+    """El año de publicación más antiguo que cuenta como novedad el día `fecha`."""
+    return int(fecha[:4]) - anios
+
+
+def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[SeleccionJefe, list[str]]:
     """Devuelve la selección y avisos de validación (ids desconocidos, recuentos)."""
     cfg = llm.cfg.pipeline.seleccion
     prompt = cargar_prompt(llm.cfg, "jefe_cultura", {
+        "[pegar año mínimo]": str(anio_minimo(fecha, cfg.antiguedad_libros)),
         "[pegar lista]": bloque_historias([h for h in historias if h.carril == "actualidad"]),
         "[pegar lista editorial]": bloque_historias([h for h in historias if h.carril == "editorial"], "mundo_del_libro"),
     })
@@ -48,8 +54,8 @@ def seleccionar(llm: LLM, historias: list[Historia]) -> tuple[SeleccionJefe, lis
             if e.historia_id not in ids:
                 avisos.append(f"El jefe de cultura devolvió un id inexistente ({e.historia_id}); se descarta «{e.titular}»")
                 continue
-            if not 2 <= len(e.libros_candidatos) <= 3:
-                avisos.append(f"«{e.titular}»: {len(e.libros_candidatos)} libros candidatos (se pedían 2–3)")
+            if not 3 <= len(e.libros_candidatos) <= 4:
+                avisos.append(f"«{e.titular}»: {len(e.libros_candidatos)} libros candidatos (se pedían 3–4)")
             validas.append(e)
         setattr(sel, grupo, validas)
     if len(sel.elegidas) > cfg["elegidas"]:

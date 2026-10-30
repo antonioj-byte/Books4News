@@ -48,6 +48,7 @@ seleccion:
   historias_editoriales: 12     # carril editorial: contexto del mundo del libro para el jefe (puede elegir una)
   elegidas: 3
   reserva: 2
+  antiguedad_libros: 2          # novedad: libros publicados en los últimos 2 años (primera edición o edición española)
 
 exclusion:
   dias_historias: 7
