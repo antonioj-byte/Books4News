@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+from folio import evaluacion_md
 from folio.modelos import HistoriaElegida, InformeDiario, LibroGuion, LibroVerificado, Pieza
 from folio.verificacion_texto import autor_coincide, titulos_coinciden
 
@@ -118,28 +119,14 @@ def _marcas(p: Pieza) -> list[str]:
     return marcas
 
 
-# Plantilla de evaluación humana. Los marcadores permiten leer las notas más adelante.
-_CAMPOS_EVALUACION = ("Selección (1–5)", "Libro (1–5)", "Idea nueva (1–5)", "Voz (1–5)",
-                      "¿La publicarías? (sí/no)", "Comentario")
-
-
 def _plantilla_evaluacion(pieza_id: str) -> list[str]:
-    return ([f"<!-- evaluacion:{pieza_id} -->", "**Evaluación** (rellenar a mano)", ""]
-            + [f"- {c}: " for c in _CAMPOS_EVALUACION]
-            + [f"<!-- /evaluacion:{pieza_id} -->", ""])
+    return evaluacion_md.bloque(f"evaluacion:{pieza_id}", evaluacion_md.CAMPOS_PIEZA,
+                                cabecera=["**Evaluación** (rellenar a mano)", ""])
 
 
 def evaluacion_rellenada(md: str) -> bool:
     """¿Hay alguna evaluación con algún campo rellenado en este informe?"""
-    dentro = False
-    for linea in md.splitlines():
-        if linea.startswith("<!-- evaluacion:"):
-            dentro = True
-        elif linea.startswith("<!-- /evaluacion:"):
-            dentro = False
-        elif dentro and linea.startswith("- ") and ":" in linea and linea.split(":", 1)[1].strip():
-            return True
-    return False
+    return evaluacion_md.rellenada(md, "evaluacion")
 
 
 def _eleccion_md(e: HistoriaElegida) -> str:

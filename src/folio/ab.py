@@ -22,6 +22,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from folio import evaluacion_md
 from folio import guion as guionista
 from folio import hechos
 from folio.config import Config
@@ -30,7 +31,6 @@ from folio.modelos import FuenteNoticia, GuionLLM, Historia, Pieza
 from pydantic import TypeAdapter
 
 LETRAS = "ABCDEFG"
-CAMPOS = ("Libro (1–5)", "Idea nueva (1–5)", "Voz (1–5)", "¿La publicarías? (sí/no)", "Comentario")
 
 
 @dataclass
@@ -81,7 +81,7 @@ def _md_version(pieza_id: str, letra: str, g: GuionLLM | None) -> list[str]:
     else:
         l += [f"{d.n}. _{d.tipo}_ — {d.texto}" for d in g.diapositivas]
         l += ["", "> " + g.pie_instagram.replace("\n", "\n> "), ""]
-    l += [f"<!-- ab:{pieza_id}:{letra} -->"] + [f"- {c}: " for c in CAMPOS] + [f"<!-- /ab:{pieza_id}:{letra} -->", ""]
+    l += evaluacion_md.bloque(f"ab:{pieza_id}:{letra}", evaluacion_md.CAMPOS_AB)
     return l
 
 
@@ -130,28 +130,15 @@ def generar(cfg: Config, fecha: str, textos_de, reutilizar: bool = False) -> tup
                 "diapositivas": len(ver.guion.diapositivas) if ver.guion else None,
                 "error": ver.error, "avisos": ver.avisos,
             }
-        md += [f"<!-- ab:{pieza.id}:preferida -->", "- Preferida (letra): ", f"<!-- /ab:{pieza.id}:preferida -->", ""]
+        md += evaluacion_md.bloque(f"ab:{pieza.id}:preferida", ("Preferida (letra)",))
     ruta_md.write_text("\n".join(md) + "\n", encoding="utf-8")
     ruta_clave.write_text(json.dumps(clave, ensure_ascii=False, indent=2), encoding="utf-8")
     return ruta_md, ruta_clave
 
 
-_BLOQUE = re.compile(r"<!-- ab:([^:]+):([^ ]+) -->\n(.*?)<!-- /ab:\1:\2 -->", re.DOTALL)
-
-
 def evaluaciones(md: str) -> dict[tuple[str, str], dict[str, str]]:
     """{(pieza, letra o «preferida»): {campo: valor}} con los campos rellenados."""
-    out = {}
-    for pieza, letra, cuerpo in _BLOQUE.findall(md):
-        campos = {}
-        for linea in cuerpo.splitlines():
-            if linea.startswith("- ") and ":" in linea:
-                k, v = linea[2:].split(":", 1)
-                if v.strip():
-                    campos[k.strip()] = v.strip()
-        if campos:
-            out[(pieza, letra)] = campos
-    return out
+    return {tuple(clave.rsplit(":", 1)): campos for clave, campos in evaluacion_md.leer(md, "ab").items()}
 
 
 def _nota(v: str | None) -> float | None:

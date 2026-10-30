@@ -24,6 +24,7 @@ from pathlib import Path
 
 from pydantic import Field
 
+from folio import evaluacion_md
 from folio.modelos import BaseModel, InformeDiario, Pieza
 
 _MIGRACIONES = [
@@ -274,19 +275,15 @@ class Almacen:
 
 # --- Copia de la evaluación en informe.md ----------------------------------------
 
-_CAMPOS_MD = ("Selección (1–5)", "Libro (1–5)", "Idea nueva (1–5)", "Voz (1–5)", "¿La publicarías? (sí/no)", "Comentario")
-
-
 def escribir_evaluacion_md(ruta_md: Path, pid: str, ev: Evaluacion) -> bool:
     """Rellena el bloque <!-- evaluacion:pid --> de informe.md. Devuelve False si no existe."""
     if not ruta_md.exists():
         return False
-    md = ruta_md.read_text(encoding="utf-8")
-    patron = re.compile(rf"(<!-- evaluacion:{re.escape(pid)} -->\n\*\*Evaluación\*\* \(rellenar a mano\)\n\n)(.*?)(<!-- /evaluacion:{re.escape(pid)} -->)", re.S)
-    if not patron.search(md):
-        return False
     pub = "" if ev.publicaria is None else ("sí" if ev.publicaria else "no")
     valores = [ev.seleccion, ev.libro, ev.idea, ev.voz, pub, ev.comentario.replace("\n", " ")]
-    cuerpo = "".join(f"- {c}: {'' if v is None else v}\n" for c, v in zip(_CAMPOS_MD, valores))
-    ruta_md.write_text(patron.sub(lambda m: m.group(1) + cuerpo + m.group(3), md), encoding="utf-8")
+    md = evaluacion_md.rellenar(ruta_md.read_text(encoding="utf-8"), f"evaluacion:{pid}",
+                                dict(zip(evaluacion_md.CAMPOS_PIEZA, valores)))
+    if md is None:
+        return False
+    ruta_md.write_text(md, encoding="utf-8")
     return True
