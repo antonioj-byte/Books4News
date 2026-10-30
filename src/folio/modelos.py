@@ -12,7 +12,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel as _BaseModel, ConfigDict, Field
+
+
+class BaseModel(_BaseModel):
+    """Base de los esquemas: en el esquema de salida (OpenAPI de la web) los campos con valor por
+    defecto figuran como obligatorios, porque siempre vienen."""
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)
+
 
 Acceso = Literal["abierto", "parcial", "muro"]
 Seccion = Literal[

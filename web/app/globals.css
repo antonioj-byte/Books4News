@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+/* La web usa el design system de Folio: las variables (--colores-*, --fuentes-*) llegan de
+   /api/diseno/tokens.css, generadas desde diseno/tokens.yaml. Cambiar los tokens cambia la web. */
+@theme inline {
+  --color-papel: var(--colores-papel);
+  --color-tinta: var(--colores-tinta);
+  --color-tinta-suave: var(--colores-tinta-suave);
+  --color-acento: var(--colores-acento);
+  --color-filete: var(--colores-filete);
+  --font-texto: var(--fuentes-texto);
+  --font-rotulos: var(--fuentes-rotulos);
+}
+
+body {
+  background: var(--colores-papel);
+  color: var(--colores-tinta);
+  font-family: var(--fuentes-rotulos);
+}
+
+.rotulo {
+  font-family: var(--fuentes-rotulos);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--colores-acento);
+}

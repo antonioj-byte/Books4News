@@ -18,9 +18,9 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
-from folio.modelos import InformeDiario, Pieza
+from folio.modelos import BaseModel, InformeDiario, Pieza
 
 _MIGRACIONES = [
     # 1: ejecuciones, piezas, versiones y evaluaciones

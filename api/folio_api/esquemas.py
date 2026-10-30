@@ -3,10 +3,9 @@ TypeScript de la web (npm run tipos)."""
 
 from __future__ import annotations
 
-from pydantic import BaseModel
 
 from folio.almacen import Evaluacion, Version
-from folio.modelos import EstadoPieza, HechoComprobado, Pieza
+from folio.modelos import BaseModel, EstadoPieza, HechoComprobado, Pieza
 
 
 class Ejecucion(BaseModel):

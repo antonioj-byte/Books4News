@@ -49,6 +49,7 @@ No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquem
 - **Agrupación**: umbral 0,84 (coseno medio) y una segunda pasada que fusiona grupos con centroides por encima de 0,94 (`umbral_fusion`). Con 0,88 todo el día acaba en un grupo.
 - **Número de medios**: no se refuerza su peso en el prompt del jefe de cultura por ahora; se observa con más días.
 - **Evaluación humana**: cada pieza del informe acaba con una plantilla para puntuar del 1 al 5 selección, libro, idea nueva y voz, decir si se publicaría y comentar. Si se relanza el mismo día con evaluaciones rellenadas, el informe anterior se guarda como `informe.evaluado-HHMMSS.md`.
+- **Web (Fase 3, versión mínima)**: herramienta local de evaluación y edición, sin autenticación, despliegue ni publicación (plan en `docs/plan-fase-3.md`). `api/` (FastAPI, paquete `folio_api` del workspace de uv) sobre `src/folio/almacen.py` y `web/` (Next.js 16 + TypeScript + Tailwind 4, tipos generados desde el OpenAPI). La base de datos es `data/folio.db`: ejecuciones, piezas, versiones (solo se añaden; deshacer es una versión nueva) y evaluaciones. Cada `folio run` se guarda al terminar y la API importa al arrancar los informes que falten. Relanzar un día crea otra ejecución; la anterior sigue con sus evaluaciones. La evaluación se copia en el bloque de `informe.md` si ese informe es el de la ejecución evaluada. Estado nuevo de pieza: `descartada`. La vista previa es el HTML de las plantillas del render, servido por la API: lo que se ve es lo que sale en el PNG.
 - **Repeticiones**: se excluyen historias usadas en los últimos 7 días (similitud de centroides) y libros usados en los últimos 60 (SQLite en `data/folio.db`). Solo cuentan días anteriores a la ejecución, así que relanzar el mismo día no se excluye a sí mismo.
 
 ## Reglas
@@ -81,6 +82,10 @@ uv run folio render                      # PNG 1080×1350 en informes/<fecha>/re
 uv run folio ab                          # prueba A/B ciega del guion (informes/<fecha>/ab/)
 uv run folio ab-resultados               # agrega las evaluaciones A/B y aplica la regla
 uv run folio libro "La peste" "Albert Camus"   # verificar un libro suelto
+uv run folio web --recargar              # API de la web en http://127.0.0.1:8000 (docs en /docs)
+cd web && npm install && npm run dev     # web en http://localhost:3000 (con la API en marcha)
+cd web && npm run tipos                  # regenera los tipos TypeScript desde el OpenAPI
+uv run folio importar                    # carga en la base de datos los informes de informes/
 uv run pytest                            # tests (sin red ni gasto)
 ```
 
