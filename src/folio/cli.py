@@ -54,6 +54,31 @@ def run(
 
 
 @app.command()
+def render(
+    fecha: str = typer.Option(None, help="Fecha (AAAA-MM-DD). Por defecto, la última con selección guardada"),
+    pieza: str = typer.Option(None, help="Solo esta pieza (p. ej. 2026-10-30-1)"),
+):
+    """Render de las piezas del día a PNG (1080×1350) en informes/<fecha>/render/."""
+    _logging(False)
+    from folio.modelos import Pieza
+    from folio.render import renderizar
+    from pydantic import TypeAdapter
+
+    cfg = config.cargar()
+    fecha = fecha or config.ultima_fecha_con_seleccion(cfg) or date.today().isoformat()
+    ruta = cfg.dir_informes / fecha / "informe.json"
+    if not ruta.exists():
+        typer.echo(f"No existe {ruta}: ejecuta antes folio run", err=True)
+        raise typer.Exit(1)
+    piezas = TypeAdapter(list[Pieza]).validate_python(json.loads(ruta.read_text(encoding="utf-8"))["piezas"])
+    piezas = [p for p in piezas if p.guion and (pieza is None or p.id == pieza)]
+    archivos, avisos = renderizar(cfg, piezas, cfg.dir_informes / fecha / "render")
+    for a in avisos:
+        typer.echo(f"Aviso: {a}")
+    typer.echo(f"{len(archivos)} diapositivas en {cfg.dir_informes / fecha / 'render'}")
+
+
+@app.command()
 def ab(
     fecha: str = typer.Option(None, help="Fecha (AAAA-MM-DD). Por defecto, la última con selección guardada"),
     reutilizar_llm: bool = typer.Option(False, "--reutilizar-llm", help="Sirve de data/cache/llm/ las peticiones ya hechas"),

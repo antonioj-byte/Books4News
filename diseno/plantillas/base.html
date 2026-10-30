@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<base href="{{ base_url }}">
+<link rel="stylesheet" href="{{ tokens.fuentes.archivo }}">
+<style>{{ css_tokens }}</style>
+<link rel="stylesheet" href="plantillas/base.css">
+<title>{{ pieza_id }} · {{ n }}/{{ total }}</title>
+</head>
+<body>
+<main class="diapositiva diapositiva--{{ tipo }}">
+{% block cabecera %}
+  <header class="cabecera">
+    <span class="rotulo">{{ rotulo }}</span>
+    {{ logotipo }}
+  </header>
+{% endblock %}
+  <section class="cuerpo" data-ajustar>
+{% block cuerpo %}
+    <p class="texto">{{ texto }}</p>
+{% endblock %}
+  </section>
+{% block pie %}
+  <footer class="pie"><span>{{ fecha_larga }}</span><span>{{ n }} / {{ total }}</span></footer>
+{% endblock %}
+</main>
+<script>
+// Reduce el cuerpo de letra del texto hasta que quepa (sin bajar del mínimo de los tokens).
+document.fonts.ready.then(() => {
+  const minimo = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--tamanos-cuerpo-minimo"));
+  for (const caja of document.querySelectorAll("[data-ajustar]")) {
+    const texto = caja.querySelector(".texto");
+    if (!texto) continue;
+    let tam = parseFloat(getComputedStyle(texto).fontSize);
+    while (caja.scrollHeight > caja.clientHeight + 1 && tam > minimo) {
+      tam -= 2;
+      texto.style.fontSize = tam + "px";
+    }
+    if (caja.scrollHeight > caja.clientHeight + 1) document.body.dataset.desborda = "1";
+  }
+  document.body.dataset.listo = "1";
+});
+</script>
+</body>
+</html>
