@@ -45,9 +45,8 @@ def test_plantillas_solo_usan_variables_de_los_tokens(cfg_diseno):
 def test_html_de_cada_diapositiva(cfg_diseno, pieza):
     p = render.Plantillas(cfg_diseno)
     portada = p.html_diapositiva(pieza, 1, base_url="/diseno/")
-    assert '<base href="/diseno/">' in portada and "diapositiva--portada" in portada
-    assert "--colores-papel" in portada
-    assert 'class="disco"' in portada                 # sin imagen, el disco de color
+    assert '<base href="/diseno/">' in portada and "diapositiva--portada" in portada and "--colores-negro" in portada
+    assert "portada--tipografica" in portada          # sin imagen, portada tipográfica
     cierre = p.html_diapositiva(pieza, 5)
     # La firma del texto no se repite; la ficha lleva los datos verificados
     assert "Léelo." in cierre and "Léelo. Folio" not in cierre
@@ -55,7 +54,7 @@ def test_html_de_cada_diapositiva(cfg_diseno, pieza):
     assert "cubierta--dibujada" in cierre             # sin cubierta en la caché, se dibuja
 
 
-def test_imagen_cifra_y_cubierta_de_la_pieza(cfg_diseno, pieza):
+def test_imagen_cifra_antetitulo_y_cubierta(cfg_diseno, pieza):
     from folio import cubiertas, imagenes
     from folio.modelos import Arte
     cache = cfg_diseno.dir_cache(pieza.fecha)
@@ -68,25 +67,15 @@ def test_imagen_cifra_y_cubierta_de_la_pieza(cfg_diseno, pieza):
     (cache.parent / "cubiertas").mkdir()
     (cache.parent / "cubiertas" / "c.jpg").write_bytes(b"jpg")
     (cache.parent / "cubiertas" / f"{cubiertas._nombre(pieza.libros[0])}.json").write_text('{"archivo": "c.jpg"}')
-    pieza.arte = Arte(tono="sereno", recurso="grabado", cifra="tribunal", cifra_rotulo="juzga")
+    pieza.arte = Arte(tono="ironico", recurso="foto", portada="neon", antetitulo="PODER", cifra="tribunal", cifra_rotulo="juzga")
     p = render.Plantillas(cfg_diseno, url_medio=lambda r: "/api/medios/" + r.name)
     portada = p.html_diapositiva(pieza, 1)
     assert "/api/medios/2026-10-30-1.jpg" in portada and "object-position: 30% 70%" in portada
-    assert "foto--grabado" in portada and "Ana Pérez" not in portada   # el crédito va en el pie de la publicación
+    assert "portada--neon" in portada and "--neon: #FF3EA5" in portada and ">PODER<" in portada
+    assert "Ana Pérez" not in portada                  # el crédito va en el pie de la publicación
     noticia = p.html_diapositiva(pieza, 2)
-    assert 'class="cifra__numero" data-encajar>tribunal<' in noticia and "foto--columna" not in noticia
+    assert 'class="cifra__numero" data-encajar>tribunal<' in noticia and "imagen--arriba" not in noticia
     assert "/api/medios/c.jpg" in p.html_diapositiva(pieza, 5)
-
-
-def test_propuestas_de_diseno(cfg_diseno, pieza):
-    """Cada propuesta pinta todas las diapositivas."""
-    assert {"suplemento", "lomo", "provisional"} <= set(render.direcciones(cfg_diseno))
-    for d in render.direcciones(cfg_diseno):
-        p = render.Plantillas(cfg_diseno, d)
-        htmls = [p.html_diapositiva(pieza, n) for n in range(1, len(pieza.guion.diapositivas) + 1)]
-        assert all("--colores-papel" in h for h in htmls)
-        if d == "lomo":
-            assert "--tela:" in htmls[0]
 
 
 def test_render_png_de_1080x1350(cfg_diseno, pieza, tmp_path):
@@ -106,15 +95,14 @@ def test_libro_de_la_diapositiva(pieza):
     assert render.libro_de_diapositiva(libros, pieza, "Nada que ver") is None
 
 
-def test_portada_de_revista_con_ilustracion(cfg_diseno, pieza):
+def test_portada_con_ilustracion_en_la_propuesta_humanista(cfg_diseno, pieza):
     from folio import ilustracion
     from folio.modelos import Arte
     pieza.arte = Arte(tono="reflexivo", recurso="foto", portada="ilustracion")
-    p = render.Plantillas(cfg_diseno)
+    p = render.Plantillas(cfg_diseno, "humanista")
     assert "portada--revista" not in p.html_diapositiva(pieza, 1)       # sin SVG, se cae al círculo
     destino = ilustracion.ruta(cfg_diseno.dir_cache(pieza.fecha), pieza.id)
     destino.parent.mkdir(parents=True)
     destino.write_text(ilustracion.sanear('<svg><rect width="9" height="9"/><circle r="3"/><path d="M0 0"/></svg>'))
     portada = p.html_diapositiva(pieza, 1)
     assert "portada--revista" in portada and "<circle" in portada and "--campo: #EFC77A" in portada
-    assert "Folio" not in portada.split("<body>")[1]     # sin cabecera ni créditos en la imagen

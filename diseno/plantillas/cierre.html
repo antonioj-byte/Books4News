@@ -4,7 +4,7 @@
     <div class="estante">
       {% for l in libros %}
       <div class="estante__libro">{% include "_cubierta.html" %}
-        <div class="estante__ficha"><em>{{ l.titulo }}</em><span>{{ l.autor }}</span>{% if l.datos %}<span class="estante__datos">{{ l.datos }}</span>{% endif %}</div>
+        <div class="estante__ficha"><b>{{ l.titulo }}</b><span>{{ l.autor }}{% if l.datos %} · {{ l.datos }}{% endif %}</span></div>
       </div>
       {% endfor %}
     </div>

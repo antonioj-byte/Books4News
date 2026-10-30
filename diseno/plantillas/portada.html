@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% block fondo %}
-{%- if portada_estilo == "ilustracion" %}<div class="campo"></div><div class="ilustracion">{{ ilustracion }}</div>
-{%- elif portada_estilo == "collage" %}<div class="campo"></div><div class="collage"><span class="collage__forma"></span><img src="{{ imagen.src }}" alt="" style="object-position: {{ imagen.enfoque[0] }}% {{ imagen.enfoque[1] }}%"></div>
-{%- elif imagen %}{% with clase="foto--circulo" %}{% include "_foto.html" %}{% endwith %}
-{%- else %}<div class="disco{% if tono == 'grave' %} disco--grave{% endif %}"></div>{% endif %}
+{%- if portada_estilo == "neon" %}{% with clase="imagen--sangre imagen--neon" %}{% include "_imagen.html" %}{% endwith %}<span class="bloque"></span>
+{%- elif portada_estilo == "banda" %}{% with clase="imagen--abajo" %}{% include "_imagen.html" %}{% endwith %}
+{%- elif portada_estilo in ("sangre", "caja") %}{% with clase="imagen--sangre" %}{% include "_imagen.html" %}{% endwith %}
+{%- else %}<span class="bloque bloque--tipografica"></span>{% endif %}
 {% endblock %}
 {% block cuerpo %}
-    <h1 class="titular">{{ texto }}</h1>
+    <div class="titulo">
+      {% if antetitulo %}<div class="antetitulo">{{ antetitulo }}</div>{% endif %}
+      <h1 class="titular">{{ texto }}</h1>
+    </div>
 {% endblock %}

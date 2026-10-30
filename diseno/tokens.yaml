@@ -1,50 +1,52 @@
-# Design system de Folio: «Revista», estética San Francisco + humanista (31/10).
-# Mucho aire, colores cálidos de luz de California, tipografía humanista (Newsreader para los
-# titulares y el ensayo, Source Sans 3 para la noticia y los datos) y la imagen como protagonista.
-# Sin cabeceras, logotipo, fechas ni créditos en las diapositivas: el crédito de la imagen va en el
-# pie de la publicación. Portada: ilustración conceptual sobre campo de color, imagen en círculo o
-# collage (lo decide el director de arte). El campo de color de la pieza (según el tono) vuelve en
-# el libro y en la idea.
+# Design system de Folio: «Wired» (31/10), tomando como referencia el Instagram de Wired.
+# Imagen de archivo a sangre en blanco y negro muy contrastado, con grano; titulares en palo seco
+# condensado y mayúsculas; antetítulo de tema en monoespaciada; fondo oscuro; un color neón por
+# pieza según el tono (en las graves, sin neón). Sin cabecera, logotipo, fecha, paginación ni
+# créditos en las diapositivas: el crédito va en el pie de la publicación.
+# Portada en cuatro composiciones que decide el director de arte: «sangre» (foto a sangre y
+# titular abajo), «banda» (titular en banda blanca arriba y foto debajo), «caja» (titular en caja
+# negra sobre la foto) y «neon» (foto virada a neón con un bloque de color). Sin imagen: tipográfica.
+# Las propuestas anteriores siguen en diseno/propuestas/.
 
 lienzo:
   ancho: 1080px
   alto: 1350px
 
 colores:
-  papel: "#F7F3EC"
-  tinta: "#23201C"
-  tinta_suave: "#7A736B"
-  acento: "#E2552D"          # amapola de California
-  duo_oscuro: "#26231F"
-  duo_claro: "#EFE6D6"
+  papel: "#0D0D0D"           # fondo de las diapositivas
+  tinta: "#F4F4F2"           # texto sobre el fondo
+  tinta_suave: "#9A9A96"
+  negro: "#0D0D0D"
+  blanco: "#F4F4F2"
+  acento: "#F2E205"          # neón por defecto (se cambia por pieza: campos_portada)
 
 fuentes:
   archivo: fuentes/fuentes.css
-  texto: "'Newsreader', 'Georgia', serif"
-  rotulos: "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif"
+  titular: "'Barlow Condensed', 'Arial Narrow', sans-serif"
+  texto: "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif"
+  rotulos: "'IBM Plex Mono', 'Courier New', monospace"
 
 tamanos:
-  titular: 96px
-  cuerpo: 54px
-  cuerpo_minimo: 36px
-  idea: 74px
-  cifra: 200px
-  dato: 24px
+  titular: 118px
+  cuerpo: 50px
+  cuerpo_minimo: 34px
+  idea: 92px
+  cifra: 300px
+  antetitulo: 26px
+  dato: 22px
 
 margenes:
-  lateral: 96px
-  superior: 96px
-  inferior: 96px
-  radio: 28px
+  lateral: 72px
+  superior: 72px
+  inferior: 80px
 
-# Campo de color de cada pieza, según su tono. fondo: el campo de la portada, del libro y de la
-# idea; color: el quinto color que puede usar la ilustración (además de tinta, papel y amapola).
+# Neón de cada pieza según el tono. fondo: el neón principal; color: el segundo, para los bloques.
 campos_portada:
-  reflexivo: {fondo: "#EFC77A", color: "#3F6E8C"}   # luz de tarde
-  sereno: {fondo: "#BFD3C1", color: "#3F6E8C"}      # salvia
-  ironico: {fondo: "#F2B9A0", color: "#3F6E8C"}     # melocotón
-  luminoso: {fondo: "#F4D98E", color: "#4F8A6B"}    # sol
-  grave: {fondo: "#DAD5CC", color: "#56606A"}       # niebla
+  reflexivo: {fondo: "#F2E205", color: "#FF3EA5"}   # amarillo y magenta
+  sereno: {fondo: "#3D6BFF", color: "#F2E205"}      # azul eléctrico
+  ironico: {fondo: "#FF3EA5", color: "#F2E205"}     # magenta
+  luminoso: {fondo: "#F2E205", color: "#3D6BFF"}
+  grave: {fondo: "#C8C8C4", color: "#C8C8C4"}       # sin neón
 
 rotulos:
   portada: ""

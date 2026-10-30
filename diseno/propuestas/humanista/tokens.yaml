@@ -1,0 +1,56 @@
+# Design system de Folio: «Revista», estética San Francisco + humanista (31/10).
+# Mucho aire, colores cálidos de luz de California, tipografía humanista (Newsreader para los
+# titulares y el ensayo, Source Sans 3 para la noticia y los datos) y la imagen como protagonista.
+# Sin cabeceras, logotipo, fechas ni créditos en las diapositivas: el crédito de la imagen va en el
+# pie de la publicación. Portada: ilustración conceptual sobre campo de color, imagen en círculo o
+# collage (lo decide el director de arte). El campo de color de la pieza (según el tono) vuelve en
+# el libro y en la idea.
+
+lienzo:
+  ancho: 1080px
+  alto: 1350px
+
+colores:
+  papel: "#F7F3EC"
+  tinta: "#23201C"
+  tinta_suave: "#7A736B"
+  acento: "#E2552D"          # amapola de California
+  duo_oscuro: "#26231F"
+  duo_claro: "#EFE6D6"
+
+fuentes:
+  archivo: ../../fuentes/fuentes.css
+  texto: "'Newsreader', 'Georgia', serif"
+  rotulos: "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif"
+
+tamanos:
+  titular: 96px
+  cuerpo: 54px
+  cuerpo_minimo: 36px
+  idea: 74px
+  cifra: 200px
+  dato: 24px
+
+margenes:
+  lateral: 96px
+  superior: 96px
+  inferior: 96px
+  radio: 28px
+
+# Campo de color de cada pieza, según su tono. fondo: el campo de la portada, del libro y de la
+# idea; color: el quinto color que puede usar la ilustración (además de tinta, papel y amapola).
+campos_portada:
+  reflexivo: {fondo: "#EFC77A", color: "#3F6E8C"}   # luz de tarde
+  sereno: {fondo: "#BFD3C1", color: "#3F6E8C"}      # salvia
+  ironico: {fondo: "#F2B9A0", color: "#3F6E8C"}     # melocotón
+  luminoso: {fondo: "#F4D98E", color: "#4F8A6B"}    # sol
+  grave: {fondo: "#DAD5CC", color: "#56606A"}       # niebla
+
+rotulos:
+  portada: ""
+  actualidad: ""
+  libro: ""
+  idea: ""
+  cierre: ""
+
+logotipo: ""

@@ -41,3 +41,9 @@ def test_rotulo_con_palabras_de_mas_se_descarta():
 def test_hoja_de_contactos():
     hoja = Image.open(BytesIO(arte.hoja_de_contactos([Image.new("RGB", (800, 600), "red")] * 4)))
     assert hoja.size == (3 * 360, 2 * 360)
+
+
+def test_antetitulo():
+    assert arte.validar_antetitulo(" prensa y poder. ") == "PRENSA Y PODER"
+    assert arte.validar_antetitulo("una etiqueta demasiado larga") is None
+    assert arte.validar_antetitulo(None) is None

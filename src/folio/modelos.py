@@ -204,9 +204,9 @@ class DiscrepanciaEdicion(BaseModel):
 class PropuestaArte(BaseModel):
     """Primera llamada: qué buscar y qué destacar. La imagen la busca el código."""
     tono: Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]
-    portada: Literal["ilustracion", "circulo", "collage"] = Field(
-        description="ilustracion: ilustración conceptual dibujada; circulo: imagen de archivo en círculo; "
-                    "collage: grabado a sangre sobre campo de color")
+    portada: Literal["sangre", "banda", "caja", "neon", "ilustracion", "circulo", "collage"] = Field(
+        description="Composición de la portada (ver el prompt)")
+    antetitulo: str | None = Field(default=None, description="De 1 a 3 palabras: el tema de la pieza, en mayúsculas")
     suceso_con_victimas: bool = Field(description="La noticia trata de muertos, heridos o víctimas")
     recurso: Literal["foto", "grabado"] = Field(description="Foto de archivo o ilustración antigua (grabado, dibujo)")
     consultas: list[str] = Field(description="3 o 4 búsquedas de 1 a 3 palabras, en inglés, sueco o alemán")
@@ -241,7 +241,8 @@ class Arte(BaseModel):
     imagen: str | None = None            # clave de la imagen fijada («europeana:/…»)
     # Composición de la portada: «circulo» (imagen en círculo), «collage» (grabado a sangre sobre
     # campo de color) o «ilustracion» (ilustración vectorial del ilustrador)
-    portada: Literal["circulo", "collage", "ilustracion"] = "circulo"
+    portada: Literal["sangre", "banda", "caja", "neon", "circulo", "collage", "ilustracion"] = "sangre"
+    antetitulo: str | None = None
     concepto: str | None = None          # metáfora de la ilustración
     credito: str | None = None
     por_que: str = ""

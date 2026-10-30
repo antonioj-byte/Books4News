@@ -69,6 +69,14 @@ def validar_cifra(propuesta: PropuestaArte, pieza: Pieza) -> list[str]:
     return avisos
 
 
+def validar_antetitulo(texto: str | None) -> str | None:
+    """De 1 a 3 palabras y 26 caracteres como mucho; si no, sin antetítulo."""
+    if not texto:
+        return None
+    texto = " ".join(texto.split()).strip(" .:·-").upper()
+    return texto if 1 <= len(texto.split()) <= 3 and len(texto) <= 26 else None
+
+
 def _descargar(c: httpx.Client, cand: imagenes.ImagenLibre) -> Image.Image | None:
     try:
         r = c.get(cand.url)
@@ -143,12 +151,14 @@ def _guardar_imagen(cand: imagenes.ImagenLibre, im: Image.Image, eleccion: Elecc
     imagenes.guardar_metadatos(cand, pieza_id, dir_cache_fecha)
 
 
-def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: set[str] | None = None) -> Arte:
+def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: set[str] | None = None,
+            portadas_del_dia: list[str] | None = None) -> Arte:
     """Etapa de arte de una pieza: propuesta, búsqueda, elección e imagen fijada (si la hay).
     `usadas`: imágenes ya elegidas para otras piezas del día (no se repiten); se añade la elegida."""
     usadas = usadas if usadas is not None else set()
     datos = _bloque_pieza(pieza, seccion)
-    prompt = cargar_prompt(cfg, "director_arte", {"[pegar pieza]": datos})
+    ya = f"\ncomposiciones de portada ya elegidas hoy para otras piezas: {', '.join(portadas_del_dia)}" if portadas_del_dia else ""
+    prompt = cargar_prompt(cfg, "director_arte", {"[pegar pieza]": datos + ya})
     propuesta, _ = llm.estructurado(f"arte:{pieza.id}", [{"role": "user", "content": con_cache(cfg, "director_arte", prompt)}],
                                     PropuestaArte, etapa_modelo="arte", max_tokens=4000)
     avisos = validar_cifra(propuesta, pieza)
@@ -183,6 +193,10 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
             arte.imagen, arte.credito = cand.archivo, cand.credito
             usadas |= {cand.archivo, cand.url}
 
+    permitidas = cfg.pipeline.arte.portadas
+    if arte.portada not in permitidas:
+        arte.portada = permitidas[0]
+    arte.antetitulo = validar_antetitulo(propuesta.antetitulo)
     if arte.portada == "collage" and not arte.imagen:
         arte.portada = "circulo"
     if arte.portada == "ilustracion":

@@ -157,7 +157,9 @@ class Plantillas:
         """Estilo de portada que se puede pintar de verdad: sin SVG o sin imagen, se cae al círculo."""
         from folio import ilustracion
 
-        estilo = pieza.arte.portada if pieza.arte else "circulo"
+        estilo = pieza.arte.portada if pieza.arte else "sangre"
+        if estilo in ("sangre", "banda", "caja", "neon") and not imagen:
+            return "tipografica", None
         if estilo == "ilustracion":
             ruta = ilustracion.ruta(self.cfg.dir_cache(pieza.fecha), pieza.id)
             if ruta.exists():
@@ -189,7 +191,7 @@ class Plantillas:
             libros=libros if d.tipo == "cierre" else [], libros_pieza=libros,
             libro=(libro_de_diapositiva(libros, pieza, d.texto) or (libros[:1] or [None])[0]) if d.tipo == "libro" else None,
             titular=texto_html(portada.texto), imagen=imagen, anio_hoy=int(pieza.fecha[:4]),
-            tono=pieza.arte.tono if pieza.arte else None, portada_estilo=estilo, ilustracion=svg, campo=campo, cifra=pieza.arte.cifra if pieza.arte else None, cifra_rotulo=pieza.arte.cifra_rotulo if pieza.arte else None,
+            tono=pieza.arte.tono if pieza.arte else None, antetitulo=pieza.arte.antetitulo if pieza.arte else None, portada_estilo=estilo, ilustracion=svg, campo=campo, cifra=pieza.arte.cifra if pieza.arte else None, cifra_rotulo=pieza.arte.cifra_rotulo if pieza.arte else None,
             color=paleta[color_de_pieza(pieza, len(paleta))] if paleta else None,
         )
 

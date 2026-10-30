@@ -94,6 +94,13 @@ class AB(_Seccion):
         return self
 
 
+class Arte(_Seccion):
+    # Composiciones de portada que puede elegir el director de arte. La ilustración vectorial
+    # dibujada por el modelo se desactivó el 31/10: el resultado parece clip-art.
+    portadas: list[Literal["sangre", "banda", "caja", "neon", "ilustracion", "circulo", "collage"]] = Field(
+        default_factory=lambda: ["sangre", "banda", "caja", "neon"])
+
+
 class ConfigPipeline(_Seccion):
     """config/pipeline.yaml, tipado."""
     modelos: dict[str, str]
@@ -106,6 +113,7 @@ class ConfigPipeline(_Seccion):
     exclusion: Exclusion
     seleccion_textos: SeleccionTextos = Field(default_factory=SeleccionTextos)
     guion: Guion
+    arte: Arte = Field(default_factory=Arte)
     ab: AB | None = None
 
     @model_validator(mode="after")

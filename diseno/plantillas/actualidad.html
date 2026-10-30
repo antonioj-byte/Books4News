@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block fondo %}{% if not cifra %}{% with clase="foto--columna" %}{% include "_foto.html" %}{% endwith %}{% endif %}{% endblock %}
+{% block fondo %}{% if not cifra %}{% with clase="imagen--arriba" %}{% include "_imagen.html" %}{% endwith %}{% endif %}{% endblock %}
 {% block cuerpo %}
     {% if cifra %}<div class="cifra"><div class="cifra__numero" data-encajar>{{ cifra }}</div>{% if cifra_rotulo %}<div class="cifra__rotulo">{{ cifra_rotulo }}</div>{% endif %}</div>{% endif %}
     <p class="texto">{{ texto }}</p>

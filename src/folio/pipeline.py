@@ -304,7 +304,8 @@ class Pipeline:
             pieza.avisos = [a for a in pieza.avisos if not a.startswith("Director de arte:")]
             h = por_id.get(pieza.historia_id)
             try:
-                pieza.arte = arte.dirigir(self.llm, self.cfg, pieza, h.seccion if h else None, usadas)
+                pieza.arte = arte.dirigir(self.llm, self.cfg, pieza, h.seccion if h else None, usadas,
+                                          [p.arte.portada for p in con_guion[:i] if p.arte])
             except Exception as exc:
                 pieza.arte = None
                 pieza.avisos.append(f"Director de arte: no se pudo ({type(exc).__name__}: {exc}); sale sin imagen")
