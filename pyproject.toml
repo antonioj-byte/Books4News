@@ -23,7 +23,13 @@ dependencies = [
 folio = "folio.cli:app"
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "folio-api"]
+
+[tool.uv.workspace]
+members = ["api"]
+
+[tool.uv.sources]
+folio-api = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

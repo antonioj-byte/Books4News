@@ -9,7 +9,7 @@ from folio.modelos import HistoriaElegida, InformeDiario, LibroGuion, LibroVerif
 from folio.verificacion_texto import autor_coincide, titulos_coinciden
 
 _ESTADO = {"propuesta": "propuesta", "en_edicion": "en edición", "aprobada": "aprobada",
-           "publicada": "publicada", "fallida": "FALLIDA"}
+           "descartada": "descartada", "publicada": "publicada", "fallida": "FALLIDA"}
 _EDICION_ES = {"si": "sí", "no": "no", "desconocido": "no consta"}
 
 

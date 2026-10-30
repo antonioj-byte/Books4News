@@ -1,0 +1,20 @@
+[project]
+name = "folio-api"
+version = "0.1.0"
+description = "API local de la web de Folio (Fase 3): portada del día, piezas, evaluación, chat, A/B."
+requires-python = ">=3.12"
+dependencies = [
+    "folio-lateral",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+]
+
+[tool.uv.sources]
+folio-lateral = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["folio_api"]

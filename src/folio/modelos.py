@@ -19,7 +19,7 @@ Seccion = Literal[
     "politica", "internacional", "economia", "ciencia", "tecnologia", "sociedad",
     "cultura", "deportes", "sucesos", "salud", "medio_ambiente", "otros",
 ]
-EstadoPieza = Literal["propuesta", "en_edicion", "aprobada", "publicada", "fallida"]
+EstadoPieza = Literal["propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
 TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre"]
 
 

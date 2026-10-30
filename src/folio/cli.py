@@ -107,6 +107,27 @@ def ab_resultados():
 
 
 @app.command()
+def web(
+    puerto: int = typer.Option(8000, help="Puerto de la API"),
+    recargar: bool = typer.Option(False, "--recargar", help="Recarga al cambiar el código (desarrollo)"),
+):
+    """API local de la web (Fase 3) en http://localhost:<puerto>. La web: cd web && npm run dev."""
+    import uvicorn
+
+    uvicorn.run("folio_api.main:app_desde_entorno", factory=True, host="127.0.0.1", port=puerto, reload=recargar)
+
+
+@app.command()
+def importar():
+    """Importa a la base de datos de la web los informes de informes/<fecha>/ (idempotente)."""
+    from folio.almacen import Almacen
+
+    cfg = config.cargar()
+    ids = Almacen(cfg.ruta_db).importar_informes(cfg.dir_informes)
+    typer.echo(f"{len(ids)} ejecuciones en la base de datos")
+
+
+@app.command()
 def libro(titulo: str, autor: str):
     """Verifica un libro contra Open Library / Google Books y muestra la ficha."""
     _logging(False)

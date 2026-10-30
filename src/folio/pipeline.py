@@ -321,4 +321,8 @@ class Pipeline:
             coste_total_usd=round(sum(t.coste_usd for t in self.llm.trazas), 4), avisos=self.avisos,
         )
         rutas = informe.escribir(inf, self.dir_informe)
+        if not self.prueba and not sin_llm and piezas:
+            # La web lee las ejecuciones de la base de datos (Fase 3)
+            from folio.almacen import Almacen
+            Almacen(self.cfg.ruta_db).registrar(inf)
         return inf, rutas
