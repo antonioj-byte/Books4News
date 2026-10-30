@@ -8,6 +8,8 @@ Criterios, por orden de peso:
 3. Alcance: la entiende cualquiera sin contexto especializado.
 4. Variedad: las tres historias no comparten sección ni cuestión de fondo.
 
+Las piezas se publican en una sección de libros. Elige libros que merezcan recomendarse por sí mismos, no solo porque encajen con la noticia: si el libro es un pretexto, la historia no sirve.
+
 Ningún tema está vetado. Si eliges una tragedia, el ángulo debe iluminar el problema y nunca usar a las víctimas como gancho.
 
 Si hay una investigación o un proceso judicial abierto, el ángulo no puede atribuir culpas ni anticipar sus conclusiones: piensa sobre lo que ya se sabe, no sobre lo que se dictaminará.

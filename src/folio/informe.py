@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from folio.modelos import HistoriaElegida, InformeDiario, LibroVerificado, Pieza
+from folio.modelos import HistoriaElegida, InformeDiario, LibroGuion, LibroVerificado, Pieza
+from folio.verificacion_texto import autor_coincide, titulos_coinciden
 
 _ESTADO = {"propuesta": "propuesta", "en_edicion": "en edición", "aprobada": "aprobada",
            "publicada": "publicada", "fallida": "FALLIDA"}
@@ -30,6 +31,19 @@ def _libro_md(l: LibroVerificado) -> list[str]:
     for n in l.notas:
         lineas.append(f"  - _{n}_")
     return lineas
+
+
+def _edicion_es_guion(lg: LibroGuion, libros: list[LibroVerificado]) -> str:
+    """Estado de la edición española del libro del guion, según su ficha verificada."""
+    v = next((v for v in libros if autor_coincide(lg.autor, v.autores) and any(
+        titulos_coinciden(lg.titulo, t) for t in (v.titulo, v.titulo_propuesto,
+                                                  v.edicion_es_detalle.titulo if v.edicion_es_detalle else None) if t
+    )), None)
+    if v is None or v.edicion_es == "desconocido":
+        return "no consta"
+    if v.edicion_es == "no":
+        return "no"
+    return f"sí, {lg.editorial_espanola}" if lg.editorial_espanola else "sí (editorial no consta)"
 
 
 def _pieza_md(p: Pieza) -> list[str]:
@@ -58,7 +72,7 @@ def _pieza_md(p: Pieza) -> list[str]:
             l += ["", "**Diapositivas por encima de 5**", ""] + [f"- {j}" for j in g.justificacion_extra]
         l += ["", "**Ficha de libros en el guion** (datos verificados)", ""]
         for lg in g.libros:
-            l.append(f"- {lg.titulo} — {lg.autor} · ed. española: {lg.editorial_espanola or 'no consta'}"
+            l.append(f"- {lg.titulo} — {lg.autor} · ed. española: {_edicion_es_guion(lg, p.libros)}"
                      f" · trad.: {lg.traductor or 'no consta'} · original: {lg.edicion_original}")
         l.append("")
     if p.discrepancias_edicion:

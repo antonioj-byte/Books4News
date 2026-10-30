@@ -137,3 +137,32 @@ def test_titulo_para_pieza_quita_el_autor_como_subtitulo():
     con_subtitulo = LIBRO.model_copy(update={"edicion_es_detalle": LIBRO.edicion_es_detalle.model_copy(
         update={"titulo": "Eichmann en Jerusalén: un estudio sobre la banalidad del mal"})})
     assert guion.titulo_para_pieza(con_subtitulo) == "Eichmann en Jerusalén: un estudio sobre la banalidad del mal"
+
+
+def test_portada_y_pie_nombran_el_libro(cfg):
+    g = guion_valido()
+    g.diapositivas[0].texto = "La obediencia también se elige"
+    g.pie_instagram = pie().replace("Arendt lo explicó.", "Un tribunal juzga.")
+    es = errores(cfg, g)
+    assert any("portada debe nombrar el libro" in e for e in es)
+    assert any("pie debe empezar por el libro" in e for e in es)
+    # Vale el título en vez del autor
+    g.diapositivas[0].texto = "*Eichmann en Jerusalén* y la obediencia"
+    g.pie_instagram = pie().replace("Arendt lo explicó.", "Eichmann en Jerusalén lo explica.")
+    assert errores(cfg, g) == []
+
+
+def test_una_sola_actualidad_y_libro_pronto(cfg):
+    g = guion_valido()
+    g.diapositivas = [
+        Diapositiva(n=1, tipo="portada", texto="Arendt y un juicio"),
+        Diapositiva(n=2, tipo="actualidad", texto="Un tribunal juzga a un funcionario."),
+        Diapositiva(n=3, tipo="actualidad", texto="El funcionario dice que obedecía."),
+        Diapositiva(n=4, tipo="libro", texto="Arendt vio en Eichmann en Jerusalén a un hombre corriente."),
+        Diapositiva(n=5, tipo="idea", texto="El mal administrativo necesita gente que no se pregunte nada."),
+        Diapositiva(n=6, tipo="cierre", texto="Eichmann en Jerusalén, de Hannah Arendt. Léelo. Folio."),
+    ]
+    g.justificacion_extra = ["3: el segundo dato de la noticia."]
+    es = errores(cfg, g)
+    assert any("2 diapositivas de actualidad" in e for e in es)
+    assert any("entra en la diapositiva 4" in e for e in es)

@@ -12,7 +12,7 @@ import re
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt
 from folio.modelos import DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroVerificado
-from folio.verificacion_texto import autor_coincide, normalizar, titulos_coinciden
+from folio.verificacion_texto import apellido, autor_coincide, normalizar, sin_subtitulo, titulos_coinciden
 
 _COMILLAS = re.compile(r"«([^»]+)»|“([^”]+)”|\"([^\"]+)\"")
 _URL = re.compile(r"https?://\S+")
@@ -92,6 +92,20 @@ def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[
     })
 
 
+def _menciona_libro(texto: str, libros: list[LibroVerificado]) -> bool:
+    """¿Nombra el texto a algún autor (apellido) o algún título de los libros verificados?"""
+    palabras = set(normalizar(texto).split())
+    tn = f" {normalizar(texto)} "
+    for l in libros:
+        if any(len(apellido(a)) >= 3 and apellido(a) in palabras for a in l.autores):
+            return True
+        for t in {l.titulo, l.titulo_propuesto, titulo_para_pieza(l)}:
+            nt = normalizar(sin_subtitulo(t))
+            if len(nt) >= 4 and f" {nt} " in tn:
+                return True
+    return False
+
+
 def _palabras(texto: str) -> int:
     return len(texto.split())
 
@@ -132,6 +146,20 @@ def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: li
         limite = p["palabras_max_portada"] if x.tipo == "portada" else p["palabras_max_diapositiva"]
         if _palabras(x.texto) > limite:
             errores.append(f"La diapositiva {x.n} ({x.tipo}) tiene {_palabras(x.texto)} palabras; máximo {limite}.")
+    # Sección de libros: el libro se ve desde la portada y la noticia no se come la pieza.
+    if d and d[0].tipo == "portada" and not _menciona_libro(d[0].texto, libros):
+        errores.append("La portada debe nombrar el libro o a su autor: se publica en una sección de libros.")
+    n_actualidad = sum(x.tipo == "actualidad" for x in d)
+    if n_actualidad > p["max_diapositivas_actualidad"]:
+        errores.append(f"Hay {n_actualidad} diapositivas de actualidad; máximo {p['max_diapositivas_actualidad']}. "
+                       "La noticia es la excusa: resúmela.")
+    primer_libro = next((x.n for x in d if x.tipo == "libro"), None)
+    if primer_libro and primer_libro > p["posicion_max_primer_libro"]:
+        errores.append(f"El libro entra en la diapositiva {primer_libro}; debe hacerlo como muy tarde en la "
+                       f"{p['posicion_max_primer_libro']}.")
+    primera_frase = re.split(r"(?<=[.!?])\s+", g.pie_instagram.strip(), maxsplit=1)[0]
+    if not _menciona_libro(primera_frase, libros):
+        errores.append("El pie debe empezar por el libro: nómbralo, o a su autor, en la primera frase.")
     if d and d[0].texto.strip().endswith("?"):
         errores.append("La portada no puede ser una pregunta retórica.")
     if d and "folio" not in normalizar(d[-1].texto).split():
