@@ -142,8 +142,10 @@ class Verificador:
             detalle, _ = _ficha_es(ed, como)
             edicion_es = "si"
             notas.append(f"Edición española según {como}")
-        elif ol and self.gb and not errores and "spa" not in ol[0].idiomas:
-            # Ambas fuentes consultadas sin errores y ninguna la tiene.
+        elif ol and gb_todos and not errores and "spa" not in ol[0].idiomas:
+            # Ambas fuentes consultadas sin errores, las dos encuentran la obra y ninguna tiene
+            # edición española. Si Google Books no encuentra ni la obra, su silencio no prueba
+            # nada: sus búsquedas intitle: devuelven 0 resultados de forma errática.
             edicion_es = "no"
         else:
             edicion_es = "desconocido"

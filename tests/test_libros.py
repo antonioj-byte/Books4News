@@ -88,3 +88,28 @@ def test_google_books_reintenta_un_503(cfg):
     respuestas = iter([httpx.Response(503), httpx.Response(200, json={"items": []})])
     gb = GoogleBooks(httpx.Client(transport=httpx.MockTransport(lambda r: next(respuestas))), "x")
     assert gb.buscar("La peste", "Albert Camus") == []
+
+
+def _transporte_ol_ingles_y_gb(items_gb):
+    def manejar(req):
+        if req.url.host == "www.googleapis.com":
+            return httpx.Response(200, json={"items": items_gb})
+        if req.url.path == "/search.json":
+            return httpx.Response(200, json={"docs": [{"key": "/works/OL1W", "title": "Some Book",
+                                                       "author_name": ["Ann Writer"], "language": ["eng"]}]})
+        return httpx.Response(200, json={"entries": [{"title": "Some Book", "publishers": ["X"],
+                                                      "publish_date": "2001", "languages": [{"key": "/languages/eng"}]}]})
+    return httpx.MockTransport(manejar)
+
+
+def test_no_afirma_que_no_hay_edicion_si_google_books_no_encuentra_la_obra(cfg):
+    cfg.google_books_api_key = "x"
+    v = Verificador(cfg, httpx.Client(transport=_transporte_ol_ingles_y_gb([])))
+    assert v.verificar(LibroCandidato(titulo="Some Book", autor="Ann Writer")).edicion_es == "desconocido"
+
+
+def test_afirma_que_no_hay_edicion_si_ambas_fuentes_encuentran_la_obra(cfg):
+    cfg.google_books_api_key = "x"
+    item = {"id": "g1", "volumeInfo": {"title": "Some Book", "authors": ["Ann Writer"], "language": "en"}}
+    v = Verificador(cfg, httpx.Client(transport=_transporte_ol_ingles_y_gb([item])))
+    assert v.verificar(LibroCandidato(titulo="Some Book", autor="Ann Writer")).edicion_es == "no"
