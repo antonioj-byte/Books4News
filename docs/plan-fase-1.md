@@ -1,5 +1,7 @@
 # Plan técnico · Fase 1
 
+> Aprobado el 30/10/2026. Las desviaciones durante la implementación están al final, en «Cambios respecto al plan».
+
 Objetivo: `folio run` (o `python -m folio run`) ejecuta el pipeline de la ingesta al guion verificado y deja en `informes/AAAA-MM-DD/` un `informe.json` y un `informe.md`.
 
 ## 1. Stack
@@ -179,3 +181,12 @@ Para los RSS no hace falta clave.
 - Informe diario en JSON y markdown.
 - Tests de cada etapa con fixtures y una ejecución real de punta a punta antes de dar la fase por cerrada.
 - Programación diaria: se documenta (cron o GitHub Actions) pero no se activa hasta que se apruebe.
+
+## Cambios respecto al plan
+
+- **Resumen por historia, no por artículo.** El modelo barato resume solo las 25 historias que llegan al jefe de cultura (unas 25 llamadas cortas), en vez de cientos de artículos. Para agrupar basta con titular y entradilla; el resumen solo hace falta para lo que se va a leer.
+- **Llamadas directas en lugar de la Batches API.** En ejecución manual, esperar a un lote es incómodo, y con 25 llamadas de Haiku el ahorro es de céntimos.
+- **Sin prompt caching.** Los prompts quedan por debajo del mínimo cacheable y solo hay una llamada por agente y pieza.
+- **Umbral de agrupación 0,84** (coseno medio), ajustado con las noticias del 30/10/2026: con 0,82 se mezclan eventos y con 0,86 se parten. Un mismo evento puede quedar partido entre la cobertura en español y en inglés; el jefe de cultura ve ambos grupos.
+- **Textos completos** extraídos con trafilatura de los medios abiertos y parciales, uno por medio y un máximo de 5 por historia.
+- **Datos de edición en el guion**: el guionista devuelve `editorial_espanola`, `traductor` y `edicion_original` (lo pide su prompt), pero el código los sustituye siempre por los de la ficha verificada. Las APIs casi nunca traen el traductor, así que normalmente queda en `null`.

@@ -1,0 +1,34 @@
+[project]
+name = "folio-lateral"
+version = "0.1.0"
+description = "Piezas diarias de Instagram para Folio: la actualidad leída a través de libros."
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.70",
+    "pydantic>=2.8",
+    "httpx>=0.27",
+    "feedparser>=6.0",
+    "fastembed>=0.4",
+    "numpy>=1.26",
+    "scikit-learn>=1.5",
+    "typer>=0.12",
+    "pyyaml>=6.0",
+    "trafilatura>=1.12",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+folio = "folio.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/folio"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

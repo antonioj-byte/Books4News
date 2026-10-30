@@ -1,0 +1,46 @@
+modelos:
+  ingesta: claude-haiku-5-5     # resumen y clasificación de historias
+  seleccion: claude-opus-5-5    # jefe de cultura
+  guion: claude-opus-5-5        # guionista
+
+esfuerzo:                       # output_config.effort
+  ingesta: low
+  seleccion: high
+  guion: high
+
+# USD por millón de tokens (entrada, salida). Solo para estimar el coste en el informe.
+precios:
+  claude-haiku-5-5: [0.10, 0.50]
+  claude-opus-5-5: [4.00, 20.00]
+  claude-opus-5: [5.00, 25.00]
+  claude-opus-4-8: [5.00, 25.00]
+
+ingesta:
+  ventana_horas: 36             # se descartan artículos más antiguos
+  timeout_s: 20
+  concurrencia_llm: 6
+
+agrupacion:
+  # e5 local para la Fase 1. Al desplegar (Fase 3) valorar Voyage por el peso del modelo (2,2 GB).
+  modelo_embeddings: intfloat/multilingual-e5-large
+  umbral_similitud: 0.84        # coseno medio mínimo para tratar dos artículos como el mismo evento (ajustado con datos del 30/10/2026: 0.82 mezcla eventos, 0.86 parte demasiado)
+  min_medios: 2                 # historias con menos medios distintos no pasan al jefe
+
+seleccion:
+  historias_al_jefe: 25
+  elegidas: 3
+  reserva: 2
+
+exclusion:
+  dias_historias: 7
+  dias_libros: 60
+  umbral_historia_repetida: 0.90  # coseno entre centroides
+
+guion:
+  max_textos: 5                 # textos de la historia que recibe el guionista
+  max_caracteres_texto: 6000
+  reintentos: 1
+  palabras_max_diapositiva: 40
+  palabras_max_portada: 12
+  pie_min_palabras: 80
+  pie_max_palabras: 150

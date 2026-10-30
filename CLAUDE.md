@@ -28,6 +28,15 @@ No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquem
 - **Libros sin edición española**: se aceptan. La ficha lo indica (`edicion_es: true/false/desconocido`).
 - **Relevancia**: la señal principal es el número de medios distintos que cubren el evento, no el número de artículos.
 - **Salida estructurada**: los agentes devuelven JSON validado contra un esquema (structured outputs del SDK). Si no valida, la pieza se marca como fallida, no se arregla a mano en el código.
+- **Citas literales**: no se usan. El guionista parafrasea y atribuye; el código rechaza cualquier texto entre comillas que no sea el título de un libro verificado.
+- **Informes diarios**: solo en local (`informes/`, fuera de git). En la Fase 3 pasarán a la base de datos de la web.
+- **Ejecución**: en la Fase 1, manual con `uv run folio run`, sin cron. Se evalúa la calidad una o dos semanas antes de automatizar. El despliegue (probablemente Railway, web y cron juntos) se decide en la Fase 3.
+- **Embeddings**: `intfloat/multilingual-e5-large` en local (fastembed). **Al desplegar, valorar Voyage AI** por el peso del modelo (2,2 GB en disco y unos 2 minutos de CPU por ejecución).
+- **Muro de pago**: el guionista recibe los textos de todos los medios del grupo, uno por medio, priorizando los de acceso abierto (`acceso` en `config/fuentes.yaml`). De los medios con muro solo se usa titular y entradilla.
+- **Selección**: el jefe de cultura recibe las 20–25 primeras historias por número de medios.
+- **Edición española**: tres valores, `si` / `no` / `desconocido`. Solo se afirma `no` cuando Open Library y Google Books se han consultado sin errores y ninguno la tiene.
+- **Agencias**: Reuters, AP y EFE no tienen RSS público; se usan Europa Press, BBC, DW, Al Jazeera y France 24.
+- **Repeticiones**: se excluyen historias usadas en los últimos 7 días (similitud de centroides) y libros usados en los últimos 60 (SQLite en `data/folio.db`). Solo cuentan días anteriores a la ejecución, así que relanzar el mismo día no se excluye a sí mismo.
 
 ## Reglas
 
@@ -41,7 +50,20 @@ No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquem
 8. **Probar los prototipos**: cada etapa se puede ejecutar sola sobre datos guardados (fixtures), y los cambios se prueban de verdad antes de darlos por buenos.
 9. No incluir identificadores de modelo en mensajes de commit ni en descripciones de PR.
 
-## Pendiente
+## Cómo se trabaja
 
-- Los archivos `prompts/jefe_cultura.md` y `prompts/guionista.md` todavía no están en el repositorio.
-- El plan técnico de la Fase 1 está en `docs/plan-fase-1.md`, pendiente de aprobación.
+```bash
+uv sync                                  # dependencias
+cp .env.example .env                     # y rellenar las claves
+uv run folio run                         # pipeline completo del día
+uv run folio run --sin-llm               # solo ingesta y agrupación (gratis)
+uv run folio run --desde seleccion       # reutiliza la ingesta guardada en data/cache/<fecha>/
+uv run folio run --desde guion           # reutiliza también la selección
+uv run folio libro "La peste" "Albert Camus"   # verificar un libro suelto
+uv run pytest                            # tests (sin red ni gasto)
+```
+
+- Código en `src/folio/`. Configuración en `config/` (`pipeline.yaml`: modelos, umbrales, límites; `fuentes.yaml`: feeds).
+- Los prompts tienen marcadores (`[pegar lista]`, `[pegar]`, `[pegar o «propón tú»]`) que el código sustituye por los datos del día. Si se cambia un marcador en el `.md`, hay que cambiarlo en el código; la carga falla si falta.
+- Los esquemas de salida de los agentes están en `src/folio/modelos.py` y deben reflejar lo que pide cada prompt.
+- El plan de la Fase 1 está en `docs/plan-fase-1.md`.

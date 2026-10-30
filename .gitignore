@@ -1,0 +1,12 @@
+# Informes diarios: solo en local (en la Fase 3 pasan a la base de datos de la web)
+informes/
+# Base de datos local, cachés y modelos descargados
+data/
+# Secretos
+.env
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/

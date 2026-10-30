@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Portada</title>
+    <link>https://www.europapress.es/</link>
+    <description>Portada</description>
+    <image>
+      <url>https://s01.europapress.net/imagenes/estaticos/eplogo.gif</url>
+      <title>Portada</title>
+      <link>https://www.europapress.es/</link>
+    </image>
+    <language>es-ES</language>
+    <copyright>(C) 2026 Europa Press.</copyright>
+    <lastBuildDate>Fri, 30 Oct 2026 05:07:36 GMT</lastBuildDate>
+    <ttl>60</ttl>
+    <item>
+      <title>La Autoridad de Investigación de Accidentes mantiene en 69 los fallecidos en el siniestro de los trenes</title>
+      <link>https://www.europapress.es/economia/transportes-00343/noticia-autoridad-investigacion-accidentes-eleva-74-fallecidos-20261029174722.html</link>
+      <description>La Autoridad Administrativa Independiente para la Investigación Técnica de Accidentes e Incidentes Ferroviarios, Marítimos y de Aviación Civil (AITAT) ha abierto ya un expediente para investigar el accidente ferroviario de Urda (Toledo), en el que elevaba a 74 la cifra de fallecidos y que ahora ha corregido y situado en los 69 confirmados hasta la fecha.</description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261029174722_120.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/economia/transportes-00343/noticia-autoridad-investigacion-accidentes-eleva-74-fallecidos-20261029174722.html</guid>
+      <pubDate>Thu, 29 Oct 2026 16:47:22 GMT</pubDate>
+      <category>Economía Finanzas</category>
+      <category>Transportes</category>
+    </item>
+    <item>
+      <title>Un total de 54 cuerpos ya han llegado desde Urda a institutos forenses de C-LM, que iniciarán las autopsias este jueves</title>
+      <link>https://www.europapress.es/castilla-lamancha/noticia-total-54-cuerpos-ya-llegado-urda-institutos-forenses-lm-iniciaran-autopsias-jueves-20261030000224.html</link>
+      <description>   El Instituto de Medicina Legal de Toledo ha recibido ya los 69 cuerpos de las personas fallecidas en el accidente ferroviario ocurrido este miércoles en Urda (Toledo), según ha informado este jueves el Tribunal Superior de Justicia de Castilla-La Mancha.</description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261030000224_120.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/castilla-lamancha/noticia-total-54-cuerpos-ya-llegado-urda-institutos-forenses-lm-iniciaran-autopsias-jueves-20261030000224.html</guid>
+      <pubDate>Thu, 29 Oct 2026 23:02:24 GMT</pubDate>
+      <category>Castilla-La Mancha</category>
+    </item>
+    <item>
+      <title>Hermana de uno de los desaparecidos: "Hay picos de esperanza absoluta y picos que te vienes abajo"</title>
+      <link>https://www.europapress.es/castilla-lamancha/noticia-hermana-desaparecidos-hay-picos-esperanza-absoluta-picos-te-vienes-abajo-20261029145927.html</link>
+      <description>   Esther San Emeterio Freire, hermana de Pepe, uno de los pasajeros desaparecidos en el accidente de tren de Urda (Toledo), ha admitido este jueves que, mientras esperan noticias sobre sus familiares en la Casa de Ejercicios 'El buen pastor' de Toledo, "hay picos de esperanza absoluta y picos que te vienes abajo".</description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261029145927_120.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/castilla-lamancha/noticia-hermana-desaparecidos-hay-picos-esperanza-absoluta-picos-te-vienes-abajo-20261029145927.html</guid>
+      <pubDate>Thu, 29 Oct 2026 13:59:27 GMT</pubDate>
+      <category>Castilla-La Mancha</category>
+    </item>
+    <item>
+      <title>Atocha vive un día "raro" marcado por la "pena" y la huelga de maquinistas</title>
+      <link>https://www.europapress.es/nacional/noticia-atocha-vive-dia-raro-marcado-pena-huelga-maquinistas-20261029175545.html</link>
+      <description>   Los viajeros y trabajadores de la estación Madrid Puerta de Atocha-Almudena Grandes han afrontado un día "raro" marcado por la huelga de maquinistas y por la "pena" tras el accidente ferroviario ocurrido este miércoles en Urda (Toledo), que ha dejado al menos 69 fallecidos y más de un centenar de heridos.</description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261029175545_120.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/nacional/noticia-atocha-vive-dia-raro-marcado-pena-huelga-maquinistas-20261029175545.html</guid>
+      <pubDate>Thu, 29 Oct 2026 16:55:45 GMT</pubDate>
+      <category>Nacional</category>
+    </item>
+    <item>
+      <title>Un directivo de Iryo ya avisó al Senado de que los trenes tardaban bastante en reconectarse tras un fallo del LZB</title>
+      <link>https://www.europapress.es/nacional/noticia-directivo-iryo-ya-aviso-senado-trenes-tardaban-bastante-reconectarse-fallo-lzb-20261029134013.html</link>
+      <description>   El consejero delegado de Iryo, Fabrizio Favara, explicó hace tres semanas en el Senado que los maquinistas de la empresa venían avisando a Adif de que, en la línea Madrid-Sevilla, cuando sus trenes se paran como consecuencia de la desconexión de la señal de tierra --provocada por ejemplo por un fallo del sistema LZB-- después les cuesta "bastante tiempo reconectarse y empezar nuevamente el servicio".</description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261029134013_120.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/nacional/noticia-directivo-iryo-ya-aviso-senado-trenes-tardaban-bastante-reconectarse-fallo-lzb-20261029134013.html</guid>
+      <pubDate>Thu, 29 Oct 2026 12:40:13 GMT</pubDate>
+      <category>Nacional</category>
+    </item>
+    <item>
+      <title>El Congreso pone fecha a la comparecencia de Puente por el accidente de Urda: 3 de noviembre</title>
+      <link>https://www.europapress.es/economia/transportes-00343/noticia-congreso-pone-fecha-comparecencia-puente-accidente-urda-noviembre-20261029180346.html</link>
+      <description>   El ministro de Transportes y Movilidad Sostenible, Óscar Puente, comparecerá el próximo martes, 3 de noviembre, a las 17.00 horas en la Diputación Permanente del Congreso para dar explicaciones sobre el accidente de Urda (Toledo), que ya ha dejado más de 70 fallecidos. </description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261029180346_120.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/economia/transportes-00343/noticia-congreso-pone-fecha-comparecencia-puente-accidente-urda-noviembre-20261029180346.html</guid>
+      <pubDate>Thu, 29 Oct 2026 17:03:46 GMT</pubDate>
+      <category>Economía Finanzas</category>
+      <category>Transportes</category>
+    </item>
+    <item>
+      <title>Sánchez dice que esclarecerán "hasta el último detalle" y reforzarán seguridad para que no se repita</title>
+      <link>https://www.europapress.es/nacional/noticia-sanchez-dice-esclareceran-ultimo-detalle-urda-reforzaran-seguridad-no-pase-nuevo-20261029105640.html</link>
+      <description>   El presidente del Gobierno, Pedro Sánchez, ha asegurado este jueves que van a esclarecer "hasta el último detalle" del accidente ferroviario que ha causado al menos 69 fallecidos y van a "reforzar la seguridad para que no vuelva a suceder".</description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261029105640_120.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/nacional/noticia-sanchez-dice-esclareceran-ultimo-detalle-urda-reforzaran-seguridad-no-pase-nuevo-20261029105640.html</guid>
+      <pubDate>Thu, 29 Oct 2026 09:56:40 GMT</pubDate>
+      <category>Nacional</category>
+    </item>
+    <item>
+      <title>Última hora del accidente de tren en Toledo, en directo: muertos, heridos y novedades del choque entre el AVE y el Iryo</title>
+      <link>https://www.europapress.es/castilla-lamancha/noticia-ultima-hora-accidente-tren-toledo-directo-muertos-heridos-novedades-choque-ave-iryo-20261029075947.html</link>
+      <description>El Rey Felipe VI ha pedido que la investigación en marcha tras el accidente ferroviario en Urda (Toledo) tiene que servir para determinar "cómo y porqué" ha sucedido esta "catástrofe". "Tendrán que estudiarse las medidas que hay que adoptar para que esto no vuelva a suceder".</description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261029075947_120_v3.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/castilla-lamancha/noticia-ultima-hora-accidente-tren-toledo-directo-muertos-heridos-novedades-choque-ave-iryo-20261029075947.html</guid>
+      <pubDate>Thu, 29 Oct 2026 06:59:47 GMT</pubDate>
+      <category>Castilla-La Mancha</category>
+    </item>
+    <item>
+      <title>Muere la exministra Fátima Báñez en el accidente ferroviario de Toledo</title>
+      <link>https://www.europapress.es/economia/transportes-00343/noticia-confirma-fallecimiento-exministra-fatima-banez-viajaba-tren-iryo-20261029135419.html</link>
+      <description>La presidenta de la Fundación CEOE y exministra de Empleo y Seguridad Social con gobiernos del PP, Fátima Báñez, ha fallecido en el accidente ferroviario ocurrido ayer en la provincia de Toledo, según ha notificado este jueves la patronal CEOE tras recibir confirmación oficial.</description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261029135419_120.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/economia/transportes-00343/noticia-confirma-fallecimiento-exministra-fatima-banez-viajaba-tren-iryo-20261029135419.html</guid>
+      <pubDate>Thu, 29 Oct 2026 12:54:19 GMT</pubDate>
+      <category>Economía Finanzas</category>
+      <category>Transportes</category>
+    </item>
+    <item>
+      <title>Ouigo cancela todos sus trenes de mañana y el lunes al no haber servicios mínimos en la huelga</title>
+      <link>https://www.europapress.es/economia/transportes-00343/noticia-ouigo-cancela-todos-trenes-lunes-no-incrementar-caos-huelga-pleno-puente-20261029183245.html</link>
+      <description>   Ouigo ha cancelado todos los trenes que tenía previstos para este viernes, 30 de octubre, y el próximo lunes, 2 de noviembre, con el objetivo de evitar que la huelga convocada por los maquinistas de la compañía aumente el caos provocado en el sistema ferroviario por el accidente de Urda (Toledo).</description>
+      <enclosure url="https://img.europapress.es/fotoweb/fotonoticia_20261029183245_120.jpg" length="4096" type="image/jpeg" />
+      <guid isPermaLink="true">https://www.europapress.es/economia/transportes-00343/noticia-ouigo-cancela-todos-trenes-lunes-no-incrementar-caos-huelga-pleno-puente-20261029183245.html</guid>
+      <pubDate>Thu, 29 Oct 2026 17:32:45 GMT</pubDate>
+      <category>Economía Finanzas</category>
+      <category>Transportes</category>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,22 @@
+# Feeds RSS de la ingesta. Comprobados el 30/10/2026.
+# acceso: abierto | parcial (muro medido o parte premium) | muro
+# Un mismo medio puede tener varios feeds: para la relevancia cuenta una sola vez.
+fuentes:
+  - {medio: El País, idioma: es, acceso: parcial, url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada"}
+  - {medio: El País, idioma: es, acceso: parcial, url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/internacional/portada"}
+  - {medio: La Vanguardia, idioma: es, acceso: parcial, url: "https://www.lavanguardia.com/rss/home.xml"}
+  - {medio: La Vanguardia, idioma: es, acceso: parcial, url: "https://www.lavanguardia.com/rss/internacional.xml"}
+  - {medio: El Mundo, idioma: es, acceso: parcial, url: "https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml"}
+  - {medio: Europa Press, idioma: es, acceso: abierto, url: "https://www.europapress.es/rss/rss.aspx"}
+  - {medio: The Guardian, idioma: en, acceso: abierto, url: "https://www.theguardian.com/international/rss"}
+  - {medio: The Guardian, idioma: en, acceso: abierto, url: "https://www.theguardian.com/world/rss"}
+  - {medio: The New York Times, idioma: en, acceso: muro, url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"}
+  - {medio: The New York Times, idioma: en, acceso: muro, url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"}
+  - {medio: Financial Times, idioma: en, acceso: muro, url: "https://www.ft.com/rss/home/international"}
+  - {medio: Financial Times, idioma: en, acceso: muro, url: "https://www.ft.com/world?format=rss"}
+  - {medio: BBC News, idioma: en, acceso: abierto, url: "https://feeds.bbci.co.uk/news/world/rss.xml"}
+  - {medio: Deutsche Welle, idioma: en, acceso: abierto, url: "https://rss.dw.com/rdf/rss-en-all"}
+  - {medio: Al Jazeera, idioma: en, acceso: abierto, url: "https://www.aljazeera.com/xml/rss/all.xml"}
+  - {medio: France 24, idioma: en, acceso: abierto, url: "https://www.france24.com/en/rss"}
+  - {medio: Le Monde, idioma: fr, acceso: parcial, url: "https://www.lemonde.fr/rss/une.xml"}
+  - {medio: Le Monde, idioma: fr, acceso: parcial, url: "https://www.lemonde.fr/international/rss_full.xml"}
