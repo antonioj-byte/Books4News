@@ -1,4 +1,4 @@
-/* Marca Tapablanda para la web (la mesa de edición). Es el único sitio con colores, fuentes,
+/* Marca de Folio · Mesa de edición (la web), con la paleta y las fuentes de Alighieria. Es el único sitio con colores, fuentes,
    radios y sombras: los componentes usan las clases que salen de aquí (bg-papel, text-carmesi,
    font-titular, .boton, .panel…). Las diapositivas de Folio tienen su propio design system
    (diseno/tokens.yaml) y no dependen de este archivo. Fuentes en public/fuentes/ (OFL). */
