@@ -13,7 +13,6 @@
   "Hay 4 diapositivas de actualidad; máximo 1. La noticia es la excusa: resúmela."
  ],
  "todo_mal": [
-  "La portada abre con la noticia o con su tensión, no con el libro: quita el título y el autor.",
   "El cierre es la recomendación: nombra el libro (título en cursiva) y a su autor.",
   "La portada no puede ser una pregunta retórica.",
   "El cierre debe llevar la firma de Folio.",
@@ -33,6 +32,7 @@
  "tipos_y_listas": [
   "La diapositiva 1 debe ser de tipo «portada».",
   "La última diapositiva debe ser de tipo «cierre».",
+  "La diapositiva 1 (libro) lleva subtítulo: solo la portada lo lleva.",
   "Falta la lista de libros.",
   "Falta fuentes_noticia."
  ]

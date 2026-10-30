@@ -14,7 +14,8 @@ from folio.verificacion_texto import normalizar
 
 
 def _bloque_guion(g: GuionLLM) -> str:
-    diapositivas = "\n".join(f"diapositiva {x.n}: {x.texto}" for x in g.diapositivas)
+    diapositivas = "\n".join(f"diapositiva {x.n}: {x.texto}" + (f"\nsubtítulo de la diapositiva {x.n}: {x.subtitulo}" if x.subtitulo else "")
+                              for x in g.diapositivas)
     return f"<guion>\n{diapositivas}\npie: {g.pie_instagram}\n</guion>"
 
 

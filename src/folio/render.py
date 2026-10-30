@@ -201,6 +201,7 @@ class Plantillas:
             libro=(libro_de_diapositiva(libros, pieza, d.texto) or (libros[:1] or [None])[0]) if d.tipo == "libro" else None,
             titular=texto_html(portada.texto), imagen=imagen, anio_hoy=int(pieza.fecha[:4]),
             titular_remate=titular_con_remate(portada.texto, pieza.arte.remate if pieza.arte else None),
+            subtitulo=texto_html(portada.subtitulo) if portada.subtitulo else None,
             tono=pieza.arte.tono if pieza.arte else None, antetitulo=pieza.arte.antetitulo if pieza.arte else None, portada_estilo=estilo, ilustracion=svg, campo=campo, cifra=pieza.arte.cifra if pieza.arte else None, cifra_rotulo=pieza.arte.cifra_rotulo if pieza.arte else None,
             color=paleta[color_de_pieza(pieza, len(paleta))] if paleta else None,
         )

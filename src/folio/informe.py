@@ -54,6 +54,8 @@ def _pieza_md(p: Pieza) -> list[str]:
         l += [f"> ⚠️ {p.error}", ""]
     l += [f"**De qué se habla.** {e.de_que_se_habla}", "",
           f"**Cuestión de fondo.** {e.cuestion_de_fondo}", ""]
+    if e.gancho_libro:
+        l += [f"**Gancho del libro.** {e.gancho_libro}", ""]
     if p.libros:
         l += ["**Libros verificados**", ""] + [x for libro in p.libros for x in _libro_md(libro)] + [""]
     if p.libros_descartados:
@@ -66,6 +68,8 @@ def _pieza_md(p: Pieza) -> list[str]:
         l += ["", f"Elegida: **{g.idea_elegida}** — {g.por_que}", "", "**Carrusel**", ""]
         for d in g.diapositivas:
             l.append(f"{d.n}. _{d.tipo}_ ({len(d.texto.split())} pal.) — {d.texto}")
+            if d.subtitulo:
+                l.append(f"   Subtítulo ({len(d.subtitulo.split())} pal.) — {d.subtitulo}")
         l += ["", "**Pie de Instagram**", ""] + [f"> {linea}" if linea else ">" for linea in g.pie_instagram.split("\n")]
         if g.justificacion_extra:
             l += ["", "**Diapositivas por encima de 5**", ""] + [f"- {j}" for j in g.justificacion_extra]

@@ -6,6 +6,12 @@ from folio.llm import LLM, ErrorLLM, cargar_prompt
 from folio.modelos import Historia, SeleccionJefe
 
 
+def _desde(h: Historia) -> str:
+    """Fecha del artículo más antiguo del grupo: el jefe la usa para no tratar en caliente un suceso doloroso."""
+    fechas = [a.publicado_en for a in h.articulos if a.publicado_en]
+    return min(fechas).strftime("%Y-%m-%d %H:%M UTC") if fechas else "desconocida"
+
+
 def bloque_historias(historias: list[Historia]) -> str:
     partes = []
     for h in historias:
@@ -16,6 +22,7 @@ def bloque_historias(historias: list[Historia]) -> str:
             f"  resumen: {h.resumen_es}\n"
             f"  sección: {h.seccion}\n"
             f"  medios que la cubren ({h.n_medios}): {', '.join(h.medios)}\n"
+            f"  publicada desde: {_desde(h)}\n"
             f"  titulares originales:\n{titulares}"
         )
     return "<historias>\n" + "\n\n".join(partes) + "\n</historias>"

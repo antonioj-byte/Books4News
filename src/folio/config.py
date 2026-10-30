@@ -67,6 +67,7 @@ class Guion(_Seccion):
     diapositivas_por_defecto: int
     palabras_max_diapositiva: int
     palabras_max_portada: int
+    palabras_max_subtitulo: int = 22
     max_diapositivas_actualidad: int
     posicion_max_primer_libro: int
     pie_min_palabras: int

@@ -65,6 +65,7 @@ guion:
   diapositivas_por_defecto: 5     # más exigen una línea de justificación por diapositiva extra
   palabras_max_diapositiva: 40    # tope duro; el prompt pide 25–30
   palabras_max_portada: 12
+  palabras_max_subtitulo: 22      # subtítulo de la portada, que trae el libro o al autor
   max_diapositivas_actualidad: 1   # la portada ya abre con la noticia
   posicion_max_primer_libro: 3     # el libro entra en la diapositiva 2 o 3
   pie_min_palabras: 80

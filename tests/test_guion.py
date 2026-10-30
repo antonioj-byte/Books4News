@@ -139,18 +139,30 @@ def test_titulo_para_pieza_quita_el_autor_como_subtitulo():
     assert guion.titulo_para_pieza(con_subtitulo) == "Eichmann en Jerusalén: un estudio sobre la banalidad del mal"
 
 
-def test_portada_abre_con_la_noticia_y_el_pie_nombra_el_libro(cfg):
+def test_el_libro_esta_desde_la_portada_y_el_pie_lo_nombra(cfg):
     g = guion_valido()
+    # Sin subtítulo, o sin libro ni autor en titular y subtítulo, se rechaza
+    g.diapositivas[0].subtitulo = None
+    assert any("necesita un subtítulo" in e for e in errores(cfg, g))
+    g.diapositivas[0].subtitulo = "Un juicio de hace sesenta años explica bien lo que pasa hoy en este tribunal."
+    assert any("va de un libro" in e for e in errores(cfg, g))
+    # Vale el autor en el titular o el libro en el subtítulo
     g.diapositivas[0].texto = "Arendt: la obediencia también se elige"
-    g.pie_instagram = pie().replace("Arendt lo explicó.", "Un tribunal juzga.")
-    es = errores(cfg, g)
-    assert any("portada abre con la noticia" in e for e in es)
-    assert any("pie debe nombrar el libro" in e for e in es)
-    g.diapositivas[0].texto = "*Eichmann en Jerusalén* y la obediencia"
-    assert any("portada abre con la noticia" in e for e in errores(cfg, g))
-    # El pie puede empezar por la noticia si el libro aparece después
+    assert errores(cfg, g) == []
     g.diapositivas[0].texto = "La obediencia también se elige"
-    g.pie_instagram = pie().replace("Arendt lo explicó.", "Un tribunal juzga.") + " Lo leemos con Arendt."
+    g.diapositivas[0].subtitulo = "*Eichmann en Jerusalén* ya lo explicó: el mal puede ser obra de gente corriente."
+    assert errores(cfg, g) == []
+    # Subtítulo largo, o en otra diapositiva, no
+    g.diapositivas[0].subtitulo = "Arendt " + "palabra " * 25
+    assert any("subtítulo de la portada tiene" in e for e in errores(cfg, g))
+    g = guion_valido()
+    g.diapositivas[2].subtitulo = "No toca"
+    assert any("solo la portada lo lleva" in e for e in errores(cfg, g))
+    # El pie puede empezar por la noticia si el libro aparece después
+    g = guion_valido()
+    g.pie_instagram = pie().replace("Arendt lo explicó.", "Un tribunal juzga.")
+    assert any("pie debe nombrar el libro" in e for e in errores(cfg, g))
+    g.pie_instagram += " Lo leemos con Arendt."
     assert errores(cfg, g) == []
 
 

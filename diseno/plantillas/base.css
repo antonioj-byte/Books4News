@@ -36,6 +36,12 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 }
 .remate { font-family: var(--fuentes-remate); font-style: italic; font-weight: 400; letter-spacing: -0.02em; font-size: 1.06em; color: var(--colores-pluma); }
 .diapositiva--portada .cuerpo { justify-content: flex-start; }
+/* Subtítulo: trae el libro o al autor desde la portada; el título del libro, en Garamond cursiva */
+.subtitulo { margin-top: 22px; font-family: var(--fuentes-texto); font-size: 38px; line-height: 1.3; font-weight: 400; text-wrap: pretty; max-width: 900px; }
+.subtitulo em { font-family: var(--fuentes-remate); font-style: italic; font-size: 1.12em; }
+.portada--sangre .subtitulo, .portada--neon .subtitulo { color: var(--colores-papel); }
+.portada--caja .subtitulo { color: var(--colores-tinta); font-size: 32px; }
+.portada--banda .subtitulo { font-size: 32px; }
 
 /* Sangre y caja: foto oscura, texto en papel; el antetítulo en marcador, el remate en papel */
 /* «neon» (de Wired) no existe en la marca: se pinta como sangre */

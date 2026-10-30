@@ -89,7 +89,8 @@ def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[
         f"Titular: {eleccion.titular}\n"
         f"De qué se está hablando: {eleccion.de_que_se_habla}\n"
         f"Cuestión de fondo (propuesta del jefe de cultura): {eleccion.cuestion_de_fondo}\n"
-        f"Textos de los medios:\n{fuentes}\n"
+        + (f"Gancho del libro para la portada (propuesta del jefe de cultura): {eleccion.gancho_libro}\n" if eleccion.gancho_libro else "")
+        + f"Textos de los medios:\n{fuentes}\n"
         "</noticia>"
     )
     libros_txt = (
@@ -155,7 +156,7 @@ class _Guion:
 
     @property
     def textos(self) -> list[str]:
-        return [x.texto for x in self.d] + [self.g.pie_instagram]
+        return [t for x in self.d for t in (x.texto, x.subtitulo) if t] + [self.g.pie_instagram]
 
 
 def _extension(c: _Guion) -> list[str]:
@@ -194,13 +195,23 @@ def _palabras_por_diapositiva(c: _Guion) -> list[str]:
         limite = c.p.palabras_max_portada if x.tipo == "portada" else c.p.palabras_max_diapositiva
         if _palabras(x.texto) > limite:
             errores.append(f"La diapositiva {x.n} ({x.tipo}) tiene {_palabras(x.texto)} palabras; máximo {limite}.")
+        if x.subtitulo and x.tipo == "portada" and _palabras(x.subtitulo) > c.p.palabras_max_subtitulo:
+            errores.append(f"El subtítulo de la portada tiene {_palabras(x.subtitulo)} palabras; máximo {c.p.palabras_max_subtitulo}.")
+        if x.subtitulo and x.tipo != "portada":
+            errores.append(f"La diapositiva {x.n} ({x.tipo}) lleva subtítulo: solo la portada lo lleva.")
     return errores
 
 
-# La noticia abre la pieza, el libro entra pronto y protagoniza el cierre.
-def _portada_sin_libro(c: _Guion) -> list[str]:
-    if c.d and c.d[0].tipo == "portada" and _menciona_libro(c.d[0].texto, c.libros):
-        return ["La portada abre con la noticia o con su tensión, no con el libro: quita el título y el autor."]
+# El libro está desde la portada (titular o subtítulo), entra pronto y protagoniza el cierre.
+def _portada_con_libro(c: _Guion) -> list[str]:
+    if not c.d or c.d[0].tipo != "portada":
+        return []
+    portada = c.d[0]
+    if not portada.subtitulo:
+        return ["La portada necesita un subtítulo que traiga el libro o a su autor."]
+    if not _menciona_libro(f"{portada.texto} {portada.subtitulo}", c.libros):
+        return ["Desde la portada tiene que saberse que la pieza va de un libro: nombra el libro o a su autor "
+                "en el titular o en el subtítulo."]
     return []
 
 
@@ -290,7 +301,7 @@ def _fuentes_conocidas(c: _Guion) -> list[str]:
 
 REGLAS = (
     _extension, _justificacion_extra, _numeracion, _primera_es_portada, _ultima_es_cierre, _tipos_obligatorios,
-    _palabras_por_diapositiva, _portada_sin_libro, _cierre_nombra_libro, _una_actualidad, _libro_pronto,
+    _palabras_por_diapositiva, _portada_con_libro, _cierre_nombra_libro, _una_actualidad, _libro_pronto,
     _pie_nombra_libro, _portada_no_pregunta, _firma, _frases_vetadas_y_citas, _traduccion, _longitud_pie,
     _pie_cita_medio, _libros_verificados, _fuentes_conocidas,
 )

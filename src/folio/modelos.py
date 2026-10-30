@@ -77,6 +77,7 @@ class HistoriaElegida(BaseModel):
     de_que_se_habla: str = Field(description="De qué se está hablando, en dos frases")
     cuestion_de_fondo: str = Field(description="La cuestión de fondo, en una frase")
     libros_candidatos: list[LibroCandidato] = Field(description="2–3 libros candidatos")
+    gancho_libro: str = Field(default="", description="En una línea, cómo entra el libro desde la portada: qué vio, explicó o anticipó su autor")
     por_que: str = Field(description="Por qué esta historia y no otra, en dos líneas")
 
 
@@ -130,6 +131,7 @@ class Diapositiva(BaseModel):
     n: int
     tipo: TipoDiapositiva
     texto: str
+    subtitulo: str | None = Field(default=None, description="Solo en la portada: el subtítulo, que trae el libro o a su autor")
 
 
 class LibroGuion(BaseModel):
