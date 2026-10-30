@@ -35,7 +35,7 @@ def run(
         raise typer.BadParameter("--desde debe ser ingesta, seleccion o guion")
     cfg = config.cargar()
     if not sin_llm and not cfg.anthropic_api_key:
-        typer.echo("Falta ANTHROPIC_API_KEY en .env (o usa --sin-llm para probar la ingesta).", err=True)
+        typer.echo("Falta ANTHROPIC_API_KEY (o FOLIO_ANTHROPIC_API_KEY) en .env (o usa --sin-llm para probar la ingesta).", err=True)
         raise typer.Exit(1)
     inf, (ruta_json, ruta_md) = Pipeline(cfg, fecha).ejecutar(desde=desde, sin_llm=sin_llm)
     buenas = sum(p.estado == "propuesta" for p in inf.piezas)

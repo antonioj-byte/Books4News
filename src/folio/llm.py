@@ -49,7 +49,7 @@ class LLM:
     def cliente(self) -> anthropic.Anthropic:
         if self._cliente is None:
             if not self.cfg.anthropic_api_key:
-                raise ErrorLLM("Falta ANTHROPIC_API_KEY (ponla en .env)")
+                raise ErrorLLM("Falta ANTHROPIC_API_KEY o FOLIO_ANTHROPIC_API_KEY (ponla en .env)")
             self._cliente = anthropic.Anthropic(api_key=self.cfg.anthropic_api_key, max_retries=4)
         return self._cliente
 

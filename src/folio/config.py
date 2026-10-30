@@ -61,6 +61,11 @@ class Config:
         return f"FolioLateral/0.1{contacto}"
 
 
+def _clave_anthropic() -> str | None:
+    """ANTHROPIC_API_KEY si existe; si no, FOLIO_ANTHROPIC_API_KEY (entornos que filtran la primera)."""
+    return os.getenv("ANTHROPIC_API_KEY") or os.getenv("FOLIO_ANTHROPIC_API_KEY") or None
+
+
 def cargar(raiz: Path = RAIZ) -> Config:
     load_dotenv(raiz / ".env")
     pipeline = yaml.safe_load((raiz / "config" / "pipeline.yaml").read_text(encoding="utf-8"))
@@ -70,7 +75,7 @@ def cargar(raiz: Path = RAIZ) -> Config:
         pipeline=pipeline,
         fuentes=fuentes,
         raiz=raiz,
-        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY") or None,
+        anthropic_api_key=_clave_anthropic(),
         google_books_api_key=os.getenv("GOOGLE_BOOKS_API_KEY") or None,
         openlibrary_contact=os.getenv("OPENLIBRARY_CONTACT") or None,
     )
