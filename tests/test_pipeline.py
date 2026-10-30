@@ -141,3 +141,34 @@ def test_textos_congelados_por_historia(cfg, monkeypatch):
     segundo = p._textos(h)
     assert descargas == [h.id]  # la segunda vez sale de data/cache/<fecha>/textos/
     assert primero == segundo and (p.cache / "textos" / f"{h.id}.json").exists()
+
+
+def test_ejecuciones_de_prueba_no_tocan_historial_ni_etapas(cfg, monkeypatch):
+    p, _ = _pipeline(cfg, monkeypatch, [guion_valido()], fecha="2026-10-29")
+    p.ejecutar()
+    seleccion_real = (p.cache / "seleccion.json").read_text()
+
+    # Solo una pieza: informe aparte, sin registrar el día (que borraría el resto)
+    p2, _ = _pipeline(cfg, monkeypatch, [guion_valido()], fecha="2026-10-29")
+    p2.solo_pieza, p2.prueba = 1, True
+    inf, (_, md) = p2.ejecutar(desde="guion")
+    assert [x.id for x in inf.piezas] == ["2026-10-29-1"]
+    assert md.parent.name == "solo-pieza-1"
+    assert (p.cache / "seleccion.json").read_text() == seleccion_real
+
+    # Modo desarrollo desde la selección: no sobrescribe la selección guardada
+    p3, _ = _pipeline(cfg, monkeypatch, [guion_valido()], fecha="2026-10-29")
+    p3.dev, p3.prueba = True, True
+    inf3, (_, md3) = p3.ejecutar(desde="seleccion")
+    assert md3.parent.name == "2026-10-29-dev" and inf3.avisos[0].startswith("MODO DESARROLLO")
+    assert (p.cache / "seleccion.json").read_text() == seleccion_real
+    assert p.historial.libro_usado("2026-10-30", 60, "Eichmann en Jerusalén", "Hannah Arendt", None) == "2026-10-29"
+
+
+def test_desde_hechos_reutiliza_los_guiones(cfg, monkeypatch):
+    p, llm = _pipeline(cfg, monkeypatch, [guion_valido()], fecha="2026-10-29")
+    p.ejecutar()
+    p2, llm2 = _pipeline(cfg, monkeypatch, [], fecha="2026-10-29")  # sin guiones: no puede escribir ninguno
+    inf, _ = p2.ejecutar(desde="hechos")
+    assert inf.piezas[0].guion and inf.piezas[0].hechos
+    assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["hechos"]

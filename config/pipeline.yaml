@@ -4,6 +4,9 @@ modelos:
   guion: claude-opus-5-5        # guionista
   comprobacion: claude-haiku-5-5  # comprobación de hechos del guion contra las fuentes
 
+dev:                            # folio run --dev: todas las etapas con este modelo y esfuerzo bajo
+  modelo: claude-haiku-5-5
+
 esfuerzo:                       # output_config.effort
   ingesta: low
   seleccion: high

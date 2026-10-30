@@ -22,22 +22,32 @@ def _logging(verbose: bool):
 
 @app.command()
 def run(
-    fecha: str = typer.Option(date.today().isoformat(), help="Fecha del informe (AAAA-MM-DD)"),
-    desde: str = typer.Option("ingesta", help="Etapa desde la que ejecutar: ingesta | seleccion | guion"),
+    fecha: str = typer.Option(None, help="Fecha del informe (AAAA-MM-DD). Por defecto, hoy; con --dev, la última con selección guardada"),
+    desde: str = typer.Option(None, help="Etapa desde la que ejecutar: ingesta | seleccion | guion | hechos. Por defecto, ingesta; con --dev, guion"),
     sin_llm: bool = typer.Option(False, "--sin-llm", help="Solo ingesta y agrupación, sin llamar a modelos"),
+    dev: bool = typer.Option(False, "--dev", help="Modo desarrollo: modelo barato en todas las etapas, informe en informes/<fecha>-dev/ y sin tocar historial ni etapas guardadas"),
+    solo_pieza: int = typer.Option(None, "--solo-pieza", help="Genera solo la pieza N de la selección (prueba: no se registra en el historial)"),
+    reutilizar_llm: bool = typer.Option(False, "--reutilizar-llm", help="Sirve de data/cache/llm/ las peticiones idénticas a otras ya hechas (0 $)"),
     verbose: bool = typer.Option(True, "--verbose/--quiet"),
 ):
     """Ejecuta el pipeline diario y escribe informes/<fecha>/informe.{json,md}."""
     _logging(verbose)
+    from folio.llm import LLM
     from folio.pipeline import Pipeline
 
-    if desde not in ("ingesta", "seleccion", "guion"):
-        raise typer.BadParameter("--desde debe ser ingesta, seleccion o guion")
+    desde = desde or ("guion" if dev else "ingesta")
+    if desde not in ("ingesta", "seleccion", "guion", "hechos"):
+        raise typer.BadParameter("--desde debe ser ingesta, seleccion, guion o hechos")
     cfg = config.cargar()
+    if not fecha:
+        fecha = (config.ultima_fecha_con_seleccion(cfg) if dev else None) or date.today().isoformat()
+    if dev:
+        cfg = config.perfil_dev(cfg)
     if not sin_llm and not cfg.anthropic_api_key:
         typer.echo("Falta ANTHROPIC_API_KEY (o FOLIO_ANTHROPIC_API_KEY) en .env (o usa --sin-llm para probar la ingesta).", err=True)
         raise typer.Exit(1)
-    inf, (ruta_json, ruta_md) = Pipeline(cfg, fecha).ejecutar(desde=desde, sin_llm=sin_llm)
+    pipeline = Pipeline(cfg, fecha, llm=LLM(cfg, reutilizar=reutilizar_llm), dev=dev, solo_pieza=solo_pieza)
+    inf, (ruta_json, ruta_md) = pipeline.ejecutar(desde=desde, sin_llm=sin_llm)
     buenas = sum(p.estado == "propuesta" for p in inf.piezas)
     typer.echo(f"\nPiezas propuestas: {buenas}/{len(inf.piezas)} · coste estimado {inf.coste_total_usd:.2f} $")
     typer.echo(f"Informe: {ruta_md}\nDatos:   {ruta_json}")

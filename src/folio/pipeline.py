@@ -29,8 +29,8 @@ from folio.verificacion_texto import clave_libro
 
 log = logging.getLogger(__name__)
 
-Etapa = Literal["ingesta", "seleccion", "guion"]
-_ORDEN = {"ingesta": 0, "seleccion": 1, "guion": 2}
+Etapa = Literal["ingesta", "seleccion", "guion", "hechos"]
+_ORDEN = {"ingesta": 0, "seleccion": 1, "guion": 2, "hechos": 3}
 
 
 def _guardar(ruta, datos) -> None:
@@ -46,7 +46,10 @@ def _cargar(ruta):
 
 class Pipeline:
     def __init__(self, cfg: Config, fecha: str, llm: LLM | None = None,
-                 verificador: Verificador | None = None, historial: Historial | None = None):
+                 verificador: Verificador | None = None, historial: Historial | None = None,
+                 dev: bool = False, solo_pieza: int | None = None):
+        """`dev` y `solo_pieza` son ejecuciones de prueba: no registran el día en el historial, no
+        sobrescriben la selección ni las piezas guardadas y escriben el informe en su propia carpeta."""
         self.cfg = cfg
         self.fecha = fecha
         self.cache = cfg.dir_cache(fecha)
@@ -54,6 +57,22 @@ class Pipeline:
         self.verificador = verificador
         self.historial = historial or Historial(cfg.ruta_db)
         self.avisos: list[str] = []
+        self.dev = dev
+        self.solo_pieza = solo_pieza
+        self.prueba = dev or solo_pieza is not None
+
+    @property
+    def dir_informe(self):
+        if self.dev:
+            return self.cfg.dir_informes / f"{self.fecha}-dev"
+        if self.solo_pieza is not None:
+            return self.cfg.dir_informes / self.fecha / f"solo-pieza-{self.solo_pieza}"
+        return self.cfg.dir_informes / self.fecha
+
+    def _guardar_etapa(self, nombre: str, datos) -> None:
+        """Las ejecuciones de prueba leen las etapas guardadas, pero no las sobrescriben."""
+        if not self.prueba:
+            _guardar(self.cache / nombre, datos)
 
     # --- Etapa 1: ingesta y agrupación ---------------------------------------
 
@@ -63,7 +82,8 @@ class Pipeline:
             return TypeAdapter(list[Articulo]).validate_python(_cargar(ruta))
         articulos, errores = rss.ingerir(self.cfg)
         self.avisos += [f"Feed fallido: {e}" for e in errores]
-        _guardar(ruta, [a.model_dump(mode="json") for a in articulos])
+        if not self.prueba:
+            _guardar(ruta, [a.model_dump(mode="json") for a in articulos])
         return articulos
 
     def vectores(self, articulos: list[Articulo]) -> dict[str, np.ndarray]:
@@ -106,7 +126,7 @@ class Pipeline:
             "historias_multimedio": len(candidatas),
             "historias_al_jefe": len(al_jefe),
         }
-        _guardar(self.cache / "historias.json", {
+        self._guardar_etapa("historias.json", {
             "al_jefe": [h.model_dump(mode="json") for h in al_jefe],
             "resumidas": [r.model_dump(mode="json") for r in resumidas],
             "stats": self.stats,
@@ -118,7 +138,7 @@ class Pipeline:
     def seleccion(self, al_jefe: list[Historia]) -> SeleccionJefe:
         sel, avisos = seleccion.seleccionar(self.llm, al_jefe)
         self.avisos += avisos
-        _guardar(self.cache / "seleccion.json", sel.model_dump(mode="json"))
+        self._guardar_etapa("seleccion.json", sel.model_dump(mode="json"))
         return sel
 
     # --- Etapa 3: verificación y guion --------------------------------------
@@ -162,13 +182,17 @@ class Pipeline:
         por_id = {h.id: h for h in al_jefe}
         objetivo = len(sel.elegidas)
         cola = [(e, False) for e in sel.elegidas] + [(e, True) for e in sel.reserva]
+        if self.solo_pieza is not None:
+            if not 1 <= self.solo_pieza <= len(sel.elegidas):
+                raise ValueError(f"--solo-pieza debe estar entre 1 y {len(sel.elegidas)}")
+            objetivo, cola = 1, [(sel.elegidas[self.solo_pieza - 1], False)]
         piezas: list[Pieza] = []
         libros_hoy: set[str] = set()
         n = 0
         for e, es_reserva in cola:
             if sum(p.estado == "propuesta" for p in piezas) >= objetivo:
                 break
-            n += 1
+            n = self.solo_pieza or n + 1
             h = por_id[e.historia_id]
             pieza = Pieza(id=f"{self.fecha}-{n}", fecha=self.fecha, estado="fallida", reserva=es_reserva,
                           historia_id=h.id, eleccion=e, n_medios=h.n_medios)
@@ -198,10 +222,6 @@ class Pipeline:
             pieza.revisar_edicion = bool(pieza.discrepancias_edicion)
             pieza.revision_humana = [f"Afirma que no hay traducción ({a}): compruébalo antes de publicar"
                                      for a in guionista.afirmaciones_traduccion(pieza.guion)]
-            try:
-                pieza.hechos = hechos.comprobar(self.llm, pieza.id, pieza.guion, textos_h)
-            except Exception as exc:
-                pieza.avisos.append(f"No se pudo comprobar los hechos: {exc}")
             pieza.estado = "propuesta"
             usados = [l for l in libros if any(
                 guionista._es_titulo_de_libro(lg.titulo, [l]) for lg in pieza.guion.libros)]
@@ -211,6 +231,20 @@ class Pipeline:
                 if l.olid:
                     libros_hoy.add(l.olid)
         return piezas
+
+    # --- Etapa 4: comprobación de hechos ------------------------------------
+
+    def comprobar_hechos(self, piezas: list[Pieza], al_jefe: list[Historia]) -> None:
+        por_id = {h.id: h for h in al_jefe}
+        for pieza in piezas:
+            if not pieza.guion:
+                continue
+            pieza.avisos = [a for a in pieza.avisos if not a.startswith("No se pudo comprobar los hechos")]
+            try:
+                pieza.hechos = hechos.comprobar(self.llm, pieza.id, pieza.guion, self._textos(por_id[pieza.historia_id]))
+            except Exception as exc:
+                pieza.hechos = []
+                pieza.avisos.append(f"No se pudo comprobar los hechos: {exc}")
 
     # --- Ejecución completa -------------------------------------------------
 
@@ -233,21 +267,33 @@ class Pipeline:
                 sel = self.seleccion(al_jefe)
             else:
                 sel = SeleccionJefe.model_validate(_cargar(self.cache / "seleccion.json"))
-            piezas = self.piezas(sel, al_jefe)
+            if inicio <= 2:
+                piezas = self.piezas(sel, al_jefe)
+                self._guardar_etapa("piezas.json", [p.model_dump(mode="json") for p in piezas])
+            else:
+                piezas = TypeAdapter(list[Pieza]).validate_python(_cargar(self.cache / "piezas.json"))
+            self.comprobar_hechos(piezas, al_jefe)
             buenas = [p for p in piezas if p.estado == "propuesta"]
-            por_id = {h.id: h for h in al_jefe}
-            self.historial.registrar_dia(
-                self.fecha,
-                [(p.historia_id, p.eleccion.titular, agrupacion.centroide(por_id[p.historia_id], vectores)) for p in buenas],
-                [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for p in buenas for l in p.libros],
-            )
-            if len(buenas) < len(sel.elegidas):
+            if inicio <= 2 and not self.prueba:
+                por_id = {h.id: h for h in al_jefe}
+                self.historial.registrar_dia(
+                    self.fecha,
+                    [(p.historia_id, p.eleccion.titular, agrupacion.centroide(por_id[p.historia_id], vectores)) for p in buenas],
+                    [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for p in buenas for l in p.libros],
+                )
+            if self.solo_pieza is None and len(buenas) < len(sel.elegidas):
                 self.avisos.append(f"Solo {len(buenas)} piezas válidas de {len(sel.elegidas)} previstas")
+            if inicio == 3:
+                self.avisos.append("Solo se ha repetido la comprobación de hechos: el coste del informe es solo el de esa etapa")
+        if self.dev:
+            self.avisos.insert(0, "MODO DESARROLLO: modelos baratos; sirve para probar la tubería, no la calidad del texto")
+        if self.solo_pieza is not None:
+            self.avisos.insert(0, f"Ejecución de prueba: solo la pieza {self.solo_pieza}; no se registra en el historial")
 
         inf = InformeDiario(
             fecha=self.fecha, generado_en=datetime.now(timezone.utc), stats=self.stats,
             top_historias=resumidas, seleccion=sel, piezas=piezas, trazas=self.llm.trazas,
             coste_total_usd=round(sum(t.coste_usd for t in self.llm.trazas), 4), avisos=self.avisos,
         )
-        rutas = informe.escribir(inf, self.cfg.dir_informes / self.fecha)
+        rutas = informe.escribir(inf, self.dir_informe)
         return inf, rutas

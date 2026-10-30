@@ -61,6 +61,25 @@ class Config:
         return f"FolioLateral/0.1{contacto}"
 
 
+def perfil_dev(cfg: Config) -> Config:
+    """Copia de la configuración con el modelo barato y esfuerzo bajo en todas las etapas.
+
+    Sirve para depurar la tubería (validación, verificación, informe) sin gastar Opus; la
+    calidad del texto que sale no dice nada de la de producción."""
+    import copy
+    dev = copy.deepcopy(cfg)
+    barato = dev.pipeline.get("dev", {}).get("modelo", "claude-haiku-5-5")
+    dev.pipeline["modelos"] = {etapa: barato for etapa in dev.pipeline["modelos"]}
+    dev.pipeline["esfuerzo"] = {etapa: "low" for etapa in dev.pipeline["esfuerzo"]}
+    return dev
+
+
+def ultima_fecha_con_seleccion(cfg: Config) -> str | None:
+    """La fecha más reciente con una selección guardada en data/cache/."""
+    fechas = sorted(p.parent.name for p in (cfg.dir_datos / "cache").glob("*/seleccion.json"))
+    return fechas[-1] if fechas else None
+
+
 def _clave_anthropic() -> str | None:
     """ANTHROPIC_API_KEY si existe; si no, FOLIO_ANTHROPIC_API_KEY (entornos que filtran la primera)."""
     return os.getenv("ANTHROPIC_API_KEY") or os.getenv("FOLIO_ANTHROPIC_API_KEY") or None

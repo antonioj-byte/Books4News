@@ -60,3 +60,25 @@ def test_prompts_reales_tienen_sus_marcadores(cfg):
     assert "<n>" in p and "<l>" in p
     with pytest.raises(ErrorLLM):
         cargar_prompt(cfg, "guionista", {"[no existe]": ""})
+
+
+def test_reutilizar_sirve_peticiones_identicas_sin_llamar(cfg):
+    capturas = []
+    llm = LLM(cfg, cliente=_cliente(capturas), reutilizar=True)
+    msg = [{"role": "user", "content": "hola"}]
+    r1, _ = llm.estructurado("a", msg, ResumenHistoria, etapa_modelo="ingesta")
+    r2, contenido = llm.estructurado("b", msg, ResumenHistoria, etapa_modelo="ingesta")
+    assert len(capturas) == 1 and r1 == r2
+    assert llm.trazas[1].coste_usd == 0 and "caché local" in llm.trazas[1].nota
+    assert contenido and isinstance(contenido[0], dict)
+    # Otra petición (otro mensaje) sí llama
+    llm.estructurado("c", [{"role": "user", "content": "adiós"}], ResumenHistoria, etapa_modelo="ingesta")
+    assert len(capturas) == 2
+
+
+def test_perfil_dev_usa_el_modelo_barato_en_todo(cfg):
+    from folio import config
+    dev = config.perfil_dev(cfg)
+    assert set(dev.pipeline["modelos"].values()) == {"claude-haiku-5-5"}
+    assert set(dev.pipeline["esfuerzo"].values()) == {"low"}
+    assert cfg.pipeline["modelos"]["guion"] == "claude-opus-5-5"  # la original no cambia

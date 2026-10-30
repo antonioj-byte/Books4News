@@ -7,8 +7,11 @@ etiquetas para que el modelo los trate como datos y no como instrucciones.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import re
+from pathlib import Path
 from typing import TypeVar
 
 import anthropic
@@ -65,10 +68,20 @@ def con_cache(cfg: Config, nombre: str, texto: str) -> str | list[dict]:
 
 
 class LLM:
-    def __init__(self, cfg: Config, cliente: anthropic.Anthropic | None = None):
+    def __init__(self, cfg: Config, cliente: anthropic.Anthropic | None = None, reutilizar: bool = False):
+        """Con `reutilizar`, cada respuesta se guarda en data/cache/llm/ y una petición idéntica
+        (modelo, esfuerzo, mensajes y esquema) se sirve de ahí sin llamar a la API: depurar el
+        código que va después de un modelo no cuesta nada."""
         self.cfg = cfg
         self._cliente = cliente
         self.trazas: list[Traza] = []
+        self.reutilizar = reutilizar
+
+    def _ruta_cache(self, modelo: str, esfuerzo: str, max_tokens: int, mensajes: list, esquema: type) -> Path:
+        clave = json.dumps({"modelo": modelo, "esfuerzo": esfuerzo, "max_tokens": max_tokens,
+                            "esquema": esquema.model_json_schema(), "mensajes": mensajes},
+                           sort_keys=True, ensure_ascii=False, default=str)
+        return self.cfg.dir_datos / "cache" / "llm" / f"{hashlib.sha256(clave.encode()).hexdigest()}.json"
 
     @property
     def cliente(self) -> anthropic.Anthropic:
@@ -104,6 +117,12 @@ class LLM:
         (para poder continuar la conversación en un reintento).
         """
         modelo = self.cfg.modelo(etapa_modelo)
+        esfuerzo = self.cfg.esfuerzo(etapa_modelo)
+        ruta_cache = self._ruta_cache(modelo, esfuerzo, max_tokens, mensajes, esquema) if self.reutilizar else None
+        if ruta_cache and ruta_cache.exists():
+            guardado = json.loads(ruta_cache.read_text(encoding="utf-8"))
+            self.trazas.append(Traza(paso=paso, modelo=modelo, nota="respuesta reutilizada de la caché local (0 $)"))
+            return esquema.model_validate(guardado["salida"]), guardado["contenido"]
         extra = {}
         if modelo in _CON_FALLBACK:
             extra = {"fallbacks": "default", "betas": [_BETA_FALLBACK]}
@@ -112,7 +131,7 @@ class LLM:
             max_tokens=max_tokens,
             messages=mensajes,
             output_format=esquema,
-            output_config={"effort": self.cfg.esfuerzo(etapa_modelo)},
+            output_config={"effort": esfuerzo},
             **extra,
         )
         modelo_real = getattr(resp, "model", None) or modelo
@@ -137,4 +156,16 @@ class LLM:
             raise ErrorLLM(f"{paso}: respuesta cortada por max_tokens")
         if resp.parsed_output is None:
             raise ErrorLLM(f"{paso}: la respuesta no se pudo validar contra {esquema.__name__}")
+        if ruta_cache:
+            ruta_cache.parent.mkdir(parents=True, exist_ok=True)
+            ruta_cache.write_text(json.dumps({
+                "salida": resp.parsed_output.model_dump(mode="json"),
+                "contenido": [_bloque(b) for b in resp.content],
+            }, ensure_ascii=False), encoding="utf-8")
         return resp.parsed_output, resp.content
+
+
+def _bloque(b) -> dict:
+    """Bloque de contenido de una respuesta como dict reenviable (sin la salida ya validada)."""
+    d = b if isinstance(b, dict) else b.model_dump(mode="json", exclude_none=True)
+    return {k: v for k, v in d.items() if k != "parsed_output"}
