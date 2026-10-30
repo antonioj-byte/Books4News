@@ -111,8 +111,19 @@ class OpenLibrary:
         return eds
 
 
+_CLAVE_EN_URL = re.compile(r"(key=)[^&\s'\"]+")
+
+
+def sin_clave(texto: str) -> str:
+    """Oculta el parámetro key= de una URL o de un mensaje de error."""
+    return _CLAVE_EN_URL.sub(r"\1***", texto)
+
+
 class GoogleBooks:
     BASE = "https://www.googleapis.com/books/v1/volumes"
+    # Sin país, Google Books responde 403 «unknownLocation» desde IPs que no sabe geolocalizar.
+    PAIS = "ES"
+    INTENTOS = 2  # da 503 y 429 esporádicos
 
     def __init__(self, cliente: httpx.Client, clave: str):
         self.c = cliente
@@ -121,12 +132,19 @@ class GoogleBooks:
     def buscar(self, titulo: str, autor: str, solo_espanol: bool = False) -> list[Obra]:
         params = {
             "q": f'intitle:"{titulo}" inauthor:"{autor}"',
-            "maxResults": 20, "printType": "books", "key": self.clave,
+            "maxResults": 20, "printType": "books", "country": self.PAIS, "key": self.clave,
         }
         if solo_espanol:
             params["langRestrict"] = "es"
-        r = self.c.get(self.BASE, params=params)
-        r.raise_for_status()
+        for intento in range(self.INTENTOS):
+            r = self.c.get(self.BASE, params=params)
+            if r.status_code not in (429, 500, 502, 503) or intento == self.INTENTOS - 1:
+                break
+        try:
+            r.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            # El mensaje de httpx lleva la URL con la clave, y acaba en las notas del informe.
+            raise httpx.HTTPStatusError(sin_clave(str(exc)), request=exc.request, response=exc.response) from None
         obras = []
         for it in r.json().get("items", []):
             v = it.get("volumeInfo", {})
