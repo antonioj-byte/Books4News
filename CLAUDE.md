@@ -16,9 +16,9 @@ Repositorio: `antonioj-byte/Books4News`. Idioma de trabajo, del código y de las
 
 ## Fases
 
-- **Fase 1 (en curso)**: pipeline en texto, de la ingesta al guion verificado. Un comando, salida en un informe diario (JSON + markdown).
-- **Fase 2**: render con el design system.
-- **Fase 3**: web con chat de edición.
+- **Fase 1 (en evaluación)**: pipeline en texto, de la ingesta al guion verificado. Un comando, salida en un informe diario (JSON + markdown). Se evalúa la calidad una o dos semanas, con la prueba A/B del guionista en esos mismos días.
+- **Fase 2 (hecha, con design system provisional)**: render con el design system.
+- **Fase 3 (en curso, versión mínima)**: web local para evaluar (carrusel + puntuación, comparación A/B ciega), sin autenticación ni despliegue, con SQLite. Base de datos definitiva, autenticación, despliegue y chat de edición se deciden después de la evaluación.
 - **Fase 4**: publicación programada y métricas.
 
 No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquema de datos preparado para ellas (estados de la pieza, ids estables).
@@ -34,7 +34,10 @@ No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquem
 - **Informes diarios**: solo en local (`informes/`, fuera de git). En la Fase 3 pasarán a la base de datos de la web.
 - **Ejecución**: en la Fase 1, manual con `uv run folio run`, sin cron. Se evalúa la calidad una o dos semanas antes de automatizar. El despliegue (probablemente Railway, web y cron juntos) se decide en la Fase 3.
 - **Embeddings**: `intfloat/multilingual-e5-large` en local (fastembed). **Al desplegar, valorar Voyage AI** por el peso del modelo (2,2 GB en disco y unos 2 minutos de CPU por ejecución).
-- **Muro de pago**: el guionista recibe los textos de todos los medios del grupo, uno por medio, priorizando los de acceso abierto (`acceso` en `config/fuentes.yaml`). De los medios con muro solo se usa titular y entradilla.
+- **Textos para el guionista**: entre 3 y 5 artículos del grupo, uno por medio, elegidos por similitud con el centro del grupo y con el hecho principal («de qué se habla», según el jefe), con un pequeño extra para el acceso abierto (`seleccion_textos` en `config/pipeline.yaml`). En los grupos grandes, el primero de cada medio traía artículos laterales y provocaba falsos «hechos no verificados». De los medios con muro solo se usa titular y entradilla.
+- **Render (Fase 2)**: el aspecto vive en un único archivo, `diseno/tokens.yaml` (colores, fuentes, tamaños, márgenes, rótulos, logotipo), que se convierte en variables CSS. Las plantillas de `diseno/plantillas/` (una por tipo de diapositiva) solo usan esas variables: un test lo comprueba. El design system actual es **provisional** (sobrio, tipográfico, de suplemento cultural; Newsreader y Libre Franklin, OFL); el definitivo se cambia en los tokens sin tocar las plantillas. PNG de 1080×1350 con Playwright; las mismas plantillas sirven para la vista previa de la web. En la imagen firma el logotipo: la firma «Folio» del texto del cierre no se repite.
+- **Prueba A/B del guionista**: `folio ab` reescribe las piezas del día con las variantes de `ab` en `config/pipeline.yaml` (mismos libros, mismos textos congelados; el control es el guion de producción). `ab.md` es ciego y `ab_clave.json` no se abre hasta evaluar. Regla: una variante sustituye al control solo si no se publicarían menos piezas y la media de idea y voz no baja más de 0,25 puntos (`folio ab-resultados`).
+- **Ejecuciones de prueba**: `--dev` (modelo barato en todo, informe en `informes/<fecha>-dev/`) y `--solo-pieza N` no registran el día en el historial ni sobrescriben las etapas guardadas. `--reutilizar-llm` sirve de `data/cache/llm/` las peticiones idénticas sin coste.
 - **Selección**: el jefe de cultura recibe las 20–25 primeras historias por número de medios.
 - **Edición española**: tres valores, `si` / `no` / `desconocido`. Solo se afirma `no` cuando Open Library y Google Books se han consultado sin errores, las dos encuentran la obra y ninguna tiene la edición española (el silencio de Google Books no prueba nada: sus búsquedas fallan de forma errática).
 - **Agencias**: Reuters, AP y EFE no tienen RSS público; se usan Europa Press, BBC, DW, Al Jazeera y France 24.
@@ -70,11 +73,18 @@ uv run folio run                         # pipeline completo del día
 uv run folio run --sin-llm               # solo ingesta y agrupación (gratis)
 uv run folio run --desde seleccion       # reutiliza la ingesta guardada en data/cache/<fecha>/
 uv run folio run --desde guion           # reutiliza también la selección
+uv run folio run --desde hechos          # solo repite la comprobación de hechos
+uv run folio run --dev                   # depurar: modelo barato, sin tocar historial ni etapas (~0,02 $)
+uv run folio run --solo-pieza 2          # regenera una sola pieza, en informes/<fecha>/solo-pieza-2/
+uv run folio run --reutilizar-llm        # peticiones idénticas desde la caché local (0 $)
+uv run folio render                      # PNG 1080×1350 en informes/<fecha>/render/
+uv run folio ab                          # prueba A/B ciega del guion (informes/<fecha>/ab/)
+uv run folio ab-resultados               # agrega las evaluaciones A/B y aplica la regla
 uv run folio libro "La peste" "Albert Camus"   # verificar un libro suelto
 uv run pytest                            # tests (sin red ni gasto)
 ```
 
-- Código en `src/folio/`. Configuración en `config/` (`pipeline.yaml`: modelos, umbrales, límites; `fuentes.yaml`: feeds).
+- Código en `src/folio/`. Configuración en `config/` (`pipeline.yaml`: modelos, umbrales, límites; `fuentes.yaml`: feeds). Diseño en `diseno/` (`tokens.yaml`, `plantillas/`, `fuentes/`).
 - Los prompts tienen marcadores (`[pegar lista]`, `[pegar]`, `[pegar o «propón tú»]`) que el código sustituye por los datos del día. Si se cambia un marcador en el `.md`, hay que cambiarlo en el código; la carga falla si falta.
 - Los esquemas de salida de los agentes están en `src/folio/modelos.py` y deben reflejar lo que pide cada prompt.
 - El plan de la Fase 1 está en `docs/plan-fase-1.md`.

@@ -47,6 +47,13 @@ exclusion:
   dias_libros: 60
   umbral_historia_repetida: 0.90  # coseno entre centroides
 
+# Qué artículos del grupo lee el guionista: puntuación = media de la similitud con el centro del
+# grupo y con «de qué se habla» (el hecho principal según el jefe), más un extra por acceso.
+seleccion_textos:
+  min_textos: 3
+  margen: 0.06                  # se descartan los que quedan a más de esto del mejor (si quedan ≥ min_textos)
+  bonus_acceso: {abierto: 0.02, parcial: 0.01, muro: 0.0}
+
 guion:
   max_textos: 5                 # textos de la historia que recibe el guionista
   max_caracteres_texto: 6000

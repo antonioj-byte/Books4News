@@ -65,7 +65,8 @@ def _pipeline(cfg, monkeypatch, guiones, fecha="2026-10-30"):
     arts = _articulos()
     monkeypatch.setattr(p, "ingesta", lambda usar_cache: arts)
     monkeypatch.setattr(p, "vectores", lambda a: _vectores(a))
-    monkeypatch.setattr(textos, "textos_historia", lambda cfg, h: [(FUENTES[0], "Texto de la noticia aquí.")])
+    monkeypatch.setattr(p, "vector_texto", lambda texto: np.array([1.0, 0, 0]))
+    monkeypatch.setattr(textos, "textos_historia", lambda cfg, h, puntuaciones=None: [(FUENTES[0], "Texto de la noticia aquí.")])
     from folio.ingesta import agrupacion
     llm.ids = [h.id for h in agrupacion.agrupar(arts, _vectores(arts), 0.84)]
     return p, llm
@@ -134,7 +135,7 @@ def test_textos_congelados_por_historia(cfg, monkeypatch):
     p, _ = _pipeline(cfg, monkeypatch, [])
     descargas = []
     monkeypatch.setattr(textos, "textos_historia",
-                        lambda cfg, h: descargas.append(h.id) or [(FUENTES[0], "Texto de la noticia aquí.")])
+                        lambda cfg, h, puntuaciones=None: descargas.append(h.id) or [(FUENTES[0], "Texto de la noticia aquí.")])
     arts = _articulos()
     h = agrupacion.agrupar(arts, _vectores(arts), 0.84)[0]
     primero = p._textos(h)
@@ -172,3 +173,18 @@ def test_desde_hechos_reutiliza_los_guiones(cfg, monkeypatch):
     inf, _ = p2.ejecutar(desde="hechos")
     assert inf.piezas[0].guion and inf.piezas[0].hechos
     assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["hechos"]
+
+
+def test_textos_congelados_de_la_version_anterior_se_vuelven_a_elegir(cfg, monkeypatch):
+    p, _ = _pipeline(cfg, monkeypatch, [])
+    arts = _articulos()
+    h = agrupacion.agrupar(arts, _vectores(arts), 0.84)[0]
+    ruta = p.cache / "textos" / f"{h.id}.json"
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    ruta.write_text('[{"fuente": {"medio": "X", "titulo": "t", "url": "u", "acceso": "abierto"}, "texto": "viejo"}]')
+    recibidas = []
+    monkeypatch.setattr(textos, "textos_historia",
+                        lambda cfg, h, puntuaciones=None: recibidas.append(puntuaciones) or [(FUENTES[0], "nuevo")])
+    p.vectores_articulos = _vectores(arts)
+    assert p._textos(h, ELECCION)[0][1] == "nuevo"
+    assert recibidas[0] and set(recibidas[0]) == {a.id for a in h.articulos}

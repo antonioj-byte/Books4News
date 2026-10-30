@@ -235,3 +235,9 @@ Medición del 30/10 sobre una ejecución completa (1,02 $): guion 82,5 %, selecc
 - **Textos congelados** por historia en `data/cache/<fecha>/textos/`: requisito para comparar variantes (A/B) y para que la comprobación de hechos mire lo mismo que vio el guionista.
 - **Pendiente, sin riesgo, cuando haya ejecución nocturna**: API por lotes (−50 %). No admite `fallbacks`, así que los rechazos del clasificador habría que tratarlos en el código.
 - **Pendiente, con prueba A/B**: Sonnet 5.5 o esfuerzo `medium` en el guion y en el jefe de cultura; reintento sin reenviar el razonamiento del primer intento.
+
+### Selección de textos y Fase 2 (30/10/2026)
+
+- **Textos para el guionista**: en los grupos grandes (Urda, 66 artículos), el primero de cada medio traía artículos laterales (víctimas por nacionalidad, la campaña) y el comprobador marcaba como «no verificados» hechos ciertos que el guionista había sacado del resumen del jefe. Ahora cada artículo puntúa por similitud con el centro del grupo y con «de qué se habla»; se toma uno por medio, entre 3 y 5, con un extra pequeño para el acceso abierto. Los textos congelados con la versión anterior se vuelven a elegir.
+- **Render (Fase 2)**: `diseno/tokens.yaml` (design system provisional), `diseno/plantillas/` y `folio render`. Ver «Render» en `CLAUDE.md`.
+- **Modo de desarrollo y A/B**: ver «Ejecuciones de prueba» y «Prueba A/B del guionista» en `CLAUDE.md`.
