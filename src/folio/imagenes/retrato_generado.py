@@ -1,7 +1,7 @@
 """Retrato del autor generado con IA a partir de su foto libre (Magnific, Seedream 4.5 Edit).
 
-Tres estilos de la casa, con referencias a la cultura digital: low-poly, vóxel y dithering de 1 bit
-(elegidos el 31/10 tras la prueba de docs/estilo-retratos.md). Los prompts viven en
+Cuatro estilos de la casa, con referencias a la cultura digital: low-poly, vóxel, dithering de 1 bit y
+render de videojuego de los 2000 (elegidos el 31/10 tras la prueba de docs/estilo-retratos.md). Los prompts viven en
 prompts/retrato_generado.md: una sección por estilo y una común (parecido, sin texto).
 
 Nunca se genera una cara desde cero: se parte siempre de la foto que fijó folio.imagenes.retratos, con
@@ -34,7 +34,8 @@ from folio.imagenes import libres
 BASE = "https://api.magnific.com"
 RUTA = "/v1/ai/text-to-image/seedream-v4-5-edit"
 MODELO = "Seedream 4.5 Edit"
-ESTILOS = {"low_poly": "low-poly", "voxel": "vóxel", "dithering": "dithering de 1 bit"}
+ESTILOS = {"low_poly": "low-poly", "voxel": "vóxel", "dithering": "dithering de 1 bit",
+           "render_2000": "render de videojuego de los 2000"}
 ESPERA_S = 4.0            # entre consultas de la tarea (los tests la ponen a 0)
 
 # Motivo del bloqueo (401/403/429) en esta ejecución: no se vuelve a llamar hasta la siguiente

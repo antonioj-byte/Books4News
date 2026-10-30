@@ -1,6 +1,7 @@
 # Estilo de la casa para los retratos generados: prueba del 30/10
 
-**Elegidos (31/10): low-poly, vóxel y dithering de 1 bit**, integrados en `folio.imagenes.retrato_generado`
+**Elegidos (31/10): low-poly, vóxel, dithering de 1 bit y render de videojuego de los 2000** (este
+último, a gusto del usuario aunque no salió como pedía el prompt: queda entre píxel y vóxel), integrados en `folio.imagenes.retrato_generado`
 (ver CLAUDE.md, «Retratos generados»). La hoja de contactos con las imágenes está en una página
 privada (Artifact) del usuario. Las imágenes no se guardan en el repo.
 

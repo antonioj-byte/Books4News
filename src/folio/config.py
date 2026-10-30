@@ -105,8 +105,8 @@ class RetratoGenerado(_Seccion):
     """Retrato del autor generado con IA a partir de su foto libre (folio.imagenes.retrato_generado)."""
     activo: bool = False
     # Estilos de la casa (prompts/retrato_generado.md), alternados en el día en este orden
-    estilos: list[Literal["low_poly", "voxel", "dithering"]] = Field(
-        default_factory=lambda: ["low_poly", "voxel", "dithering"], min_length=1)
+    estilos: list[Literal["low_poly", "voxel", "dithering", "render_2000"]] = Field(
+        default_factory=lambda: ["low_poly", "voxel", "dithering", "render_2000"], min_length=1)
     aspecto: Literal["traditional_3_4", "portrait_2_3", "square_1_1"] = "traditional_3_4"
     espera_max_s: int = Field(default=180, gt=0)
     max_por_dia: int = Field(default=5, ge=0)

@@ -140,7 +140,7 @@ app.add_typer(retrato_app, name="retrato")
 
 
 @retrato_app.command("generar")
-def retrato_generar(pieza: str, estilo: str = typer.Option(..., help="low_poly, voxel o dithering"),
+def retrato_generar(pieza: str, estilo: str = typer.Option(..., help="low_poly, voxel, dithering o render_2000"),
                     fecha: str = typer.Option(None, help="Por defecto, la de la pieza")):
     """Pasa el retrato fijado de la pieza a un estilo de la casa (aunque arte.retrato_generado esté
     desactivado) y actualiza el crédito en piezas.json. Parte siempre de la foto original."""

@@ -78,6 +78,7 @@ def test_prompt_de_cada_estilo(cfg):
         texto = rg.prompt(cfg, estilo)
         assert "exact likeness" in texto and "No text" in texto
     assert "low-poly" in rg.prompt(cfg, "low_poly") and "cubes" in rg.prompt(cfg, "voxel")
+    assert "early-2000s" in rg.prompt(cfg, "render_2000")
     with pytest.raises(ValueError, match="## pixel"):
         rg.prompt(cfg, "pixel")
 
@@ -225,7 +226,8 @@ def test_arte_sin_generar_si_esta_desactivado_o_falla(con_foto, monkeypatch):
 # --- Configuración -----------------------------------------------------------------
 
 def test_configuracion_y_perfil_dev(cfg):
-    assert cfg.pipeline.arte.retrato_generado.estilos == ["low_poly", "voxel", "dithering"]
+    assert cfg.pipeline.arte.retrato_generado.estilos == ["low_poly", "voxel", "dithering", "render_2000"]
+    assert set(cfg.pipeline.arte.retrato_generado.estilos) == set(rg.ESTILOS)          # cada estilo tiene nombre
     with pytest.raises(ValueError):
         config.RetratoGenerado(estilos=["pixel"])
     with pytest.raises(ValueError):

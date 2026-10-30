@@ -1,9 +1,9 @@
 # Retrato generado del autor (Magnific, Seedream 4.5 Edit)
 
-Prompts para convertir la foto libre del autor en uno de los tres estilos de la casa, elegidos el
-31/10 tras la prueba de `docs/estilo-retratos.md`. Van en inglés porque el modelo los sigue mejor.
+Prompts para convertir la foto libre del autor en uno de los estilos de la casa, elegidos el 31/10
+tras la prueba de `docs/estilo-retratos.md`. Van en inglés porque el modelo los sigue mejor.
 El código (`folio.imagenes.retrato_generado`) lee la sección del estilo (`## low_poly`, `## voxel`,
-`## dithering`) y le añade la sección `## comun`. Lo que hay antes del primer encabezado `##` no se
+`## dithering`, `## render_2000`) y le añade la sección `## comun`. Lo que hay antes del primer encabezado `##` no se
 envía.
 
 Reglas: nada de nombres de juegos, consolas, estudios ni artistas; sin texto ni logotipos; la cara
@@ -20,6 +20,10 @@ Recreate this portrait as a voxel bust: the head and shoulders built entirely fr
 ## dithering
 
 Recreate this portrait as 1-bit dithered graphics: only pure black and pure white pixels, with dithering patterns for the shading, like the screen of an early monochrome personal computer. Plain background.
+
+## render_2000
+
+Recreate this portrait as an early-2000s video game character render: a 3D character model with low-resolution blurry textures, simple geometry, a slightly stiff look, lit like a character selection screen, bust facing the camera. Plain dark background, flat or a soft near-black gradient.
 
 ## comun
 

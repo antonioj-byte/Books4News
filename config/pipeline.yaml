@@ -91,7 +91,7 @@ arte:
   # pieza: folio retrato generar <pieza> --estilo voxel.
   retrato_generado:
     activo: false
-    estilos: [low_poly, voxel, dithering]
+    estilos: [low_poly, voxel, dithering, render_2000]
     max_por_dia: 5             # tope de retratos generados por día
 
 ab:
