@@ -126,7 +126,18 @@ class LLM:
         extra = {}
         if modelo in _CON_FALLBACK:
             extra = {"fallbacks": "default", "betas": [_BETA_FALLBACK]}
-        resp = self.cliente.beta.messages.parse(
+        try:
+            resp = self._llamar(modelo, max_tokens, mensajes, esquema, esfuerzo, extra)
+        except anthropic.APIConnectionError as exc:
+            # El SDK resume como «Connection error» fallos muy distintos: red, DNS o una clave con un
+            # salto de línea (cabecera inválida). La causa real va en el mensaje.
+            causa = exc.__cause__
+            raise ErrorLLM(f"{paso}: no se pudo conectar con la API de Anthropic ({type(causa).__name__ if causa else 'sin causa'}: "
+                           f"{causa})") from exc
+        return self._procesar(paso, modelo, resp, esquema, ruta_cache)
+
+    def _llamar(self, modelo, max_tokens, mensajes, esquema, esfuerzo, extra):
+        return self.cliente.beta.messages.parse(
             model=modelo,
             max_tokens=max_tokens,
             messages=mensajes,
@@ -134,6 +145,8 @@ class LLM:
             output_config={"effort": esfuerzo},
             **extra,
         )
+
+    def _procesar(self, paso, modelo, resp, esquema, ruta_cache):
         modelo_real = getattr(resp, "model", None) or modelo
         traza = Traza(
             paso=paso,

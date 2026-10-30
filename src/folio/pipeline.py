@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -33,6 +34,11 @@ log = logging.getLogger(__name__)
 Etapa = Literal["ingesta", "seleccion", "guion", "hechos"]
 _VERSION_TEXTOS = 2  # 2: artículos elegidos por cercanía al hecho principal
 _ORDEN = {"ingesta": 0, "seleccion": 1, "guion": 2, "hechos": 3}
+
+
+def progreso(etapa: str) -> None:
+    """Anuncia la etapa en curso. La web la lee del registro de la ejecución (líneas «ETAPA: …»)."""
+    print(f"ETAPA: {etapa}", flush=True)
 
 
 def _guardar(ruta, datos) -> None:
@@ -88,9 +94,15 @@ class Pipeline:
             _guardar(ruta, [a.model_dump(mode="json") for a in articulos])
         return articulos
 
+    @property
+    def embedder(self) -> agrupacion.Embedder:
+        """Un único modelo de embeddings por ejecución: cargarlo cuesta 2 GB de memoria."""
+        if getattr(self, "_embedder", None) is None:
+            self._embedder = agrupacion.Embedder(self.cfg.pipeline["agrupacion"]["modelo_embeddings"], self.cache)
+        return self._embedder
+
     def vectores(self, articulos: list[Articulo]) -> dict[str, np.ndarray]:
-        emb = agrupacion.Embedder(self.cfg.pipeline["agrupacion"]["modelo_embeddings"], self.cache)
-        return emb.vectores({a.id: agrupacion.texto_articulo(a) for a in articulos})
+        return self.embedder.vectores({a.id: agrupacion.texto_articulo(a) for a in articulos})
 
     def historias(self, articulos: list[Articulo], vectores, con_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
         """Agrupa, excluye las ya usadas y resume las que pasan al jefe de cultura."""
@@ -168,9 +180,8 @@ class Pipeline:
 
     def vector_texto(self, texto: str) -> np.ndarray:
         """Embedding de un texto suelto, con la misma caché que los artículos."""
-        emb = agrupacion.Embedder(self.cfg.pipeline["agrupacion"]["modelo_embeddings"], self.cache)
         clave = "texto:" + hashlib.sha1(texto.encode()).hexdigest()[:12]
-        return emb.vectores({clave: texto})[clave]
+        return self.embedder.vectores({clave: texto})[clave]
 
     def _puntuaciones(self, h: Historia, e: HistoriaElegida | None) -> dict[str, float] | None:
         """Similitud de cada artículo con el centro del grupo y con el hecho principal («de qué se habla»)."""
@@ -202,7 +213,51 @@ class Pipeline:
                         "textos": [{"fuente": f.model_dump(mode="json"), "texto": t} for f, t in tx]})
         return tx
 
+    def _preparar(self, pieza: Pieza, h: Historia, reservados: set[str]) -> list[tuple[FuenteNoticia, str]] | None:
+        """Verifica los libros y prepara los textos de una pieza. Va en orden, pieza a pieza: una
+        pieza no puede repetir un libro de otra (`reservados`) y el modelo de embeddings, que se
+        usa para elegir los textos, no se comparte entre hilos. None si no hay libro verificado."""
+        e = pieza.eleccion
+        libros, descartes = self._verificar_libros(e, reservados)
+        pieza.libros, pieza.libros_descartados = libros, descartes
+        if not libros:
+            pieza.error = "Ningún libro candidato se pudo verificar"
+            return None
+        for l in libros:
+            if l.edicion_es != "si":
+                pieza.avisos.append(f"«{l.titulo_propuesto}»: edición española {l.edicion_es}")
+            # Se reservan todos los verificados: los guiones se escriben a la vez y aún no se sabe cuál usará
+            reservados.add(clave_libro(l.titulo_propuesto, l.autores[0] if l.autores else ""))
+            if l.olid:
+                reservados.add(l.olid)
+        if not any(l.edicion_es == "si" for l in libros):
+            pieza.avisos.append("Ningún libro verificado tiene edición española")
+        textos_h = self._textos(h, e)
+        pieza.fuentes = [f for f, _ in textos_h]
+        if not any(f.texto_completo for f in pieza.fuentes):
+            pieza.avisos.append("Ningún texto completo disponible: el guionista solo tuvo titulares y entradillas")
+        return textos_h
+
+    def _escribir(self, pieza: Pieza, textos_h: list[tuple[FuenteNoticia, str]]) -> None:
+        """Guion de una pieza (se ejecuta en paralelo con los de las demás)."""
+        try:
+            pieza.guion, avisos = guionista.escribir(self.llm, pieza.id, pieza.eleccion, textos_h, pieza.libros)
+        except Exception as exc:
+            pieza.error = str(exc)
+            return
+        pieza.avisos += avisos
+        pieza.discrepancias_edicion = guionista.ajustar_libros(pieza.guion, pieza.libros)
+        pieza.revisar_edicion = bool(pieza.discrepancias_edicion)
+        pieza.revision_humana = [f"Afirma que no hay traducción ({a}): compruébalo antes de publicar"
+                                 for a in guionista.afirmaciones_traduccion(pieza.guion)]
+        pieza.estado = "propuesta"
+        usados = [l for l in pieza.libros if any(
+            guionista._es_titulo_de_libro(lg.titulo, [l]) for lg in pieza.guion.libros)]
+        pieza.libros = usados or pieza.libros
+
     def piezas(self, sel: SeleccionJefe, al_jefe: list[Historia]) -> list[Pieza]:
+        """Prepara las piezas en orden y escribe sus guiones a la vez. Si alguna falla, entra la
+        siguiente historia de reserva, hasta tener tantas piezas como elegidas."""
         por_id = {h.id: h for h in al_jefe}
         objetivo = len(sel.elegidas)
         cola = [(e, False) for e in sel.elegidas] + [(e, True) for e in sel.reserva]
@@ -211,73 +266,69 @@ class Pipeline:
                 raise ValueError(f"--solo-pieza debe estar entre 1 y {len(sel.elegidas)}")
             objetivo, cola = 1, [(sel.elegidas[self.solo_pieza - 1], False)]
         piezas: list[Pieza] = []
-        libros_hoy: set[str] = set()
+        reservados: set[str] = set()
         n = 0
-        for e, es_reserva in cola:
-            if sum(p.estado == "propuesta" for p in piezas) >= objetivo:
-                break
-            n = self.solo_pieza or n + 1
-            h = por_id[e.historia_id]
-            pieza = Pieza(id=f"{self.fecha}-{n}", fecha=self.fecha, estado="fallida", reserva=es_reserva,
-                          historia_id=h.id, eleccion=e, n_medios=h.n_medios)
-            piezas.append(pieza)
-            log.info("Pieza %s: %s", pieza.id, e.titular)
-            libros, descartes = self._verificar_libros(e, libros_hoy)
-            pieza.libros, pieza.libros_descartados = libros, descartes
-            if not libros:
-                pieza.error = "Ningún libro candidato se pudo verificar"
+        while cola and sum(p.estado == "propuesta" for p in piezas) < objetivo:
+            faltan = objetivo - sum(p.estado == "propuesta" for p in piezas)
+            lote: list[tuple[Pieza, list]] = []
+            while cola and len(lote) < faltan:
+                e, es_reserva = cola.pop(0)
+                n = self.solo_pieza or n + 1
+                h = por_id[e.historia_id]
+                pieza = Pieza(id=f"{self.fecha}-{n}", fecha=self.fecha, estado="fallida", reserva=es_reserva,
+                              historia_id=h.id, eleccion=e, n_medios=h.n_medios)
+                piezas.append(pieza)
+                progreso(f"Verificando libros y textos de la pieza {n}")
+                log.info("Pieza %s: %s", pieza.id, e.titular)
+                textos_h = self._preparar(pieza, h, reservados)
+                if textos_h is not None:
+                    lote.append((pieza, textos_h))
+            if not lote:
                 continue
-            for l in libros:
-                if l.edicion_es != "si":
-                    pieza.avisos.append(f"«{l.titulo_propuesto}»: edición española {l.edicion_es}")
-            if not any(l.edicion_es == "si" for l in libros):
-                pieza.avisos.append("Ningún libro verificado tiene edición española")
-            textos_h = self._textos(h, e)
-            pieza.fuentes = [f for f, _ in textos_h]
-            if not any(f.texto_completo for f in pieza.fuentes):
-                pieza.avisos.append("Ningún texto completo disponible: el guionista solo tuvo titulares y entradillas")
-            try:
-                pieza.guion, avisos = guionista.escribir(self.llm, pieza.id, e, textos_h, libros)
-            except Exception as exc:
-                pieza.error = str(exc)
-                continue
-            pieza.avisos += avisos
-            pieza.discrepancias_edicion = guionista.ajustar_libros(pieza.guion, libros)
-            pieza.revisar_edicion = bool(pieza.discrepancias_edicion)
-            pieza.revision_humana = [f"Afirma que no hay traducción ({a}): compruébalo antes de publicar"
-                                     for a in guionista.afirmaciones_traduccion(pieza.guion)]
-            pieza.estado = "propuesta"
-            usados = [l for l in libros if any(
-                guionista._es_titulo_de_libro(lg.titulo, [l]) for lg in pieza.guion.libros)]
-            pieza.libros = usados or libros
-            for l in pieza.libros:
-                libros_hoy.add(clave_libro(l.titulo_propuesto, l.autores[0] if l.autores else ""))
-                if l.olid:
-                    libros_hoy.add(l.olid)
+            hechas = 0
+            progreso(f"Escribiendo guiones (0 de {len(lote)})")
+            with ThreadPoolExecutor(max_workers=len(lote)) as pool:
+                for _ in as_completed([pool.submit(self._escribir, p, t) for p, t in lote]):
+                    hechas += 1
+                    progreso(f"Escribiendo guiones ({hechas} de {len(lote)})")
         return piezas
 
     # --- Etapa 4: comprobación de hechos ------------------------------------
 
     def comprobar_hechos(self, piezas: list[Pieza], al_jefe: list[Historia]) -> None:
+        """Comprobación de hechos de todas las piezas a la vez (los textos se leen antes, en orden)."""
         por_id = {h.id: h for h in al_jefe}
-        for pieza in piezas:
-            if not pieza.guion:
-                continue
+        con_guion = [(p, self._textos(por_id[p.historia_id])) for p in piezas if p.guion]
+
+        def una(pieza: Pieza, textos_h) -> None:
             pieza.avisos = [a for a in pieza.avisos if not a.startswith("No se pudo comprobar los hechos")]
             try:
-                pieza.hechos = hechos.comprobar(self.llm, pieza.id, pieza.guion, self._textos(por_id[pieza.historia_id]))
+                pieza.hechos = hechos.comprobar(self.llm, pieza.id, pieza.guion, textos_h)
             except Exception as exc:
                 pieza.hechos = []
                 pieza.avisos.append(f"No se pudo comprobar los hechos: {exc}")
+
+        if not con_guion:
+            return
+        hechas = 0
+        progreso(f"Comprobando hechos (0 de {len(con_guion)})")
+        with ThreadPoolExecutor(max_workers=len(con_guion)) as pool:
+            for _ in as_completed([pool.submit(una, p, t) for p, t in con_guion]):
+                hechas += 1
+                progreso(f"Comprobando hechos ({hechas} de {len(con_guion)})")
 
     # --- Ejecución completa -------------------------------------------------
 
     def ejecutar(self, desde: Etapa = "ingesta", sin_llm: bool = False) -> tuple[InformeDiario, tuple]:
         inicio = _ORDEN[desde]
+        progreso("Leyendo las noticias" if inicio == 0 else "Cargando las noticias guardadas")
         articulos = self.ingesta(usar_cache=inicio > 0)
+        progreso("Agrupando las noticias por evento (embeddings)")
         vectores = self.vectores(articulos)
         self.vectores_articulos = vectores
         if inicio <= 1 or sin_llm:
+            if not sin_llm:
+                progreso("Resumiendo las historias")
             al_jefe, resumidas = self.historias(articulos, vectores, con_llm=not sin_llm)
         else:
             datos = _cargar(self.cache / "historias.json")
@@ -289,6 +340,7 @@ class Pipeline:
         piezas: list[Pieza] = []
         if not sin_llm:
             if inicio <= 1:
+                progreso("Eligiendo las historias (jefe de cultura)")
                 sel = self.seleccion(al_jefe)
             else:
                 sel = SeleccionJefe.model_validate(_cargar(self.cache / "seleccion.json"))
@@ -320,6 +372,7 @@ class Pipeline:
             top_historias=resumidas, seleccion=sel, piezas=piezas, trazas=self.llm.trazas,
             coste_total_usd=round(sum(t.coste_usd for t in self.llm.trazas), 4), avisos=self.avisos,
         )
+        progreso("Guardando el informe")
         rutas = informe.escribir(inf, self.dir_informe)
         if not self.prueba and not sin_llm and piezas:
             # La web lee las ejecuciones de la base de datos (Fase 3)

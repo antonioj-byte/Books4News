@@ -17,6 +17,7 @@ class EstadoEjecucion(BaseModel):
     inicio: str | None = None
     fin: str | None = None
     codigo: int | None = None          # código de salida del último `folio run` (0 = bien)
+    etapa: str | None = None           # última línea «ETAPA: …» del registro
     ultimas_lineas: list[str] = []
 
 
@@ -48,10 +49,13 @@ class Ejecutor:
 
     def estado(self) -> EstadoEjecucion:
         en_marcha = bool(self._proceso and self._proceso.poll() is None)
-        lineas = []
+        lineas: list[str] = []
+        etapa = None
         if self.registro.exists():
-            lineas = [l for l in self.registro.read_text(encoding="utf-8", errors="replace").splitlines()
-                      if l.strip() and "Fetching" not in l][-12:]
+            todas = [l for l in self.registro.read_text(encoding="utf-8", errors="replace").splitlines()
+                     if l.strip() and "Fetching" not in l]
+            etapa = next((l.removeprefix("ETAPA: ") for l in reversed(todas) if l.startswith("ETAPA: ")), None)
+            lineas = [l for l in todas if not l.startswith("ETAPA: ")][-12:]
         codigo = None if en_marcha or not self._proceso else self._proceso.returncode
         return EstadoEjecucion(en_marcha=en_marcha, inicio=self._inicio, fin=self._fin, codigo=codigo,
-                               ultimas_lineas=lineas)
+                               etapa=etapa, ultimas_lineas=lineas)

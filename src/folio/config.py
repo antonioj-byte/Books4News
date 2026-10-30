@@ -88,7 +88,13 @@ def ultima_fecha_con_seleccion(cfg: Config) -> str | None:
 
 def _clave_anthropic() -> str | None:
     """ANTHROPIC_API_KEY si existe; si no, FOLIO_ANTHROPIC_API_KEY (entornos que filtran la primera)."""
-    return os.getenv("ANTHROPIC_API_KEY") or os.getenv("FOLIO_ANTHROPIC_API_KEY") or None
+    return _limpia("ANTHROPIC_API_KEY") or _limpia("FOLIO_ANTHROPIC_API_KEY")
+
+
+def _limpia(nombre: str) -> str | None:
+    """Valor de una variable sin espacios ni saltos de línea alrededor (habituales al pegar una clave en
+    un panel: un salto de línea final hace que el cliente HTTP falle con un «Connection error» engañoso)."""
+    return (os.getenv(nombre) or "").strip() or None
 
 
 def cargar(raiz: Path = RAIZ) -> Config:
@@ -101,6 +107,6 @@ def cargar(raiz: Path = RAIZ) -> Config:
         fuentes=fuentes,
         raiz=raiz,
         anthropic_api_key=_clave_anthropic(),
-        google_books_api_key=os.getenv("GOOGLE_BOOKS_API_KEY") or None,
-        openlibrary_contact=os.getenv("OPENLIBRARY_CONTACT") or None,
+        google_books_api_key=_limpia("GOOGLE_BOOKS_API_KEY"),
+        openlibrary_contact=_limpia("OPENLIBRARY_CONTACT"),
     )

@@ -82,3 +82,23 @@ def test_perfil_dev_usa_el_modelo_barato_en_todo(cfg):
     assert set(dev.pipeline["modelos"].values()) == {"claude-haiku-5-5"}
     assert set(dev.pipeline["esfuerzo"].values()) == {"low"}
     assert cfg.pipeline["modelos"]["guion"] == "claude-opus-5-5"  # la original no cambia
+
+
+def test_clave_con_salto_de_linea_se_limpia(monkeypatch, tmp_path):
+    from folio import config
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("FOLIO_ANTHROPIC_API_KEY", "  sk-ant-prueba\n")
+    raiz = tmp_path / "r"
+    (raiz / "config").mkdir(parents=True)
+    for nombre in ("pipeline.yaml", "fuentes.yaml"):
+        (raiz / "config" / nombre).write_text((config.RAIZ / "config" / nombre).read_text(encoding="utf-8"), encoding="utf-8")
+    assert config.cargar(raiz).anthropic_api_key == "sk-ant-prueba"
+
+
+def test_fallo_de_conexion_dice_la_causa(cfg):
+    def manejar(req):
+        raise httpx.ConnectError("Name or service not known", request=req)
+    cliente = anthropic.Anthropic(api_key="x", max_retries=0, http_client=httpx.Client(transport=httpx.MockTransport(manejar)))
+    llm = LLM(cfg, cliente=cliente)
+    with pytest.raises(ErrorLLM, match="no se pudo conectar.*ConnectError: Name or service not known"):
+        llm.estructurado("resumen:h1", [{"role": "user", "content": "hola"}], ResumenHistoria, etapa_modelo="ingesta")

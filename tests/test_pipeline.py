@@ -188,3 +188,45 @@ def test_textos_congelados_de_la_version_anterior_se_vuelven_a_elegir(cfg, monke
     p.vectores_articulos = _vectores(arts)
     assert p._textos(h, ELECCION)[0][1] == "nuevo"
     assert recibidas[0] and set(recibidas[0]) == {a.id for a in h.articulos}
+
+
+def _pipeline_tres(cfg, monkeypatch, escribir):
+    """Pipeline con tres elegidas y una reserva; cada guion lo decide `escribir(paso)`."""
+    from folio import guion as guionista
+    p, llm = _pipeline(cfg, monkeypatch, [])
+    arts = _articulos()
+    ids = [h.id for h in agrupacion.agrupar(arts, _vectores(arts), 0.84)]
+    sel = SeleccionJefe(elegidas=[ELECCION.model_copy(update={"historia_id": ids[i % 2], "titular": f"E{i}"}) for i in range(3)],
+                        reserva=[ELECCION.model_copy(update={"historia_id": ids[0], "titular": "Reserva"})])
+    from datos import LIBRO
+    monkeypatch.setattr(p, "_verificar_libros", lambda e, reservados: ([LIBRO.model_copy()], []))
+    monkeypatch.setattr(guionista, "escribir", lambda llm, pid, e, t, libros: (escribir(pid), []))
+    al_jefe = [h for h in agrupacion.agrupar(arts, _vectores(arts), 0.84)]
+    return p, sel, al_jefe
+
+
+def test_los_guiones_se_escriben_a_la_vez(cfg, monkeypatch, capsys):
+    import time
+
+    def escribir(pid):
+        time.sleep(0.6)
+        return guion_valido()
+
+    p, sel, al_jefe = _pipeline_tres(cfg, monkeypatch, escribir)
+    inicio = time.monotonic()
+    piezas = p.piezas(sel, al_jefe)
+    assert time.monotonic() - inicio < 1.5  # en serie serían 1,8 s
+    assert [x.estado for x in piezas] == ["propuesta"] * 3
+    assert "ETAPA: Escribiendo guiones (3 de 3)" in capsys.readouterr().out
+
+
+def test_si_falla_un_guion_entra_la_reserva(cfg, monkeypatch):
+    def escribir(pid):
+        if pid.endswith("-2"):
+            raise ValueError("El guion no pasó la validación")
+        return guion_valido()
+
+    p, sel, al_jefe = _pipeline_tres(cfg, monkeypatch, escribir)
+    piezas = p.piezas(sel, al_jefe)
+    assert [(x.id[-1], x.estado, x.reserva) for x in piezas] == [
+        ("1", "propuesta", False), ("2", "fallida", False), ("3", "propuesta", False), ("4", "propuesta", True)]

@@ -44,7 +44,8 @@ def run(
     if dev:
         cfg = config.perfil_dev(cfg)
     if not sin_llm and not cfg.anthropic_api_key:
-        typer.echo("Falta ANTHROPIC_API_KEY (o FOLIO_ANTHROPIC_API_KEY) en .env (o usa --sin-llm para probar la ingesta).", err=True)
+        typer.echo("Falta ANTHROPIC_API_KEY (o FOLIO_ANTHROPIC_API_KEY): ponla en las variables de entorno del "
+                   "servicio (en local, en .env). Para probar solo la ingesta: --sin-llm.", err=True)
         raise typer.Exit(1)
     pipeline = Pipeline(cfg, fecha, llm=LLM(cfg, reutilizar=reutilizar_llm), dev=dev, solo_pieza=solo_pieza)
     inf, (ruta_json, ruta_md) = pipeline.ejecutar(desde=desde, sin_llm=sin_llm)

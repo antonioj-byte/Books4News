@@ -282,6 +282,8 @@ export interface components {
             fin: string | null;
             /** Codigo */
             codigo: number | null;
+            /** Etapa */
+            etapa: string | null;
             /**
              * Ultimas Lineas
              * @default []

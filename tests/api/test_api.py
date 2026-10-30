@@ -109,3 +109,19 @@ def test_datos_en_el_volumen(cfg, monkeypatch, tmp_path):
     assert cfg.dir_datos == tmp_path / "volumen" / "data" and cfg.ruta_db == tmp_path / "volumen" / "data" / "folio.db"
     assert cfg.dir_informes == tmp_path / "volumen" / "informes"
     assert (cfg.dir_prompts).exists()  # prompts, config y diseño siguen en el código
+
+
+def test_etapa_de_la_ejecucion(tmp_path):
+    import sys
+    import time
+
+    from folio_api.ejecutor import Ejecutor
+    codigo = "print('ETAPA: Leyendo las noticias'); print('INFO algo'); print('ETAPA: Escribiendo guiones (1 de 3)', flush=True)"
+    e = Ejecutor(tmp_path, comando=[sys.executable, "-c", codigo])
+    e.lanzar()
+    for _ in range(50):
+        if not e.estado().en_marcha:
+            break
+        time.sleep(0.1)
+    estado = e.estado()
+    assert estado.etapa == "Escribiendo guiones (1 de 3)" and estado.ultimas_lineas == ["INFO algo"]
