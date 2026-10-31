@@ -42,6 +42,8 @@ export const api = {
   chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),
   enviarChat: (eid: number, pid: string, mensaje: string) =>
     pedir<RespuestaChat>(`${pieza(eid, pid)}/chat`, { method: "POST", body: JSON.stringify({ mensaje }) }),
+  // El carrusel listo para publicar (JPEG, vídeo de portada y pie), de la versión actual
+  urlDescarga: (eid: number, pid: string) => `${pieza(eid, pid)}/descarga.zip`,
   urlDiapositiva: (eid: number, pid: string, n: number, version: number) =>
     `${pieza(eid, pid)}/diapositivas/${n}.html?version=${version}`,
 };

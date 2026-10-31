@@ -1,7 +1,7 @@
 """Una pieza: detalle, estado, HTML de sus diapositivas y evaluación."""
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from folio import edicion
 from folio.almacen import Evaluacion, MensajeChat, escribir_evaluacion_md
@@ -110,3 +110,32 @@ def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(c
     ctx.almacen.anadir_mensaje(eid, pid, "usuario", m.mensaje.strip())
     ctx.almacen.anadir_mensaje(eid, pid, "editor", respuesta, v)
     return RespuestaChat(respuesta=respuesta, version=v, avisos=avisos)
+
+
+@router.get("/api/ejecuciones/{eid}/piezas/{pid}/descarga.zip", include_in_schema=False)
+def descargar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
+    """El carrusel listo para publicar, en su versión actual: JPEG de cada diapositiva (1080×1350),
+    la portada en vídeo si tiene imagen y pie.txt con los créditos. Se pinta en el momento (hasta un
+    minuto); si la pieza no se ha editado, reutiliza el vídeo que dejó el render del día."""
+    import io
+    import shutil
+    import zipfile
+
+    from folio.publicacion.preparar import preparar
+    fecha, _ = ctx.ejecucion(eid)
+    p, v = ctx.pieza(eid, pid)
+    if not p.guion:
+        raise HTTPException(409, "Esta pieza no tiene guion")
+    hecho = _video(ctx, fecha, pid)
+    reutilizar = v == 1 and hecho.is_file()
+    lista = preparar(ctx.cfg, p, con_video=not reutilizar)
+    if reutilizar:
+        shutil.copy(hecho, lista.carpeta / "01.mp4")
+    zona = io.BytesIO()
+    with zipfile.ZipFile(zona, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in sorted(lista.carpeta.iterdir()):
+            if f.suffix in (".jpg", ".mp4", ".txt"):
+                z.write(f, f.name)
+    nombre = f"folio-{pid}-v{v}.zip"
+    return Response(zona.getvalue(), media_type="application/zip",
+                    headers={"Content-Disposition": f'attachment; filename="{nombre}"'})

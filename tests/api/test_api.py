@@ -164,3 +164,32 @@ def test_video_de_portada_en_la_ficha_de_la_pieza(cliente, cfg):
     assert ficha["video_portada"] == "/api/ejecuciones/1/piezas/2026-10-30-1/video.mp4"
     r = cliente.get(ficha["video_portada"])
     assert r.status_code == 200 and r.headers["content-type"] == "video/mp4"
+
+
+def test_descargar_el_carrusel_en_zip(cliente, cfg, monkeypatch):
+    import io
+    import zipfile
+
+    from folio.publicacion import preparar as prep
+
+    def preparar_falso(cfg, p, con_video=True):
+        carpeta = cfg.dir_informes / p.fecha / "publicar" / p.id
+        carpeta.mkdir(parents=True, exist_ok=True)
+        for n in range(1, 6):
+            (carpeta / f"{n:02d}.jpg").write_bytes(b"jpg")
+        (carpeta / "pie.txt").write_text(prep.pie_publicacion(p), encoding="utf-8")
+        if con_video:
+            (carpeta / "01.mp4").write_bytes(b"recien hecho")
+        return prep.Preparada(carpeta, [], prep.pie_publicacion(p), [])
+    monkeypatch.setattr(prep, "preparar", preparar_falso)
+    r = cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1/descarga.zip")
+    assert r.status_code == 200 and r.headers["content-type"] == "application/zip"
+    assert 'filename="folio-2026-10-30-1-v1.zip"' in r.headers["content-disposition"]
+    z = zipfile.ZipFile(io.BytesIO(r.content))
+    assert z.namelist() == ["01.jpg", "01.mp4", "02.jpg", "03.jpg", "04.jpg", "05.jpg", "pie.txt"]
+    # Si ya hay vídeo del render del día y la pieza no se ha editado, se reutiliza
+    mp4 = cfg.dir_informes / "2026-10-30" / "render" / "2026-10-30-1" / "01-portada.mp4"
+    mp4.parent.mkdir(parents=True)
+    mp4.write_bytes(b"del render del dia")
+    z = zipfile.ZipFile(io.BytesIO(cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1/descarga.zip").content))
+    assert z.read("01.mp4") == b"del render del dia"

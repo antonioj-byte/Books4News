@@ -64,6 +64,10 @@ export function VistaPieza() {
                         setAvisosEdicion(r.avisos);
                         cargar();
                       }} />
+            <p className="mt-3 text-center">
+              <a href={api.urlDescarga(eid, pid)} download className="boton-suave">Descargar el carrusel (.zip)</a>
+              <span className="dato ml-2">JPEG, vídeo de portada y pie · tarda hasta un minuto</span>
+            </p>
             {avisosEdicion.length > 0 && (
               <div className="mx-auto mt-4 max-w-[560px] rounded-[6px] border border-carmesi px-4 py-2.5 text-[13px]">
                 <b className="text-carmesi">Guardado, pero no cumple estas reglas del guion:</b>
