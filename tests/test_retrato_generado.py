@@ -213,6 +213,7 @@ def test_arte_sin_generar_si_esta_desactivado_o_falla(con_foto, monkeypatch):
         llamadas.append(1)
         raise rg.ErrorMagnific("La tarea t1 falló")
     monkeypatch.setattr(rg, "generar", falla)
+    con_foto.pipeline.arte.retrato_generado.activo = False
     pieza, a = _pieza(), Arte(tono="sereno", recurso="foto")
     arte._retrato(con_foto, pieza, a, con_foto.dir_cache("2026-10-30"))
     assert llamadas == [] and a.retrato == "Ana Pérez · CC BY-SA 4.0 · Wikimedia Commons"
@@ -226,8 +227,9 @@ def test_arte_sin_generar_si_esta_desactivado_o_falla(con_foto, monkeypatch):
 # --- Configuración -----------------------------------------------------------------
 
 def test_configuracion_y_perfil_dev(cfg):
-    assert cfg.pipeline.arte.retrato_generado.estilos == ["low_poly", "voxel", "dithering", "render_2000"]
-    assert set(cfg.pipeline.arte.retrato_generado.estilos) == set(rg.ESTILOS)          # cada estilo tiene nombre
+    assert cfg.pipeline.arte.retrato_generado.activo and cfg.pipeline.arte.retrato_generado.max_por_dia == 3
+    assert cfg.pipeline.arte.retrato_generado.estilos == ["low_poly", "voxel", "render_2000"]     # los tres en 3D
+    assert set(config.RetratoGenerado().estilos) == set(rg.ESTILOS)                     # cada estilo tiene nombre
     with pytest.raises(ValueError):
         config.RetratoGenerado(estilos=["pixel"])
     with pytest.raises(ValueError):

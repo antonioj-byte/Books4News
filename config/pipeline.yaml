@@ -91,9 +91,9 @@ arte:
   # en docs/estilo-retratos.md. Necesita MAGNIFIC_API_KEY; con --dev no se genera. A mano, para una
   # pieza: folio retrato generar <pieza> --estilo voxel.
   retrato_generado:
-    activo: false
-    estilos: [low_poly, voxel, dithering, render_2000]
-    max_por_dia: 5             # tope de retratos generados por día
+    activo: true               # activado el 31/10 a petición del usuario
+    estilos: [low_poly, voxel, render_2000]   # los tres en 3D; dithering, disponible a mano
+    max_por_dia: 3             # tope de retratos generados por día (una pieza, uno)
 
 ab:
   control: opus-high
