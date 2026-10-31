@@ -194,6 +194,89 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .sin-foto--collage .texto { font-size: 42px; }
 .grave .marca { background: none; color: inherit; padding: 0; }
 
+/* Infografía de la diapositiva de la idea (31/10): una tarjeta de papel con la línea de tiempo (I1), el mapa
+   noticia → idea → libro (I3) o el esquema de Magnific con rótulos (I7). Funciona sobre la tinta y sobre el
+   color de la pieza. El texto de la idea baja y se reduce. */
+.con-infografia .cuerpo { justify-content: flex-start; }
+.con-infografia .texto { margin-top: auto; font-size: 60px; }
+.infografia {
+  position: relative; margin: 0 0 40px; height: 660px; border-radius: var(--margenes-radio); overflow: hidden;
+  background: var(--colores-papel); color: var(--colores-tinta); box-shadow: 0 30px 70px -30px rgba(18, 14, 15, 0.6);
+}
+.infografia__titulo {
+  position: absolute; z-index: 2; left: 44px; right: 44px; top: 36px; font-family: var(--fuentes-remate); font-style: italic;
+  font-size: 46px; line-height: 1.1; letter-spacing: -0.01em; text-wrap: balance;
+}
+/* I1 · Línea de tiempo: los años verificados en un eje */
+.linea { position: absolute; inset: 0; }
+.linea__eje { position: absolute; left: 10%; right: 10%; top: 330px; height: 4px; background: var(--colores-tinta); transform-origin: left; }
+.hito { position: absolute; top: 312px; width: 270px; margin-left: -135px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+.hito__punto { width: 40px; height: 40px; border-radius: 50%; background: var(--colores-papel); border: 5px solid var(--colores-tinta); }
+.hito--ahora .hito__punto { background: var(--colores-pluma); border-color: var(--colores-pluma); }
+.hito__anio { margin-top: 10px; font-family: var(--fuentes-titular); font-weight: 700; font-size: 80px; line-height: 0.9; letter-spacing: -0.055em; }
+.hito--ahora .hito__anio { color: var(--colores-pluma); }
+.hito__que { font-family: var(--fuentes-texto); font-size: 23px; line-height: 1.25; font-weight: 600; }
+.hito__que em { font-family: var(--fuentes-remate); font-weight: 400; font-size: 1.15em; }
+.hito__detalle { font-size: 20px; line-height: 1.25; color: var(--colores-tinta-60); }
+/* I3 · Mapa de la lectura lateral */
+.mapa { position: absolute; left: 0; right: 0; bottom: 10px; width: 100%; height: 560px; }
+.mapa__linea { fill: none; stroke: var(--colores-tinta); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 900; stroke-dashoffset: 0; }
+.mapa__nodo--noticia { fill: var(--colores-tinta); }
+.mapa__nodo--idea { fill: var(--colores-pluma); }
+.mapa__nodo--libro { fill: var(--colores-marcador); }
+.mapa__nombre { font-family: var(--fuentes-titular); font-weight: 700; font-size: 38px; letter-spacing: -0.03em; text-anchor: middle; fill: var(--colores-tinta); }
+.mapa__nombre--claro { fill: var(--colores-papel); }
+.mapa__rotulo { font-family: var(--fuentes-remate); font-style: italic; font-size: 38px; fill: var(--colores-pluma); }
+/* I7 · Esquema de Magnific con rótulos del guion (la imagen no lleva texto) */
+.esquema { position: absolute; inset: 0; }
+.esquema img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.esquema__rotulo {
+  position: absolute; font-family: var(--fuentes-texto); font-weight: 600; font-size: 26px; line-height: 1.15; max-width: 330px;
+  background: var(--colores-papel); color: var(--colores-tinta); border: 3px solid var(--colores-tinta); padding: 10px 16px;
+}
+.esquema__rotulo::after { content: ""; position: absolute; top: 50%; width: 70px; height: 3px; background: var(--colores-tinta); }
+.esquema__rotulo--1 { left: 34px; top: 150px; } .esquema__rotulo--1::after { left: 100%; }
+.esquema__rotulo--2 { right: 34px; top: 330px; } .esquema__rotulo--2::after { right: 100%; }
+.esquema__rotulo--3 { left: 54px; bottom: 50px; } .esquema__rotulo--3::after { left: 100%; }
+.con-infografia .infografia--esquema .infografia__titulo { display: inline-block; right: auto; max-width: 720px; background: var(--colores-papel); padding: 4px 12px; left: 32px; top: 28px; }
+
+/* La interferencia de la portada (M10): dos capas del titular en pluma y cian que solo asoman en el vídeo */
+.titular-caja { position: relative; }
+.interferencia {
+  position: absolute; left: 0; top: 0; right: 0; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  font-family: var(--fuentes-titular); font-size: var(--tamanos-titular); font-weight: 700; line-height: 1.0;
+  letter-spacing: -0.05em; text-wrap: balance; font-variant-numeric: lining-nums; padding-bottom: 0.18em;
+}
+.interferencia--a { color: var(--colores-pluma); }
+.interferencia--b { color: var(--colores-cian); }
+.interferencia .remate { background: none !important; color: inherit !important; padding: 0; }
+.gigante__copia { display: none; }
+
+/* ——— Solo en vídeo (folio.render.video añade «en-video»; el PNG no se anima) ——— */
+@keyframes interferencia-a { 0%, 18%, 25%, 68%, 75%, 100% { opacity: 0; transform: none; }
+  19% { opacity: 1; transform: translate(-10px, 3px); } 22% { opacity: 1; transform: translate(8px, -5px); }
+  69% { opacity: 1; transform: translate(9px, 2px); } 72% { opacity: 1; transform: translate(-7px, -3px); } }
+@keyframes interferencia-b { 0%, 18%, 25%, 68%, 75%, 100% { opacity: 0; transform: none; }
+  19% { opacity: 1; transform: translate(10px, -3px); } 22% { opacity: 1; transform: translate(-8px, 5px); }
+  69% { opacity: 1; transform: translate(-9px, -2px); } 72% { opacity: 1; transform: translate(7px, 3px); } }
+.en-video .interferencia--a { animation: interferencia-a calc(var(--video-segundos) * 1s) steps(1) both; }
+.en-video .interferencia--b { animation: interferencia-b calc(var(--video-segundos) * 1s) steps(1) both; }
+@keyframes subir { from { transform: translateY(0); } to { transform: translateY(-28%); } }
+.en-video .gigante__copia { display: inline; }
+.en-video .gigante { animation: subir calc(var(--video-segundos) * 1s) linear both; }
+@keyframes crecer { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes asomar { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes trazar { from { stroke-dashoffset: 900; } to { stroke-dashoffset: 0; } }
+@keyframes acercar { from { transform: scale(1.08); } to { transform: scale(1); } }
+.en-video .linea__eje { animation: crecer 1.4s cubic-bezier(.3, .7, .3, 1) 0.3s both; }
+.en-video .hito { animation: asomar 0.7s ease-out both; animation-delay: calc(0.9s + var(--i) * 0.6s); }
+.en-video .mapa__linea { animation: trazar 1.4s ease-in-out 0.6s both; }
+.en-video .mapa__linea--2 { animation-delay: 1.8s; }
+.en-video .mapa__rotulo { animation: asomar 0.6s ease-out 1.6s both; }
+.en-video .mapa__rotulo--2 { animation-delay: 2.9s; }
+.en-video .esquema img { animation: acercar calc(var(--video-segundos) * 1s) ease-out both; }
+.en-video .esquema__rotulo { animation: asomar 0.6s ease-out both; animation-delay: calc(1s + var(--i) * 0.7s); }
+
 /* Noticias graves: sin marcador; el remate, en cursiva sin subrayar */
 .grave .remate { background: none !important; color: inherit !important; padding: 0; }
 .grave .cifra__numero { color: var(--colores-papel); }

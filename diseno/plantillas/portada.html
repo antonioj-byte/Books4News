@@ -8,7 +8,9 @@
 {% block cuerpo %}
     <div class="titulo">
       {% if antetitulo %}<div class="antetitulo">{{ antetitulo }}</div>{% endif %}
-      <h1 class="titular">{{ titular_remate }}</h1>
+      {% if interferencia %}<div class="titular-caja"><h1 class="titular">{{ titular_remate }}</h1>
+        <p class="interferencia interferencia--a" aria-hidden="true">{{ titular_remate }}</p><p class="interferencia interferencia--b" aria-hidden="true">{{ titular_remate }}</p></div>
+      {%- else %}<h1 class="titular">{{ titular_remate }}</h1>{% endif %}
       {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
     </div>
 {% endblock %}

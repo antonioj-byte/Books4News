@@ -118,6 +118,17 @@ class RetratoGenerado(_Seccion):
     aspecto: Literal["traditional_3_4", "portrait_2_3", "square_1_1"] = "traditional_3_4"
     espera_max_s: int = Field(default=180, gt=0)
     max_por_dia: int = Field(default=5, ge=0)
+    # Estilos según el tono de la pieza (31/10): rota solo entre los de su tono que estén en `estilos`;
+    # una lista vacía es «sin retrato generado» (la foto). Un tono que no esté aquí rota entre todos.
+    por_tono: dict[Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"],
+                   list[Literal["low_poly", "voxel", "dithering", "render_2000"]]] = Field(default_factory=dict)
+
+
+class Esquema(_Seccion):
+    activo: bool = True
+    max_por_dia: int = Field(default=3, ge=0)     # ilustraciones de Magnific por día (unos 25 créditos cada una)
+    aspecto: Literal["traditional_3_4", "portrait_2_3", "square_1_1", "widescreen_16_9", "classic_4_3"] = "classic_4_3"
+    espera_max_s: int = Field(default=240, gt=0)
 
 
 class Arte(_Seccion):
@@ -134,6 +145,11 @@ class Arte(_Seccion):
     # el director de arte no está aquí o le faltan datos, se usa el primero de la lista que los tenga.
     sin_foto: list[Literal["golpe", "gigante", "teletipo", "collage"]] = Field(
         default_factory=lambda: ["golpe", "gigante", "teletipo", "collage"])
+    # Infografías de la diapositiva de la idea (31/10) y la ilustración técnica de Magnific del «esquema»
+    infografias: list[Literal["linea", "mapa", "esquema"]] = Field(default_factory=lambda: ["linea", "mapa", "esquema"])
+    esquema: Esquema = Field(default_factory=lambda: Esquema())
+    # Tonos en los que la portada en vídeo lleva la interferencia (M10)
+    interferencia: list[Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]] = Field(default_factory=lambda: ["ironico"])
 
 
 class ConfigPipeline(_Seccion):
@@ -240,6 +256,7 @@ def perfil_dev(cfg: Config) -> Config:
     dev.pipeline.modelos = {etapa: dev.pipeline.dev.modelo for etapa in dev.pipeline.modelos}
     dev.pipeline.esfuerzo = {etapa: "low" for etapa in dev.pipeline.esfuerzo}
     dev.pipeline.arte.retrato_generado.activo = False      # tampoco se pagan retratos generados
+    dev.pipeline.arte.esquema.activo = False               # ni ilustraciones de esquema (Magnific)
     return dev
 
 

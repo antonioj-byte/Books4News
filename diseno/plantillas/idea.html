@@ -1,2 +1,29 @@
 {% extends "base.html" %}
-{% block fondo %}<span class="glifo" aria-hidden="true">§</span>{% endblock %}
+{% block fondo %}{% if not infografia %}<span class="glifo" aria-hidden="true">§</span>{% endif %}{% endblock %}
+{% block cuerpo %}
+    {% if infografia %}
+    <figure class="infografia infografia--{{ infografia.tipo }}" aria-hidden="true">
+      {% if infografia.titulo %}<figcaption class="infografia__titulo">{{ infografia.titulo }}</figcaption>{% endif %}
+      {% if infografia.tipo == "linea" %}
+      <div class="linea"><span class="linea__eje"></span>
+        {% for h in infografia.hitos %}<div class="hito{% if h.ahora %} hito--ahora{% endif %}" style="left: {{ h.x }}%; --i: {{ loop.index0 }}"><b class="hito__punto"></b><span class="hito__anio">{{ h.anio }}</span><span class="hito__que">{{ h.que_html }}</span><span class="hito__detalle">{{ h.detalle }}</span></div>{% endfor %}
+      </div>
+      {% elif infografia.tipo == "mapa" %}
+      <svg class="mapa" viewBox="0 0 920 560">
+        <path class="mapa__linea" d="M190 120 C 420 120, 560 200, 700 280"/>
+        <path class="mapa__linea mapa__linea--2" d="M700 280 C 560 380, 400 440, 220 450"/>
+        <circle class="mapa__nodo mapa__nodo--noticia" cx="190" cy="120" r="96"/><text x="190" y="132" class="mapa__nombre mapa__nombre--claro">noticia</text>
+        <circle class="mapa__nodo mapa__nodo--idea" cx="700" cy="280" r="106"/><text x="700" y="292" class="mapa__nombre mapa__nombre--claro">idea</text>
+        <circle class="mapa__nodo mapa__nodo--libro" cx="220" cy="450" r="96"/><text x="220" y="462" class="mapa__nombre">libro</text>
+        <text x="470" y="132" class="mapa__rotulo">{{ infografia.etiquetas[0] }}</text>
+        <text x="480" y="470" class="mapa__rotulo mapa__rotulo--2">{{ infografia.etiquetas[1] }}</text>
+      </svg>
+      {% else %}
+      <div class="esquema"><img src="{{ infografia.imagen }}" alt="">
+        {% for e in infografia.etiquetas %}<span class="esquema__rotulo esquema__rotulo--{{ loop.index }}" style="--i: {{ loop.index0 }}">{{ e }}</span>{% endfor %}
+      </div>
+      {% endif %}
+    </figure>
+    {% endif %}
+    <p class="texto">{{ texto }}</p>
+{% endblock %}

@@ -228,6 +228,16 @@ class SinFoto(BaseModel):
     sello: str | None = Field(default=None, description="De 1 a 3 palabras de la diapositiva de actualidad, copiadas literalmente, para un sello de estampilla")
 
 
+class Infografia(BaseModel):
+    """Infografía de la diapositiva de la idea (31/10): «linea» (línea de tiempo del libro y la noticia,
+    con los años verificados), «mapa» (noticia → idea → libro, con dos rótulos del guion) o «esquema»
+    (ilustración técnica de Magnific a partir de la imagen de la pieza, con tres rótulos del guion). Los
+    años los pone el código; los rótulos salen literalmente del guion (folio.infografia)."""
+    tipo: Literal["linea", "mapa", "esquema"] = Field(description="linea, mapa o esquema (ver el prompt)")
+    titulo: str | None = Field(default=None, description="De 3 a 8 palabras, sin cifras: lo que cuenta la infografía")
+    etiquetas: list[str] = Field(default_factory=list, description="Rótulos copiados literalmente del guion: 2 en el mapa (de 2 a 4 palabras), 3 en el esquema (de 1 a 3 palabras)")
+
+
 class PropuestaArte(BaseModel):
     """Primera llamada: qué buscar y qué destacar. La imagen la busca el código."""
     tono: Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]
@@ -243,6 +253,7 @@ class PropuestaArte(BaseModel):
     cifra: str | None = Field(default=None, description="Una cifra copiada literalmente de la diapositiva de actualidad, o null")
     cifra_rotulo: str | None = Field(default=None, description="De 2 a 6 palabras de esa misma diapositiva que explican la cifra")
     sin_foto: SinFoto | None = Field(default=None, description="Recurso gráfico de la diapositiva de actualidad si se queda sin foto ni cifra")
+    infografia: Infografia | None = Field(default=None, description="Infografía de la diapositiva de la idea, o null si ninguna aporta")
     por_que: str
 
 
@@ -278,6 +289,8 @@ class Arte(BaseModel):
     concepto: str | None = None          # metáfora de la ilustración
     retrato: str | None = None           # crédito del retrato del autor, si lo hay
     sin_foto: SinFoto | None = None    # recurso de la diapositiva de actualidad sin foto ni cifra
+    infografia: Infografia | None = None  # infografía de la diapositiva de la idea
+    esquema: str | None = None           # crédito de la ilustración técnica de Magnific (infografía «esquema»)
     credito: str | None = None
     por_que: str = ""
     avisos: list[str] = Field(default_factory=list)

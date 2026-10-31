@@ -23,11 +23,11 @@ import httpx
 import yaml
 from PIL import Image, ImageDraw, ImageFont
 
-from folio import sin_foto
-from folio.imagenes import cubiertas, ilustracion, libres, retrato_generado, retratos
+from folio import infografia, sin_foto
+from folio.imagenes import cubiertas, esquema, ilustracion, libres, retrato_generado, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
-from folio.modelos import Arte, EleccionImagen, Pieza, PropuestaArte
+from folio.modelos import Arte, EleccionImagen, Infografia, Pieza, PropuestaArte
 from folio.verificacion_texto import normalizar
 
 MAX_CANDIDATAS = 9
@@ -221,6 +221,9 @@ def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte
     arte.sin_foto, avisos = sin_foto.validar(propuesta.sin_foto, _texto_actualidad(pieza), permitidos,
                                              propuesta.suceso_con_victimas)
     arte.avisos += avisos
+    tipos = [t for t in cfg.pipeline.arte.infografias if not grave or t == "linea"]     # en graves, solo la línea
+    arte.infografia, avisos = infografia.validar(propuesta.infografia, pieza, tipos, bool(arte.imagen))
+    arte.avisos += avisos
 
 
 def _ilustracion(llm: LLM, cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
@@ -270,9 +273,11 @@ def _retrato(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
 
 def _retrato_generado(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
     """Pasa el retrato al estilo que toca hoy. Si falla, la pieza se queda con la foto."""
-    estilo, hechos = retrato_generado.estilo_del_dia(cfg, pieza.id, dir_fecha)
+    estilo, hechos = retrato_generado.estilo_del_dia(cfg, pieza.id, dir_fecha, arte.tono)
     if not estilo:
-        arte.avisos.append(f"Retrato generado: ya hay {hechos} hoy (máximo del día); se usa la foto")
+        motivo = (f"ya hay {hechos} hoy (máximo del día)" if hechos >= cfg.pipeline.arte.retrato_generado.max_por_dia
+                  else f"el tono «{arte.tono}» no lleva retrato generado")
+        arte.avisos.append(f"Retrato generado: {motivo}; se usa la foto")
         return
     try:
         img = retrato_generado.aplicar(cfg, pieza.id, dir_fecha, estilo)
@@ -281,6 +286,30 @@ def _retrato_generado(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) ->
         return
     arte.retrato = img.credito
     pieza.revision_humana.append(AVISO_RETRATO_GENERADO)
+
+
+def _esquema(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
+    """La ilustración técnica de la infografía «esquema» (Magnific). Si no se puede, la infografía pasa a
+    la línea de tiempo (si hay años) o se queda sin infografía; la etapa nunca se para."""
+    esquema.ruta(dir_fecha, pieza.id).unlink(missing_ok=True)
+    if not arte.infografia or arte.infografia.tipo != "esquema":
+        return
+    ec = cfg.pipeline.arte.esquema
+    motivo = None
+    if not ec.activo:
+        motivo = "desactivado en la configuración"
+    elif esquema.del_dia(dir_fecha, pieza.id) >= ec.max_por_dia:
+        motivo = f"ya hay {ec.max_por_dia} hoy (máximo del día)"
+    else:
+        try:
+            arte.esquema = esquema.generar(cfg, pieza.id, dir_fecha)
+            return
+        except Exception as exc:
+            motivo = f"no se pudo ({exc})"
+    linea, _ = infografia.validar(Infografia(tipo="linea", titulo=arte.infografia.titulo), pieza,
+                                  cfg.pipeline.arte.infografias, bool(arte.imagen))
+    arte.infografia = linea
+    arte.avisos.append(f"Esquema: {motivo}; {'la infografía pasa a la línea de tiempo' if linea else 'sin infografía'}")
 
 
 def _cubiertas(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
@@ -312,5 +341,6 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
         _ilustracion(llm, cfg, pieza, arte, dir_fecha)
     if cfg.pipeline.arte.retratos and pieza.libros and pieza.libros[0].autores:
         _retrato(cfg, pieza, arte, dir_fecha)
+    _esquema(cfg, pieza, arte, dir_fecha)
     _cubiertas(cfg, pieza, arte, dir_fecha)
     return arte

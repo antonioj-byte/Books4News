@@ -118,10 +118,9 @@ def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(c
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}/descarga.zip", include_in_schema=False)
 def descargar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     """El carrusel listo para publicar, en su versión actual: JPEG de cada diapositiva (1080×1350),
-    la portada en vídeo si tiene imagen y pie.txt con los créditos. Se pinta en el momento (hasta un
-    minuto); si la pieza no se ha editado, reutiliza el vídeo que dejó el render del día."""
+    en vídeo las diapositivas animadas y pie.txt con los créditos. Se pinta en el momento (hasta unos
+    minutos); si la pieza no se ha editado, reutiliza los vídeos que dejó el render del día."""
     import io
-    import shutil
     import zipfile
 
     from folio.publicacion.preparar import preparar
@@ -129,11 +128,8 @@ def descargar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     p, v = ctx.pieza(eid, pid)
     if not p.guion:
         raise HTTPException(409, "Esta pieza no tiene guion")
-    hecho = _video(ctx, fecha, pid)
-    reutilizar = v == 1 and hecho.is_file()
-    lista = preparar(ctx.cfg, p, con_video=not reutilizar)
-    if reutilizar:
-        shutil.copy(hecho, lista.carpeta / "01.mp4")
+    render = _video(ctx, fecha, pid).parent
+    lista = preparar(ctx.cfg, p, videos_de=render if v == 1 and any(render.glob("[0-9][0-9]-*.mp4")) else None)
     zona = io.BytesIO()
     with zipfile.ZipFile(zona, "w", zipfile.ZIP_DEFLATED) as z:
         for f in sorted(lista.carpeta.iterdir()):

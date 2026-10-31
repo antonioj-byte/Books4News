@@ -126,17 +126,21 @@ def posproceso(estilo: str, datos: bytes) -> tuple[bytes, str]:
 
 # --- Para la pieza ---------------------------------------------------------------------
 
-def estilo_del_dia(cfg: Config, pieza_id: str, dir_fecha: Path) -> tuple[str | None, int]:
-    """El siguiente estilo de la lista, alternando con los retratos ya generados hoy (sin contar esta
-    pieza), y cuántos hay. None si ya se llegó al máximo del día. El punto de partida cambia cada día:
-    con la mesa del día solo se escribe sola la primera pieza, y si la rotación empezara siempre por el
-    primer estilo, el retrato de la mañana saldría siempre en el mismo."""
+def estilo_del_dia(cfg: Config, pieza_id: str, dir_fecha: Path, tono: str | None = None) -> tuple[str | None, int]:
+    """El siguiente estilo, alternando con los retratos ya generados hoy (sin contar esta pieza), y cuántos
+    hay. None si ya se llegó al máximo del día o si el tono no lleva retrato generado. Si el tono tiene
+    estilos en `por_tono`, se rota solo entre esos. El punto de partida cambia cada día: con la mesa del
+    día solo se escribe sola la primera pieza, y si la rotación empezara siempre por el primer estilo, el
+    retrato de la mañana saldría siempre en el mismo."""
     rg = cfg.pipeline.arte.retrato_generado
     hechos = [p for p in libres.dir_imagenes(dir_fecha).glob("*-retrato.json")
               if not p.name.startswith(f"{pieza_id}-") and (img := libres.de_pieza(p.stem, dir_fecha)) and img.generado]
     if len(hechos) >= rg.max_por_dia:
         return None, len(hechos)
-    return rg.estilos[(_dia(dir_fecha) + len(hechos)) % len(rg.estilos)], len(hechos)
+    estilos = [e for e in rg.por_tono[tono] if e in rg.estilos] if tono in rg.por_tono else rg.estilos
+    if not estilos:
+        return None, len(hechos)
+    return estilos[(_dia(dir_fecha) + len(hechos)) % len(estilos)], len(hechos)
 
 
 def _dia(dir_fecha: Path) -> int:

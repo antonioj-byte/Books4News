@@ -275,7 +275,7 @@ def instagram_comprobar():
 @instagram_app.command("publicar")
 def instagram_publicar(pieza: str, fecha: str = typer.Option(None, help="Por defecto, la de la pieza"),
                        confirmar: bool = typer.Option(False, "--confirmar", help="Publicar de verdad; sin él, solo prepara y comprueba"),
-                       sin_video: bool = typer.Option(False, "--sin-video", help="La portada en imagen, no en vídeo")):
+                       sin_video: bool = typer.Option(False, "--sin-video", help="Todas las diapositivas en imagen, sin vídeo")):
     """Publica una pieza «aprobada» (en su versión actual de la web) como carrusel en Instagram.
 
     Sin --confirmar no publica nada: prepara los archivos, enseña el pie y comprueba la cuenta."""
@@ -293,7 +293,8 @@ def instagram_publicar(pieza: str, fecha: str = typer.Option(None, help="Por def
     for a in lista.avisos:
         typer.echo(f"Aviso: {a}")
     typer.echo(f"Pieza {pieza} (versión {version}): {len(lista.medios)} diapositivas"
-               f"{', portada en vídeo' if lista.medios[0][0] == 'video' else ''}; archivos en {lista.carpeta}")
+               f"{', en vídeo la ' + ', '.join(str(i) for i, (t, _) in enumerate(lista.medios, 1) if t == 'video') if any(t == 'video' for t, _ in lista.medios) else ''}"
+               f"; archivos en {lista.carpeta}")
     typer.echo(f"Pie ({len(lista.pie)} caracteres):\n{lista.pie}\n")
     try:
         c = ig.cuenta()
@@ -370,7 +371,7 @@ def buffer_programar(pieza: str,
                      fecha: str = typer.Option(None, help="Por defecto, la de la pieza"),
                      confirmar: bool = typer.Option(False, "--confirmar", help="Programar de verdad; sin él, solo prepara y comprueba"),
                      borrador: bool = typer.Option(False, "--borrador", help="Con --confirmar, lo deja en los borradores de Buffer: no se publica"),
-                     sin_video: bool = typer.Option(False, "--sin-video", help="La portada en imagen, no en vídeo")):
+                     sin_video: bool = typer.Option(False, "--sin-video", help="Todas las diapositivas en imagen, sin vídeo")):
     """Programa en Buffer una pieza «aprobada» (en su versión actual de la web) como carrusel de Instagram.
 
     Sin --confirmar no programa nada: prepara los archivos, enseña el pie y comprueba el canal."""
@@ -394,7 +395,8 @@ def buffer_programar(pieza: str,
     for aviso in lista.avisos:
         typer.echo(f"Aviso: {aviso}")
     typer.echo(f"Pieza {pieza} (versión {version}): {len(lista.medios)} diapositivas"
-               f"{', portada en vídeo' if lista.medios[0][0] == 'video' else ''}; archivos en {lista.carpeta}")
+               f"{', en vídeo la ' + ', '.join(str(i) for i, (t, _) in enumerate(lista.medios, 1) if t == 'video') if any(t == 'video' for t, _ in lista.medios) else ''}"
+               f"; archivos en {lista.carpeta}")
     typer.echo(f"Pie ({len(lista.pie)} caracteres):\n{lista.pie}\n")
     typer.echo(f"Hora: {cuando.strftime('%d/%m/%Y %H:%M') if cuando else 'la siguiente de la cola de Buffer'}")
     # Buffer descarga los archivos al publicar: los enlaces valen hasta tres días después de la hora

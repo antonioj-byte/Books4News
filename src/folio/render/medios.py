@@ -49,6 +49,12 @@ class Medios:
         return {"src": self.url_medio(libres.dir_imagenes(cache) / img.local), "credito": img.credito,
                 "enfoque": img.enfoque, "grabado": bool(pieza.arte and pieza.arte.recurso == "grabado")}
 
+    def esquema(self, pieza: Pieza) -> str | None:
+        """La ilustración técnica de la infografía «esquema», si se hizo."""
+        from folio.imagenes import esquema
+        r = esquema.ruta(self.cfg.dir_cache(pieza.fecha), pieza.id)
+        return self.url_medio(r) if r.exists() else None
+
     def retrato(self, pieza: Pieza) -> dict | None:
         r = self.imagen(pieza, "-retrato")
         if r:

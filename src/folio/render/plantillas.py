@@ -19,6 +19,9 @@ import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
+import re
+
+from folio import infografia as infografias
 from folio import sin_foto as recursos_sin_foto
 from folio.config import Config
 from folio.modelos import Diapositiva, Pieza
@@ -109,6 +112,24 @@ class Plantillas:
         antes = [de(x) for x in pieza.guion.diapositivas[:n - 1] if x.tipo == "libro"]
         return None if libro and any(a and a["titulo"] == libro["titulo"] for a in antes) else libro
 
+    def _infografia(self, pieza: Pieza, d: Diapositiva, n: int) -> dict | None:
+        """La infografía de la (primera) diapositiva de la idea, comprobada otra vez contra el guion actual.
+        None si no hay, si ya no casa o si es un esquema sin su ilustración: sale como antes."""
+        a = pieza.arte
+        if not a or not a.infografia or n != next(i for i, x in enumerate(pieza.guion.diapositivas, 1) if x.tipo == "idea"):
+            return None
+        imagen = self.medios.esquema(pieza) if a.infografia.tipo == "esquema" else None
+        info, _ = infografias.validar(a.infografia, pieza, self.cfg.pipeline.arte.infografias, True)
+        if not info or (info.tipo == "esquema" and not imagen):
+            return None
+        out = {"tipo": info.tipo, "titulo": info.titulo, "etiquetas": info.etiquetas, "imagen": imagen}
+        if info.tipo == "linea":
+            hitos = infografias.hitos(pieza)
+            paso = 60 / (len(hitos) - 1)
+            out["hitos"] = [{**h, "x": round(20 + i * paso, 2), "que_html": texto_html(f"*{h['que']}*" if h["que"] != "la noticia" else h["que"])}
+                            for i, h in enumerate(hitos)]
+        return out
+
     def _sin_foto(self, pieza: Pieza, d: Diapositiva) -> dict | None:
         """El recurso de la diapositiva de actualidad sin foto ni cifra, comprobado otra vez contra el texto
         actual (puede haberse editado en la web). None si no hay o ya no casa: sale solo con el texto."""
@@ -151,12 +172,21 @@ class Plantillas:
             imagen = retrato        # la cara del autor manda en la portada
         estilo, svg = self.medios.portada(pieza, imagen)
         sin_foto = self._sin_foto(pieza, d) if d.tipo == "actualidad" and not imagen and not (a and a.cifra) else None
+        info = self._infografia(pieza, d, n) if d.tipo == "idea" else None
+        # La cifra que cuenta (M2), la palabra gigante que sube (M7) y la interferencia de la portada (M10)
+        contar = bool(d.tipo == "actualidad" and a and a.cifra and re.search(r"\d", a.cifra))
+        interferencia = bool(d.tipo == "portada" and a and a.tono in self.cfg.pipeline.arte.interferencia and a.tono != "grave")
         campos = self.tokens.get("campos_portada") or {}
         paleta = self.tokens.get("paleta_piezas") or []
         return {
             "imagen": imagen, "retrato": retrato, "portada_estilo": estilo, "ilustracion": svg,
             "libros": libros if d.tipo == "cierre" else [], "libros_pieza": libros,
-            "libro": libro, "sin_foto": sin_foto,
+            "libro": libro, "sin_foto": sin_foto, "infografia": info, "contar": contar, "interferencia": interferencia,
+            # Las diapositivas que también salen en vídeo (folio.render.video): la portada con imagen o con
+            # interferencia, la noticia con cifra que cuenta o con palabra gigante, la idea con infografía
+            "video": (d.tipo == "portada" and (bool(imagen) or interferencia))
+                     or (d.tipo == "actualidad" and (contar or bool(sin_foto and sin_foto["recurso"] == "gigante")))
+                     or bool(info),
             "tono": a.tono if a else None, "acento": a.acento if a else None, "antetitulo": a.antetitulo if a else None,
             "cifra": a.cifra if a else None, "cifra_rotulo": a.cifra_rotulo if a else None,
             "campo": campos.get(a.tono if a else "", campos.get("sereno")),

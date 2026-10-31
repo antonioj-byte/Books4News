@@ -18,7 +18,8 @@ def creditos_pie(a: Arte) -> list[str]:
     """Los créditos de imagen que van en el pie de la publicación (en las diapositivas no hay créditos)."""
     sa = " (la portada se publica con la misma licencia, CC BY-SA)" if a.retrato and "SA" in a.retrato.upper().replace("-", " ").split() else ""
     return ([f"Retrato: {a.retrato}{sa}"] if a.retrato else []) + \
-           ([f"{'Ilustración' if a.recurso == 'grabado' else 'Imagen'}: {a.credito}"] if a.credito else [])
+           ([f"{'Ilustración' if a.recurso == 'grabado' else 'Imagen'}: {a.credito}"] if a.credito else []) + \
+           ([f"Infografía: {a.esquema}"] if a.esquema and a.infografia and a.infografia.tipo == "esquema" else [])
 
 
 def _libro_md(l: LibroVerificado) -> list[str]:

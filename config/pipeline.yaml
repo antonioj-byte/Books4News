@@ -94,6 +94,12 @@ arte:
   # golpe (la frase final a tamaño de titular), gigante (una palabra a toda la altura), teletipo (etiquetas,
   # número grande y letra de máquina) y collage (papel rasgado con la palabra y un sello).
   sin_foto: [golpe, gigante, teletipo, collage]
+  # La diapositiva de la idea puede llevar una infografía (31/10): linea (línea de tiempo con los años
+  # verificados), mapa (noticia → idea → libro) o esquema (ilustración técnica de Magnific a partir de la
+  # imagen de la pieza, con rótulos del guion). La elige el director de arte; los datos los comprueba el código.
+  infografias: [linea, mapa, esquema]
+  esquema: {activo: true, max_por_dia: 3}
+  interferencia: [ironico]     # tonos con interferencia (M10) en la portada en vídeo
   retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
   retratos_cc_by_sa: true      # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia
   # Retrato generado con IA a partir de la foto libre del autor (Magnific, Seedream 4.5 Edit), en un
@@ -104,6 +110,8 @@ arte:
     activo: true               # activado el 31/10 a petición del usuario
     estilos: [low_poly, voxel, render_2000]   # los tres en 3D; dithering, disponible a mano
     max_por_dia: 3             # tope de retratos generados por día (una pieza, uno)
+    # El estilo va con el tono de la noticia (31/10, a petición del usuario); en las graves, la foto
+    por_tono: {grave: [], sereno: [low_poly], reflexivo: [low_poly], ironico: [render_2000], luminoso: [voxel]}
 
 ab:
   control: opus-high

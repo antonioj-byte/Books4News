@@ -173,13 +173,16 @@ def test_descargar_el_carrusel_en_zip(cliente, cfg, monkeypatch):
 
     from folio.publicacion import preparar as prep
 
-    def preparar_falso(cfg, p, con_video=True):
+    def preparar_falso(cfg, p, con_video=True, videos_de=None):
         carpeta = cfg.dir_informes / p.fecha / "publicar" / p.id
         carpeta.mkdir(parents=True, exist_ok=True)
         for n in range(1, 6):
             (carpeta / f"{n:02d}.jpg").write_bytes(b"jpg")
         (carpeta / "pie.txt").write_text(prep.pie_publicacion(p), encoding="utf-8")
-        if con_video:
+        if videos_de:
+            for v in videos_de.glob("*.mp4"):
+                (carpeta / f"{v.name[:2]}.mp4").write_bytes(v.read_bytes())
+        elif con_video:
             (carpeta / "01.mp4").write_bytes(b"recien hecho")
         return prep.Preparada(carpeta, [], prep.pie_publicacion(p), [])
     monkeypatch.setattr(prep, "preparar", preparar_falso)
@@ -192,8 +195,9 @@ def test_descargar_el_carrusel_en_zip(cliente, cfg, monkeypatch):
     mp4 = cfg.dir_informes / "2026-10-30" / "render" / "2026-10-30-1" / "01-portada.mp4"
     mp4.parent.mkdir(parents=True)
     mp4.write_bytes(b"del render del dia")
+    (mp4.parent / "04-idea.mp4").write_bytes(b"la infografia")
     z = zipfile.ZipFile(io.BytesIO(cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1/descarga.zip").content))
-    assert z.read("01.mp4") == b"del render del dia"
+    assert z.read("01.mp4") == b"del render del dia" and z.read("04.mp4") == b"la infografia"
 
 
 def test_proceder_lanza_el_desarrollo_de_una_propuesta_pendiente(cfg, tmp_path):
