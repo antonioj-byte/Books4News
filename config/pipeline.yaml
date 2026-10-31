@@ -102,8 +102,8 @@ arte:
   interferencia: [ironico]     # tonos con interferencia (M10) en la portada en vídeo
   # Ilustración editorial (31/10, B1 y B6 del catálogo): el director de arte puede pedir una metáfora visual
   # en vez de una foto de archivo; Magnific la dibuja con el estilo de prompts/ilustracion_editorial.md, en
-  # 16:9, y cruza la portada y la noticia como una panorámica. Unos 25 créditos cada una.
-  ilustracion_editorial: {activo: true, max_por_dia: 3}
+  # 16:9, y cruza la portada y la noticia como una panorámica. Unos 25 créditos cada una (~0,025 €).
+  ilustracion_editorial: {activo: true, max_por_dia: 10}   # 10 al día (31/10, a petición del usuario): ~250 créditos como mucho
   buscador: true               # B2: el buscador de la portada escribe la pregunta y responde con el libro
   mapa_ilustrado: true         # B4: el mapa de la idea, dibujado como tres salas (diseno/ilustraciones/salas.jpg)
   retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
