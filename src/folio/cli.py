@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import date
+from datetime import date, datetime, timedelta
 
 import typer
 from pathlib import Path
@@ -233,6 +233,25 @@ def _instagram(cfg):
         raise typer.Exit(1)
 
 
+def _pieza_aprobada(cfg, pieza: str, fecha: str):
+    """La pieza en la última ejecución del día, solo si está «aprobada» y hay URL pública y clave de enlaces."""
+    from folio.almacen import Almacen
+    almacen = Almacen(cfg.ruta_db)
+    eid = almacen.ultima_ejecucion(fecha)
+    r = almacen.pieza(eid, pieza) if eid else None
+    if not r:
+        typer.echo(f"No encuentro la pieza {pieza} en la última ejecución del {fecha}", err=True)
+        raise typer.Exit(1)
+    p, version = r
+    if p.estado != "aprobada":
+        typer.echo(f"La pieza está «{p.estado}»: solo se publican las aprobadas (apruébala en la web)", err=True)
+        raise typer.Exit(1)
+    if not (cfg.url_publica and cfg.clave_enlaces):
+        typer.echo("Faltan FOLIO_URL_PUBLICA o FOLIO_CLAVE_ENLACES (docs/instagram.md)", err=True)
+        raise typer.Exit(1)
+    return almacen, eid, p, version
+
+
 @instagram_app.command("comprobar")
 def instagram_comprobar():
     """Comprueba la conexión con la cuenta (solo lectura): usuario, tipo de cuenta y publicaciones en 24 h."""
@@ -262,26 +281,13 @@ def instagram_publicar(pieza: str, fecha: str = typer.Option(None, help="Por def
     Sin --confirmar no publica nada: prepara los archivos, enseña el pie y comprueba la cuenta."""
     import json as _json
 
-    from folio.almacen import Almacen
     from folio.publicacion import enlaces
     from folio.publicacion.instagram import ErrorInstagram
     from folio.publicacion.preparar import preparar
 
     cfg = config.cargar()
     fecha = fecha or pieza[:10]
-    almacen = Almacen(cfg.ruta_db)
-    eid = almacen.ultima_ejecucion(fecha)
-    r = almacen.pieza(eid, pieza) if eid else None
-    if not r:
-        typer.echo(f"No encuentro la pieza {pieza} en la última ejecución del {fecha}", err=True)
-        raise typer.Exit(1)
-    p, version = r
-    if p.estado != "aprobada":
-        typer.echo(f"La pieza está «{p.estado}»: solo se publican las aprobadas (apruébala en la web)", err=True)
-        raise typer.Exit(1)
-    if not (cfg.url_publica and cfg.clave_enlaces):
-        typer.echo("Faltan FOLIO_URL_PUBLICA o FOLIO_CLAVE_ENLACES (docs/instagram.md)", err=True)
-        raise typer.Exit(1)
+    almacen, eid, p, version = _pieza_aprobada(cfg, pieza, fecha)
     ig = _instagram(cfg)
     lista = preparar(cfg, p, con_video=not sin_video)
     for a in lista.avisos:
@@ -305,6 +311,119 @@ def instagram_publicar(pieza: str, fecha: str = typer.Option(None, help="Por def
     almacen.cambiar_estado(eid, pieza, "publicada")
     (lista.carpeta / "publicada.json").write_text(_json.dumps({**publicada, "version": version}, ensure_ascii=False), encoding="utf-8")
     typer.echo(f"Publicada: {publicada.get('permalink') or publicada['id']}")
+
+
+buffer_app = typer.Typer(help="Programar el carrusel de una pieza en el Instagram de Folio a través de Buffer (docs/instagram.md)")
+app.add_typer(buffer_app, name="buffer")
+
+
+def _buffer(cfg):
+    from folio.publicacion.buffer import Buffer, ErrorBuffer
+    try:
+        return Buffer(cfg.buffer_clave)
+    except ErrorBuffer as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(1)
+
+
+def hora_de_publicacion(texto: str, zona: str, ahora: datetime | None = None) -> datetime:
+    """«2026-11-02 09:30» o «09:30» (la próxima vez que sea esa hora) en la zona de Folio."""
+    from zoneinfo import ZoneInfo
+    tz = ZoneInfo(zona)
+    ahora = (ahora or datetime.now(tz)).astimezone(tz)
+    try:
+        if len(texto.strip()) <= 5:
+            h, m = (int(x) for x in texto.strip().split(":"))
+            cuando = ahora.replace(hour=h, minute=m, second=0, microsecond=0)
+            return cuando if cuando > ahora else cuando + timedelta(days=1)
+        return datetime.strptime(texto.strip(), "%Y-%m-%d %H:%M").replace(tzinfo=tz)
+    except ValueError:
+        raise typer.BadParameter(f"Hora no válida: «{texto}» (usa «AAAA-MM-DD HH:MM» o «HH:MM»)") from None
+
+
+@buffer_app.command("comprobar")
+def buffer_comprobar():
+    """Comprueba la conexión (solo lectura): organización, canales y el de Instagram que se usará."""
+    from folio.publicacion.buffer import ErrorBuffer
+
+    cfg = config.cargar()
+    b = _buffer(cfg)
+    try:
+        for o in b.organizaciones():
+            typer.echo(f"Organización: {o['name']} ({o['id']})")
+            for c in b.canales(o["id"]):
+                typer.echo(f"  canal {c['service']}: {c['name']} ({c['id']})")
+        canal = b.canal_instagram(cfg.buffer_canal)
+        typer.echo(f"Se programará en: {canal['name']} ({canal['id']})")
+        typer.echo(f"Tipos de publicación que admite: {', '.join(b.valores('PostType')) or 'no se pudo leer'}")
+    except ErrorBuffer as e:
+        typer.echo(f"No se pudo: {e}", err=True)
+        raise typer.Exit(1)
+    for nombre, valor in (("FOLIO_URL_PUBLICA", cfg.url_publica), ("FOLIO_CLAVE_ENLACES", cfg.clave_enlaces)):
+        if not valor:
+            typer.echo(f"Falta {nombre}: sin ella no se puede programar (Buffer descarga las imágenes de ahí)")
+
+
+@buffer_app.command("programar")
+def buffer_programar(pieza: str,
+                     a: str = typer.Option(None, "--a", help="Hora de publicación, «AAAA-MM-DD HH:MM» o «HH:MM» (hora de Madrid); sin ella, a la cola de Buffer"),
+                     fecha: str = typer.Option(None, help="Por defecto, la de la pieza"),
+                     confirmar: bool = typer.Option(False, "--confirmar", help="Programar de verdad; sin él, solo prepara y comprueba"),
+                     borrador: bool = typer.Option(False, "--borrador", help="Con --confirmar, lo deja en los borradores de Buffer: no se publica"),
+                     sin_video: bool = typer.Option(False, "--sin-video", help="La portada en imagen, no en vídeo")):
+    """Programa en Buffer una pieza «aprobada» (en su versión actual de la web) como carrusel de Instagram.
+
+    Sin --confirmar no programa nada: prepara los archivos, enseña el pie y comprueba el canal."""
+    import json as _json
+    import os
+    import shutil
+
+    from folio.publicacion import enlaces
+    from folio.publicacion.buffer import ErrorBuffer
+    from folio.publicacion.preparar import preparar
+
+    cfg = config.cargar()
+    fecha = fecha or pieza[:10]
+    almacen, eid, p, version = _pieza_aprobada(cfg, pieza, fecha)
+    cuando = hora_de_publicacion(a, os.getenv("FOLIO_ZONA") or "Europe/Madrid") if a else None
+    if cuando and cuando <= datetime.now(cuando.tzinfo) + timedelta(minutes=5):
+        typer.echo("La hora tiene que ser al menos dentro de cinco minutos", err=True)
+        raise typer.Exit(1)
+    b = _buffer(cfg)
+    lista = preparar(cfg, p, con_video=not sin_video)
+    for aviso in lista.avisos:
+        typer.echo(f"Aviso: {aviso}")
+    typer.echo(f"Pieza {pieza} (versión {version}): {len(lista.medios)} diapositivas"
+               f"{', portada en vídeo' if lista.medios[0][0] == 'video' else ''}; archivos en {lista.carpeta}")
+    typer.echo(f"Pie ({len(lista.pie)} caracteres):\n{lista.pie}\n")
+    typer.echo(f"Hora: {cuando.strftime('%d/%m/%Y %H:%M') if cuando else 'la siguiente de la cola de Buffer'}")
+    # Buffer descarga los archivos al publicar: los enlaces valen hasta tres días después de la hora
+    # (con la cola, que no sabemos cuándo sale, treinta días)
+    segundos = int((cuando - datetime.now(cuando.tzinfo)).total_seconds()) + 3 * 86400 if cuando else 30 * 86400
+    try:
+        canal = b.canal_instagram(cfg.buffer_canal)
+        typer.echo(f"Canal: {canal['name']} ({canal['id']})")
+        if not confirmar:
+            typer.echo("Prueba: no se ha programado nada. Repite con --confirmar para programarlo.")
+            return
+        # Copia propia y estable: la descarga del .zip y Instagram vuelven a preparar la carpeta de la
+        # pieza, y Buffer descarga los archivos horas o días después
+        estable = lista.carpeta.parent / f"{pieza}-buffer"
+        shutil.rmtree(estable, ignore_errors=True)
+        shutil.copytree(lista.carpeta, estable)
+        medios = [(tipo, enlaces.firmar(cfg.url_publica, cfg.clave_enlaces, f"{fecha}/{pieza}-buffer/{archivo}", segundos))
+                  for tipo, archivo in lista.medios]
+        post = b.programar(canal["id"], lista.pie, medios, cuando, borrador)
+    except ErrorBuffer as e:
+        typer.echo(f"No se pudo: {e}", err=True)
+        raise typer.Exit(1)
+    (estable / "programada.json").write_text(
+        _json.dumps({"buffer": post, "version": version, "hora": cuando.isoformat() if cuando else None,
+                     "borrador": borrador}, ensure_ascii=False),
+        encoding="utf-8")
+    typer.echo(f"{'Borrador guardado' if borrador else 'Programada'} en Buffer (post {post['id']}, "
+               f"{'no se publica' if borrador else post.get('dueAt') or 'en cola'}). Los archivos que "
+               f"descargará están en {estable}: no los borres hasta que salga.")
 
 
 @app.command()

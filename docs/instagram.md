@@ -14,7 +14,33 @@ tarde (un despliegue), recupera la del día solo hasta dos horas después; pasad
 mañana. `GET /api/ejecuciones/programada` dice si está activa y cuándo toca. Cuesta lo mismo que
 lanzarla a mano (~1 $ por día).
 
-## Conectar la cuenta de Instagram de Folio
+## Programar con Buffer (lo más sencillo)
+
+Buffer conecta el Instagram de Folio sin crear una app en Meta y programa a una hora. El plan gratis basta
+(3 canales y 10 publicaciones en cola por canal). La cuenta de Instagram tiene que ser profesional.
+
+1. En buffer.com, conecta el Instagram de Folio y crea una clave de la API (developers.buffer.com).
+2. Variables del servicio «api» (nunca en el repo): `BUFFER_API_KEY` y, si hay más de un canal de
+   Instagram en la cuenta, `BUFFER_CHANNEL_ID`. Hacen falta también `FOLIO_URL_PUBLICA` y
+   `FOLIO_CLAVE_ENLACES` (abajo): Buffer descarga los archivos de ahí.
+3. Comprobar (solo lectura): `uv run folio buffer comprobar` lista la organización, los canales y el de
+   Instagram que se usará.
+4. Programar una pieza **aprobada**:
+
+   ```bash
+   uv run folio buffer programar 2026-10-31-1 --a "09:30"                         # prepara y enseña; no programa
+   uv run folio buffer programar 2026-10-31-1 --a "09:30" --confirmar --borrador  # a los borradores de Buffer (prueba)
+   uv run folio buffer programar 2026-10-31-1 --a "2026-11-02 09:30" --confirmar  # programada
+   ```
+
+   Sin `--a`, va a la cola de Buffer. La hora es la de Madrid (`FOLIO_ZONA`).
+
+Buffer descarga los archivos **al publicar**, no al programar: se copian a
+`informes/<fecha>/publicar/<pieza>-buffer/` y sus enlaces firmados valen hasta tres días después de la
+hora (treinta con la cola). No borres esa carpeta hasta que salga. Ante 401, 403 o 429 se para sin
+reintentar.
+
+## Conectar la cuenta de Instagram de Folio (API de Meta, sin intermediarios)
 
 Se usa la API de Instagram con login de Instagram: no hace falta página de Facebook ni intermediarios.
 

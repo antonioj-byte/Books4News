@@ -187,6 +187,10 @@ class Config:
     instagram_usuario: str | None = None
     url_publica: str | None = None
     clave_enlaces: str | None = None
+    # Programación en Buffer (folio.publicacion.buffer): clave de la API y, si hay más de un canal de
+    # Instagram en la cuenta, el id del de Folio
+    buffer_clave: str | None = None
+    buffer_canal: str | None = None
     extra: dict = field(default_factory=dict)
 
     @property
@@ -278,4 +282,6 @@ def cargar(raiz: Path = RAIZ) -> Config:
         instagram_usuario=_limpia("INSTAGRAM_USER_ID"),
         url_publica=_limpia("FOLIO_URL_PUBLICA"),
         clave_enlaces=_limpia("FOLIO_CLAVE_ENLACES"),
+        buffer_clave=_limpia("BUFFER_API_KEY"),
+        buffer_canal=_limpia("BUFFER_CHANNEL_ID"),
     )
