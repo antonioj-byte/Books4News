@@ -22,6 +22,7 @@ import hashlib
 import re
 import time
 from dataclasses import replace
+from datetime import date
 from io import BytesIO
 from pathlib import Path
 
@@ -127,13 +128,24 @@ def posproceso(estilo: str, datos: bytes) -> tuple[bytes, str]:
 
 def estilo_del_dia(cfg: Config, pieza_id: str, dir_fecha: Path) -> tuple[str | None, int]:
     """El siguiente estilo de la lista, alternando con los retratos ya generados hoy (sin contar esta
-    pieza), y cuántos hay. None si ya se llegó al máximo del día."""
+    pieza), y cuántos hay. None si ya se llegó al máximo del día. El punto de partida cambia cada día:
+    con la mesa del día solo se escribe sola la primera pieza, y si la rotación empezara siempre por el
+    primer estilo, el retrato de la mañana saldría siempre en el mismo."""
     rg = cfg.pipeline.arte.retrato_generado
     hechos = [p for p in libres.dir_imagenes(dir_fecha).glob("*-retrato.json")
               if not p.name.startswith(f"{pieza_id}-") and (img := libres.de_pieza(p.stem, dir_fecha)) and img.generado]
     if len(hechos) >= rg.max_por_dia:
         return None, len(hechos)
-    return rg.estilos[len(hechos) % len(rg.estilos)], len(hechos)
+    return rg.estilos[(_dia(dir_fecha) + len(hechos)) % len(rg.estilos)], len(hechos)
+
+
+def _dia(dir_fecha: Path) -> int:
+    """Número del día de la carpeta de caché (data/cache/<fecha>), para rotar el estilo inicial; 0 si no es
+    una fecha."""
+    try:
+        return date.fromisoformat(dir_fecha.name).toordinal()
+    except ValueError:
+        return 0
 
 
 def aplicar(cfg: Config, pieza_id: str, dir_fecha: Path, estilo: str,

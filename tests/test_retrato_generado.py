@@ -171,14 +171,25 @@ def test_sin_clave_o_sin_foto_no_se_llama(cfg_rg):
 
 def test_estilo_del_dia_alterna_y_respeta_el_tope(cfg_rg):
     dir_fecha = cfg_rg.dir_cache("2026-10-30")
+    estilos = cfg_rg.pipeline.arte.retrato_generado.estilos
     for i in (1, 2):
         _fijar_foto(cfg_rg, f"2026-10-30-{i}")
-    assert rg.estilo_del_dia(cfg_rg, "2026-10-30-1", dir_fecha) == ("low_poly", 0)
-    rg.aplicar(cfg_rg, "2026-10-30-1", dir_fecha, "low_poly", Servidor().cliente())
-    assert rg.estilo_del_dia(cfg_rg, "2026-10-30-2", dir_fecha) == ("voxel", 1)
-    assert rg.estilo_del_dia(cfg_rg, "2026-10-30-1", dir_fecha) == ("low_poly", 0)   # no se cuenta a sí misma
+    primero, _ = rg.estilo_del_dia(cfg_rg, "2026-10-30-1", dir_fecha)
+    siguiente = estilos[(estilos.index(primero) + 1) % len(estilos)]
+    rg.aplicar(cfg_rg, "2026-10-30-1", dir_fecha, primero, Servidor().cliente())
+    assert rg.estilo_del_dia(cfg_rg, "2026-10-30-2", dir_fecha) == (siguiente, 1)
+    assert rg.estilo_del_dia(cfg_rg, "2026-10-30-1", dir_fecha) == (primero, 0)   # no se cuenta a sí misma
     cfg_rg.pipeline.arte.retrato_generado.max_por_dia = 1
     assert rg.estilo_del_dia(cfg_rg, "2026-10-30-2", dir_fecha) == (None, 1)
+
+
+def test_el_primer_retrato_del_dia_cambia_de_estilo_cada_dia(cfg_rg):
+    """Con la mesa del día solo se escribe sola la primera pieza: si la rotación empezara cada día por el
+    mismo estilo, el retrato de la mañana saldría siempre igual (salía siempre en low-poly)."""
+    estilos = cfg_rg.pipeline.arte.retrato_generado.estilos
+    primeros = [rg.estilo_del_dia(cfg_rg, f"2026-11-0{d}-1", cfg_rg.dir_cache(f"2026-11-0{d}"))[0]
+                for d in range(1, len(estilos) + 1)]
+    assert sorted(primeros) == sorted(estilos)
 
 
 # --- En la etapa de arte ---------------------------------------------------------
@@ -202,7 +213,7 @@ def test_arte_usa_el_retrato_generado_y_lo_manda_a_revision(con_foto, monkeypatc
     pieza, a = _pieza(), Arte(tono="sereno", recurso="foto")
     for _ in range(2):                                                  # relanzar no duplica el aviso
         arte._retrato(con_foto, pieza, a, con_foto.dir_cache("2026-10-30"))
-    assert "low-poly generado con IA" in a.retrato
+    assert "generado con IA (Magnific)" in a.retrato
     assert pieza.revision_humana.count(arte.AVISO_RETRATO_GENERADO) == 1
 
 
