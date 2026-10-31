@@ -313,7 +313,7 @@ export interface components {
              * @default sangre
              * @enum {string}
              */
-            portada: "sangre" | "banda" | "caja" | "neon" | "circulo" | "collage" | "ilustracion";
+            portada: "sangre" | "banda" | "caja" | "neon" | "circulo" | "collage" | "ilustracion" | "panorama";
             /** Antetitulo */
             antetitulo: string | null;
             /** Remate */
@@ -324,6 +324,16 @@ export interface components {
             concepto: string | null;
             /** Retrato */
             retrato: string | null;
+            sin_foto: components["schemas"]["SinFoto"] | null;
+            infografia: components["schemas"]["Infografia"] | null;
+            /** Esquema */
+            esquema: string | null;
+            /** Escena */
+            escena: string | null;
+            /** Pregunta */
+            pregunta: string | null;
+            /** Registro */
+            registro: ("foto_autor" | "retrato_ia" | "ilustracion" | "archivo") | null;
             /** Credito */
             credito: string | null;
             /**
@@ -659,6 +669,32 @@ export interface components {
              */
             por_que: string;
         };
+        /**
+         * Infografia
+         * @description Infografía de la diapositiva de la idea (31/10): «linea» (línea de tiempo del libro y la noticia,
+         *     con los años verificados), «mapa» (noticia → idea → libro, con dos rótulos del guion) o «esquema»
+         *     (ilustración técnica de Magnific a partir de la imagen de la pieza, con tres rótulos del guion). Los
+         *     años los pone el código; los rótulos salen literalmente del guion (folio.infografia).
+         */
+        Infografia: {
+            /**
+             * Tipo
+             * @description linea, mapa, esquema o ninguna (ver el prompt)
+             * @enum {string}
+             */
+            tipo: "linea" | "mapa" | "esquema" | "ninguna";
+            /**
+             * Titulo
+             * @description De 3 a 8 palabras, sin cifras: lo que cuenta la infografía
+             * @default
+             */
+            titulo: string;
+            /**
+             * Etiquetas
+             * @description Rótulos copiados literalmente del guion: 2 en el mapa (de 2 a 4 palabras), 3 en el esquema (de 1 a 3 palabras)
+             */
+            etiquetas: string[];
+        };
         /** LibroCandidato */
         LibroCandidato: {
             /**
@@ -863,6 +899,11 @@ export interface components {
             /** Video Portada */
             video_portada: string | null;
             /**
+             * Videos
+             * @default []
+             */
+            videos: components["schemas"]["VideoDiapositiva"][];
+            /**
              * Lomos
              * @default []
              */
@@ -938,6 +979,61 @@ export interface components {
             /** Publicaria */
             publicaria: number | null;
         };
+        /**
+         * SinFoto
+         * @description Recurso gráfico de la diapositiva de actualidad cuando no lleva foto ni cifra (31/10). Todo lo
+         *     que se pinta sale literalmente del texto de esa diapositiva: el código lo comprueba al validar y
+         *     otra vez al pintar (el texto puede editarse en la web).
+         */
+        SinFoto: {
+            /**
+             * Recurso
+             * @description golpe, gigante, teletipo o collage (ver el prompt)
+             * @enum {string}
+             */
+            recurso: "golpe" | "gigante" | "teletipo" | "collage";
+            /**
+             * Golpe
+             * @description La frase final de la diapositiva de actualidad, copiada literalmente (de 3 a 14 palabras)
+             * @default
+             */
+            golpe: string;
+            /**
+             * Golpe Remate
+             * @description El final del golpe, copiado literalmente (de 1 a 4 palabras), que irá en cursiva con marcador
+             * @default
+             */
+            golpe_remate: string;
+            /**
+             * Palabra
+             * @description Una palabra de la diapositiva de actualidad, copiada literalmente (de 4 a 12 letras)
+             * @default
+             */
+            palabra: string;
+            /**
+             * Etiquetas
+             * @description De 2 a 3 etiquetas de 1 o 2 palabras copiadas literalmente de la diapositiva de actualidad
+             */
+            etiquetas: string[];
+            /**
+             * Numero
+             * @description Un número de la diapositiva de actualidad (un año, una edad, una cantidad), copiado literalmente, o vacío
+             * @default
+             */
+            numero: string;
+            /**
+             * Numero Rotulo
+             * @description De 1 a 5 palabras de esa misma diapositiva que dicen qué es el número
+             * @default
+             */
+            numero_rotulo: string;
+            /**
+             * Sello
+             * @description De 1 a 3 palabras de la diapositiva de actualidad, copiadas literalmente, para un sello de estampilla
+             * @default
+             */
+            sello: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -961,6 +1057,13 @@ export interface components {
             origen: string;
             /** Descripcion */
             descripcion: string;
+        };
+        /** VideoDiapositiva */
+        VideoDiapositiva: {
+            /** N */
+            n: number;
+            /** Url */
+            url: string;
         };
     };
     responses: never;

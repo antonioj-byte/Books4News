@@ -41,7 +41,9 @@ export function VistaPieza() {
             <EstadoChip estado={d.pieza.estado} />
             <FormatoChip formato={d.pieza.eleccion.formato ?? "lateral"} />
             <span className="dato">{d.pieza.id} · versión {d.version}</span>
-            {d.video_portada && <span className="dato text-carmesi">PORTADA EN VÍDEO</span>}
+            {(d.videos ?? []).length > 0 && (
+              <span className="dato text-carmesi">EN VÍDEO: {(d.videos ?? []).map((v) => v.n).join(", ")}</span>
+            )}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {ESTADOS.map((e) => (
@@ -61,6 +63,7 @@ export function VistaPieza() {
         {g ? (
           <>
             <Carrusel total={g.diapositivas.length} ancho={440} video={d.video_portada}
+                      videos={Object.fromEntries((d.videos ?? []).map((v) => [v.n, v.url]))}
                       url={(n) => api.urlDiapositiva(eid, pid, n, d.version)}
                       onEditar={async (n, texto, subtitulo) => {
                         const r = await api.editarDiapositiva(eid, pid, n, texto, subtitulo);

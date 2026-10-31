@@ -68,6 +68,11 @@ class HechoLigado(BaseModel):
     frase: str | None
 
 
+class VideoDiapositiva(BaseModel):
+    n: int                                # número de la diapositiva
+    url: str
+
+
 class PiezaDetalle(BaseModel):
     ejecucion_id: int
     fecha: str
@@ -81,6 +86,8 @@ class PiezaDetalle(BaseModel):
     # URL del vídeo de portada (folio render --video), si existe y la pieza no se ha editado desde
     # entonces: el vídeo se hizo con la versión del informe del día
     video_portada: str | None = None
+    # Todas las diapositivas en vídeo (portada, noticia, idea), con la misma condición
+    videos: list[VideoDiapositiva] = []
     lomos: list[Lomo] = []                # los libros con su cubierta (la propuesta pendiente los enseña)
 
 

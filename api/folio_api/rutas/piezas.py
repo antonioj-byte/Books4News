@@ -1,5 +1,7 @@
 """Una pieza: detalle, estado, HTML de sus diapositivas y evaluación."""
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
@@ -10,7 +12,7 @@ from folio.modelos import InformeDiario
 from folio_api.dependencias import Contexto, contexto
 from folio_api.ejecutor import EstadoEjecucion
 from folio_api.esquemas import (CambioEstado, EdicionDiapositiva, MensajeNuevo, PiezaDetalle, RespuestaChat,
-                                ResultadoEdicion)
+                                ResultadoEdicion, VideoDiapositiva)
 from folio_api.rutas.dias import lomos
 from folio_api.servicio import hechos_ligados
 
@@ -22,18 +24,26 @@ def _video(ctx: Contexto, fecha: str, pid: str):
     return ctx.cfg.dir_informes / fecha / "render" / pid / "01-portada.mp4"
 
 
+def _videos(ctx: Contexto, fecha: str, pid: str) -> dict[int, Path]:
+    """Los MP4 de cada diapositiva animada (NN-tipo.mp4), por número."""
+    carpeta = ctx.cfg.dir_informes / fecha / "render" / pid
+    return {int(f.name[:2]): f for f in sorted(carpeta.glob("[0-9][0-9]-*.mp4"))} if carpeta.is_dir() else {}
+
+
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}", response_model=PiezaDetalle)
 def pieza(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     fecha, inf = ctx.ejecucion(eid)
     p, v = ctx.pieza(eid, pid)
     ev = ctx.almacen.evaluacion(eid, pid)
     hay_video = v == 1 and _video(ctx, fecha, pid).is_file()
+    videos = _videos(ctx, fecha, pid) if v == 1 else {}
     return PiezaDetalle(ejecucion_id=eid, fecha=fecha, version=v, pieza=p,
                         aviso_jefe=inf.seleccion.aviso if inf.seleccion else None,
                         hechos_no_verificados=hechos_ligados(p),
                         evaluacion=ev[0] if ev else None, evaluacion_version=ev[1] if ev else None,
                         versiones=ctx.almacen.versiones(eid, pid),
                         video_portada=f"/api/ejecuciones/{eid}/piezas/{pid}/video.mp4" if hay_video else None,
+                        videos=[VideoDiapositiva(n=n, url=f"/api/ejecuciones/{eid}/piezas/{pid}/videos/{n}.mp4") for n in videos],
                         lomos=lomos(ctx, p))
 
 
@@ -44,6 +54,16 @@ def video(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     ruta = _video(ctx, fecha, pid)
     if not ruta.is_file():
         raise HTTPException(404, "Esta pieza no tiene vídeo de portada")
+    return FileResponse(ruta, media_type="video/mp4")
+
+
+@router.get("/api/ejecuciones/{eid}/piezas/{pid}/videos/{n}.mp4", include_in_schema=False)
+def video_diapositiva(eid: int, pid: str, n: int, ctx: Contexto = Depends(contexto)):
+    fecha, _ = ctx.ejecucion(eid)
+    ctx.pieza(eid, pid)
+    ruta = _videos(ctx, fecha, pid).get(n)
+    if not ruta:
+        raise HTTPException(404, "Esta diapositiva no tiene vídeo")
     return FileResponse(ruta, media_type="video/mp4")
 
 

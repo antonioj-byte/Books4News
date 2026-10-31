@@ -5,11 +5,12 @@
 const ANCHO = 1080;
 const ALTO = 1350;
 
-// La portada en vídeo (folio render --video): mismo tamaño y marco que la diapositiva, en bucle y sin sonido.
+// Una diapositiva en vídeo (folio render --video: la portada, la noticia o la idea): mismo tamaño y marco
+// que la diapositiva, en bucle y sin sonido.
 export function VideoPortada({ src, ancho }: { src: string; ancho: number }) {
   return (
     <video src={src} width={ancho} height={ALTO * (ancho / ANCHO)} autoPlay muted loop playsInline
-           aria-label="Portada en vídeo"
+           aria-label="Diapositiva en vídeo"
            className="block rounded-[6px] bg-papel object-cover shadow-[var(--sombra-libro)]" />
   );
 }
