@@ -293,7 +293,11 @@ class Pipeline:
                                  for a in guionista.afirmaciones_traduccion(pieza.guion)]
         pieza.estado = "propuesta"
         # En el orden del guion: el primero es el libro principal (el de la portada y el retrato)
-        usados = list(dict.fromkeys(v for lg in pieza.guion.libros if (v := guionista.libro_verificado(lg, pieza.libros))))
+        usados: list[LibroVerificado] = []          # las fichas no son hashables: sin dict.fromkeys
+        for lg in pieza.guion.libros:
+            v = guionista.libro_verificado(lg, pieza.libros)
+            if v and all(v is not u for u in usados):
+                usados.append(v)
         pieza.libros = usados or pieza.libros
 
     def piezas(self, sel: SeleccionJefe, al_jefe: list[Historia]) -> list[Pieza]:

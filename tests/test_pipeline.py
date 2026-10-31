@@ -302,3 +302,16 @@ def test_el_jefe_recibe_el_anio_minimo(cfg):
     assert seleccion.anio_minimo("2026-10-31", 2) == 2024
     texto = cargar_prompt(cfg, "jefe_cultura", {"[pegar año mínimo]": "2024", "[pegar lista]": "", "[pegar lista editorial]": ""})
     assert "publicados en 2024 o después" in texto
+
+
+def test_los_libros_quedan_en_el_orden_del_guion_sin_repetir(cfg, monkeypatch):
+    """Regresión: ordenar con dict.fromkeys rompía cualquier guion (las fichas no son hashables)."""
+    from datos import LIBRO
+    from folio import guion as guionista
+    from folio.modelos import Pieza
+    p, _ = _pipeline(cfg, monkeypatch, [])
+    otro = LIBRO.model_copy(update={"titulo": "Ficciones", "titulo_propuesto": "Ficciones", "autores": ["Jorge Luis Borges"], "olid": "OL1W"})
+    pieza = Pieza(id="2026-10-30-1", fecha="2026-10-30", estado="fallida", historia_id="h1", eleccion=ELECCION, n_medios=1, libros=[otro, LIBRO])
+    monkeypatch.setattr(guionista, "escribir", lambda *a, **k: (guion_valido(), [], []))
+    p._escribir(pieza, [])
+    assert pieza.estado == "propuesta" and [l.titulo for l in pieza.libros] == ["Eichmann in Jerusalem"]
