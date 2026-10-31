@@ -12,7 +12,7 @@ Penguin Random House España no responde: quedan fuera hasta que haya una vía m
 
 Ante 403 o 429 se para y se avisa, sin reintentar ni esquivar el bloqueo.
 
-En curso (31/10): todavía no está conectado a la etapa de arte ni a la portada «copia».
+La etapa de arte la usa cuando Commons no tiene retrato (folio.arte._retrato).
 """
 
 from __future__ import annotations

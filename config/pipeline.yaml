@@ -108,6 +108,7 @@ arte:
   mapa_ilustrado: true         # B4: el mapa de la idea, dibujado como tres salas (diseno/ilustraciones/salas.jpg)
   retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
   retratos_cc_by_sa: true      # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia
+  fotos_editoriales: true      # sin retrato en Commons, la foto de prensa de la web de la editorial (con su crédito)
   # Retrato generado con IA a partir de la foto libre del autor (Magnific, Seedream 4.5 Edit), en un
   # estilo de la casa, alternando en el día. Prompts en prompts/retrato_generado.md; prueba y criterios
   # en docs/estilo-retratos.md. Necesita MAGNIFIC_API_KEY; con --dev no se genera. A mano, para una

@@ -171,6 +171,8 @@ class Plantillas:
         if d.tipo == "portada" and retrato and not (a and a.portada == "panorama"):
             imagen = retrato        # la cara del autor manda en la portada (salvo en la panorámica, B6)
         estilo, svg = self.medios.portada(pieza, imagen)
+        if d.tipo == "portada" and imagen is retrato and retrato and retrato.get("pequena") and estilo != "panorama":
+            estilo = "copia"        # foto pequeña (de prensa): una copia en papel sobre la mesa, no a sangre
         panorama = bool(d.tipo == "actualidad" and imagen and a and a.portada == "panorama"
                         and self.medios.portada(pieza, imagen)[0] == "panorama")
         sin_foto = self._sin_foto(pieza, d) if d.tipo == "actualidad" and not imagen and not (a and a.cifra) else None

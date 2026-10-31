@@ -207,12 +207,19 @@ def con_foto(cfg_rg, monkeypatch):
     return cfg_rg
 
 
+def _retrato_y_estilo(cfg, pieza, a):
+    """Lo que hace dirigir() cuando la portada es la foto del autor y toca retrato generado."""
+    img = arte._retrato(cfg, pieza, a, cfg.dir_cache("2026-10-30"))
+    if img and cfg.pipeline.arte.retrato_generado.activo:
+        arte._retrato_generado(cfg, pieza, a, cfg.dir_cache("2026-10-30"))
+
+
 def test_arte_usa_el_retrato_generado_y_lo_manda_a_revision(con_foto, monkeypatch):
     monkeypatch.setattr(rg, "generar", lambda *a, **k: (_jpeg((10, 10, 10)), "t9", 20.0))
     con_foto.pipeline.arte.retrato_generado.activo = True
     pieza, a = _pieza(), Arte(tono="sereno", recurso="foto")
     for _ in range(2):                                                  # relanzar no duplica el aviso
-        arte._retrato(con_foto, pieza, a, con_foto.dir_cache("2026-10-30"))
+        _retrato_y_estilo(con_foto, pieza, a)
     assert "generado con IA (Magnific)" in a.retrato
     assert pieza.revision_humana.count(arte.AVISO_RETRATO_GENERADO) == 1
 
@@ -226,11 +233,11 @@ def test_arte_sin_generar_si_esta_desactivado_o_falla(con_foto, monkeypatch):
     monkeypatch.setattr(rg, "generar", falla)
     con_foto.pipeline.arte.retrato_generado.activo = False
     pieza, a = _pieza(), Arte(tono="sereno", recurso="foto")
-    arte._retrato(con_foto, pieza, a, con_foto.dir_cache("2026-10-30"))
+    _retrato_y_estilo(con_foto, pieza, a)
     assert llamadas == [] and a.retrato == "Ana Pérez · CC BY-SA 4.0 · Wikimedia Commons"
     con_foto.pipeline.arte.retrato_generado.activo = True
     a = Arte(tono="sereno", recurso="foto")
-    arte._retrato(con_foto, pieza, a, con_foto.dir_cache("2026-10-30"))
+    _retrato_y_estilo(con_foto, pieza, a)
     assert llamadas == [1] and a.retrato == "Ana Pérez · CC BY-SA 4.0 · Wikimedia Commons"
     assert any("se usa la foto" in x for x in a.avisos) and arte.AVISO_RETRATO_GENERADO not in pieza.revision_humana
 

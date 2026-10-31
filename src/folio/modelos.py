@@ -307,6 +307,9 @@ class Arte(BaseModel):
     esquema: str | None = None           # crédito de la ilustración técnica de Magnific (infografía «esquema»)
     escena: str | None = None            # metáfora de la ilustración editorial (recurso «ilustracion», portada «panorama»)
     pregunta: str | None = None          # la del buscador de la portada (B2)
+    # Registro de la imagen de portada, para barajar en el día (31/10): la foto real del autor, su retrato
+    # generado con IA, la ilustración editorial o la imagen de archivo
+    registro: Literal["foto_autor", "retrato_ia", "ilustracion", "archivo"] | None = None
     credito: str | None = None
     por_que: str = ""
     avisos: list[str] = Field(default_factory=list)

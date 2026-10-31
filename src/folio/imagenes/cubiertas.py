@@ -52,7 +52,7 @@ def es_buena(datos: bytes) -> tuple[bool, str]:
     if not 1.2 <= im.height / im.width <= 1.8:
         return False, f"proporción rara ({im.width}×{im.height})"
     gris = im.convert("L").resize((60, 90))
-    claros = sum(1 for v in gris.getdata() if v > 235) / (60 * 90)
+    claros = sum(1 for v in gris.tobytes() if v > 235) / (60 * 90)
     if claros > 0.85:
         return False, "cubierta genérica (casi toda en blanco)"
     if ImageStat.Stat(gris).stddev[0] < 12:

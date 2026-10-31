@@ -75,9 +75,10 @@ def _pipeline(cfg, monkeypatch, guiones, fecha="2026-10-30"):
     monkeypatch.setattr(textos, "textos_historia", lambda cfg, h, puntuaciones=None: [(FUENTES[0], "Texto de la noticia aquí.")])
     # Arte sin red: ninguna imagen candidata ni cubierta
     from folio import arte
-    from folio.imagenes import cubiertas, retratos
+    from folio.imagenes import cubiertas, prensa, retratos
     monkeypatch.setattr(arte, "candidatas", lambda propuesta, excluir=(): [])
     monkeypatch.setattr(retratos, "buscar_y_fijar", lambda *a, **k: (None, "sin red en los tests"))
+    monkeypatch.setattr(prensa, "buscar_y_fijar", lambda *a, **k: (None, "sin red en los tests"))
     monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)
     from folio.ingesta import agrupacion
     llm.ids = [h.id for h in agrupacion.agrupar(arts, _vectores(arts), 0.84)]
@@ -185,7 +186,7 @@ def test_desde_hechos_reutiliza_los_guiones(cfg, monkeypatch):
     inf, _ = p2.ejecutar(desde="hechos")
     assert inf.piezas[0].guion and inf.piezas[0].hechos
     assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["hechos", "arte"]
-    assert inf.piezas[0].arte.recurso == "grabado" and "Sin imagen" in inf.piezas[0].arte.avisos[0]
+    assert inf.piezas[0].arte.recurso == "grabado" and any("Sin imagen" in a for a in inf.piezas[0].arte.avisos)
 
 
 def test_desde_arte_no_repite_los_hechos(cfg, monkeypatch):

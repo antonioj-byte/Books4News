@@ -16,6 +16,7 @@ from folio.modelos import LibroVerificado, Pieza
 
 # Composiciones que necesitan una imagen; sin ella, la portada es tipográfica
 _CON_IMAGEN = ("sangre", "banda", "caja", "neon", "panorama")
+LADO_SANGRE = 1000        # lado mayor mínimo para poner una foto a toda la portada
 
 
 def como_uri(ruta: Path) -> str:
@@ -62,6 +63,8 @@ class Medios:
             img = libres.de_pieza(pieza.id + "-retrato", self.cfg.dir_cache(pieza.fecha))
             # Los retratos de antes del 31/10 no guardaban a quién retratan: eran del primer libro verificado
             r["persona"] = (img.persona if img else None) or (pieza.libros[0].autores[0] if pieza.libros and pieza.libros[0].autores else None)
+            # Las fotos de prensa de las editoriales son pequeñas: en la portada van como copia, no a sangre
+            r["pequena"] = bool(img and max(img.ancho, img.alto) < LADO_SANGRE)
         return r
 
     def portada(self, pieza: Pieza, imagen: dict | None) -> tuple[str, Markup | None]:

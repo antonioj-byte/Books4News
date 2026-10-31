@@ -24,7 +24,7 @@ import yaml
 from PIL import Image, ImageDraw, ImageFont
 
 from folio import infografia, sin_foto
-from folio.imagenes import cubiertas, editorial, esquema, ilustracion, libres, retrato_generado, retratos
+from folio.imagenes import cubiertas, editorial, esquema, ilustracion, libres, prensa, retrato_generado, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import Arte, EleccionImagen, Infografia, Pieza, PropuestaArte
@@ -288,44 +288,78 @@ def autor_principal(pieza: Pieza) -> str | None:
 AVISO_RETRATO_GENERADO = "Retrato generado con IA: comprueba el parecido con la foto original antes de publicar"
 
 
-def _retrato(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
-    """El retrato del autor del libro principal (Wikidata + Commons) y, si está activo, su versión
-    generada en un estilo de la casa (folio.imagenes.retrato_generado)."""
+def _retrato(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> libres.ImagenLibre | None:
+    """Busca el retrato del autor del libro principal y lo fija: primero en Wikidata y Commons (fotos
+    grandes, con licencia libre); si no hay, la foto de prensa de la web de su editorial (pequeña, con el
+    crédito del fotógrafo; folio.imagenes.prensa). No genera nada: eso lo decide dirigir()."""
     for viejo in [*libres.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato.*"),
                   *libres.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato-original.*")]:
         viejo.unlink()
     pieza.revision_humana = [r for r in pieza.revision_humana if r != AVISO_RETRATO_GENERADO]
     autor = autor_principal(pieza)
     if not autor:
-        return
+        return None
+    img = None
     try:
         img, motivo = retratos.buscar_y_fijar(autor, pieza.id, dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
-        if img:
-            arte.retrato = img.credito
-        else:
+        if not img:
             arte.avisos.append(motivo)
     except Exception as exc:
-        arte.avisos.append(f"No se pudo buscar el retrato de {autor}: {type(exc).__name__}")
-        return
-    if img and cfg.pipeline.arte.retrato_generado.activo:
-        _retrato_generado(cfg, pieza, arte, dir_fecha)
+        arte.avisos.append(f"No se pudo buscar el retrato de {autor} en Commons: {type(exc).__name__}")
+    if not img and cfg.pipeline.arte.fotos_editoriales:
+        from folio.infografia import libro_principal
+        libro = libro_principal(pieza)
+        editorial_es = libro.edicion_es_detalle.editorial if libro and libro.edicion_es_detalle else None
+        try:
+            img, motivo = prensa.buscar_y_fijar(autor, editorial_es or (libro.editorial_original if libro else None),
+                                                pieza.id, dir_fecha)
+            if not img:
+                arte.avisos.append(motivo)
+        except prensa.BloqueoEditorial as exc:
+            arte.avisos.append(f"Foto de prensa: {exc}; se para sin reintentar")
+        except Exception as exc:
+            arte.avisos.append(f"No se pudo buscar la foto de prensa de {autor}: {type(exc).__name__}")
+    if img:
+        arte.retrato = img.credito
+    return img
 
 
-def _retrato_generado(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
-    """Pasa el retrato al estilo que toca hoy. Si falla, la pieza se queda con la foto."""
+def elegir_registro(hay_retrato: bool, quiere_ilustracion: bool, del_dia: list[str]) -> str:
+    """La imagen de portada, por este orden (31/10, reglas del usuario): la foto del autor si la hay; si no,
+    la ilustración editorial si el tema es conceptual; si no, el archivo. Para barajar en el día, si la
+    pieza anterior ya fue foto de autor y esta admite ilustración, va ilustración (y al revés)."""
+    preferido = "foto_autor" if hay_retrato else "ilustracion" if quiere_ilustracion else "archivo"
+    anterior = next((r for r in reversed(del_dia) if r), None)
+    retrato_antes = anterior in ("foto_autor", "retrato_ia")
+    if preferido == "foto_autor" and retrato_antes and quiere_ilustracion:
+        return "ilustracion"
+    if preferido == "ilustracion" and anterior == "ilustracion" and hay_retrato:
+        return "foto_autor"
+    return preferido
+
+
+def toca_retrato_ia(del_dia: list[str]) -> bool:
+    """Foto real y retrato generado se alternan en el día: generado si hoy hay menos generados que reales
+    (la primera foto de autor del día va real)."""
+    return del_dia.count("retrato_ia") < del_dia.count("foto_autor")
+
+
+def _retrato_generado(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> bool:
+    """Pasa el retrato al estilo que toca hoy. Si falla, la pieza se queda con la foto (False)."""
     estilo, hechos = retrato_generado.estilo_del_dia(cfg, pieza.id, dir_fecha, arte.tono)
     if not estilo:
         motivo = (f"ya hay {hechos} hoy (máximo del día)" if hechos >= cfg.pipeline.arte.retrato_generado.max_por_dia
                   else f"el tono «{arte.tono}» no lleva retrato generado")
         arte.avisos.append(f"Retrato generado: {motivo}; se usa la foto")
-        return
+        return False
     try:
         img = retrato_generado.aplicar(cfg, pieza.id, dir_fecha, estilo)
     except Exception as exc:
         arte.avisos.append(f"Retrato generado: no se pudo ({exc}); se usa la foto")
-        return
+        return False
     arte.retrato = img.credito
     pieza.revision_humana.append(AVISO_RETRATO_GENERADO)
+    return True
 
 
 def _esquema(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
@@ -362,10 +396,13 @@ def _cubiertas(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
 
 
 def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: set[str] | None = None,
-            portadas_del_dia: list[str] | None = None, dir_fecha: Path | None = None) -> Arte:
+            portadas_del_dia: list[str] | None = None, dir_fecha: Path | None = None,
+            registros_del_dia: list[str] | None = None) -> Arte:
     """Etapa de arte de una pieza: propuesta, imagen de archivo, composición, ilustración (si toca),
     retrato del autor y cubiertas. `usadas`: imágenes ya elegidas hoy (no se repiten; se añade la
-    elegida). `portadas_del_dia`: composiciones y colores ya elegidos hoy, para variar. `dir_fecha`:
+    elegida). `portadas_del_dia`: composiciones y colores ya elegidos hoy, para variar.
+    `registros_del_dia`: la imagen de portada de las piezas anteriores del día (foto de autor, retrato
+    generado, ilustración, archivo), para barajar (elegir_registro). `dir_fecha`:
     dónde se guardan las imágenes (por defecto, data/cache/<fecha>; las ejecuciones de prueba usan otra
     carpeta para no pisar las de las piezas de verdad, que tienen los mismos ids)."""
     usadas = usadas if usadas is not None else set()
@@ -375,13 +412,29 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
     arte = Arte(tono=propuesta.tono, recurso=propuesta.recurso, portada=propuesta.portada, consultas=propuesta.consultas,
                 cifra=propuesta.cifra, cifra_rotulo=propuesta.cifra_rotulo, por_que=propuesta.por_que,
                 avisos=validar_cifra(propuesta, pieza))
-    if propuesta.recurso != "ilustracion" or not _ilustracion_editorial(cfg, pieza, propuesta, arte, dir_fecha):
+    del_dia = registros_del_dia or []
+    retrato = _retrato(cfg, pieza, arte, dir_fecha) if cfg.pipeline.arte.retratos and pieza.libros and pieza.libros[0].autores else None
+    quiere_ilustracion = propuesta.recurso == "ilustracion"
+    arte.registro = elegir_registro(bool(retrato), quiere_ilustracion, del_dia)
+    if arte.registro == "ilustracion" and not _ilustracion_editorial(cfg, pieza, propuesta, arte, dir_fecha):
+        arte.registro = "foto_autor" if retrato else "archivo"
+    if arte.registro != "ilustracion":
+        if quiere_ilustracion:
+            if arte.registro == "foto_autor":
+                arte.avisos.append("Ilustración editorial: la pieza lleva la foto del autor; se busca una foto de archivo para la noticia")
+            propuesta.recurso = arte.recurso = "foto"
         _imagen_de_archivo(llm, cfg, pieza, datos, propuesta, arte, usadas, dir_fecha)
     _composicion(cfg, pieza, propuesta, arte)
     if arte.portada == "ilustracion":
         _ilustracion(llm, cfg, pieza, arte, dir_fecha)
-    if cfg.pipeline.arte.retratos and pieza.libros and pieza.libros[0].autores:
-        _retrato(cfg, pieza, arte, dir_fecha)
+    # El retrato generado (3D) se alterna con la foto real, nunca parte de una foto de prensa (la cesión
+    # no permite obras derivadas) y solo cuando la portada es la foto del autor
+    if (arte.registro == "foto_autor" and retrato and not prensa.es_de_prensa(retrato)
+            and cfg.pipeline.arte.retrato_generado.activo and toca_retrato_ia(del_dia)):
+        if _retrato_generado(cfg, pieza, arte, dir_fecha):
+            arte.registro = "retrato_ia"
+    if arte.registro == "archivo" and not arte.imagen:
+        arte.registro = None
     _esquema(cfg, pieza, arte, dir_fecha)
     _cubiertas(cfg, pieza, arte, dir_fecha)
     return arte

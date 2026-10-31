@@ -146,6 +146,8 @@ class Arte(_Seccion):
     retratos: bool = True
     # Casi todos los retratos de Commons son CC BY-SA: la imagen derivada se publica con la misma licencia
     retratos_cc_by_sa: bool = False
+    # Si Commons no tiene retrato, la foto de la ficha del autor en la web de su editorial (folio.imagenes.prensa)
+    fotos_editoriales: bool = True
     retrato_generado: RetratoGenerado = Field(default_factory=RetratoGenerado)
     # Recursos de la diapositiva de actualidad sin foto ni cifra (elegidos el 31/10). Si el que propone
     # el director de arte no está aquí o le faltan datos, se usa el primero de la lista que los tenga.
