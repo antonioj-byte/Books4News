@@ -73,6 +73,7 @@ def buscar_y_fijar(autor: str, pieza_id: str, dir_cache_fecha: Path, permitir_cc
     if not img.libre:
         return None, f"Retrato de {autor} descartado: {img.motivo}"
     img.enfoque = (50, 28)        # en un retrato, la cara suele estar en el tercio de arriba
+    img.persona = autor
     imagenes.fijar(img, f"{pieza_id}-retrato", dir_cache_fecha)
     return img, ""
 

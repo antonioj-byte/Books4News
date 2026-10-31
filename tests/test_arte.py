@@ -55,3 +55,13 @@ def test_remate_literal_al_final_del_titular():
     assert arte.validar_remate("pierde a quien", t) is None          # no es el final
     assert arte.validar_remate("anotaba", t) is None                 # una sola palabra
     assert arte.validar_remate(t, t) is None                         # el titular entero
+
+
+def test_el_retrato_es_del_autor_del_libro_principal_del_guion():
+    from folio.modelos import LibroGuion
+    otro = LIBRO.model_copy(update={"titulo": "Ficciones", "titulo_propuesto": "Ficciones", "autores": ["Jorge Luis Borges"], "olid": "OL1W"})
+    p = _pieza()
+    p.libros = [otro, LIBRO]                       # verificados en otro orden
+    assert arte.autor_principal(p) == "Hannah Arendt"   # el guion lleva Eichmann en Jerusalén como principal
+    p.guion.libros = [LibroGuion(titulo="Ficciones", autor="Jorge Luis Borges", editorial_espanola=None, traductor=None, edicion_original="x")]
+    assert arte.autor_principal(p) == "Jorge Luis Borges"

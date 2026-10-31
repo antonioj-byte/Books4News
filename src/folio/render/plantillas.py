@@ -9,6 +9,8 @@ vista previa de la web: solo cambian `base_url` (de dónde salen fuentes y estil
 
 from __future__ import annotations
 
+import unicodedata
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -45,6 +47,16 @@ def css_tokens(tokens: dict) -> str:
               for clave, valor in valores.items() if isinstance(valor, (str, int, float))]
     return ":root {\n" + "\n".join(lineas) + "\n}"
 
+
+
+def misma_persona(a: str | None, b: str | None) -> bool:
+    """Mismo autor aunque cambien tildes, mayúsculas o un segundo apellido («Mariana Enriquez» y
+    «Mariana Enríquez»): todas las palabras del nombre más corto están en el más largo."""
+    if not a or not b:
+        return False
+    pa, pb = (set(unicodedata.normalize("NFKD", x).encode("ascii", "ignore").decode().lower().replace(".", " ").split()) for x in (a, b))
+    corto, largo = sorted((pa, pb), key=len)
+    return bool(corto) and corto <= largo
 
 @dataclass
 class Plantillas:
@@ -99,17 +111,22 @@ class Plantillas:
     def _medios_y_arte(self, pieza: Pieza, d: Diapositiva, n: int) -> dict:
         a = pieza.arte
         imagen = self.medios.imagen(pieza)
+        libros = ficha_libros(pieza, self.medios.cubierta)
+        libro = self._libro(libros, pieza, n) if d.tipo == "libro" else None
         retrato = self.medios.retrato(pieza)
+        # La cara solo va con su libro: en la portada, si es el autor del libro principal; en una
+        # diapositiva de libro, si es el autor de ese libro
+        if retrato and not misma_persona(retrato["persona"], (libro or (libros[:1] or [{}])[0]).get("autor")):
+            retrato = None
         if d.tipo == "portada" and retrato:
             imagen = retrato        # la cara del autor manda en la portada
         estilo, svg = self.medios.portada(pieza, imagen)
-        libros = ficha_libros(pieza, self.medios.cubierta)
         campos = self.tokens.get("campos_portada") or {}
         paleta = self.tokens.get("paleta_piezas") or []
         return {
             "imagen": imagen, "retrato": retrato, "portada_estilo": estilo, "ilustracion": svg,
             "libros": libros if d.tipo == "cierre" else [], "libros_pieza": libros,
-            "libro": self._libro(libros, pieza, n) if d.tipo == "libro" else None,
+            "libro": libro,
             "tono": a.tono if a else None, "acento": a.acento if a else None, "antetitulo": a.antetitulo if a else None,
             "cifra": a.cifra if a else None, "cifra_rotulo": a.cifra_rotulo if a else None,
             "campo": campos.get(a.tono if a else "", campos.get("sereno")),

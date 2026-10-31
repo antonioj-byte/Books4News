@@ -226,6 +226,14 @@ def _ilustracion(llm: LLM, cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Pat
         arte.avisos.append(f"Sin ilustración ({type(exc).__name__}: {exc}); la portada usa la imagen en círculo")
 
 
+def autor_principal(pieza: Pieza) -> str | None:
+    """El autor del libro principal: el primer libro del guion (con su ficha verificada)."""
+    from folio.guion import libro_verificado
+    principal = (libro_verificado(pieza.guion.libros[0], pieza.libros) if pieza.guion and pieza.guion.libros else None) \
+        or (pieza.libros[0] if pieza.libros else None)
+    return principal.autores[0] if principal and principal.autores else None
+
+
 AVISO_RETRATO_GENERADO = "Retrato generado con IA: comprueba el parecido con la foto original antes de publicar"
 
 
@@ -236,7 +244,9 @@ def _retrato(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
                   *libres.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato-original.*")]:
         viejo.unlink()
     pieza.revision_humana = [r for r in pieza.revision_humana if r != AVISO_RETRATO_GENERADO]
-    autor = pieza.libros[0].autores[0]
+    autor = autor_principal(pieza)
+    if not autor:
+        return
     try:
         img, motivo = retratos.buscar_y_fijar(autor, pieza.id, dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
         if img:

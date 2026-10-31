@@ -53,6 +53,9 @@ class Medios:
         r = self.imagen(pieza, "-retrato")
         if r:
             r["grabado"] = False
+            img = libres.de_pieza(pieza.id + "-retrato", self.cfg.dir_cache(pieza.fecha))
+            # Los retratos de antes del 31/10 no guardaban a quién retratan: eran del primer libro verificado
+            r["persona"] = (img.persona if img else None) or (pieza.libros[0].autores[0] if pieza.libros and pieza.libros[0].autores else None)
         return r
 
     def portada(self, pieza: Pieza, imagen: dict | None) -> tuple[str, Markup | None]:

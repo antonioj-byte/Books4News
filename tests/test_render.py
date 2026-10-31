@@ -153,3 +153,35 @@ def test_la_cubierta_no_se_repite_en_el_carrusel(cfg_diseno, pieza):
     assert 'class="escaparate"' in p.html_diapositiva(pieza, 3)
     segunda = p.html_diapositiva(pieza, 4)
     assert 'class="escaparate"' not in segunda and "vuelve a la obediencia" in segunda
+
+
+def test_la_cara_solo_va_con_su_libro(cfg_diseno, pieza):
+    """El retrato de otro autor (p. ej. Borges junto a un libro de Enríquez) no sale ni en la portada ni
+    en el círculo junto a la cubierta."""
+    from PIL import Image
+    from folio.imagenes import libres as imagenes
+    from folio.modelos import Arte
+    cache = cfg_diseno.dir_cache(pieza.fecha)
+    imagenes.dir_imagenes(cache).mkdir(parents=True)
+    Image.new("RGB", (1200, 1500), (90, 90, 90)).save(imagenes.dir_imagenes(cache) / f"{pieza.id}-retrato.jpg")
+    pieza.arte = Arte(tono="sereno", recurso="foto", portada="sangre")
+
+    def con_retrato_de(persona):
+        imagenes.guardar_metadatos(imagenes.ImagenLibre(
+            archivo="commons:File:x.jpg", pagina="", url="", ancho=1200, alto=1500, licencia="CC BY 4.0", licencia_url=None,
+            autor="A", descripcion="", libre=True, motivo="", local=f"{pieza.id}-retrato.jpg", persona=persona),
+            f"{pieza.id}-retrato", cache)
+        p = render.Plantillas(cfg_diseno)
+        return p.html_diapositiva(pieza, 1), p.html_diapositiva(pieza, 3)
+
+    portada, libro = con_retrato_de("Jorge Luis Borges")
+    assert "con-retrato" not in portada and 'class="cara"' not in libro
+    portada, libro = con_retrato_de("Hannah Arendt")
+    assert "con-retrato" in portada and 'class="cara"' in libro
+
+
+def test_misma_persona():
+    from folio.render.plantillas import misma_persona
+    assert misma_persona("Mariana Enriquez", "Mariana Enríquez") and misma_persona("Mariana Enríquez", "mariana enriquez")
+    assert misma_persona("Javier Cercas", "Javier Cercas Mena")
+    assert not misma_persona("Jorge Luis Borges", "Mariana Enríquez") and not misma_persona(None, "Borges")

@@ -292,7 +292,8 @@ class Pipeline:
         pieza.revision_humana = [f"Afirma que no hay traducción ({a}): compruébalo antes de publicar"
                                  for a in guionista.afirmaciones_traduccion(pieza.guion)]
         pieza.estado = "propuesta"
-        usados = [l for l in pieza.libros if any(guionista.libro_verificado(lg, [l]) for lg in pieza.guion.libros)]
+        # En el orden del guion: el primero es el libro principal (el de la portada y el retrato)
+        usados = list(dict.fromkeys(v for lg in pieza.guion.libros if (v := guionista.libro_verificado(lg, pieza.libros))))
         pieza.libros = usados or pieza.libros
 
     def piezas(self, sel: SeleccionJefe, al_jefe: list[Historia]) -> list[Pieza]:
