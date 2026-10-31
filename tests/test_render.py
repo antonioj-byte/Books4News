@@ -185,3 +185,21 @@ def test_misma_persona():
     assert misma_persona("Mariana Enriquez", "Mariana Enríquez") and misma_persona("Mariana Enríquez", "mariana enriquez")
     assert misma_persona("Javier Cercas", "Javier Cercas Mena")
     assert not misma_persona("Jorge Luis Borges", "Mariana Enríquez") and not misma_persona(None, "Borges")
+
+
+def test_el_video_borra_los_de_una_version_anterior(cfg_diseno, pieza, tmp_path, monkeypatch):
+    """Los NN-tipo.mp4 viejos de la pieza se borran al pintar: la web y el .zip los servirían."""
+    import shutil
+    pytest.importorskip("playwright")
+    if not shutil.which("ffmpeg"):
+        pytest.skip("sin ffmpeg")
+    from folio.imagenes import cubiertas
+    monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)
+    viejo = tmp_path / pieza.id / "02-actualidad.mp4"
+    viejo.parent.mkdir(parents=True)
+    viejo.write_bytes(b"de otra version")
+    try:
+        archivos, _ = render.renderizar_video(cfg_diseno, [pieza], tmp_path, fps=2, segundos=1)
+    except Exception as exc:  # sin navegador en este entorno
+        pytest.skip(f"Chromium no disponible: {exc}")
+    assert archivos == [] and not viejo.exists()          # esta pieza no tiene nada animado

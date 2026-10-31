@@ -82,7 +82,7 @@ def validar(info: Infografia | None, pieza: Pieza, permitidos: list[str], hay_im
     texto = texto_guion(pieza)
     buenas = []
     for e in info.etiquetas:
-        e = " ".join(e.split()).strip(" .,;:«»\"'")
+        e = " ".join(e.replace("*", "").split()).strip(" .,;:«»\"'")      # sin las marcas de cursiva
         if minimo <= len(e.split()) <= maximo and len(e) <= 34 and literal(e, texto):
             buenas.append(e)
         else:

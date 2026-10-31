@@ -175,7 +175,10 @@ class Plantillas:
             estilo = "copia"        # foto pequeña (de prensa): una copia en papel sobre la mesa, no a sangre
         panorama = bool(d.tipo == "actualidad" and imagen and a and a.portada == "panorama"
                         and self.medios.portada(pieza, imagen)[0] == "panorama")
-        sin_foto = self._sin_foto(pieza, d) if d.tipo == "actualidad" and not imagen and not (a and a.cifra) else None
+        # La cifra destacada solo si sigue literalmente en el texto (puede haberse editado en la web)
+        cifra = a.cifra if a and a.cifra and d.tipo == "actualidad" and recursos_sin_foto.literal(a.cifra, d.texto) else None
+        cifra_rotulo = a.cifra_rotulo if cifra and a.cifra_rotulo and recursos_sin_foto.literal(a.cifra_rotulo, d.texto) else None
+        sin_foto = self._sin_foto(pieza, d) if d.tipo == "actualidad" and not imagen and not cifra else None
         info = self._infografia(pieza, d, n) if d.tipo == "idea" else None
         if info and info["tipo"] == "mapa" and self.cfg.pipeline.arte.mapa_ilustrado and \
                 (dir_diseno(self.cfg, self.direccion) / "ilustraciones" / "salas.jpg").exists():
@@ -186,7 +189,7 @@ class Plantillas:
         buscador = ({"pregunta": a.pregunta, "respuesta": texto_html(f"*{principal}*") if principal else None}
                     if d.tipo == "portada" and a and a.pregunta and self.cfg.pipeline.arte.buscador else None)
         # La cifra que cuenta (M2), la palabra gigante que sube (M7) y la interferencia de la portada (M10)
-        contar = bool(d.tipo == "actualidad" and a and a.cifra and re.search(r"\d", a.cifra))
+        contar = bool(cifra and re.search(r"\d", cifra))
         interferencia = bool(d.tipo == "portada" and a and a.tono in self.cfg.pipeline.arte.interferencia and a.tono != "grave")
         campos = self.tokens.get("campos_portada") or {}
         paleta = self.tokens.get("paleta_piezas") or []
@@ -201,7 +204,7 @@ class Plantillas:
                      or (d.tipo == "actualidad" and (contar or bool(sin_foto and sin_foto["recurso"] == "gigante")))
                      or bool(info),
             "tono": a.tono if a else None, "acento": a.acento if a else None, "antetitulo": a.antetitulo if a else None,
-            "cifra": a.cifra if a else None, "cifra_rotulo": a.cifra_rotulo if a else None,
+            "cifra": cifra, "cifra_rotulo": cifra_rotulo,
             "campo": campos.get(a.tono if a else "", campos.get("sereno")),
             "color": paleta[color_de_pieza(pieza, len(paleta))] if paleta else None,
         }

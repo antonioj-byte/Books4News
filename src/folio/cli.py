@@ -88,6 +88,13 @@ def render(
             for a in avisos:
                 typer.echo(f"Aviso: {a}")
             typer.echo(f"{len(videos)} diapositivas en vídeo en {destino}")
+        if not d:
+            # Las piezas del informe son la versión 1 de la última ejecución del día
+            from folio.almacen import Almacen
+            from folio.render import marcar_render
+            eid = Almacen(cfg.ruta_db).ultima_ejecucion(fecha) if cfg.ruta_db.exists() else None
+            for p in piezas:
+                marcar_render(destino / p.id, eid, 1)
 
 
 @app.command("fuentes-editoriales")
@@ -180,6 +187,9 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
         tuberia.historial.anadir_libros(fecha, [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for l in hecha.libros])
     coste = round(sum(t.coste_usd for t in tuberia.llm.trazas), 4)
     v = almacen.guardar_version(eid, pieza, hecha, "pipeline", f"Desarrollada desde la mesa ({coste} $)")
+    if hecha.estado == "propuesta":
+        from folio.render import marcar_render
+        marcar_render(cfg.dir_informes / fecha / "render" / pieza, eid, v)
     almacen.cambiar_estado(eid, pieza, hecha.estado)
     if hecha.estado != "propuesta":
         typer.echo(f"No se pudo escribir: {hecha.error}", err=True)
@@ -371,6 +381,7 @@ def buffer_programar(pieza: str,
                      fecha: str = typer.Option(None, help="Por defecto, la de la pieza"),
                      confirmar: bool = typer.Option(False, "--confirmar", help="Programar de verdad; sin él, solo prepara y comprueba"),
                      borrador: bool = typer.Option(False, "--borrador", help="Con --confirmar, lo deja en los borradores de Buffer: no se publica"),
+                     reemplazar: bool = typer.Option(False, "--reemplazar", help="La pieza ya estaba programada y esa publicación se ha borrado en Buffer"),
                      sin_video: bool = typer.Option(False, "--sin-video", help="Todas las diapositivas en imagen, sin vídeo")):
     """Programa en Buffer una pieza «aprobada» (en su versión actual de la web) como carrusel de Instagram.
 
@@ -411,6 +422,11 @@ def buffer_programar(pieza: str,
         # Copia propia y estable: la descarga del .zip y Instagram vuelven a preparar la carpeta de la
         # pieza, y Buffer descarga los archivos horas o días después
         estable = lista.carpeta.parent / f"{pieza}-buffer"
+        if (estable / "programada.json").exists() and not reemplazar:
+            typer.echo(f"La pieza ya está programada en Buffer ({estable / 'programada.json'}): sus archivos se "
+                       "descargan al publicar y no se pueden cambiar. Borra antes esa publicación en Buffer y repite "
+                       "con --reemplazar.", err=True)
+            raise typer.Exit(1)
         shutil.rmtree(estable, ignore_errors=True)
         shutil.copytree(lista.carpeta, estable)
         medios = [(tipo, enlaces.firmar(cfg.url_publica, cfg.clave_enlaces, f"{fecha}/{pieza}-buffer/{archivo}", segundos))

@@ -163,6 +163,9 @@ def aplicar(cfg: Config, pieza_id: str, dir_fecha: Path, estilo: str,
     original = libres.de_pieza(f"{pieza_id}-retrato-original", dir_fecha) or libres.de_pieza(f"{pieza_id}-retrato", dir_fecha)
     if not original or not original.local or not (carpeta / original.local).exists():
         raise ValueError(f"La pieza {pieza_id} no tiene retrato fijado del que partir")
+    if original.archivo.startswith("prensa:"):
+        raise ValueError(f"El retrato de {pieza_id} es una foto de prensa: se cede para publicarla tal cual, "
+                         "no para hacer obras derivadas")
     foto = (carpeta / original.local).read_bytes()
     texto_prompt = prompt(cfg, estilo)
     clave_cache = hashlib.sha256(foto + estilo.encode() + texto_prompt.encode()).hexdigest()[:20]

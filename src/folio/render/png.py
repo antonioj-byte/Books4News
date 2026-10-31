@@ -39,6 +39,8 @@ def renderizar(cfg: Config, piezas: list[Pieza], destino: Path,
         for pieza in (p for p in piezas if p.guion):
             carpeta = destino / pieza.id
             carpeta.mkdir(parents=True, exist_ok=True)
+            for viejo in carpeta.glob("[0-9][0-9]-*.png"):        # si el guion tenía más diapositivas
+                viejo.unlink()
             for n, d in enumerate(pieza.guion.diapositivas, 1):
                 html_path = Path(tmp) / f"{pieza.id}-{n}.html"
                 html_path.write_text(plantillas.html_diapositiva(pieza, n), encoding="utf-8")

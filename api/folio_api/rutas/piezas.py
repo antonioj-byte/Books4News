@@ -24,10 +24,33 @@ def _video(ctx: Contexto, fecha: str, pid: str):
     return ctx.cfg.dir_informes / fecha / "render" / pid / "01-portada.mp4"
 
 
-def _videos(ctx: Contexto, fecha: str, pid: str) -> dict[int, Path]:
-    """Los MP4 de cada diapositiva animada (NN-tipo.mp4), por número."""
+def _render_vigente(ctx: Contexto, eid: int, fecha: str, pid: str, v: int) -> bool:
+    """Si lo que hay en render/<pieza>/ es de esta ejecución y versión (render.json lo dice); sin esa
+    marca (renders antiguos), solo la versión 1 de la última ejecución del día."""
+    import json
+    marca = ctx.cfg.dir_informes / fecha / "render" / pid / "render.json"
+    if marca.is_file():
+        try:
+            datos = json.loads(marca.read_text(encoding="utf-8"))
+        except ValueError:
+            return False
+        return datos.get("ejecucion") == eid and datos.get("version") == v
+    return v == 1 and ctx.almacen.ultima_ejecucion(fecha) == eid
+
+
+def _videos(ctx: Contexto, fecha: str, pid: str, p=None) -> dict[int, Path]:
+    """Los MP4 de cada diapositiva animada (NN-tipo.mp4), por número; con la pieza, solo los que casan
+    con el tipo de su diapositiva actual."""
     carpeta = ctx.cfg.dir_informes / fecha / "render" / pid
-    return {int(f.name[:2]): f for f in sorted(carpeta.glob("[0-9][0-9]-*.mp4"))} if carpeta.is_dir() else {}
+    if not carpeta.is_dir():
+        return {}
+    tipos = {i: d.tipo for i, d in enumerate(p.guion.diapositivas, 1)} if p is not None and p.guion else None
+    out = {}
+    for f in sorted(carpeta.glob("[0-9][0-9]-*.mp4")):
+        n = int(f.name[:2])
+        if tipos is None or tipos.get(n) == f.stem[3:]:
+            out[n] = f
+    return out
 
 
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}", response_model=PiezaDetalle)
@@ -35,8 +58,9 @@ def pieza(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     fecha, inf = ctx.ejecucion(eid)
     p, v = ctx.pieza(eid, pid)
     ev = ctx.almacen.evaluacion(eid, pid)
-    hay_video = v == 1 and _video(ctx, fecha, pid).is_file()
-    videos = _videos(ctx, fecha, pid) if v == 1 else {}
+    vigente = _render_vigente(ctx, eid, fecha, pid, v)
+    hay_video = vigente and _video(ctx, fecha, pid).is_file()
+    videos = _videos(ctx, fecha, pid, p) if vigente else {}
     return PiezaDetalle(ejecucion_id=eid, fecha=fecha, version=v, pieza=p,
                         aviso_jefe=inf.seleccion.aviso if inf.seleccion else None,
                         hechos_no_verificados=hechos_ligados(p),
@@ -50,9 +74,9 @@ def pieza(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}/video.mp4", include_in_schema=False)
 def video(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     fecha, _ = ctx.ejecucion(eid)
-    ctx.pieza(eid, pid)
+    _, v = ctx.pieza(eid, pid)
     ruta = _video(ctx, fecha, pid)
-    if not ruta.is_file():
+    if not ruta.is_file() or not _render_vigente(ctx, eid, fecha, pid, v):
         raise HTTPException(404, "Esta pieza no tiene vídeo de portada")
     return FileResponse(ruta, media_type="video/mp4")
 
@@ -60,8 +84,8 @@ def video(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}/videos/{n}.mp4", include_in_schema=False)
 def video_diapositiva(eid: int, pid: str, n: int, ctx: Contexto = Depends(contexto)):
     fecha, _ = ctx.ejecucion(eid)
-    ctx.pieza(eid, pid)
-    ruta = _videos(ctx, fecha, pid).get(n)
+    p, v = ctx.pieza(eid, pid)
+    ruta = _videos(ctx, fecha, pid, p).get(n) if _render_vigente(ctx, eid, fecha, pid, v) else None
     if not ruta:
         raise HTTPException(404, "Esta diapositiva no tiene vídeo")
     return FileResponse(ruta, media_type="video/mp4")
@@ -149,7 +173,8 @@ def descargar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     if not p.guion:
         raise HTTPException(409, "Esta pieza no tiene guion")
     render = _video(ctx, fecha, pid).parent
-    lista = preparar(ctx.cfg, p, videos_de=render if v == 1 and any(render.glob("[0-9][0-9]-*.mp4")) else None)
+    reutilizar = _render_vigente(ctx, eid, fecha, pid, v) and bool(_videos(ctx, fecha, pid, p))
+    lista = preparar(ctx.cfg, p, videos_de=render if reutilizar else None)
     zona = io.BytesIO()
     with zipfile.ZipFile(zona, "w", zipfile.ZIP_DEFLATED) as z:
         for f in sorted(lista.carpeta.iterdir()):

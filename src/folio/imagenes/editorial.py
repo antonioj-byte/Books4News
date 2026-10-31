@@ -103,7 +103,8 @@ def generar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, cliente: h
     if not cfg.magnific_api_key:
         raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
     texto = f"{escena} {estilo(cfg)}"
-    cache = dir_fecha.parent / "ilustraciones" / f"{hashlib.sha256(texto.encode()).hexdigest()[:20]}.jpg"
+    # La caché es común a todos los días y a las pruebas (cache/ilustraciones/), no de la carpeta del día
+    cache = cfg.dir_cache("x").parent / "ilustraciones" / f"{hashlib.sha256(texto.encode()).hexdigest()[:20]}.jpg"
     if not cache.exists():
         try:
             datos = _pedir(texto, cfg.magnific_api_key, cfg.pipeline.arte.ilustracion_editorial.espera_max_s, cliente)

@@ -78,6 +78,12 @@ def validar_antetitulo(texto: str | None) -> str | None:
     return texto if 1 <= len(texto.split()) <= 3 and len(texto) <= 26 else None
 
 
+_INICIOS_PREGUNTA = {"qué", "que", "por", "cómo", "como", "cuándo", "cuando", "dónde", "donde", "quién", "quien",
+                     "quiénes", "cuál", "cuáles", "cuánto", "cuánta", "cuántos", "cuántas", "para", "puede", "pueden",
+                     "se", "es", "son", "hay", "debe", "deben", "sirve", "sirven", "vale", "tiene", "tienen", "el",
+                     "la", "los", "las", "un", "una", "lo", "a", "de", "en", "sin", "si", "libros", "leer"}
+
+
 def validar_pregunta(texto: str | None) -> str | None:
     """La pregunta del buscador (B2): de 3 a 9 palabras y 48 caracteres, sin cifras ni nombres propios
     (solo siglas en mayúsculas), sin signos de interrogación (el buscador no los lleva)."""
@@ -85,7 +91,11 @@ def validar_pregunta(texto: str | None) -> str | None:
         return None
     palabras = " ".join(texto.split()).strip(" ¿?.").split()
     if palabras and palabras[0][:1].isupper() and not palabras[0].isupper():
-        palabras[0] = palabras[0].lower()                     # la mayúscula de inicio de frase no cuenta
+        # La mayúscula de inicio de frase no cuenta, pero solo en las palabras con que empieza una pregunta:
+        # «Madrid puede vivir sin coches» lleva un nombre propio
+        if palabras[0].lower() not in _INICIOS_PREGUNTA:
+            return None
+        palabras[0] = palabras[0].lower()
     t = " ".join(palabras)
     # Siglas en mayúsculas (IA, ONU) sí; nombres propios (una mayúscula y minúsculas) no
     propios = [w for w in palabras if w[:1].isupper() and not (w.isupper() and len(w) <= 5)]
@@ -218,6 +228,13 @@ def _imagen_de_archivo(llm: LLM, cfg: Config, pieza: Pieza, datos: str, propuest
         usadas |= {cand.archivo, cand.url}
 
 
+def _del_dia(contar, cfg: Config, pieza: Pieza, dir_fecha: Path) -> int:
+    """Lo hecho hoy contra el tope diario: las piezas de verdad y, en una prueba (--solo-pieza, --dev), también
+    las de la carpeta de prueba."""
+    real = cfg.dir_cache(pieza.fecha)
+    return contar(real, pieza.id) + (contar(dir_fecha, pieza.id) if dir_fecha != real else 0)
+
+
 def _ilustracion_editorial(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte, dir_fecha: Path) -> bool:
     """La ilustración editorial de la pieza (B1). Si no se puede (desactivada, máximo del día, escena no
     válida, víctimas o Magnific), se avisa y se busca una foto de archivo: devuelve False."""
@@ -227,7 +244,7 @@ def _ilustracion_editorial(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, 
         motivo = "desactivada en la configuración"
     elif propuesta.suceso_con_victimas:
         motivo = "con víctimas no se ilustra"
-    elif escena and editorial.del_dia(dir_fecha, pieza.id) >= ie.max_por_dia:
+    elif escena and _del_dia(editorial.del_dia, cfg, pieza, dir_fecha) >= ie.max_por_dia:
         motivo = f"ya hay {ie.max_por_dia} hoy (máximo del día)"
     elif escena:
         libres.olvidar(pieza.id, dir_fecha)
@@ -337,14 +354,14 @@ def _retrato(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> libres.I
 def elegir_registro(hay_retrato: bool, quiere_ilustracion: bool, del_dia: list[str]) -> str:
     """La imagen de portada, por este orden (31/10, reglas del usuario): la foto del autor si la hay; si no,
     la ilustración editorial si el tema es conceptual; si no, el archivo. Para barajar en el día, si la
-    pieza anterior ya fue foto de autor y esta admite ilustración, va ilustración (y al revés)."""
+    pieza anterior ya fue foto de autor y esta admite ilustración, va ilustración. Nunca se baja al
+    archivo por barajar."""
     preferido = "foto_autor" if hay_retrato else "ilustracion" if quiere_ilustracion else "archivo"
     anterior = next((r for r in reversed(del_dia) if r), None)
-    retrato_antes = anterior in ("foto_autor", "retrato_ia")
-    if preferido == "foto_autor" and retrato_antes and quiere_ilustracion:
+    if preferido == "foto_autor" and anterior in ("foto_autor", "retrato_ia") and quiere_ilustracion:
         return "ilustracion"
-    if preferido == "ilustracion" and anterior == "ilustracion" and hay_retrato:
-        return "foto_autor"
+    # La vuelta (después de una ilustración, la foto del autor) ya la da el orden: la foto manda. Dos
+    # ilustraciones seguidas solo se dan sin foto de autor, y entonces mejor ilustración que archivo.
     return preferido
 
 
@@ -382,7 +399,7 @@ def _esquema(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
     motivo = None
     if not ec.activo:
         motivo = "desactivado en la configuración"
-    elif esquema.del_dia(dir_fecha, pieza.id) >= ec.max_por_dia:
+    elif _del_dia(esquema.del_dia, cfg, pieza, dir_fecha) >= ec.max_por_dia:
         motivo = f"ya hay {ec.max_por_dia} hoy (máximo del día)"
     else:
         try:

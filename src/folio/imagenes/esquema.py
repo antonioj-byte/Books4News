@@ -59,7 +59,7 @@ def generar(cfg: Config, pieza_id: str, dir_fecha: Path, cliente: httpx.Client |
         im.save(b, "JPEG", quality=90)
     foto, texto = b.getvalue(), prompt(cfg)
     ec = cfg.pipeline.arte.esquema
-    cache = dir_fecha.parent / "esquemas" / f"{hashlib.sha256(foto + texto.encode() + ec.aspecto.encode()).hexdigest()[:20]}.jpg"
+    cache = cfg.dir_cache("x").parent / "esquemas" / f"{hashlib.sha256(foto + texto.encode() + ec.aspecto.encode()).hexdigest()[:20]}.jpg"
     if not cache.exists():
         try:
             datos, _, _ = retrato_generado.generar(foto, texto, cfg.magnific_api_key, ec.aspecto, ec.espera_max_s, cliente)

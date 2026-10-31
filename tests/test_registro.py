@@ -127,3 +127,41 @@ def test_si_el_mapa_no_se_sostiene_va_la_linea(cfg):
     arte._composicion(cfg, p, _propuesta(infografia=Infografia(tipo="mapa", titulo="Del tribunal a la obediencia",
                                                                etiquetas=["inventado del todo", "tampoco está"])), a)
     assert a.infografia.tipo == "linea" and "pasa a la línea de tiempo" in a.avisos[-1]
+
+
+def test_regresiones_de_la_revision(cfg_diseno, monkeypatch, tmp_path):
+    """Hallazgos de la revisión del 31/10."""
+    from folio import infografia
+    from folio.imagenes import retrato_generado as rg
+    from folio.modelos import Infografia
+    # Un nombre propio al principio de la pregunta no se cuela pasándolo a minúsculas
+    assert arte.validar_pregunta("Madrid puede vivir sin coches") is None
+    assert arte.validar_pregunta("Qué leer para entender el miedo") == "qué leer para entender el miedo"
+    # Los rótulos de la infografía salen sin las marcas de cursiva
+    p = _pieza()
+    p.guion.diapositivas[3].texto = "El mal administrativo necesita *gente corriente* que no se pregunte nada."
+    info, _ = infografia.validar(Infografia(tipo="mapa", titulo="Del tribunal a la obediencia",
+                                            etiquetas=["firmaba órdenes", "*gente corriente*"]), p, ["mapa"], True)
+    assert info.etiquetas == ["firmaba órdenes", "gente corriente"]
+    # Nunca un retrato generado a partir de una foto de prensa, tampoco a mano
+    _foto_prensa(cfg_diseno, "p9")
+    with pytest.raises(ValueError, match="prensa"):
+        rg.aplicar(cfg_diseno, "p9", cfg_diseno.dir_cache("2026-10-30"), "voxel")
+    # La cifra editada fuera del texto deja de pintarse (y de contar en el vídeo)
+    from folio.imagenes import cubiertas
+    monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)
+    con = _pieza()
+    con.guion.diapositivas[1].texto = "Un tribunal de 1963 juzga a un funcionario."
+    con.arte = Arte(tono="sereno", recurso="foto", cifra="1963")
+    pl = render.Plantillas(cfg_diseno)
+    assert "data-contar" in pl.html_diapositiva(con, 2)
+    con.guion.diapositivas[1].texto = "Un tribunal juzga a un funcionario que firmaba órdenes."
+    assert "cifra__numero" not in pl.html_diapositiva(con, 2)
+
+
+def test_topes_diarios_cuentan_las_piezas_de_verdad_en_las_pruebas(cfg):
+    real, prueba = cfg.dir_cache("2026-10-30"), cfg.dir_cache("2026-10-30") / "prueba"
+    vistos = []
+    contar = lambda d, pid: vistos.append(d) or 2
+    assert arte._del_dia(contar, cfg, _pieza(), prueba) == 4 and vistos == [real, prueba]
+    assert arte._del_dia(lambda d, pid: 2, cfg, _pieza(), real) == 2

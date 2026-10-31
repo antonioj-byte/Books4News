@@ -171,6 +171,13 @@ def test_video_de_portada_en_la_ficha_de_la_pieza(cliente, cfg):
     assert [v["n"] for v in ficha["videos"]] == [1, 4]
     assert cliente.get(ficha["videos"][1]["url"]).status_code == 200
     assert cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1/videos/2.mp4").status_code == 404
+    # Solo los vídeos de esta ejecución y versión (render.json), y que casen con el tipo de su diapositiva
+    (mp4.parent / "render.json").write_text('{"ejecucion": 1, "version": 2}')
+    ficha = cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1").json()
+    assert ficha["videos"] == [] and ficha["video_portada"] is None
+    (mp4.parent / "render.json").write_text('{"ejecucion": 1, "version": 1}')
+    (mp4.parent / "04-idea.mp4").rename(mp4.parent / "04-cierre.mp4")
+    assert [v["n"] for v in cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1").json()["videos"]] == [1]
 
 
 def test_descargar_el_carrusel_en_zip(cliente, cfg, monkeypatch):

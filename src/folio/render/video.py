@@ -52,6 +52,9 @@ def renderizar_video(cfg: Config, piezas: list[Pieza], destino: Path, direccion:
         navegador = _lanzar(p)
         pagina = navegador.new_page(viewport={"width": ancho, "height": alto}, device_scale_factor=1)
         for pieza in (p for p in piezas if p.guion):
+            # Los vídeos de una versión anterior no pueden quedarse: la web y el .zip los servirían
+            for viejo in (destino / pieza.id).glob("[0-9][0-9]-*.mp4"):
+                viejo.unlink()
             for n, d in enumerate(pieza.guion.diapositivas, 1):
                 html = Path(tmp) / f"{pieza.id}-{n}.html"
                 html.write_text(plantillas.html_diapositiva(pieza, n), encoding="utf-8")
