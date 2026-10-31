@@ -12,7 +12,7 @@ router = APIRouter()
 @router.post("/api/ejecuciones/lanzar", response_model=EstadoEjecucion, status_code=202)
 def lanzar(ctx: Contexto = Depends(contexto)):
     """Lanza la ejecución del día, igual que la diaria: `folio run` (~1 $) y después el render (PNG y
-    portada en vídeo). La ejecución aparece en la portada del día en cuanto termina el pipeline (la
+    vídeos de las diapositivas animadas). La ejecución aparece en la portada del día en cuanto termina el pipeline (la
     guarda en la base de datos); el vídeo, cuando termina el render."""
     if not ctx.ejecutor.lanzar(ctx.ejecutor.diaria):
         raise HTTPException(409, "Ya hay una ejecución en marcha")

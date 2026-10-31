@@ -28,7 +28,7 @@ class Ejecutor:
     def __init__(self, dir_datos: Path, comando: list[str] | None = None):
         self.registro = dir_datos / "ejecucion.log"
         self.comando = comando or [sys.executable, "-m", "folio.cli", "run", "--quiet"]
-        # La ejecución diaria programada: el pipeline y, si sale bien, PNG y portada en vídeo
+        # La ejecución diaria programada: el pipeline y, si sale bien, PNG y vídeos
         self.diaria = [self.comando, [sys.executable, "-m", "folio.cli", "render", "--video"]]
         self._proceso: subprocess.Popen | None = None
         self._inicio: str | None = None

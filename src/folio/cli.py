@@ -61,7 +61,7 @@ def render(
     pieza: str = typer.Option(None, help="Solo esta pieza (p. ej. 2026-10-30-1)"),
     direccion: str = typer.Option(None, help="Propuesta de diseno/propuestas/ («todas» para todas); "
                                              "sin ella, el design system en uso"),
-    video: bool = typer.Option(False, "--video", help="También la portada en MP4 (solo las que tienen imagen)"),
+    video: bool = typer.Option(False, "--video", help="También en MP4 las diapositivas animadas (portada, noticia, idea)"),
 ):
     """Render de las piezas del día a PNG (1080×1350) en informes/<fecha>/render/."""
     _logging(False)
@@ -87,7 +87,7 @@ def render(
             videos, avisos = renderizar_video(cfg, piezas, destino, d)
             for a in avisos:
                 typer.echo(f"Aviso: {a}")
-            typer.echo(f"{len(videos)} portadas en vídeo en {destino}")
+            typer.echo(f"{len(videos)} diapositivas en vídeo en {destino}")
 
 
 @app.command("fuentes-editoriales")
@@ -145,7 +145,7 @@ def imagen_fijar(pieza: str, archivo: str, fecha: str = typer.Option(None, help=
 def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defecto, la última ejecución de la fecha de la pieza"),
                 quiet: bool = typer.Option(False, "--quiet", help="Solo la etapa en curso (lo usa la web)")):
     """Escribe una propuesta pendiente de la mesa del día («Proceder» en la web): textos, guion,
-    hechos, arte, PNG y portada en vídeo. Guarda la pieza como versión nueva en la base de datos."""
+    hechos, arte, PNG y vídeos. Guarda la pieza como versión nueva en la base de datos."""
     _logging(quiet)
     from folio.almacen import Almacen
     from folio.etapas import EtapasGuardadas
@@ -173,7 +173,7 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
     progreso(f"Desarrollando {pieza}")
     hecha = tuberia.desarrollar(p, al_jefe, otras)
     if hecha.estado == "propuesta":
-        progreso("Pintando las diapositivas y la portada en vídeo")
+        progreso("Pintando las diapositivas y los vídeos")
         destino = cfg.dir_informes / fecha / "render"
         renderizar(cfg, [hecha], destino)
         renderizar_video(cfg, [hecha], destino)

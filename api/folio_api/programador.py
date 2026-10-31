@@ -1,4 +1,4 @@
-"""Ejecución diaria programada: cada mañana, el pipeline del día y el render (PNG y portada en vídeo),
+"""Ejecución diaria programada: cada mañana, el pipeline del día y el render (PNG y vídeos),
 para que a primera hora haya piezas listas para revisar y programar.
 
 Se activa con FOLIO_EJECUCION_DIARIA=HH:MM, hora local de FOLIO_ZONA (por defecto Europe/Madrid, con
