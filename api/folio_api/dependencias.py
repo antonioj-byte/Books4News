@@ -21,6 +21,7 @@ class Contexto:
     ejecutor: Ejecutor
     plantillas: Plantillas
     programador: Programador | None = field(default=None)
+    llm: object | None = field(default=None)       # el del chat de edición; en los tests, uno falso
 
     def ejecucion(self, eid: int) -> tuple[str, InformeDiario]:
         e = self.almacen.ejecucion(eid)

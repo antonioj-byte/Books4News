@@ -80,6 +80,26 @@ class PiezaDetalle(BaseModel):
     video_portada: str | None = None
 
 
+class EdicionDiapositiva(BaseModel):
+    texto: str
+    subtitulo: str | None = None          # solo la portada
+
+
+class ResultadoEdicion(BaseModel):
+    version: int
+    avisos: list[str]                     # reglas del guion que la edición no cumple (se guarda igual)
+
+
+class MensajeNuevo(BaseModel):
+    mensaje: str
+
+
+class RespuestaChat(BaseModel):
+    respuesta: str
+    version: int | None                   # la versión nueva, si el chat cambió la pieza
+    avisos: list[str]
+
+
 class CambioEstado(BaseModel):
     estado: EstadoPieza
 

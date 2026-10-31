@@ -107,6 +107,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ejecuciones/{eid}/piezas/{pid}/diapositivas/{n}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Editar Diapositiva
+         * @description Edición directa sobre la diapositiva: una versión nueva («manual»). Si rompe alguna regla del
+         *     guion se guarda igual y la respuesta trae los avisos.
+         */
+        put: operations["editar_diapositiva_api_ejecuciones__eid__piezas__pid__diapositivas__n__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ejecuciones/{eid}/piezas/{pid}/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leer Chat */
+        get: operations["leer_chat_api_ejecuciones__eid__piezas__pid__chat_get"];
+        put?: never;
+        /**
+         * Escribir Chat
+         * @description Un turno del chat de edición (Opus, unos céntimos). Si el editor cambia la pieza, es una versión
+         *     nueva («chat») que ya ha pasado las reglas del guion.
+         */
+        post: operations["escribir_chat_api_ejecuciones__eid__piezas__pid__chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/diseno/tokens.css": {
         parameters: {
             query?: never;
@@ -350,6 +393,13 @@ export interface components {
             modelo: string;
             /** Api */
             api: string;
+        };
+        /** EdicionDiapositiva */
+        EdicionDiapositiva: {
+            /** Texto */
+            texto: string;
+            /** Subtitulo */
+            subtitulo?: string | null;
         };
         /** EdicionEspanola */
         EdicionEspanola: {
@@ -697,6 +747,24 @@ export interface components {
             /** Error */
             error: string | null;
         };
+        /** MensajeChat */
+        MensajeChat: {
+            /** N */
+            n: number;
+            /** Rol */
+            rol: string;
+            /** Texto */
+            texto: string;
+            /** Version N */
+            version_n: number | null;
+            /** Creado En */
+            creado_en: string;
+        };
+        /** MensajeNuevo */
+        MensajeNuevo: {
+            /** Mensaje */
+            mensaje: string;
+        };
         /** Pieza */
         Pieza: {
             /** Id */
@@ -791,6 +859,22 @@ export interface components {
             evaluada: boolean;
             /** Libros */
             libros: components["schemas"]["Lomo"][];
+        };
+        /** RespuestaChat */
+        RespuestaChat: {
+            /** Respuesta */
+            respuesta: string;
+            /** Version */
+            version: number | null;
+            /** Avisos */
+            avisos: string[];
+        };
+        /** ResultadoEdicion */
+        ResultadoEdicion: {
+            /** Version */
+            version: number;
+            /** Avisos */
+            avisos: string[];
         };
         /** ResumenDia */
         ResumenDia: {
@@ -1053,6 +1137,111 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Evaluacion-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    editar_diapositiva_api_ejecuciones__eid__piezas__pid__diapositivas__n__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+                n: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EdicionDiapositiva"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoEdicion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leer_chat_api_ejecuciones__eid__piezas__pid__chat_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MensajeChat"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    escribir_chat_api_ejecuciones__eid__piezas__pid__chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MensajeNuevo"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RespuestaChat"];
                 };
             };
             /** @description Validation Error */

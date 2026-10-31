@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { Carrusel } from "@/components/Carrusel";
+import { ChatEdicion } from "@/components/ChatEdicion";
 import { FormEvaluacion } from "@/components/FormEvaluacion";
 import { EstadoChip } from "@/components/Marcas";
 import { PanelNoticia } from "@/components/PanelNoticia";
@@ -10,12 +12,13 @@ import { api, ESTADOS } from "@/lib/api";
 import { conCursivas } from "@/lib/cursivas";
 import { useDatos } from "@/lib/useDatos";
 
-// Vista de pieza en tres columnas: la noticia y sus avisos, el carrusel y la evaluación (el chat
-// de edición llega en el paso 5).
+// Vista de pieza en tres columnas: la noticia y sus avisos; el carrusel, con el texto editable sobre la
+// diapositiva; y el chat de edición con la evaluación.
 export function VistaPieza() {
   const { eid: eidTexto, pid } = useParams<{ eid: string; pid: string }>();
   const eid = Number(eidTexto);
   const { datos: d, error, recargar: cargar } = useDatos(`pieza:${eid}:${pid}`, () => api.pieza(eid, pid));
+  const [avisosEdicion, setAvisosEdicion] = useState<string[]>([]);
 
   if (error) return <p className="p-6 text-carmesi">{error}</p>;
   if (!d) return <p className="dato p-6">Cargando la pieza…</p>;
@@ -55,7 +58,18 @@ export function VistaPieza() {
         {g ? (
           <>
             <Carrusel total={g.diapositivas.length} ancho={440} video={d.video_portada}
-                      url={(n) => api.urlDiapositiva(eid, pid, n, d.version)} />
+                      url={(n) => api.urlDiapositiva(eid, pid, n, d.version)}
+                      onEditar={async (n, texto, subtitulo) => {
+                        const r = await api.editarDiapositiva(eid, pid, n, texto, subtitulo);
+                        setAvisosEdicion(r.avisos);
+                        cargar();
+                      }} />
+            {avisosEdicion.length > 0 && (
+              <div className="mx-auto mt-4 max-w-[560px] rounded-[6px] border border-carmesi px-4 py-2.5 text-[13px]">
+                <b className="text-carmesi">Guardado, pero no cumple estas reglas del guion:</b>
+                <ul className="mt-1 list-disc pl-5">{avisosEdicion.map((a) => <li key={a}>{a}</li>)}</ul>
+              </div>
+            )}
             <div className="mx-auto mt-8 max-w-[560px]">
               <h3 className="antetitulo mb-2">Pie de Instagram</h3>
               <p className="whitespace-pre-line text-[15px] leading-relaxed">{conCursivas(g.pie_instagram)}</p>
@@ -70,16 +84,14 @@ export function VistaPieza() {
       </section>
 
       <aside className="overflow-y-auto border-l border-borde px-6 py-5">
-        <h3 className="antetitulo mb-1">Evaluación</h3>
-        <p className="titular mb-4 text-[24px]">¿La <em>publicarías</em>?</p>
+        <h3 className="antetitulo mb-1">Chat de edición</h3>
+        <p className="titular mb-3 text-[22px]">Pídele un <em>cambio</em></p>
+        <ChatEdicion key={`chat:${eid}/${pid}`} eid={eid} pid={pid} onCambio={cargar} />
+        <h3 className="antetitulo mb-2 mt-6 border-t border-borde pt-4">Evaluación</h3>
         <FormEvaluacion key={`${eid}/${pid}`} eid={eid} pid={pid} inicial={d.evaluacion ?? null} />
         {d.evaluacion_version && d.evaluacion_version !== d.version && (
           <p className="dato mt-2">Evaluaste la versión {d.evaluacion_version}; la actual es la {d.version}.</p>
         )}
-        <div className="mt-8 border-t border-borde pt-4 text-[13px] text-tinta-suave">
-          <h3 className="antetitulo mb-1">Chat de edición</h3>
-          Llega en el paso 5.
-        </div>
       </aside>
     </div>
   );

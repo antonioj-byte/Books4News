@@ -65,6 +65,19 @@ _MIGRACIONES = [
         PRIMARY KEY (ejecucion_id, pieza_id)
     );
     """,
+    # 2: conversación del chat de edición, por pieza (paso 5 del plan de la Fase 3)
+    """
+    CREATE TABLE chat_mensajes (
+        ejecucion_id INTEGER NOT NULL,
+        pieza_id TEXT NOT NULL,
+        n INTEGER NOT NULL,
+        rol TEXT NOT NULL,                 -- usuario | editor
+        texto TEXT NOT NULL,
+        version_n INTEGER,                 -- versión que creó el mensaje, si cambió la pieza
+        creado_en TEXT NOT NULL,
+        PRIMARY KEY (ejecucion_id, pieza_id, n)
+    );
+    """,
 ]
 
 
@@ -75,6 +88,14 @@ class Evaluacion(BaseModel):
     voz: int | None = Field(default=None, ge=1, le=5)
     publicaria: bool | None = None
     comentario: str = ""
+
+
+class MensajeChat(BaseModel):
+    n: int
+    rol: str
+    texto: str
+    version_n: int | None = None
+    creado_en: str
 
 
 class Version(BaseModel):
@@ -243,6 +264,19 @@ class Almacen:
         f = self.db.execute("SELECT datos FROM versiones WHERE ejecucion_id = ? AND pieza_id = ? AND n = ?",
                             (eid, pid, n)).fetchone()
         return Pieza.model_validate_json(f["datos"]) if f else None
+
+    # --- Chat de edición ----------------------------------------------------
+
+    def chat(self, eid: int, pid: str) -> list[MensajeChat]:
+        return [MensajeChat(**dict(f)) for f in self.db.execute(
+            "SELECT n, rol, texto, version_n, creado_en FROM chat_mensajes WHERE ejecucion_id = ? AND pieza_id = ? ORDER BY n",
+            (eid, pid))]
+
+    def anadir_mensaje(self, eid: int, pid: str, rol: str, texto: str, version_n: int | None = None) -> None:
+        with self._transaccion() as db:
+            n = db.execute("SELECT COALESCE(MAX(n), 0) + 1 FROM chat_mensajes WHERE ejecucion_id = ? AND pieza_id = ?",
+                           (eid, pid)).fetchone()[0]
+            db.execute("INSERT INTO chat_mensajes VALUES (?, ?, ?, ?, ?, ?, ?)", (eid, pid, n, rol, texto, version_n, _ahora()))
 
     # --- Evaluaciones -------------------------------------------------------
 

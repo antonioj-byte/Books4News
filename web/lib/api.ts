@@ -10,6 +10,9 @@ export type Evaluacion = components["schemas"]["Evaluacion-Output"];
 export type ResumenDia = components["schemas"]["ResumenDia"];
 export type Estado = components["schemas"]["CambioEstado"]["estado"];
 export type EstadoEjecucion = components["schemas"]["EstadoEjecucion"];
+export type ResultadoEdicion = components["schemas"]["ResultadoEdicion"];
+export type MensajeChat = components["schemas"]["MensajeChat"];
+export type RespuestaChat = components["schemas"]["RespuestaChat"];
 
 async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
   const r = await fetch(ruta, { cache: "no-store", ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
@@ -34,6 +37,11 @@ export const api = {
   resumen: () => pedir<ResumenDia[]>("/api/evaluaciones/resumen"),
   lanzarEjecucion: () => pedir<EstadoEjecucion>("/api/ejecuciones/lanzar", { method: "POST" }),
   ejecucionEnMarcha: () => pedir<EstadoEjecucion>("/api/ejecuciones/en-marcha"),
+  editarDiapositiva: (eid: number, pid: string, n: number, texto: string, subtitulo?: string | null) =>
+    pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),
+  chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),
+  enviarChat: (eid: number, pid: string, mensaje: string) =>
+    pedir<RespuestaChat>(`${pieza(eid, pid)}/chat`, { method: "POST", body: JSON.stringify({ mensaje }) }),
   urlDiapositiva: (eid: number, pid: string, n: number, version: number) =>
     `${pieza(eid, pid)}/diapositivas/${n}.html?version=${version}`,
 };

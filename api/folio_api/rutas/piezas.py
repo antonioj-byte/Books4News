@@ -3,10 +3,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 
-from folio.almacen import Evaluacion, escribir_evaluacion_md
+from folio import edicion
+from folio.almacen import Evaluacion, MensajeChat, escribir_evaluacion_md
+from folio.llm import LLM
 from folio.modelos import InformeDiario
 from folio_api.dependencias import Contexto, contexto
-from folio_api.esquemas import CambioEstado, PiezaDetalle
+from folio_api.esquemas import (CambioEstado, EdicionDiapositiva, MensajeNuevo, PiezaDetalle, RespuestaChat,
+                                ResultadoEdicion)
 from folio_api.servicio import hechos_ligados
 
 router = APIRouter()
@@ -74,3 +77,36 @@ def guardar_evaluacion(eid: int, pid: str, ev: Evaluacion, ctx: Contexto = Depen
     if ruta_json.exists() and InformeDiario.model_validate_json(ruta_json.read_text(encoding="utf-8")).generado_en == inf.generado_en:
         escribir_evaluacion_md(ctx.cfg.dir_informes / fecha / "informe.md", pid, ev)
     return ev
+
+
+@router.put("/api/ejecuciones/{eid}/piezas/{pid}/diapositivas/{n}", response_model=ResultadoEdicion)
+def editar_diapositiva(eid: int, pid: str, n: int, cambio: EdicionDiapositiva, ctx: Contexto = Depends(contexto)):
+    """Edición directa sobre la diapositiva: una versión nueva («manual»). Si rompe alguna regla del
+    guion se guarda igual y la respuesta trae los avisos."""
+    p, _ = ctx.pieza(eid, pid)
+    if not p.guion or not 1 <= n <= len(p.guion.diapositivas):
+        raise HTTPException(404, "Diapositiva no encontrada")
+    nueva, avisos = edicion.editar_diapositiva(ctx.cfg, p, n, cambio.texto, cambio.subtitulo)
+    v = ctx.almacen.guardar_version(eid, pid, nueva, "manual", f"Diapositiva {n} editada a mano")
+    return ResultadoEdicion(version=v, avisos=avisos)
+
+
+@router.get("/api/ejecuciones/{eid}/piezas/{pid}/chat", response_model=list[MensajeChat])
+def leer_chat(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
+    ctx.pieza(eid, pid)
+    return ctx.almacen.chat(eid, pid)
+
+
+@router.post("/api/ejecuciones/{eid}/piezas/{pid}/chat", response_model=RespuestaChat)
+def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(contexto)):
+    """Un turno del chat de edición (Opus, unos céntimos). Si el editor cambia la pieza, es una versión
+    nueva («chat») que ya ha pasado las reglas del guion."""
+    p, _ = ctx.pieza(eid, pid)
+    if not p.guion:
+        raise HTTPException(409, "Esta pieza no tiene guion")
+    historial = [(x.rol, x.texto) for x in ctx.almacen.chat(eid, pid)]
+    respuesta, nueva, avisos = edicion.chat(ctx.llm or LLM(ctx.cfg), ctx.cfg, p, historial, m.mensaje.strip())
+    v = ctx.almacen.guardar_version(eid, pid, nueva, "chat", m.mensaje.strip()[:120]) if nueva else None
+    ctx.almacen.anadir_mensaje(eid, pid, "usuario", m.mensaje.strip())
+    ctx.almacen.anadir_mensaje(eid, pid, "editor", respuesta, v)
+    return RespuestaChat(respuesta=respuesta, version=v, avisos=avisos)
