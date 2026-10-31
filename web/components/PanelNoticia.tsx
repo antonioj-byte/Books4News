@@ -16,7 +16,7 @@ export function PanelNoticia({ d }: { d: PiezaDetalle }) {
   const p = d.pieza;
   const e = p.eleccion;
   return (
-    <div className="flex flex-col gap-5 text-[13.5px] leading-relaxed">
+    <div className="flex min-w-0 flex-col gap-5 text-[13.5px] leading-relaxed [overflow-wrap:anywhere]">
       <div>
         <h2 className="titular text-[25px] leading-[1.1]">{e.titular}</h2>
         <p className="mt-3">{e.de_que_se_habla}</p>

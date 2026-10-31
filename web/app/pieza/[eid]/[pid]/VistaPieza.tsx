@@ -14,7 +14,8 @@ import { conCursivas } from "@/lib/cursivas";
 import { useDatos } from "@/lib/useDatos";
 
 // Vista de pieza en tres columnas: la noticia y sus avisos; el carrusel, con el texto editable sobre la
-// diapositiva; y el chat de edición con la evaluación.
+// diapositiva; y el chat de edición con la evaluación. En el móvil, una columna: carrusel, chat y
+// evaluación, y la noticia al final.
 export function VistaPieza() {
   const { eid: eidTexto, pid } = useParams<{ eid: string; pid: string }>();
   const eid = Number(eidTexto);
@@ -28,21 +29,21 @@ export function VistaPieza() {
   const estiloRetrato = d.pieza.arte?.retrato?.match(/retrato (.+?) generado con IA/)?.[1];
 
   return (
-    <div className="grid h-[calc(100vh-61px)] grid-cols-[minmax(300px,370px)_1fr_minmax(300px,350px)]">
-      <aside className="overflow-y-auto border-r border-borde px-6 py-5">
+    <div className="grid grid-cols-1 lg:h-[calc(100vh-61px)] lg:grid-cols-[minmax(300px,370px)_1fr_minmax(300px,350px)]">
+      <aside className="order-3 border-t border-borde px-4 py-5 lg:order-none lg:overflow-y-auto lg:border-r lg:border-t-0 lg:px-6">
         <Link href={`/dia/${d.fecha}?ejecucion=${eid}`} className="dato hover:text-carmesi">← PORTADA DEL DÍA</Link>
         <div className="mt-4"><PanelNoticia d={d} /></div>
       </aside>
 
-      <section className="overflow-y-auto px-8 py-5">
+      <section className="order-1 min-w-0 px-4 py-5 lg:order-none lg:overflow-y-auto lg:px-8">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <EstadoChip estado={d.pieza.estado} />
             <FormatoChip formato={d.pieza.eleccion.formato ?? "lateral"} />
             <span className="dato">{d.pieza.id} · versión {d.version}</span>
             {d.video_portada && <span className="dato text-carmesi">PORTADA EN VÍDEO</span>}
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {ESTADOS.map((e) => (
               <button key={e.valor} onClick={() => api.estado(eid, pid, e.valor).then(cargar)}
                       aria-pressed={d.pieza.estado === e.valor} className="boton-suave">
@@ -68,7 +69,7 @@ export function VistaPieza() {
                       }} />
             <p className="mt-3 text-center">
               <a href={api.urlDescarga(eid, pid)} download className="boton-suave">Descargar el carrusel (.zip)</a>
-              <span className="dato ml-2">JPEG, vídeo de portada y pie · tarda hasta un minuto</span>
+              <span className="dato mt-2 block sm:ml-2 sm:mt-0 sm:inline">JPEG, vídeo de portada y pie · tarda hasta un minuto</span>
             </p>
             {avisosEdicion.length > 0 && (
               <div className="mx-auto mt-4 max-w-[560px] rounded-[6px] border border-carmesi px-4 py-2.5 text-[13px]">
@@ -87,7 +88,7 @@ export function VistaPieza() {
         ) : d.pieza.libros.length > 0 ? (
           // Propuesta de la mesa sin escribir (o cuyo guion falló): se ve la propuesta y se puede proceder
           <div className="mx-auto flex max-w-[560px] flex-col gap-4">
-            <h2 className="titular text-[34px] leading-tight">{d.pieza.eleccion.titular}</h2>
+            <h2 className="titular text-[28px] leading-tight sm:text-[34px]">{d.pieza.eleccion.titular}</h2>
             {d.pieza.eleccion.gancho_libro && (
               <p className="titular text-[20px] italic leading-snug text-tinta-suave" style={{ fontWeight: 400 }}>{d.pieza.eleccion.gancho_libro}</p>
             )}
@@ -113,7 +114,7 @@ export function VistaPieza() {
         )}
       </section>
 
-      <aside className="overflow-y-auto border-l border-borde px-6 py-5">
+      <aside className="order-2 border-t border-borde px-4 py-5 lg:order-none lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-6">
         <h3 className="antetitulo mb-1">Chat de edición</h3>
         <p className="titular mb-3 text-[22px]">Pídele un <em>cambio</em></p>
         {g ? <ChatEdicion key={`chat:${eid}/${pid}`} eid={eid} pid={pid} onCambio={cargar} />

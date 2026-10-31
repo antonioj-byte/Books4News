@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Diapositiva, VideoPortada } from "./Diapositiva";
 import { EditorDiapositiva } from "./EditorDiapositiva";
 
@@ -13,6 +13,17 @@ export function Carrusel({ total, url, ancho, inicial = 1, video, onEditar }: {
 }) {
   const [n, setN] = useState(inicial);
   const [editando, setEditando] = useState(false);
+  // Ancho disponible: en el móvil la diapositiva se encoge y las flechas pasan debajo
+  const caja = useRef<HTMLDivElement>(null);
+  const [disponible, setDisponible] = useState(ancho + 120);
+  useEffect(() => {
+    if (!caja.current) return;
+    const ro = new ResizeObserver(([e]) => setDisponible(e.contentRect.width));
+    ro.observe(caja.current);
+    return () => ro.disconnect();
+  }, []);
+  const estrecho = disponible < ancho + 112;
+  const grande = Math.floor(Math.min(ancho, estrecho ? disponible : disponible - 112));
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.closest("input, textarea, [contenteditable]")) return;
@@ -25,25 +36,32 @@ export function Carrusel({ total, url, ancho, inicial = 1, video, onEditar }: {
   }, [total, editando]);
   const actual = Math.min(n, total);
   const boton = "h-11 w-11 rounded-full bg-tinta text-xl leading-none text-papel shadow-[var(--sombra-boton)] disabled:opacity-20 disabled:shadow-none hover:bg-noche";
+  const anterior = <button className={boton} disabled={actual <= 1 || editando} onClick={() => setN(actual - 1)} aria-label="Anterior">‹</button>;
+  const siguiente = <button className={boton} disabled={actual >= total || editando} onClick={() => setN(actual + 1)} aria-label="Siguiente">›</button>;
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div ref={caja} className="flex w-full min-w-0 flex-col items-center gap-3">
       <div className="flex items-center gap-3">
-        <button className={boton} disabled={actual <= 1 || editando} onClick={() => setN(actual - 1)} aria-label="Anterior">‹</button>
+        {!estrecho && anterior}
         {editando && onEditar
-          ? <EditorDiapositiva src={url(actual)} ancho={ancho} onCancelar={() => setEditando(false)}
+          ? <EditorDiapositiva src={url(actual)} ancho={grande} onCancelar={() => setEditando(false)}
                                onGuardar={async (t, s) => { await onEditar(actual, t, s); setEditando(false); }} />
           : actual === 1 && video
-            ? <VideoPortada src={video} ancho={ancho} />
-            : <Diapositiva src={url(actual)} ancho={ancho} titulo={`Diapositiva ${actual}`} />}
-        <button className={boton} disabled={actual >= total || editando} onClick={() => setN(actual + 1)} aria-label="Siguiente">›</button>
+            ? <VideoPortada src={video} ancho={grande} />
+            : <Diapositiva src={url(actual)} ancho={grande} titulo={`Diapositiva ${actual}`} />}
+        {!estrecho && siguiente}
       </div>
+      {estrecho && (
+        <div className="flex items-center gap-4">
+          {anterior}<span className="dato">{actual} / {total}</span>{siguiente}
+        </div>
+      )}
       {onEditar && !editando && (
         <button onClick={() => setEditando(true)} className="boton-suave">Editar el texto de esta diapositiva</button>
       )}
-      <div className="mt-2 flex gap-2.5">
+      <div className="mt-2 flex max-w-full gap-2.5 overflow-x-auto px-1 pb-2">
         {Array.from({ length: total }, (_, i) => i + 1).map((k) => (
           <button key={k} onClick={() => setN(k)} disabled={editando} aria-label={`Ir a la diapositiva ${k}`}
-                  className={`rounded-[6px] outline-offset-2 ${k === actual ? "outline-2 outline-carmesi" : "opacity-60 hover:opacity-100"}`}>
+                  className={`shrink-0 rounded-[6px] outline-offset-2 ${k === actual ? "outline-2 outline-carmesi" : "opacity-60 hover:opacity-100"}`}>
             <Diapositiva src={url(k)} ancho={64} titulo={`Miniatura ${k}`} />
           </button>
         ))}
