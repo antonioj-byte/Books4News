@@ -1,6 +1,21 @@
 {% extends "base.html" %}
-{% block fondo %}{% if not cifra %}{% with clase="imagen--arriba" %}{% include "_imagen.html" %}{% endwith %}{% endif %}{% endblock %}
+{% block fondo %}{% if not cifra %}{% with clase="imagen--arriba" %}{% include "_imagen.html" %}{% endwith %}{% endif %}
+{%- if sin_foto and sin_foto.recurso == "gigante" %}<div class="gigante" aria-hidden="true" style="font-size: {{ sin_foto.tam_palabra }}px">{{ sin_foto.palabra }}</div>{% endif %}
+{%- if sin_foto and sin_foto.recurso == "collage" %}<div class="tira" aria-hidden="true"><span>{{ sin_foto.palabra }}</span></div>
+<div class="sello" aria-hidden="true">{% if sin_foto.sello[0] %}<span class="sello__arriba">{{ sin_foto.sello[0] }}</span>{% endif %}<span class="sello__palabra">{{ sin_foto.sello[1] }}</span></div>{% endif %}
+{% endblock %}
 {% block cuerpo %}
     {% if cifra %}<div class="cifra"><div class="cifra__numero" data-encajar>{{ cifra }}</div>{% if cifra_rotulo %}<div class="cifra__rotulo">{{ cifra_rotulo }}</div>{% endif %}</div>{% endif %}
+    {% if sin_foto and sin_foto.recurso == "golpe" %}
+    <p class="texto golpe__antes">{{ sin_foto.golpe_antes }}</p>
+    <p class="titular golpe" style="font-size: {{ sin_foto.tam_golpe }}px">{{ sin_foto.golpe }}</p>
+    {% elif sin_foto and sin_foto.recurso == "teletipo" %}
+    <div class="etiquetas">{% for e in sin_foto.etiquetas %}<span class="etiqueta">{{ e }}</span>{% endfor %}</div>
+    {% if sin_foto.numero %}<div class="teletipo__numero" data-encajar>{{ sin_foto.numero }}</div>{% if sin_foto.numero_rotulo %}<div class="teletipo__rotulo">{{ sin_foto.numero_rotulo }}</div>{% endif %}{% endif %}
+    <p class="texto teletipo__texto">{{ sin_foto.texto_marcado }}</p>
+    {% elif sin_foto %}
+    <p class="texto">{{ sin_foto.texto_marcado }}</p>
+    {% else %}
     <p class="texto">{{ texto }}</p>
+    {% endif %}
 {% endblock %}

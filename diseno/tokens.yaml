@@ -37,6 +37,7 @@ fuentes:
   titular: "'Alexandria', 'Helvetica Neue', Arial, sans-serif"
   remate: "'EB Garamond', Garamond, Georgia, serif"
   texto: "'Open Sans', system-ui, sans-serif"
+  maquina: "'IBM Plex Mono', ui-monospace, Menlo, monospace"   # el texto del teletipo
 
 tamanos:
   titular: 112px

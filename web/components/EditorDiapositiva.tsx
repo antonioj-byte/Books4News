@@ -39,9 +39,14 @@ export function EditorDiapositiva({ src, ancho, onGuardar, onCancelar }: {
   const guardar = async () => {
     const doc = marco.current?.contentDocument;
     if (!doc) return;
-    const titular = doc.querySelector(".titular");
+    // La diapositiva de actualidad con «golpe» parte su texto en dos: el principio y la frase final
+    // a tamaño de titular (.golpe, que no es el titular de portada)
+    const golpe = doc.querySelector(".golpe");
+    const titular = doc.querySelector(".titular:not(.golpe)");
     const subtitulo = doc.querySelector(".subtitulo");
-    const texto = titular ? aTexto(titular) : aTexto(doc.querySelector("p.texto") ?? doc.body);
+    const parrafo = doc.querySelector("p.texto");
+    const texto = golpe ? [parrafo ? aTexto(parrafo) : "", aTexto(golpe)].filter(Boolean).join(" ")
+      : titular ? aTexto(titular) : aTexto(parrafo ?? doc.body);
     setGuardando(true);
     try { await onGuardar(texto, subtitulo ? aTexto(subtitulo) : null); }
     finally { setGuardando(false); }

@@ -409,7 +409,9 @@ class Pipeline:
             h = por_id.get(pieza.historia_id)
             try:
                 pieza.arte = arte.dirigir(self.llm, self.cfg, pieza, h.seccion if h else None, usadas,
-                                          [f"{p.arte.portada} en {p.arte.acento or 'blanco y negro'}" for p in con_guion[:i] if p.arte],
+                                          [f"{p.arte.portada} en {p.arte.acento or 'blanco y negro'}"
+                                           + (f" (sin foto: {p.arte.sin_foto.recurso})" if p.arte.sin_foto else "")
+                                           for p in con_guion if p.arte and p.id != pieza.id and (solo is not None or con_guion.index(p) < i)],
                                           self.cache / "prueba" if self.prueba else None)
             except Exception as exc:
                 pieza.arte = None

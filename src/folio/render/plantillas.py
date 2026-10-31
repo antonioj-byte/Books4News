@@ -19,6 +19,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
+from folio import sin_foto as recursos_sin_foto
 from folio.config import Config
 from folio.modelos import Diapositiva, Pieza
 from folio.render.medios import Medios, como_uri
@@ -108,6 +109,34 @@ class Plantillas:
         antes = [de(x) for x in pieza.guion.diapositivas[:n - 1] if x.tipo == "libro"]
         return None if libro and any(a and a["titulo"] == libro["titulo"] for a in antes) else libro
 
+    def _sin_foto(self, pieza: Pieza, d: Diapositiva) -> dict | None:
+        """El recurso de la diapositiva de actualidad sin foto ni cifra, comprobado otra vez contra el texto
+        actual (puede haberse editado en la web). None si no hay o ya no casa: sale solo con el texto."""
+        a = pieza.arte
+        if not a or not a.sin_foto:
+            return None
+        sf, _ = recursos_sin_foto.validar(a.sin_foto, d.texto, self.cfg.pipeline.arte.sin_foto)
+        if not sf:
+            return None
+        out = {"recurso": sf.recurso, "etiquetas": [e.upper() for e in sf.etiquetas],
+               "numero": sf.numero, "numero_rotulo": sf.numero_rotulo,
+               "palabra": sf.palabra.upper() if sf.palabra else None,
+               # La palabra gigante va en vertical: cabe a toda la altura con unas 9 letras a 250 px
+               "tam_palabra": min(250, int(1420 / (0.64 * len(sf.palabra)))) if sf.palabra else None,
+               "texto_marcado": recursos_sin_foto.marcar(d.texto, sf.golpe_remate, texto_html) or texto_html(d.texto)}
+        if sf.sello:
+            palabras = sf.sello.split()
+            out["sello"] = (" ".join(palabras[:-1]).upper(), palabras[-1])
+        if sf.recurso == "golpe":
+            i = recursos_sin_foto.inicio_del_final(sf.golpe, d.texto)
+            antes, golpe = d.texto[:i], d.texto[i:]
+            if antes.count("*") % 2:
+                return None
+            out["golpe_antes"], out["golpe"] = texto_html(antes), titular_con_remate(golpe, sf.golpe_remate)
+            palabras = len(golpe.split())     # cuanto más larga la frase, más pequeña: 150 px hasta 6 palabras
+            out["tam_golpe"] = 150 if palabras <= 6 else 124 if palabras <= 9 else 104
+        return out
+
     def _medios_y_arte(self, pieza: Pieza, d: Diapositiva, n: int) -> dict:
         a = pieza.arte
         imagen = self.medios.imagen(pieza)
@@ -121,12 +150,13 @@ class Plantillas:
         if d.tipo == "portada" and retrato:
             imagen = retrato        # la cara del autor manda en la portada
         estilo, svg = self.medios.portada(pieza, imagen)
+        sin_foto = self._sin_foto(pieza, d) if d.tipo == "actualidad" and not imagen and not (a and a.cifra) else None
         campos = self.tokens.get("campos_portada") or {}
         paleta = self.tokens.get("paleta_piezas") or []
         return {
             "imagen": imagen, "retrato": retrato, "portada_estilo": estilo, "ilustracion": svg,
             "libros": libros if d.tipo == "cierre" else [], "libros_pieza": libros,
-            "libro": libro,
+            "libro": libro, "sin_foto": sin_foto,
             "tono": a.tono if a else None, "acento": a.acento if a else None, "antetitulo": a.antetitulo if a else None,
             "cifra": a.cifra if a else None, "cifra_rotulo": a.cifra_rotulo if a else None,
             "campo": campos.get(a.tono if a else "", campos.get("sereno")),

@@ -9,7 +9,7 @@
 <title>{{ pieza_id }} · {{ n }}/{{ total }}</title>
 </head>
 <body>
-<main class="diapositiva diapositiva--{{ tipo }}{% if imagen %} con-imagen{% endif %}{% if tipo == 'portada' %} portada--{{ portada_estilo }}{% if retrato %} con-retrato{% endif %}{% endif %}{% if tono == 'grave' %} grave{% endif %}{% if acento %} acento acento--{{ acento }}{% endif %}">
+<main class="diapositiva diapositiva--{{ tipo }}{% if imagen %} con-imagen{% endif %}{% if tipo == 'portada' %} portada--{{ portada_estilo }}{% if retrato %} con-retrato{% endif %}{% endif %}{% if tono == 'grave' %} grave{% endif %}{% if acento %} acento acento--{{ acento }}{% endif %}{% if sin_foto %} sin-foto sin-foto--{{ sin_foto.recurso }}{% endif %}">
 {% block fondo %}{% endblock %}
   <section class="cuerpo" data-ajustar>
 {% block cuerpo %}

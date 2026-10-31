@@ -211,6 +211,23 @@ class DiscrepanciaEdicion(BaseModel):
 
 # --- Director de arte (prompts/director_arte.md) --------------------------------
 
+RecursoSinFoto = Literal["golpe", "gigante", "teletipo", "collage"]
+
+
+class SinFoto(BaseModel):
+    """Recurso gráfico de la diapositiva de actualidad cuando no lleva foto ni cifra (31/10). Todo lo
+    que se pinta sale literalmente del texto de esa diapositiva: el código lo comprueba al validar y
+    otra vez al pintar (el texto puede editarse en la web)."""
+    recurso: RecursoSinFoto = Field(description="golpe, gigante, teletipo o collage (ver el prompt)")
+    golpe: str | None = Field(default=None, description="La frase final de la diapositiva de actualidad, copiada literalmente (de 3 a 14 palabras)")
+    golpe_remate: str | None = Field(default=None, description="El final del golpe, copiado literalmente (de 1 a 4 palabras), que irá en cursiva con marcador")
+    palabra: str | None = Field(default=None, description="Una palabra de la diapositiva de actualidad, copiada literalmente (de 4 a 12 letras)")
+    etiquetas: list[str] = Field(default_factory=list, description="De 2 a 3 etiquetas de 1 o 2 palabras copiadas literalmente de la diapositiva de actualidad")
+    numero: str | None = Field(default=None, description="Un número de la diapositiva de actualidad (un año, una edad, una cantidad), copiado literalmente, o null")
+    numero_rotulo: str | None = Field(default=None, description="De 1 a 5 palabras de esa misma diapositiva que dicen qué es el número")
+    sello: str | None = Field(default=None, description="De 1 a 3 palabras de la diapositiva de actualidad, copiadas literalmente, para un sello de estampilla")
+
+
 class PropuestaArte(BaseModel):
     """Primera llamada: qué buscar y qué destacar. La imagen la busca el código."""
     tono: Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]
@@ -225,6 +242,7 @@ class PropuestaArte(BaseModel):
     evitar: list[str] = Field(description="Lo que la imagen no debe mostrar")
     cifra: str | None = Field(default=None, description="Una cifra copiada literalmente de la diapositiva de actualidad, o null")
     cifra_rotulo: str | None = Field(default=None, description="De 2 a 6 palabras de esa misma diapositiva que explican la cifra")
+    sin_foto: SinFoto | None = Field(default=None, description="Recurso gráfico de la diapositiva de actualidad si se queda sin foto ni cifra")
     por_que: str
 
 
@@ -259,6 +277,7 @@ class Arte(BaseModel):
     acento: Literal["pluma", "marcador"] | None = None   # color de la pieza; sin color en las graves
     concepto: str | None = None          # metáfora de la ilustración
     retrato: str | None = None           # crédito del retrato del autor, si lo hay
+    sin_foto: SinFoto | None = None    # recurso de la diapositiva de actualidad sin foto ni cifra
     credito: str | None = None
     por_que: str = ""
     avisos: list[str] = Field(default_factory=list)

@@ -130,6 +130,10 @@ class Arte(_Seccion):
     # Casi todos los retratos de Commons son CC BY-SA: la imagen derivada se publica con la misma licencia
     retratos_cc_by_sa: bool = False
     retrato_generado: RetratoGenerado = Field(default_factory=RetratoGenerado)
+    # Recursos de la diapositiva de actualidad sin foto ni cifra (elegidos el 31/10). Si el que propone
+    # el director de arte no está aquí o le faltan datos, se usa el primero de la lista que los tenga.
+    sin_foto: list[Literal["golpe", "gigante", "teletipo", "collage"]] = Field(
+        default_factory=lambda: ["golpe", "gigante", "teletipo", "collage"])
 
 
 class ConfigPipeline(_Seccion):

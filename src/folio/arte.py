@@ -23,6 +23,7 @@ import httpx
 import yaml
 from PIL import Image, ImageDraw, ImageFont
 
+from folio import sin_foto
 from folio.imagenes import cubiertas, ilustracion, libres, retrato_generado, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
@@ -162,8 +163,8 @@ def _guardar_imagen(cand: libres.ImagenLibre, im: Image.Image, eleccion: Eleccio
 
 
 def _propuesta(llm: LLM, cfg: Config, pieza: Pieza, datos: str, portadas_del_dia: list[str] | None) -> PropuestaArte:
-    ya = (f"\ncomposiciones y colores ya elegidos hoy para otras piezas (no repitas composición ni, si puedes, "
-          f"color): {', '.join(portadas_del_dia)}") if portadas_del_dia else ""
+    ya = (f"\ncomposiciones, colores y recursos sin foto ya elegidos hoy para otras piezas (no repitas composición "
+          f"ni, si puedes, color ni recurso sin foto): {', '.join(portadas_del_dia)}") if portadas_del_dia else ""
     prompt = cargar_prompt(cfg, "director_arte", {"[pegar pieza]": datos + ya})
     propuesta, _ = llm.estructurado(f"arte:{pieza.id}", [{"role": "user", "content": con_cache(cfg, "director_arte", prompt)}],
                                     PropuestaArte, etapa_modelo="arte", max_tokens=4000)
@@ -213,6 +214,13 @@ def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte
         arte.portada = "sangre"
     if arte.portada == "collage" and not arte.imagen:
         arte.portada = "circulo"
+    # El recurso de la diapositiva de actualidad sin foto ni cifra: se guarda siempre que sea válido
+    # (la imagen puede fijarse o quitarse después a mano); el render decide si se usa
+    grave = propuesta.suceso_con_victimas or propuesta.tono == "grave"
+    permitidos = [r for r in cfg.pipeline.arte.sin_foto if not (grave and r == "collage")]   # el collage, nunca en graves
+    arte.sin_foto, avisos = sin_foto.validar(propuesta.sin_foto, _texto_actualidad(pieza), permitidos,
+                                             propuesta.suceso_con_victimas)
+    arte.avisos += avisos
 
 
 def _ilustracion(llm: LLM, cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:

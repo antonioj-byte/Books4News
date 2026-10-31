@@ -90,6 +90,10 @@ arte:
   # sangre, banda, caja, neon. Las de la propuesta humanista: circulo, collage, ilustracion (el SVG
   # del ilustrador está desactivado: el modelo dibuja clip-art, 31/10).
   portadas: [sangre, banda, caja, neon]
+  # La diapositiva de actualidad sin foto ni cifra lleva un recurso gráfico (31/10, a petición del usuario):
+  # golpe (la frase final a tamaño de titular), gigante (una palabra a toda la altura), teletipo (etiquetas,
+  # número grande y letra de máquina) y collage (papel rasgado con la palabra y un sello).
+  sin_foto: [golpe, gigante, teletipo, collage]
   retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
   retratos_cc_by_sa: true      # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia
   # Retrato generado con IA a partir de la foto libre del autor (Magnific, Seedream 4.5 Edit), en un

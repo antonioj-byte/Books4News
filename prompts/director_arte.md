@@ -9,7 +9,7 @@ La portada (`portada`) es una imagen de archivo en blanco y negro muy contrastad
 - «neon»: la foto virada a dos tintas, negro y el color de la pieza, a sangre, como los collages de Wired. La más llamativa: para piezas con energía. Nunca en piezas graves.
 
 `acento`: el color de la pieza, a lo grande, como en Wired: «pluma» (magenta) o «marcador» (amarillo fluorescente). Tiñe la foto en «neon», llena la página de la idea, hace de bloque detrás de la cubierta y colorea el antetítulo y la cifra. Elige el que mejor case con el tono y varía entre las piezas del día. Si la pieza es grave, null: va en blanco y negro.
-Varía: las tres piezas del día no deberían tener la misma composición.
+Varía: las piezas del día no deberían tener la misma composición.
 
 `remate`: el final del titular de portada que irá en cursiva, como el remate de los titulares de la marca («Tres productos. *Un mismo oficio.*»). Cópialo literalmente del titular, de 2 a 6 palabras, y que sea el giro de la frase («*a quien la anotaba*»). Si el titular no tiene un final con giro, null.
 
@@ -27,6 +27,19 @@ La cifra destacada:
 - `cifra_rotulo`: de 2 a 6 palabras copiadas de esa misma diapositiva que digan qué es la cifra («de dólares en bolsa»). No añadas nada que no esté en el texto.
 - Con víctimas, no destaques el número de muertos: deja `cifra` y `cifra_rotulo` en null.
 - Si no hay una cifra clara, null. Mejor ninguna que una floja.
+
+La diapositiva de actualidad sin foto (`sin_foto`):
+Si no se encuentra imagen y no hay cifra, la diapositiva de actualidad sería un párrafo liso sobre negro, y en el feed eso no para a nadie. Propón siempre su recurso gráfico, aunque haya imagen (todavía no se sabe si se encontrará). Todo lo que des se copia literalmente del texto de la diapositiva de actualidad: el código lo comprueba y descarta lo que no esté.
+- «golpe»: la frase final del texto, a tamaño de titular, y el resto encima, pequeño. Para cuando el texto acaba con una frase con fuerza («No tiene capítulos: tiene vértebras.»).
+- «gigante»: una palabra del texto a toda la altura, en vertical, cortada por el borde y en el color de la pieza. Para cuando una palabra concentra la noticia («VÉRTEBRAS», «APAGÓN»).
+- «teletipo»: la página en el color de la pieza, como un despacho de agencia: 2 o 3 etiquetas en píldora, un número grande si lo hay (un año, una edad, una cantidad) y el texto en letra de máquina de escribir. Para noticias con datos: lugar, fecha, cifra.
+- «collage»: papel rasgado con la palabra recortada y un sello de estampilla. Para piezas con humor o curiosidad. Nunca en piezas graves.
+`recurso` es el que mejor le va a esta pieza; varía entre las piezas del día. Rellena todos los campos que puedas, no solo los del recurso elegido, porque si falta un dato el código usa otro:
+- `golpe`: la última frase del texto, copiada tal cual, de 3 a 14 palabras. `golpe_remate`: su final, de 1 a 4 palabras, que irá en cursiva con marcador (el giro: «tiene vértebras»).
+- `palabra`: una sola palabra del texto, de 4 a 12 letras, concreta y visual. Ni nombres de persona ni el título del libro.
+- `etiquetas`: 2 o 3 etiquetas de 1 o 2 palabras copiadas del texto (un lugar, un género, un tema: «Barcelona», «ensayo», «miedo»).
+- `numero` y `numero_rotulo`: un número del texto (un año, una edad, una cantidad) y de 1 a 5 palabras del texto que dicen qué es («Buenos Aires»). Si no hay, null. Con víctimas, nunca el número de muertos.
+- `sello`: de 1 a 3 palabras del texto para el sello («sin capítulos»).
 
 `por_que`: una o dos frases sobre la asociación que buscas.
 
