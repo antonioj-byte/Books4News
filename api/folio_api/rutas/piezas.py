@@ -1,7 +1,7 @@
 """Una pieza: detalle, estado, HTML de sus diapositivas y evaluación."""
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
 from folio.almacen import Evaluacion, escribir_evaluacion_md
 from folio.modelos import InformeDiario
@@ -12,16 +12,33 @@ from folio_api.servicio import hechos_ligados
 router = APIRouter()
 
 
+def _video(ctx: Contexto, fecha: str, pid: str):
+    """El MP4 de la portada que deja `folio render --video` (la ejecución diaria y el botón lo hacen)."""
+    return ctx.cfg.dir_informes / fecha / "render" / pid / "01-portada.mp4"
+
+
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}", response_model=PiezaDetalle)
 def pieza(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     fecha, inf = ctx.ejecucion(eid)
     p, v = ctx.pieza(eid, pid)
     ev = ctx.almacen.evaluacion(eid, pid)
+    hay_video = v == 1 and _video(ctx, fecha, pid).is_file()
     return PiezaDetalle(ejecucion_id=eid, fecha=fecha, version=v, pieza=p,
                         aviso_jefe=inf.seleccion.aviso if inf.seleccion else None,
                         hechos_no_verificados=hechos_ligados(p),
                         evaluacion=ev[0] if ev else None, evaluacion_version=ev[1] if ev else None,
-                        versiones=ctx.almacen.versiones(eid, pid))
+                        versiones=ctx.almacen.versiones(eid, pid),
+                        video_portada=f"/api/ejecuciones/{eid}/piezas/{pid}/video.mp4" if hay_video else None)
+
+
+@router.get("/api/ejecuciones/{eid}/piezas/{pid}/video.mp4", include_in_schema=False)
+def video(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
+    fecha, _ = ctx.ejecucion(eid)
+    ctx.pieza(eid, pid)
+    ruta = _video(ctx, fecha, pid)
+    if not ruta.is_file():
+        raise HTTPException(404, "Esta pieza no tiene vídeo de portada")
+    return FileResponse(ruta, media_type="video/mp4")
 
 
 @router.patch("/api/ejecuciones/{eid}/piezas/{pid}/estado", response_model=CambioEstado)

@@ -20,6 +20,8 @@ export function VistaPieza() {
   if (error) return <p className="p-6 text-carmesi">{error}</p>;
   if (!d) return <p className="dato p-6">Cargando la pieza…</p>;
   const g = d.pieza.guion;
+  // Retrato del autor generado con IA (folio.imagenes.retrato_generado): el estilo va en su crédito
+  const estiloRetrato = d.pieza.arte?.retrato?.match(/retrato (.+?) generado con IA/)?.[1];
 
   return (
     <div className="grid h-[calc(100vh-61px)] grid-cols-[minmax(300px,370px)_1fr_minmax(300px,350px)]">
@@ -33,6 +35,7 @@ export function VistaPieza() {
           <div className="flex items-center gap-3">
             <EstadoChip estado={d.pieza.estado} />
             <span className="dato">{d.pieza.id} · versión {d.version}</span>
+            {d.video_portada && <span className="dato text-carmesi">PORTADA EN VÍDEO</span>}
           </div>
           <div className="flex gap-1.5">
             {ESTADOS.map((e) => (
@@ -43,9 +46,15 @@ export function VistaPieza() {
             ))}
           </div>
         </div>
+        {estiloRetrato && (
+          <p className="mx-auto mb-4 max-w-[560px] rounded-[6px] bg-tinta px-4 py-2.5 text-[14px] text-papel">
+            <b>Retrato {estiloRetrato.startsWith("dithering") ? "generado" : "3D"} del autor · {estiloRetrato}</b>, generado con IA a partir de su foto libre.
+            Comprueba el parecido antes de aprobar.
+          </p>
+        )}
         {g ? (
           <>
-            <Carrusel total={g.diapositivas.length} ancho={440}
+            <Carrusel total={g.diapositivas.length} ancho={440} video={d.video_portada}
                       url={(n) => api.urlDiapositiva(eid, pid, n, d.version)} />
             <div className="mx-auto mt-8 max-w-[560px]">
               <h3 className="antetitulo mb-2">Pie de Instagram</h3>

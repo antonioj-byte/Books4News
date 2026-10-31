@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Diapositiva } from "./Diapositiva";
+import { Diapositiva, VideoPortada } from "./Diapositiva";
 
-// Carrusel de la pieza: diapositiva grande, flechas (también con el teclado) y miniaturas.
-export function Carrusel({ total, url, ancho, inicial = 1 }: {
-  total: number; url: (n: number) => string; ancho: number; inicial?: number;
+// Carrusel de la pieza: diapositiva grande, flechas (también con el teclado) y miniaturas. Si hay
+// vídeo de portada, la diapositiva 1 grande es el vídeo (la miniatura sigue siendo la imagen).
+export function Carrusel({ total, url, ancho, inicial = 1, video }: {
+  total: number; url: (n: number) => string; ancho: number; inicial?: number; video?: string | null;
 }) {
   const [n, setN] = useState(inicial);
   useEffect(() => {
@@ -23,7 +24,9 @@ export function Carrusel({ total, url, ancho, inicial = 1 }: {
     <div className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-3">
         <button className={boton} disabled={actual <= 1} onClick={() => setN(actual - 1)} aria-label="Anterior">‹</button>
-        <Diapositiva src={url(actual)} ancho={ancho} titulo={`Diapositiva ${actual}`} />
+        {actual === 1 && video
+          ? <VideoPortada src={video} ancho={ancho} />
+          : <Diapositiva src={url(actual)} ancho={ancho} titulo={`Diapositiva ${actual}`} />}
         <button className={boton} disabled={actual >= total} onClick={() => setN(actual + 1)} aria-label="Siguiente">›</button>
       </div>
       <div className="mt-2 flex gap-2.5">

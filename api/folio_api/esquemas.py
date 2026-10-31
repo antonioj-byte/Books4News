@@ -75,6 +75,9 @@ class PiezaDetalle(BaseModel):
     evaluacion: Evaluacion | None
     evaluacion_version: int | None
     versiones: list[Version]
+    # URL del vídeo de portada (folio render --video), si existe y la pieza no se ha editado desde
+    # entonces: el vídeo se hizo con la versión del informe del día
+    video_portada: str | None = None
 
 
 class CambioEstado(BaseModel):

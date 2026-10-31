@@ -91,6 +91,7 @@ def test_lanzar_ejecucion_una_a_la_vez(cfg, tmp_path):
     from folio_api.ejecutor import Ejecutor
     (cfg.raiz / "diseno").symlink_to((type(cfg)(pipeline={}, fuentes=[]).raiz / "diseno").resolve())
     ejecutor = Ejecutor(tmp_path, comando=[sys.executable, "-c", "import time; print('pipeline en marcha', flush=True); time.sleep(1.5)"])
+    ejecutor.diaria = [ejecutor.comando]           # el botón lanza la diaria; aquí, sin el render de verdad
     c = TestClient(crear_app(cfg, Almacen(cfg.ruta_db), ejecutor=ejecutor))
     assert c.get("/api/ejecuciones/en-marcha").json()["en_marcha"] is False
     r = c.post("/api/ejecuciones/lanzar")
@@ -150,3 +151,16 @@ def test_error_interno_dice_el_motivo(cliente, monkeypatch):
     monkeypatch.setattr(app.state.folio.almacen, "dias", lambda: (_ for _ in ()).throw(ValueError("algo raro key=SECRETO")))
     r = TestClient(app, raise_server_exceptions=False).get("/api/dias")
     assert r.status_code == 500 and "ValueError: algo raro" in r.json()["detail"] and "SECRETO" not in r.text
+
+
+def test_video_de_portada_en_la_ficha_de_la_pieza(cliente, cfg):
+    ficha = cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1").json()
+    assert ficha["video_portada"] is None
+    assert cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1/video.mp4").status_code == 404
+    mp4 = cfg.dir_informes / "2026-10-30" / "render" / "2026-10-30-1" / "01-portada.mp4"
+    mp4.parent.mkdir(parents=True)
+    mp4.write_bytes(b"\x00\x00\x00\x18ftypmp42")
+    ficha = cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1").json()
+    assert ficha["video_portada"] == "/api/ejecuciones/1/piezas/2026-10-30-1/video.mp4"
+    r = cliente.get(ficha["video_portada"])
+    assert r.status_code == 200 and r.headers["content-type"] == "video/mp4"

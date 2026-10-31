@@ -175,8 +175,9 @@ export interface paths {
         put?: never;
         /**
          * Lanzar
-         * @description Lanza `folio run` (pipeline completo del día, ~1 $). Al terminar, la ejecución aparece en
-         *     la portada del día: el pipeline la guarda en la base de datos.
+         * @description Lanza la ejecución del día, igual que la diaria: `folio run` (~1 $) y después el render (PNG y
+         *     portada en vídeo). La ejecución aparece en la portada del día en cuanto termina el pipeline (la
+         *     guarda en la base de datos); el vídeo, cuando termina el render.
          */
         post: operations["lanzar_api_ejecuciones_lanzar_post"];
         delete?: never;
@@ -194,6 +195,26 @@ export interface paths {
         };
         /** En Marcha */
         get: operations["en_marcha_api_ejecuciones_en_marcha_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ejecuciones/programada": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Programada
+         * @description La ejecución diaria automática (FOLIO_EJECUCION_DIARIA): si está activa, a qué hora y cuándo toca.
+         */
+        get: operations["programada_api_ejecuciones_programada_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -256,6 +277,22 @@ export interface components {
              * @enum {string}
              */
             estado: "propuesta" | "en_edicion" | "aprobada" | "descartada" | "publicada" | "fallida";
+        };
+        /**
+         * CitaVerificada
+         * @description Cita literal del libro encontrada letra por letra en su texto (búsqueda de Google Books).
+         */
+        CitaVerificada: {
+            /** Texto */
+            texto: string;
+            /** Libro */
+            libro: string;
+            /** Autor */
+            autor: string;
+            /** Volumen Google */
+            volumen_google: string;
+            /** Fragmento */
+            fragmento: string;
         };
         /** Dia */
         Dia: {
@@ -357,6 +394,19 @@ export interface components {
              * @default []
              */
             ultimas_lineas: string[];
+        };
+        /** EstadoProgramada */
+        EstadoProgramada: {
+            /** Activa */
+            activa: boolean;
+            /** Hora */
+            hora: string | null;
+            /** Zona */
+            zona: string | null;
+            /** Ultima */
+            ultima: string | null;
+            /** Proxima */
+            proxima: string | null;
         };
         /** Evaluacion */
         "Evaluacion-Input": {
@@ -688,6 +738,8 @@ export interface components {
             revision_humana: string[];
             /** Hechos */
             hechos: components["schemas"]["HechoComprobado"][];
+            /** Citas */
+            citas: components["schemas"]["CitaVerificada"][];
             arte: components["schemas"]["Arte"] | null;
             /** Error */
             error: string | null;
@@ -710,6 +762,8 @@ export interface components {
             evaluacion_version: number | null;
             /** Versiones */
             versiones: components["schemas"]["Version"][];
+            /** Video Portada */
+            video_portada: string | null;
         };
         /** PiezaResumen */
         PiezaResumen: {
@@ -1119,6 +1173,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+        };
+    };
+    programada_api_ejecuciones_programada_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoProgramada"];
                 };
             };
         };
