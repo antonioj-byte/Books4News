@@ -10,7 +10,7 @@ from folio.ingesta import agrupacion
 from folio.historial import Historial
 from folio.libros.verificacion import Verificador
 from folio.llm import LLM
-from folio.modelos import Articulo, ComprobacionHechos, HechoComprobado, PropuestaArte, ResumenHistoria, SeleccionJefe
+from folio.modelos import Arte, Articulo, ComprobacionHechos, HechoComprobado, PropuestaArte, ResumenHistoria, SeleccionJefe
 from folio.pipeline import Pipeline
 
 from conftest import transporte_openlibrary
@@ -211,9 +211,11 @@ def test_textos_congelados_de_la_version_anterior_se_vuelven_a_elegir(cfg, monke
 
 
 def _pipeline_tres(cfg, monkeypatch, escribir):
-    """Pipeline con tres elegidas y una reserva; cada guion lo decide `escribir(paso)`."""
+    """Pipeline con tres elegidas y una reserva; cada guion lo decide `escribir(paso)`. Se escriben las tres
+    al inicio (en producción, solo la primera: el resto espera a «Proceder»)."""
     from folio import guion as guionista
     p, llm = _pipeline(cfg, monkeypatch, [])
+    cfg.pipeline.seleccion.desarrollar_al_inicio = 3
     arts = _articulos()
     ids = [h.id for h in agrupacion.agrupar(arts, _vectores(arts), 0.84)]
     sel = SeleccionJefe(elegidas=[ELECCION.model_copy(update={"historia_id": ids[i % 2], "titular": f"E{i}"}) for i in range(3)],
@@ -236,7 +238,7 @@ def test_los_guiones_se_escriben_a_la_vez(cfg, monkeypatch, capsys):
     inicio = time.monotonic()
     piezas = p.piezas(sel, al_jefe)
     assert time.monotonic() - inicio < 1.5  # en serie serían 1,8 s
-    assert [x.estado for x in piezas] == ["propuesta"] * 3
+    assert [x.estado for x in piezas] == ["propuesta"] * 3 + ["pendiente"]    # la reserva no hizo falta
     assert "ETAPA: Escribiendo guiones (3 de 3)" in capsys.readouterr().out
 
 
@@ -315,3 +317,51 @@ def test_los_libros_quedan_en_el_orden_del_guion_sin_repetir(cfg, monkeypatch):
     monkeypatch.setattr(guionista, "escribir", lambda *a, **k: (guion_valido(), [], []))
     p._escribir(pieza, [])
     assert pieza.estado == "propuesta" and [l.titulo for l in pieza.libros] == ["Eichmann in Jerusalem"]
+
+def test_la_mesa_escribe_solo_la_primera_y_proceder_escribe_otra(cfg, monkeypatch):
+    """Seis propuestas: se verifican todas y se escribe la primera; las demás quedan «pendiente» hasta
+    que se desarrollan (folio desarrollar), sin tocar el arte de las ya escritas."""
+    from folio import arte as arte_mod
+    escritas = []
+    p, sel, al_jefe = _pipeline_tres(cfg, monkeypatch, lambda pid: escritas.append(pid) or guion_valido())
+    cfg.pipeline.seleccion.desarrollar_al_inicio = 1
+    sel.elegidas = [e.model_copy(update={"formato": f}) for e, f in zip(sel.elegidas * 2, ["lateral", "dialogo", "edicion"] * 2)]
+    piezas = p.piezas(sel, al_jefe)
+    assert [x.estado for x in piezas] == ["propuesta"] + ["pendiente"] * 6 and escritas == [piezas[0].id]
+    assert [x.eleccion.formato for x in piezas[:3]] == ["lateral", "dialogo", "edicion"]
+    dirigidas = []
+    monkeypatch.setattr(arte_mod, "dirigir", lambda llm, cfg, pieza, *a, **k: dirigidas.append(pieza.id) or Arte(tono="sereno", recurso="foto"))
+    from folio import hechos as hechos_mod
+    monkeypatch.setattr(hechos_mod, "comprobar", lambda *a, **k: [])
+    hecha = p.desarrollar(piezas[2], al_jefe, piezas)
+    assert hecha.estado == "propuesta" and hecha.guion and dirigidas == [piezas[2].id]   # solo la desarrollada
+
+
+def test_proceder_con_guion_que_falla_deja_la_propuesta_fallida(cfg, monkeypatch):
+    p, sel, al_jefe = _pipeline_tres(cfg, monkeypatch, lambda pid: (_ for _ in ()).throw(ValueError("no valida")) if pid.endswith("-2") else guion_valido())
+    cfg.pipeline.seleccion.desarrollar_al_inicio = 1
+    piezas = p.piezas(sel, al_jefe)
+    hecha = p.desarrollar(piezas[1], al_jefe, piezas)
+    assert hecha.estado == "fallida" and "no valida" in hecha.error
+
+
+def test_reparto_en_el_prompt_y_avisos_si_no_se_cumple(cfg):
+    from folio import seleccion
+    assert seleccion.texto_reparto({"lateral": 2, "dialogo": 2, "edicion": 2}) == \
+        "2 de lectura lateral, 2 de diálogo con la actualidad y 2 del mundo del libro"
+
+    class LLMJefe:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
+            assert "2 de lectura lateral, 2 de diálogo con la actualidad y 2 del mundo del libro" in mensajes[0]["content"]
+            assert max_tokens > 16000
+            e = ELECCION.model_copy(update={"historia_id": "h1", "libros_candidatos": ELECCION.libros_candidatos * 2})
+            return SeleccionJefe(elegidas=[e.model_copy(update={"formato": f}) for f in ("lateral", "lateral", "dialogo", "dialogo", "edicion")],
+                                 reserva=[]), []
+
+    from folio.modelos import Historia
+    h = Historia(id="h1", articulos=_articulos()[:1], n_medios=1, medios=["El País"], titular_es="T", resumen_es="R")
+    sel, avisos = seleccion.seleccionar(LLMJefe(cfg), [h], "2026-10-31")
+    assert len(sel.elegidas) == 5 and "Propuestas del mundo del libro: 1 (se pedían 2)" in avisos

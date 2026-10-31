@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 import numpy as np
 from folio import guion as guionista
 from folio import arte, hechos, informe, seleccion, textos
+from folio.imagenes import cubiertas
 from folio.libros import citas
 from folio.etapas import ORDEN, Etapa, EtapasGuardadas
 from folio.config import Config
@@ -246,16 +247,15 @@ class Pipeline:
         self.etapas.guardar_textos(h.id, tx)  # también en las pruebas: son las noticias, no un resultado
         return tx
 
-    def _preparar(self, pieza: Pieza, h: Historia, reservados: set[str]) -> list[tuple[FuenteNoticia, str]] | None:
-        """Verifica los libros y prepara los textos de una pieza. Va en orden, pieza a pieza: una
-        pieza no puede repetir un libro de otra (`reservados`) y el modelo de embeddings, que se
-        usa para elegir los textos, no se comparte entre hilos. None si no hay libro verificado."""
+    def _verificar(self, pieza: Pieza, reservados: set[str]) -> bool:
+        """Verifica los libros de una propuesta. Va en orden, propuesta a propuesta: una no puede
+        repetir un libro de otra (`reservados`). False si ningún candidato pasa."""
         e = pieza.eleccion
         libros, descartes = self._verificar_libros(e, reservados)
         pieza.libros, pieza.libros_descartados = libros, descartes
         if not libros:
             pieza.error = "Ningún libro candidato se pudo verificar"
-            return None
+            return False
         for l in libros:
             if l.edicion_es != "si":
                 pieza.avisos.append(f"«{l.titulo_propuesto}»: edición española {l.edicion_es}")
@@ -265,7 +265,20 @@ class Pipeline:
                 reservados.add(l.olid)
         if not any(l.edicion_es == "si" for l in libros):
             pieza.avisos.append("Ningún libro verificado tiene edición española")
-        textos_h = self.textos_de_historia(h, e)
+        return True
+
+    def _cubiertas_de(self, pieza: Pieza) -> None:
+        """Las cubiertas de los libros verificados, para enseñarlas en la mesa antes de escribir nada."""
+        for l in pieza.libros:
+            try:
+                cubiertas.buscar(l, self.cache.parent, self.cfg.google_books_api_key)
+            except Exception as exc:
+                pieza.avisos.append(f"No se pudo buscar la cubierta de {l.titulo_propuesto}: {type(exc).__name__}")
+
+    def _textos(self, pieza: Pieza, h: Historia) -> list[tuple[FuenteNoticia, str]]:
+        """Los textos de los medios para el guion. En orden, no en paralelo: el modelo de embeddings,
+        que se usa para elegirlos, no se comparte entre hilos."""
+        textos_h = self.textos_de_historia(h, pieza.eleccion)
         pieza.fuentes = [f for f, _ in textos_h]
         if not any(f.texto_completo for f in pieza.fuentes):
             pieza.avisos.append("Ningún texto completo disponible: el guionista solo tuvo titulares y entradillas")
@@ -301,42 +314,59 @@ class Pipeline:
         pieza.libros = usados or pieza.libros
 
     def piezas(self, sel: SeleccionJefe, al_jefe: list[Historia]) -> list[Pieza]:
-        """Prepara las piezas en orden y escribe sus guiones a la vez. Si alguna falla, entra la
-        siguiente historia de reserva, hasta tener tantas piezas como elegidas."""
+        """La mesa del día: cada propuesta con sus libros verificados y sus cubiertas, y el guion de
+        las primeras (`seleccion.desarrollar_al_inicio`, por orden de preferencia). Las demás quedan
+        «pendiente» hasta que se pulse «Proceder» en la web (`folio desarrollar`). Si un guion falla,
+        se escribe el de la siguiente propuesta con libro."""
         por_id = {h.id: h for h in al_jefe}
-        objetivo = len(sel.elegidas)
         cola = [(e, False) for e in sel.elegidas] + [(e, True) for e in sel.reserva]
+        objetivo = min(self.cfg.pipeline.seleccion.desarrollar_al_inicio, len(sel.elegidas))
         if self.solo_pieza is not None:
             if not 1 <= self.solo_pieza <= len(sel.elegidas):
                 raise ValueError(f"--solo-pieza debe estar entre 1 y {len(sel.elegidas)}")
             objetivo, cola = 1, [(sel.elegidas[self.solo_pieza - 1], False)]
         piezas: list[Pieza] = []
         reservados: set[str] = set()
-        n = 0
-        while cola and sum(p.estado == "propuesta" for p in piezas) < objetivo:
+        for i, (e, es_reserva) in enumerate(cola, 1):
+            n = self.solo_pieza or i
+            h = por_id[e.historia_id]
+            pieza = Pieza(id=f"{self.fecha}-{n}", fecha=self.fecha, estado="fallida", reserva=es_reserva,
+                          historia_id=h.id, eleccion=e, n_medios=h.n_medios)
+            piezas.append(pieza)
+            progreso(f"Verificando los libros de la propuesta {i} de {len(cola)}")
+            log.info("Propuesta %s (%s): %s", pieza.id, e.formato, e.titular)
+            if self._verificar(pieza, reservados):
+                pieza.estado = "pendiente"
+                self._cubiertas_de(pieza)
+        por_escribir = [p for p in piezas if p.estado == "pendiente"]
+        while por_escribir and sum(p.estado == "propuesta" for p in piezas) < objetivo:
             faltan = objetivo - sum(p.estado == "propuesta" for p in piezas)
-            lote: list[tuple[Pieza, list]] = []
-            while cola and len(lote) < faltan:
-                e, es_reserva = cola.pop(0)
-                n = self.solo_pieza or n + 1
-                h = por_id[e.historia_id]
-                pieza = Pieza(id=f"{self.fecha}-{n}", fecha=self.fecha, estado="fallida", reserva=es_reserva,
-                              historia_id=h.id, eleccion=e, n_medios=h.n_medios)
-                piezas.append(pieza)
-                progreso(f"Verificando libros y textos de la pieza {n}")
-                log.info("Pieza %s: %s", pieza.id, e.titular)
-                textos_h = self._preparar(pieza, h, reservados)
-                if textos_h is not None:
-                    lote.append((pieza, textos_h))
-            if not lote:
-                continue
+            lote = [(p, self._textos(p, por_id[p.historia_id])) for p in por_escribir[:faltan]]
+            por_escribir = por_escribir[faltan:]
             hechas = 0
             progreso(f"Escribiendo guiones (0 de {len(lote)})")
             with ThreadPoolExecutor(max_workers=len(lote)) as pool:
                 for _ in as_completed([pool.submit(self._escribir, p, t) for p, t in lote]):
                     hechas += 1
                     progreso(f"Escribiendo guiones ({hechas} de {len(lote)})")
+            for p, _ in lote:
+                if p.estado != "propuesta":
+                    p.estado = "fallida"
         return piezas
+
+    def desarrollar(self, pieza: Pieza, al_jefe: list[Historia], otras: list[Pieza]) -> Pieza:
+        """«Proceder» en la web: escribe la pieza de una propuesta pendiente (textos, guion, hechos y
+        arte), sin tocar las demás del día (`otras`: las ya desarrolladas, para no repetir imagen ni
+        composición). Si el guion falla, la pieza vuelve como «fallida» con el error."""
+        h = {x.id: x for x in al_jefe}[pieza.historia_id]
+        pieza.error = None
+        self._escribir(pieza, self._textos(pieza, h))
+        if pieza.estado != "propuesta":
+            pieza.estado = "fallida"
+            return pieza
+        self.comprobar_hechos([pieza], al_jefe)
+        self.dirigir_arte([*[o for o in otras if o.guion and o.id != pieza.id], pieza], al_jefe, solo={pieza.id})
+        return pieza
 
     # --- Etapa 4: comprobación de hechos ------------------------------------
 
@@ -364,13 +394,16 @@ class Pipeline:
 
     # --- Etapa 5: director de arte -------------------------------------------
 
-    def dirigir_arte(self, piezas: list[Pieza], al_jefe: list[Historia]) -> None:
+    def dirigir_arte(self, piezas: list[Pieza], al_jefe: list[Historia], solo: set[str] | None = None) -> None:
         """Tono, imagen libre, cifra destacada y cubiertas de cada pieza. Una pieza tras otra, para
-        que dos piezas del día no lleven la misma imagen (unos 10 s por pieza)."""
+        que dos piezas del día no lleven la misma imagen (unos 10 s por pieza). Con `solo`, se dirige
+        únicamente esas piezas: las demás cuentan para no repetir imagen ni composición."""
         por_id = {h.id: h for h in al_jefe}
         con_guion = [p for p in piezas if p.guion and p.estado != "fallida"]
-        usadas: set[str] = set()
+        usadas: set[str] = {x for p in con_guion if solo and p.id not in solo and p.arte and p.arte.imagen for x in [p.arte.imagen]}
         for i, pieza in enumerate(con_guion):
+            if solo is not None and pieza.id not in solo:
+                continue
             progreso(f"Dirección de arte ({i} de {len(con_guion)})")
             pieza.avisos = [a for a in pieza.avisos if not a.startswith("Director de arte:")]
             h = por_id.get(pieza.historia_id)
@@ -443,8 +476,9 @@ class Pipeline:
         buenas = [p for p in piezas if p.estado == "propuesta"]
         if inicio <= 2 and not self.prueba:
             self._registrar_historial(buenas, al_jefe, vectores)
-        if self.solo_pieza is None and len(buenas) < len(sel.elegidas):
-            self.avisos.append(f"Solo {len(buenas)} piezas válidas de {len(sel.elegidas)} previstas")
+        previstas = min(self.cfg.pipeline.seleccion.desarrollar_al_inicio, len(sel.elegidas))
+        if self.solo_pieza is None and len(buenas) < previstas:
+            self.avisos.append(f"Solo {len(buenas)} piezas escritas de {previstas} previstas")
         if inicio >= 3:
             repetidas = "la comprobación de hechos y la dirección de arte" if inicio == 3 else "la dirección de arte"
             self.avisos.append(f"Solo se ha repetido {repetidas}: el coste del informe es solo el de esa etapa")

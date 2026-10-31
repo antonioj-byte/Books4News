@@ -3,10 +3,10 @@
 ## Ejecución diaria (contenido listo a primera hora)
 
 La API lanza sola, cada día, el pipeline y después el render (PNG de cada diapositiva y portada en
-vídeo). Para que a las 6:00 esté todo hecho, en el servicio «api» de Railway:
+vídeo) de la primera propuesta de la mesa. Para que a las 5:30 esté la mesa, en el servicio «api» de Railway:
 
 ```
-FOLIO_EJECUCION_DIARIA=04:30      # hora de Madrid (FOLIO_ZONA, por defecto Europe/Madrid)
+FOLIO_EJECUCION_DIARIA=04:45      # hora de Madrid (FOLIO_ZONA, por defecto Europe/Madrid): mesa lista a las 5:30
 ```
 
 Una vez al día. Si a esa hora hay otra ejecución en marcha, espera a que acabe. Si la API arranca más

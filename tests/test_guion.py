@@ -1,3 +1,4 @@
+import pytest
 from folio import guion
 from folio.modelos import Diapositiva, LibroGuion
 
@@ -275,3 +276,13 @@ def test_una_diapositiva_de_libro_por_libro(cfg):
         d.n = i
     g.justificacion_extra = ["4: otro argumento del libro."]
     assert any("una sola" in e and "cubierta" in e for e in errores(cfg, g))
+
+
+def test_el_guionista_recibe_la_estructura_de_su_formato(cfg):
+    from folio.modelos import FuenteNoticia
+    for formato, señal in (("lateral", "de lado"), ("dialogo", "ensayo reciente"), ("edicion", "historia de la edición")):
+        texto = guion.construir_prompt(cfg, ELECCION.model_copy(update={"formato": formato}),
+                                       [(FUENTES[0], "Texto.")], [LIBRO])
+        assert señal in texto and "[pegar formato]" not in texto
+    with pytest.raises(ValueError):
+        guion.instrucciones_formato(cfg, "otro")

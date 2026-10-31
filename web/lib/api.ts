@@ -36,6 +36,9 @@ export const api = {
     pedir<Evaluacion>(`${pieza(eid, pid)}/evaluacion`, { method: "PUT", body: JSON.stringify(ev) }),
   resumen: () => pedir<ResumenDia[]>("/api/evaluaciones/resumen"),
   lanzarEjecucion: () => pedir<EstadoEjecucion>("/api/ejecuciones/lanzar", { method: "POST" }),
+  // «Proceder»: escribe una propuesta pendiente de la mesa (unos minutos; se sigue con ejecucionEnMarcha)
+  desarrollar: (eid: number, pid: string) =>
+    pedir<EstadoEjecucion>(`${pieza(eid, pid)}/desarrollar`, { method: "POST" }),
   ejecucionEnMarcha: () => pedir<EstadoEjecucion>("/api/ejecuciones/en-marcha"),
   editarDiapositiva: (eid: number, pid: string, n: number, texto: string, subtitulo?: string | null) =>
     pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),

@@ -26,7 +26,9 @@ Seccion = Literal[
     "politica", "internacional", "economia", "ciencia", "tecnologia", "sociedad",
     "cultura", "deportes", "sucesos", "salud", "medio_ambiente", "otros",
 ]
-EstadoPieza = Literal["propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
+# «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
+EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
+Formato = Literal["lateral", "dialogo", "edicion"]
 TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre"]
 
 
@@ -77,21 +79,22 @@ class LibroCandidato(BaseModel):
 
 
 class HistoriaElegida(BaseModel):
+    formato: Formato = Field(default="lateral", description="lateral (lectura lateral), dialogo (diálogo con la actualidad) o edicion (mundo del libro)")
     historia_id: str = Field(description="Identificador de la historia tal como aparece en la lista")
     titular: str = Field(description="Titular en una línea")
     de_que_se_habla: str = Field(description="De qué se está hablando, en dos frases")
     cuestion_de_fondo: str = Field(description="La cuestión de fondo, en una frase")
-    libros_candidatos: list[LibroCandidato] = Field(description="2–3 libros candidatos")
+    libros_candidatos: list[LibroCandidato] = Field(description="3–4 libros candidatos, por orden de preferencia")
     gancho_libro: str = Field(default="", description="En una línea, cómo entra el libro desde la portada: qué vio, explicó o anticipó su autor")
     por_que: str = Field(description="Por qué esta historia y no otra, en dos líneas")
 
 
 class SeleccionJefe(BaseModel):
-    elegidas: list[HistoriaElegida] = Field(description="Hasta 3 historias elegidas, por orden de preferencia")
-    reserva: list[HistoriaElegida] = Field(description="Hasta 2 historias de reserva")
+    elegidas: list[HistoriaElegida] = Field(description="Las propuestas del día, por orden de preferencia (la primera se escribe sola)")
+    reserva: list[HistoriaElegida] = Field(default_factory=list, description="Vacía: ya no hay reserva, las propuestas sin desarrollar hacen de reserva")
     aviso: str | None = Field(
         default=None,
-        description="Si eliges menos de 3 porque no hay buena lectura lateral, explícalo aquí; si no, null",
+        description="Si propones menos de las pedidas porque no hay material, explícalo aquí; si no, null",
     )
 
 

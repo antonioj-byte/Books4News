@@ -130,7 +130,8 @@ def test_etapa_de_la_ejecucion(tmp_path):
 
 def test_portada_del_dia_trae_los_libros_para_la_estanteria(cliente):
     p1 = cliente.get("/api/dias/2026-10-30").json()["piezas"][0]
-    assert p1["libros"] == [{"titulo": "Eichmann en Jerusalén", "autor": "Hannah Arendt"}]
+    assert p1["libros"] == [{"titulo": "Eichmann en Jerusalén", "autor": "Hannah Arendt", "cubierta": None}]
+    assert p1["formato"] == "lateral"
 
 
 def test_medios_solo_imagenes_y_cubiertas(cliente, cfg):
@@ -193,3 +194,31 @@ def test_descargar_el_carrusel_en_zip(cliente, cfg, monkeypatch):
     mp4.write_bytes(b"del render del dia")
     z = zipfile.ZipFile(io.BytesIO(cliente.get("/api/ejecuciones/1/piezas/2026-10-30-1/descarga.zip").content))
     assert z.read("01.mp4") == b"del render del dia"
+
+
+def test_proceder_lanza_el_desarrollo_de_una_propuesta_pendiente(cfg, tmp_path):
+    from folio_api.ejecutor import Ejecutor
+    (cfg.raiz / "diseno").symlink_to((type(cfg)(pipeline={}, fuentes=[]).raiz / "diseno").resolve())
+
+    class EjecutorFalso(Ejecutor):
+        def __init__(self):
+            super().__init__(tmp_path)
+            self.lanzadas = []
+
+        def lanzar(self, pasos=None):
+            self.lanzadas.append(pasos)
+            return True
+
+    inf = InformeDiario(fecha="2026-10-30", generado_en=datetime(2026, 10, 30, 9, tzinfo=timezone.utc), stats={}, top_historias=[],
+                        seleccion=SeleccionJefe(elegidas=[ELECCION], reserva=[]),
+                        piezas=[_pieza(1), _pieza(2, estado="pendiente", guion=None,
+                                                  eleccion=ELECCION.model_copy(update={"formato": "edicion"}))])
+    informe.escribir(inf, cfg.dir_informes / "2026-10-30")
+    ej = EjecutorFalso()
+    c = TestClient(crear_app(cfg, Almacen(cfg.ruta_db), ejecutor=ej))
+    dia = c.get("/api/dias/2026-10-30").json()
+    assert [(p["estado"], p["formato"]) for p in dia["piezas"]] == [("propuesta", "lateral"), ("pendiente", "edicion")]
+    assert c.post("/api/ejecuciones/1/piezas/2026-10-30-1/desarrollar").status_code == 409     # ya escrita
+    r = c.post("/api/ejecuciones/1/piezas/2026-10-30-2/desarrollar")
+    assert r.status_code == 202 and ej.lanzadas[-1][0][-5:] == ["desarrollar", "2026-10-30-2", "--ejecucion", "1", "--quiet"]
+    assert "pendiente (sin desarrollar" in (cfg.dir_informes / "2026-10-30" / "informe.md").read_text()

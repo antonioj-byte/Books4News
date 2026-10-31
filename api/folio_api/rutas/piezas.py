@@ -8,8 +8,10 @@ from folio.almacen import Evaluacion, MensajeChat, escribir_evaluacion_md
 from folio.llm import LLM
 from folio.modelos import InformeDiario
 from folio_api.dependencias import Contexto, contexto
+from folio_api.ejecutor import EstadoEjecucion
 from folio_api.esquemas import (CambioEstado, EdicionDiapositiva, MensajeNuevo, PiezaDetalle, RespuestaChat,
                                 ResultadoEdicion)
+from folio_api.rutas.dias import lomos
 from folio_api.servicio import hechos_ligados
 
 router = APIRouter()
@@ -31,7 +33,8 @@ def pieza(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
                         hechos_no_verificados=hechos_ligados(p),
                         evaluacion=ev[0] if ev else None, evaluacion_version=ev[1] if ev else None,
                         versiones=ctx.almacen.versiones(eid, pid),
-                        video_portada=f"/api/ejecuciones/{eid}/piezas/{pid}/video.mp4" if hay_video else None)
+                        video_portada=f"/api/ejecuciones/{eid}/piezas/{pid}/video.mp4" if hay_video else None,
+                        lomos=lomos(ctx, p))
 
 
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}/video.mp4", include_in_schema=False)
@@ -139,3 +142,16 @@ def descargar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     nombre = f"folio-{pid}-v{v}.zip"
     return Response(zona.getvalue(), media_type="application/zip",
                     headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
+
+
+@router.post("/api/ejecuciones/{eid}/piezas/{pid}/desarrollar", response_model=EstadoEjecucion, status_code=202)
+def desarrollar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
+    """«Proceder»: escribe una propuesta pendiente de la mesa (`folio desarrollar`, en un proceso aparte;
+    unos minutos y unos 0,3 $). Comparte turno con la ejecución del día: una cosa a la vez."""
+    import sys
+    p, _ = ctx.pieza(eid, pid)
+    if p.guion or p.estado not in ("pendiente", "fallida"):
+        raise HTTPException(409, "Esta pieza ya está escrita")
+    if not ctx.ejecutor.lanzar([[sys.executable, "-m", "folio.cli", "desarrollar", pid, "--ejecucion", str(eid), "--quiet"]]):
+        raise HTTPException(409, "Hay otra ejecución en marcha; prueba cuando termine")
+    return ctx.ejecutor.estado()

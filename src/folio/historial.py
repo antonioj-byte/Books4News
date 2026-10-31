@@ -51,6 +51,14 @@ class Historial:
         ).fetchone()
         return fila[0] if fila else None
 
+    def anadir_libros(self, fecha: str, libros: list[tuple[str, str, str | None]]) -> None:
+        """Añade libros usados el día `fecha` sin tocar lo ya registrado (una pieza desarrollada más tarde)."""
+        with self.db:
+            self.db.executemany(
+                "INSERT OR REPLACE INTO libros_usados VALUES (?, ?, ?, ?, ?)",
+                [(fecha, clave_libro(t, a), t, a, olid) for t, a, olid in libros],
+            )
+
     def registrar_dia(self, fecha: str, historias: list[tuple[str, str, np.ndarray]], libros: list[tuple[str, str, str | None]]):
         """Sustituye lo registrado para `fecha` (una nueva ejecución del día reemplaza la anterior)."""
         with self.db:

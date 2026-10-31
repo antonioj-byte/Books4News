@@ -141,6 +141,52 @@ def imagen_fijar(pieza: str, archivo: str, fecha: str = typer.Option(None, help=
     typer.echo(f"{ruta} · {img.credito}")
 
 
+@app.command()
+def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defecto, la última ejecución de la fecha de la pieza"),
+                quiet: bool = typer.Option(False, "--quiet", help="Solo la etapa en curso (lo usa la web)")):
+    """Escribe una propuesta pendiente de la mesa del día («Proceder» en la web): textos, guion,
+    hechos, arte, PNG y portada en vídeo. Guarda la pieza como versión nueva en la base de datos."""
+    _logging(quiet)
+    from folio.almacen import Almacen
+    from folio.etapas import EtapasGuardadas
+    from folio.pipeline import Pipeline, progreso
+    from folio.render import renderizar, renderizar_video
+
+    cfg = config.cargar()
+    fecha = pieza[:10]
+    almacen = Almacen(cfg.ruta_db)
+    eid = ejecucion or almacen.ultima_ejecucion(fecha)
+    r = almacen.pieza(eid, pieza) if eid else None
+    if not r:
+        typer.echo(f"No encuentro la pieza {pieza} en la ejecución {eid}", err=True)
+        raise typer.Exit(1)
+    p, _ = r
+    if p.estado not in ("pendiente", "fallida") or p.guion:
+        typer.echo(f"La pieza está «{p.estado}» y ya tiene guion: no hay nada que desarrollar", err=True)
+        raise typer.Exit(1)
+    if not p.libros:
+        typer.echo("La propuesta no tiene ningún libro verificado", err=True)
+        raise typer.Exit(1)
+    al_jefe, _, _ = EtapasGuardadas(cfg.dir_cache(fecha)).historias()
+    otras = [x for x, _ in almacen.piezas(eid) if x.id != pieza]
+    tuberia = Pipeline(cfg, fecha)
+    progreso(f"Desarrollando {pieza}")
+    hecha = tuberia.desarrollar(p, al_jefe, otras)
+    if hecha.estado == "propuesta":
+        progreso("Pintando las diapositivas y la portada en vídeo")
+        destino = cfg.dir_informes / fecha / "render"
+        renderizar(cfg, [hecha], destino)
+        renderizar_video(cfg, [hecha], destino)
+        tuberia.historial.anadir_libros(fecha, [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for l in hecha.libros])
+    coste = round(sum(t.coste_usd for t in tuberia.llm.trazas), 4)
+    v = almacen.guardar_version(eid, pieza, hecha, "pipeline", f"Desarrollada desde la mesa ({coste} $)")
+    almacen.cambiar_estado(eid, pieza, hecha.estado)
+    if hecha.estado != "propuesta":
+        typer.echo(f"No se pudo escribir: {hecha.error}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"{pieza}: versión {v}, {coste} $")
+
+
 retrato_app = typer.Typer(help="Retratos de autor generados con IA a partir de su foto libre (Magnific)")
 app.add_typer(retrato_app, name="retrato")
 

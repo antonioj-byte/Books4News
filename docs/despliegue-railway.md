@@ -20,7 +20,7 @@ Variables:
 | api | `FOLIO_DATOS` | `/datos` |
 | api | `PORT` | `8000` |
 | api | `MAGNIFIC_API_KEY` | la clave de Magnific (secreta). Opcional: retratos generados (`arte.retrato_generado`) |
-| api | `FOLIO_EJECUCION_DIARIA` | opcional: `04:30` para lanzar cada día el pipeline y el render (hora de Madrid) |
+| api | `FOLIO_EJECUCION_DIARIA` | opcional: `04:45` para tener la mesa del día a las 5:30 (pipeline y render, hora de Madrid) |
 | api | `INSTAGRAM_TOKEN` | opcional: token de la cuenta de Instagram de Folio (secreto; caduca a los 60 días). Ver `docs/instagram.md` |
 | api | `INSTAGRAM_USER_ID` | opcional: id de la cuenta de Instagram (si falta, se pide a la API) |
 | api | `FOLIO_URL_PUBLICA` | para publicar: la URL pública del servicio «web» |

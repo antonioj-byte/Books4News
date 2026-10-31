@@ -9,7 +9,7 @@ from folio import evaluacion_md
 from folio.modelos import Arte, HistoriaElegida, InformeDiario, LibroGuion, LibroVerificado, Pieza
 from folio.guion import libro_verificado
 
-_ESTADO = {"propuesta": "propuesta", "en_edicion": "en edición", "aprobada": "aprobada",
+_ESTADO = {"pendiente": "pendiente (sin desarrollar: «Proceder» en la web)", "propuesta": "propuesta", "en_edicion": "en edición", "aprobada": "aprobada",
            "descartada": "descartada", "publicada": "publicada", "fallida": "FALLIDA"}
 _EDICION_ES = {"si": "sí", "no": "no", "desconocido": "no consta"}
 
@@ -54,7 +54,8 @@ def _edicion_es_guion(lg: LibroGuion, libros: list[LibroVerificado]) -> str:
 
 def _pieza_md(p: Pieza) -> list[str]:
     e = p.eleccion
-    l = [f"### {p.id} · {e.titular}", "",
+    from folio.seleccion import NOMBRES_FORMATO
+    l = [f"### {p.id} · {e.titular}", "", f"**Formato:** {NOMBRES_FORMATO.get(e.formato, e.formato)}", "",
          f"**Estado:** {_ESTADO[p.estado]}" + "".join(f" · ⚠️ {m}" for m in _marcas(p))
          + (" · historia de reserva" if p.reserva else "") + f" · {p.n_medios} medios", ""]
     if p.error:

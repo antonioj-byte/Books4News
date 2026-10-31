@@ -50,6 +50,11 @@ class Seleccion(_Seccion):
     historias_editoriales: int = 12     # contexto del mundo del libro para el jefe de cultura
     elegidas: int
     reserva: int
+    # Mesa del día (31/10, a petición del usuario): propuestas por formato y cuántas se escriben solas
+    # (las primeras por preferencia); el resto espera a que se pulse «Proceder» en la web
+    reparto: dict[Literal["lateral", "dialogo", "edicion"], int] = Field(
+        default_factory=lambda: {"lateral": 2, "dialogo": 2, "edicion": 2})
+    desarrollar_al_inicio: int = Field(default=1, ge=0)
     # Novedad (31/10, a petición del usuario): solo libros publicados en los últimos N años (primera edición
     # o edición española); los anteriores se descartan al verificar
     antiguedad_libros: int = Field(default=2, ge=0)

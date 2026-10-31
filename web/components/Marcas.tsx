@@ -24,6 +24,7 @@ export function Marcas({ marcas, avisoJefe }: { marcas: Marcas; avisoJefe?: bool
 }
 
 const ESTADOS: Record<string, { texto: string; clase: string }> = {
+  pendiente: { texto: "En la mesa", clase: "border border-dashed border-tinta text-tinta" },
   propuesta: { texto: "Propuesta", clase: "border border-borde text-tinta-suave" },
   en_edicion: { texto: "En edición", clase: "bg-subrayador text-tinta" },
   aprobada: { texto: "Aprobada", clase: "bg-verde text-papel" },
@@ -35,4 +36,16 @@ const ESTADOS: Record<string, { texto: string; clase: string }> = {
 export function EstadoChip({ estado }: { estado: string }) {
   const e = ESTADOS[estado] ?? { texto: estado, clase: "border border-borde" };
   return <span className={`chip ${e.clase}`}>{e.texto}</span>;
+}
+
+// Formato de la propuesta (la mesa del día tiene tres)
+const FORMATOS: Record<string, { texto: string; clase: string }> = {
+  lateral: { texto: "Lectura lateral", clase: "border border-tinta text-tinta" },
+  dialogo: { texto: "Diálogo con la actualidad", clase: "bg-tinta text-papel" },
+  edicion: { texto: "Mundo del libro", clase: "bg-carmesi text-papel" },
+};
+
+export function FormatoChip({ formato }: { formato: string }) {
+  const f = FORMATOS[formato] ?? { texto: formato, clase: "border border-borde" };
+  return <span className={`chip ${f.clase}`}>{f.texto}</span>;
 }

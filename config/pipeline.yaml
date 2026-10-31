@@ -47,9 +47,13 @@ agrupacion:
 
 seleccion:
   historias_al_jefe: 25
-  historias_editoriales: 12     # carril editorial: contexto del mundo del libro para el jefe (puede elegir una)
-  elegidas: 3
-  reserva: 2
+  historias_editoriales: 16     # carril editorial: material para las propuestas del mundo del libro
+  # Mesa del día (31/10): el jefe propone `elegidas` con este reparto por formato; se escriben solas las
+  # `desarrollar_al_inicio` primeras y el resto espera a «Proceder» en la web. Sin reserva: las demás lo son.
+  elegidas: 6
+  reserva: 0
+  reparto: {lateral: 2, dialogo: 2, edicion: 2}
+  desarrollar_al_inicio: 1
   antiguedad_libros: 2          # novedad: libros publicados en los últimos 2 años (primera edición o edición española)
 
 exclusion:

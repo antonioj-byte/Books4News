@@ -79,6 +79,15 @@ def _linea_libro(l: LibroVerificado) -> str:
     )
 
 
+def instrucciones_formato(cfg: Config, formato: str) -> str:
+    """La sección del formato en prompts/formatos.md (lateral, dialogo, edicion)."""
+    texto = (cfg.dir_prompts / "formatos.md").read_text(encoding="utf-8")
+    secciones = {m.group(1): m.group(2).strip() for m in re.finditer(r"^## (\w+)\n(.*?)(?=^## |\Z)", texto, re.M | re.S)}
+    if formato not in secciones:
+        raise ValueError(f"prompts/formatos.md no tiene la sección «## {formato}»")
+    return secciones[formato]
+
+
 def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
                      libros: list[LibroVerificado]) -> str:
     fuentes = "\n".join(
@@ -98,6 +107,7 @@ def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[
         "Usa solo estos libros, que se han verificado en catálogos bibliográficos."
     )
     return cargar_prompt(cfg, "guionista", {
+        "[pegar formato]": instrucciones_formato(cfg, eleccion.formato),
         "[pegar]": noticia,
         "[pegar o «propón tú»]": libros_txt,
     })

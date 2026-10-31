@@ -150,6 +150,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ejecuciones/{eid}/piezas/{pid}/desarrollar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Desarrollar
+         * @description «Proceder»: escribe una propuesta pendiente de la mesa (`folio desarrollar`, en un proceso aparte;
+         *     unos minutos y unos 0,3 $). Comparte turno con la ejecución del día: una cosa a la vez.
+         */
+        post: operations["desarrollar_api_ejecuciones__eid__piezas__pid__desarrollar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/diseno/tokens.css": {
         parameters: {
             query?: never;
@@ -319,7 +340,7 @@ export interface components {
              * Estado
              * @enum {string}
              */
-            estado: "propuesta" | "en_edicion" | "aprobada" | "descartada" | "publicada" | "fallida";
+            estado: "pendiente" | "propuesta" | "en_edicion" | "aprobada" | "descartada" | "publicada" | "fallida";
         };
         /**
          * CitaVerificada
@@ -595,6 +616,13 @@ export interface components {
         /** HistoriaElegida */
         HistoriaElegida: {
             /**
+             * Formato
+             * @description lateral (lectura lateral), dialogo (diálogo con la actualidad) o edicion (mundo del libro)
+             * @default lateral
+             * @enum {string}
+             */
+            formato: "lateral" | "dialogo" | "edicion";
+            /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista
              */
@@ -616,7 +644,7 @@ export interface components {
             cuestion_de_fondo: string;
             /**
              * Libros Candidatos
-             * @description 2–3 libros candidatos
+             * @description 3–4 libros candidatos, por orden de preferencia
              */
             libros_candidatos: components["schemas"]["LibroCandidato"][];
             /**
@@ -723,6 +751,8 @@ export interface components {
             titulo: string;
             /** Autor */
             autor: string;
+            /** Cubierta */
+            cubierta: string | null;
         };
         /**
          * Marcas
@@ -775,7 +805,7 @@ export interface components {
              * Estado
              * @enum {string}
              */
-            estado: "propuesta" | "en_edicion" | "aprobada" | "descartada" | "publicada" | "fallida";
+            estado: "pendiente" | "propuesta" | "en_edicion" | "aprobada" | "descartada" | "publicada" | "fallida";
             /**
              * Reserva
              * @default false
@@ -832,6 +862,11 @@ export interface components {
             versiones: components["schemas"]["Version"][];
             /** Video Portada */
             video_portada: string | null;
+            /**
+             * Lomos
+             * @default []
+             */
+            lomos: components["schemas"]["Lomo"][];
         };
         /** PiezaResumen */
         PiezaResumen: {
@@ -847,7 +882,7 @@ export interface components {
              * Estado
              * @enum {string}
              */
-            estado: "propuesta" | "en_edicion" | "aprobada" | "descartada" | "publicada" | "fallida";
+            estado: "pendiente" | "propuesta" | "en_edicion" | "aprobada" | "descartada" | "publicada" | "fallida";
             /** N Medios */
             n_medios: number;
             /** Reserva */
@@ -859,6 +894,16 @@ export interface components {
             evaluada: boolean;
             /** Libros */
             libros: components["schemas"]["Lomo"][];
+            /**
+             * Formato
+             * @default lateral
+             */
+            formato: string;
+            /**
+             * Gancho
+             * @default
+             */
+            gancho: string;
         };
         /** RespuestaChat */
         RespuestaChat: {
@@ -1242,6 +1287,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RespuestaChat"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    desarrollar_api_ejecuciones__eid__piezas__pid__desarrollar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
                 };
             };
             /** @description Validation Error */

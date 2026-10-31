@@ -32,6 +32,7 @@ class Lomo(BaseModel):
     """Un libro de la pieza tal como se recomienda: para la estantería de la portada del día."""
     titulo: str
     autor: str
+    cubierta: str | None = None           # URL de la cubierta, si la etapa de arte o la mesa la encontró
 
 
 class PiezaResumen(BaseModel):
@@ -46,6 +47,8 @@ class PiezaResumen(BaseModel):
     marcas: Marcas
     evaluada: bool
     libros: list[Lomo]
+    formato: str = "lateral"              # lateral, dialogo o edicion
+    gancho: str = ""                      # el gancho del libro que propuso el jefe (lo que se ve en la mesa)
 
 
 class DiaDetalle(BaseModel):
@@ -78,6 +81,7 @@ class PiezaDetalle(BaseModel):
     # URL del vídeo de portada (folio render --video), si existe y la pieza no se ha editado desde
     # entonces: el vídeo se hizo con la versión del informe del día
     video_portada: str | None = None
+    lomos: list[Lomo] = []                # los libros con su cubierta (la propuesta pendiente los enseña)
 
 
 class EdicionDiapositiva(BaseModel):

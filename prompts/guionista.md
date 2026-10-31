@@ -59,5 +59,7 @@ Devuelve JSON:
   "fuentes_noticia": ["medio + URL"]
 }
 
+Formato: [pegar formato]
+
 Noticia: [pegar]
 Libro(s) elegido(s): [pegar o «propón tú»]

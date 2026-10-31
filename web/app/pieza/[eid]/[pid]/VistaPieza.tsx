@@ -6,7 +6,8 @@ import { useState } from "react";
 import { Carrusel } from "@/components/Carrusel";
 import { ChatEdicion } from "@/components/ChatEdicion";
 import { FormEvaluacion } from "@/components/FormEvaluacion";
-import { EstadoChip } from "@/components/Marcas";
+import { EstadoChip, FormatoChip } from "@/components/Marcas";
+import { Proceder } from "@/components/Proceder";
 import { PanelNoticia } from "@/components/PanelNoticia";
 import { api, ESTADOS } from "@/lib/api";
 import { conCursivas } from "@/lib/cursivas";
@@ -37,6 +38,7 @@ export function VistaPieza() {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <EstadoChip estado={d.pieza.estado} />
+            <FormatoChip formato={d.pieza.eleccion.formato ?? "lateral"} />
             <span className="dato">{d.pieza.id} · versión {d.version}</span>
             {d.video_portada && <span className="dato text-carmesi">PORTADA EN VÍDEO</span>}
           </div>
@@ -82,6 +84,30 @@ export function VistaPieza() {
               <p className="mt-2 text-[13px] text-tinta-suave">{g.por_que}</p>
             </div>
           </>
+        ) : d.pieza.libros.length > 0 ? (
+          // Propuesta de la mesa sin escribir (o cuyo guion falló): se ve la propuesta y se puede proceder
+          <div className="mx-auto flex max-w-[560px] flex-col gap-4">
+            <h2 className="titular text-[34px] leading-tight">{d.pieza.eleccion.titular}</h2>
+            {d.pieza.eleccion.gancho_libro && (
+              <p className="titular text-[20px] italic leading-snug text-tinta-suave" style={{ fontWeight: 400 }}>{d.pieza.eleccion.gancho_libro}</p>
+            )}
+            <div className="flex flex-wrap gap-4">
+              {d.lomos.map((l) => (
+                <div key={l.titulo} className="flex items-center gap-3">
+                  {l.cubierta
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={l.cubierta} alt={`Cubierta de ${l.titulo}`} className="h-[120px] w-[80px] object-cover shadow-[var(--sombra-libro)]" />
+                    : <div className="flex h-[120px] w-[80px] items-center justify-center bg-papel-hondo text-[11px] text-tinta-suave">sin cubierta</div>}
+                  <div className="text-[14px]"><b>{l.titulo}</b><br /><span className="text-tinta-suave">{l.autor}</span></div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[15px]"><b>De qué se habla.</b> {d.pieza.eleccion.de_que_se_habla}</p>
+            <p className="text-[15px]"><b>Cuestión de fondo.</b> {d.pieza.eleccion.cuestion_de_fondo}</p>
+            {d.pieza.error && <p className="text-[14px] text-carmesi">El intento anterior falló: {d.pieza.error}</p>}
+            <Proceder eid={eid} pid={pid} onHecho={cargar} texto={d.pieza.error ? "Volver a intentarlo" : "Proceder: escribir la pieza"} />
+            <p className="dato">Guion, comprobación de hechos, arte (con retrato 3D si toca), PNG y vídeo · unos minutos y unos 0,30 $</p>
+          </div>
         ) : (
           <p className="text-carmesi">Esta pieza no tiene guion: {d.pieza.error}</p>
         )}
@@ -90,7 +116,8 @@ export function VistaPieza() {
       <aside className="overflow-y-auto border-l border-borde px-6 py-5">
         <h3 className="antetitulo mb-1">Chat de edición</h3>
         <p className="titular mb-3 text-[22px]">Pídele un <em>cambio</em></p>
-        <ChatEdicion key={`chat:${eid}/${pid}`} eid={eid} pid={pid} onCambio={cargar} />
+        {g ? <ChatEdicion key={`chat:${eid}/${pid}`} eid={eid} pid={pid} onCambio={cargar} />
+           : <p className="text-[13px] text-tinta-suave">Cuando la pieza esté escrita, podrás pedirle cambios aquí.</p>}
         <h3 className="antetitulo mb-2 mt-6 border-t border-borde pt-4">Evaluación</h3>
         <FormEvaluacion key={`${eid}/${pid}`} eid={eid} pid={pid} inicial={d.evaluacion ?? null} />
         {d.evaluacion_version && d.evaluacion_version !== d.version && (
