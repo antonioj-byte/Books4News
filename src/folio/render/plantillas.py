@@ -168,11 +168,21 @@ class Plantillas:
         # diapositiva de libro, si es el autor de ese libro
         if retrato and not misma_persona(retrato["persona"], (libro or (libros[:1] or [{}])[0]).get("autor")):
             retrato = None
-        if d.tipo == "portada" and retrato:
-            imagen = retrato        # la cara del autor manda en la portada
+        if d.tipo == "portada" and retrato and not (a and a.portada == "panorama"):
+            imagen = retrato        # la cara del autor manda en la portada (salvo en la panorámica, B6)
         estilo, svg = self.medios.portada(pieza, imagen)
+        panorama = bool(d.tipo == "actualidad" and imagen and a and a.portada == "panorama"
+                        and self.medios.portada(pieza, imagen)[0] == "panorama")
         sin_foto = self._sin_foto(pieza, d) if d.tipo == "actualidad" and not imagen and not (a and a.cifra) else None
         info = self._infografia(pieza, d, n) if d.tipo == "idea" else None
+        if info and info["tipo"] == "mapa" and self.cfg.pipeline.arte.mapa_ilustrado and \
+                (dir_diseno(self.cfg, self.direccion) / "ilustraciones" / "salas.jpg").exists():
+            info["salas"] = "ilustraciones/salas.jpg"          # relativa a <base>: vale en el PNG y en la web
+            info["libro"] = libros[0]["titulo"] if libros else ""
+        # El buscador de la portada (B2): la pregunta del director de arte y, de respuesta, el libro
+        principal = pieza.guion.libros[0].titulo.replace("*", "") if pieza.guion.libros else None
+        buscador = ({"pregunta": a.pregunta, "respuesta": texto_html(f"*{principal}*") if principal else None}
+                    if d.tipo == "portada" and a and a.pregunta and self.cfg.pipeline.arte.buscador else None)
         # La cifra que cuenta (M2), la palabra gigante que sube (M7) y la interferencia de la portada (M10)
         contar = bool(d.tipo == "actualidad" and a and a.cifra and re.search(r"\d", a.cifra))
         interferencia = bool(d.tipo == "portada" and a and a.tono in self.cfg.pipeline.arte.interferencia and a.tono != "grave")
@@ -184,7 +194,8 @@ class Plantillas:
             "libro": libro, "sin_foto": sin_foto, "infografia": info, "contar": contar, "interferencia": interferencia,
             # Las diapositivas que también salen en vídeo (folio.render.video): la portada con imagen o con
             # interferencia, la noticia con cifra que cuenta o con palabra gigante, la idea con infografía
-            "video": (d.tipo == "portada" and (bool(imagen) or interferencia))
+            "panorama": panorama, "buscador": buscador,
+            "video": (d.tipo == "portada" and ((bool(imagen) and estilo != "panorama") or interferencia or bool(buscador)))
                      or (d.tipo == "actualidad" and (contar or bool(sin_foto and sin_foto["recurso"] == "gigante")))
                      or bool(info),
             "tono": a.tono if a else None, "acento": a.acento if a else None, "antetitulo": a.antetitulo if a else None,

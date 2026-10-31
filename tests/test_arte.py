@@ -3,7 +3,7 @@ from io import BytesIO
 from PIL import Image
 
 from folio import arte
-from folio.modelos import Pieza, PropuestaArte
+from folio.modelos import Infografia, Pieza, PropuestaArte, SinFoto
 
 from datos import ELECCION, LIBRO, guion_valido
 
@@ -15,7 +15,7 @@ def _pieza():
 
 def _propuesta(**cambios):
     datos = dict(tono="sereno", portada="circulo", suceso_con_victimas=False, recurso="foto", consultas=["court"], evitar=[],
-                 cifra=None, cifra_rotulo=None, por_que="x")
+                 cifra=None, cifra_rotulo=None, por_que="x", sin_foto=SinFoto(recurso="golpe"), infografia=Infografia(tipo="ninguna"))
     return PropuestaArte(**(datos | cambios))
 
 
@@ -65,3 +65,9 @@ def test_el_retrato_es_del_autor_del_libro_principal_del_guion():
     assert arte.autor_principal(p) == "Hannah Arendt"   # el guion lleva Eichmann en Jerusalén como principal
     p.guion.libros = [LibroGuion(titulo="Ficciones", autor="Jorge Luis Borges", editorial_espanola=None, traductor=None, edicion_original="x")]
     assert arte.autor_principal(p) == "Jorge Luis Borges"
+
+
+def test_el_esquema_del_director_cabe_en_las_salidas_estructuradas():
+    """Con un null en cada campo opcional anidado, la API rechazó el esquema («Schema is too complex»)."""
+    import json
+    assert json.dumps(PropuestaArte.model_json_schema()).count("anyOf") <= 6

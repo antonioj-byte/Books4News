@@ -45,7 +45,7 @@ def test_rotulos_literales_del_guion_y_titulo_sin_cifras():
     info, avisos = infografia.validar(MAPA.model_copy(update={"etiquetas": ["firmaba órdenes", "obediencia ciega"]}), p, ["mapa"], True)
     assert info is None and any("obediencia ciega" in a for a in avisos)
     info, avisos = infografia.validar(MAPA.model_copy(update={"titulo": "En 1963 lo vio"}), p, ["mapa"], True)
-    assert info.titulo is None and "sin cifras" in avisos[0]
+    assert not info.titulo and "sin cifras" in avisos[0]
     assert infografia.validar(ESQUEMA, p, ["esquema"], hay_imagen=False)[0] is None    # sin imagen no hay esquema
     assert infografia.validar(MAPA, p, ["linea"], True)[0] is None                     # no permitida
 

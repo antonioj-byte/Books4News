@@ -24,7 +24,7 @@ import yaml
 from PIL import Image, ImageDraw, ImageFont
 
 from folio import infografia, sin_foto
-from folio.imagenes import cubiertas, esquema, ilustracion, libres, retrato_generado, retratos
+from folio.imagenes import cubiertas, editorial, esquema, ilustracion, libres, retrato_generado, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import Arte, EleccionImagen, Infografia, Pieza, PropuestaArte
@@ -76,6 +76,18 @@ def validar_antetitulo(texto: str | None) -> str | None:
         return None
     texto = " ".join(texto.split()).strip(" .:·-").upper()
     return texto if 1 <= len(texto.split()) <= 3 and len(texto) <= 26 else None
+
+
+def validar_pregunta(texto: str | None) -> str | None:
+    """La pregunta del buscador (B2): de 3 a 9 palabras y 48 caracteres, sin cifras ni nombres propios
+    (ninguna mayúscula), sin signos de interrogación (el buscador no los lleva)."""
+    if not texto:
+        return None
+    t = " ".join(texto.split()).strip(" ¿?.").lower() if texto[:1].isupper() and not any(c.isupper() for c in texto[1:]) \
+        else " ".join(texto.split()).strip(" ¿?.")
+    if not 3 <= len(t.split()) <= 9 or len(t) > 48 or any(c.isdigit() or c.isupper() for c in t):
+        return None
+    return t
 
 
 def validar_remate(remate: str | None, titular: str) -> str | None:
@@ -202,11 +214,39 @@ def _imagen_de_archivo(llm: LLM, cfg: Config, pieza: Pieza, datos: str, propuest
         usadas |= {cand.archivo, cand.url}
 
 
+def _ilustracion_editorial(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte, dir_fecha: Path) -> bool:
+    """La ilustración editorial de la pieza (B1). Si no se puede (desactivada, máximo del día, escena no
+    válida, víctimas o Magnific), se avisa y se busca una foto de archivo: devuelve False."""
+    ie = cfg.pipeline.arte.ilustracion_editorial
+    escena, motivo = editorial.validar_escena(propuesta.escena)
+    if not ie.activo:
+        motivo = "desactivada en la configuración"
+    elif propuesta.suceso_con_victimas:
+        motivo = "con víctimas no se ilustra"
+    elif escena and editorial.del_dia(dir_fecha, pieza.id) >= ie.max_por_dia:
+        motivo = f"ya hay {ie.max_por_dia} hoy (máximo del día)"
+    elif escena:
+        libres.olvidar(pieza.id, dir_fecha)
+        try:
+            img = editorial.generar(cfg, pieza.id, dir_fecha, escena)
+            arte.imagen, arte.credito, arte.escena = img.archivo, img.credito, escena
+            return True
+        except Exception as exc:
+            motivo = f"no se pudo ({exc})"
+    arte.avisos.append(f"Ilustración editorial: {motivo}; se busca una foto de archivo")
+    propuesta.recurso = arte.recurso = "foto"
+    return False
+
+
 def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte) -> None:
     """Composición, antetítulo, remate y color, ajustados a lo permitido y a lo que hay."""
     permitidas = cfg.pipeline.arte.portadas
     if arte.portada not in permitidas:
         arte.portada = permitidas[0]
+    # La ilustración editorial cruza la portada y la noticia como una panorámica (B6)
+    if arte.recurso == "ilustracion" and arte.imagen:
+        arte.portada = "panorama"
+    arte.pregunta = validar_pregunta(propuesta.pregunta) if cfg.pipeline.arte.buscador else None
     arte.antetitulo = validar_antetitulo(propuesta.antetitulo)
     arte.remate = validar_remate(propuesta.remate, pieza.guion.diapositivas[0].texto)
     arte.acento = None if propuesta.suceso_con_victimas or propuesta.tono == "grave" else propuesta.acento
@@ -335,7 +375,8 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
     arte = Arte(tono=propuesta.tono, recurso=propuesta.recurso, portada=propuesta.portada, consultas=propuesta.consultas,
                 cifra=propuesta.cifra, cifra_rotulo=propuesta.cifra_rotulo, por_que=propuesta.por_que,
                 avisos=validar_cifra(propuesta, pieza))
-    _imagen_de_archivo(llm, cfg, pieza, datos, propuesta, arte, usadas, dir_fecha)
+    if propuesta.recurso != "ilustracion" or not _ilustracion_editorial(cfg, pieza, propuesta, arte, dir_fecha):
+        _imagen_de_archivo(llm, cfg, pieza, datos, propuesta, arte, usadas, dir_fecha)
     _composicion(cfg, pieza, propuesta, arte)
     if arte.portada == "ilustracion":
         _ilustracion(llm, cfg, pieza, arte, dir_fecha)

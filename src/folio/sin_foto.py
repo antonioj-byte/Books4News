@@ -50,17 +50,17 @@ def _limpiar(sf: SinFoto, texto: str, victimas: bool) -> list[str]:
 
     if sf.golpe and (inicio_del_final(sf.golpe, texto) is None or not 3 <= _palabras(sf.golpe) <= 14):
         fuera("golpe", sf.golpe)
-        sf.golpe = None
+        sf.golpe = ""
     if sf.golpe_remate and (not sf.golpe or inicio_del_final(sf.golpe_remate, sf.golpe) is None
                             or not 1 <= _palabras(sf.golpe_remate) <= 4):
         if sf.golpe:
             fuera("remate del golpe", sf.golpe_remate)
-        sf.golpe_remate = None
+        sf.golpe_remate = ""
     if sf.palabra:
         p = sf.palabra.strip(_COLA + ",;:()")
         if " " in p or not 4 <= len(p) <= 12 or not literal(p, texto):
             fuera("palabra", sf.palabra)
-            sf.palabra = None
+            sf.palabra = ""
         else:
             sf.palabra = p
     etiquetas = []
@@ -72,14 +72,14 @@ def _limpiar(sf: SinFoto, texto: str, victimas: bool) -> list[str]:
     sf.etiquetas = etiquetas
     if sf.numero and (victimas or not _NUMERO.search(sf.numero) or len(sf.numero) > 12 or not literal(sf.numero, texto)):
         fuera("número", sf.numero)
-        sf.numero = None
+        sf.numero = ""
     if sf.numero_rotulo and (not sf.numero or not 1 <= _palabras(sf.numero_rotulo) <= 5 or not literal(sf.numero_rotulo, texto)):
         if sf.numero:
             fuera("rótulo del número", sf.numero_rotulo)
-        sf.numero_rotulo = None
+        sf.numero_rotulo = ""
     if sf.sello and (not 1 <= _palabras(sf.sello) <= 3 or len(sf.sello) > 28 or not literal(sf.sello, texto)):
         fuera("sello", sf.sello)
-        sf.sello = None
+        sf.sello = ""
     return avisos
 
 

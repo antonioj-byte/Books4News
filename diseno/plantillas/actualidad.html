@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block fondo %}{% if not cifra %}{% with clase="imagen--arriba" %}{% include "_imagen.html" %}{% endwith %}{% endif %}
+{% block fondo %}{% if panorama %}{% with clase="imagen--panorama imagen--panorama-2" %}{% include "_imagen.html" %}{% endwith %}{% elif not cifra %}{% with clase="imagen--arriba" %}{% include "_imagen.html" %}{% endwith %}{% endif %}
 {%- if sin_foto and sin_foto.recurso == "gigante" %}<div class="gigante" aria-hidden="true" style="font-size: {{ sin_foto.tam_palabra }}px">{{ sin_foto.palabra }}<span class="gigante__copia"> {{ sin_foto.palabra }}</span></div>{% endif %}
 {%- if sin_foto and sin_foto.recurso == "collage" %}<div class="tira" aria-hidden="true"><span>{{ sin_foto.palabra }}</span></div>
 <div class="sello" aria-hidden="true">{% if sin_foto.sello[0] %}<span class="sello__arriba">{{ sin_foto.sello[0] }}</span>{% endif %}<span class="sello__palabra">{{ sin_foto.sello[1] }}</span></div>{% endif %}

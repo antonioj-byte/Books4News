@@ -10,9 +10,9 @@ Hay dos familias:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel as _BaseModel, ConfigDict, Field
+from pydantic import BaseModel as _BaseModel, BeforeValidator, ConfigDict, Field
 
 
 class BaseModel(_BaseModel):
@@ -213,32 +213,44 @@ class DiscrepanciaEdicion(BaseModel):
 
 RecursoSinFoto = Literal["golpe", "gigante", "teletipo", "collage"]
 
+# Texto opcional en los esquemas de salida del director de arte: cadena, vacía si no hay. Con null en cada
+# campo, el esquema es demasiado complejo para las salidas estructuradas; lo guardado con null se sigue leyendo.
+Texto = Annotated[str, BeforeValidator(lambda v: "" if v is None else v)]
 
-class SinFoto(BaseModel):
+
+class _TodoObligatorio(BaseModel):
+    """Esquema de salida de un agente con todos los campos en «required»: la API compila el esquema en una
+    gramática y cada campo opcional la dobla; con los opcionales anidados del director de arte respondía
+    «Schema is too complex». El modelo rellena siempre cada campo (vacío o null si no hay); en Python
+    siguen los valores por defecto, para construirlos a mano."""
+    model_config = ConfigDict(json_schema_extra=lambda esquema, _: esquema.update(required=list(esquema.get("properties", {}))))
+
+
+class SinFoto(_TodoObligatorio):
     """Recurso gráfico de la diapositiva de actualidad cuando no lleva foto ni cifra (31/10). Todo lo
     que se pinta sale literalmente del texto de esa diapositiva: el código lo comprueba al validar y
     otra vez al pintar (el texto puede editarse en la web)."""
     recurso: RecursoSinFoto = Field(description="golpe, gigante, teletipo o collage (ver el prompt)")
-    golpe: str | None = Field(default=None, description="La frase final de la diapositiva de actualidad, copiada literalmente (de 3 a 14 palabras)")
-    golpe_remate: str | None = Field(default=None, description="El final del golpe, copiado literalmente (de 1 a 4 palabras), que irá en cursiva con marcador")
-    palabra: str | None = Field(default=None, description="Una palabra de la diapositiva de actualidad, copiada literalmente (de 4 a 12 letras)")
+    golpe: Texto = Field(default="", description="La frase final de la diapositiva de actualidad, copiada literalmente (de 3 a 14 palabras)")
+    golpe_remate: Texto = Field(default="", description="El final del golpe, copiado literalmente (de 1 a 4 palabras), que irá en cursiva con marcador")
+    palabra: Texto = Field(default="", description="Una palabra de la diapositiva de actualidad, copiada literalmente (de 4 a 12 letras)")
     etiquetas: list[str] = Field(default_factory=list, description="De 2 a 3 etiquetas de 1 o 2 palabras copiadas literalmente de la diapositiva de actualidad")
-    numero: str | None = Field(default=None, description="Un número de la diapositiva de actualidad (un año, una edad, una cantidad), copiado literalmente, o null")
-    numero_rotulo: str | None = Field(default=None, description="De 1 a 5 palabras de esa misma diapositiva que dicen qué es el número")
-    sello: str | None = Field(default=None, description="De 1 a 3 palabras de la diapositiva de actualidad, copiadas literalmente, para un sello de estampilla")
+    numero: Texto = Field(default="", description="Un número de la diapositiva de actualidad (un año, una edad, una cantidad), copiado literalmente, o vacío")
+    numero_rotulo: Texto = Field(default="", description="De 1 a 5 palabras de esa misma diapositiva que dicen qué es el número")
+    sello: Texto = Field(default="", description="De 1 a 3 palabras de la diapositiva de actualidad, copiadas literalmente, para un sello de estampilla")
 
 
-class Infografia(BaseModel):
+class Infografia(_TodoObligatorio):
     """Infografía de la diapositiva de la idea (31/10): «linea» (línea de tiempo del libro y la noticia,
     con los años verificados), «mapa» (noticia → idea → libro, con dos rótulos del guion) o «esquema»
     (ilustración técnica de Magnific a partir de la imagen de la pieza, con tres rótulos del guion). Los
     años los pone el código; los rótulos salen literalmente del guion (folio.infografia)."""
-    tipo: Literal["linea", "mapa", "esquema"] = Field(description="linea, mapa o esquema (ver el prompt)")
-    titulo: str | None = Field(default=None, description="De 3 a 8 palabras, sin cifras: lo que cuenta la infografía")
+    tipo: Literal["linea", "mapa", "esquema", "ninguna"] = Field(description="linea, mapa, esquema o ninguna (ver el prompt)")
+    titulo: Texto = Field(default="", description="De 3 a 8 palabras, sin cifras: lo que cuenta la infografía")
     etiquetas: list[str] = Field(default_factory=list, description="Rótulos copiados literalmente del guion: 2 en el mapa (de 2 a 4 palabras), 3 en el esquema (de 1 a 3 palabras)")
 
 
-class PropuestaArte(BaseModel):
+class PropuestaArte(_TodoObligatorio):
     """Primera llamada: qué buscar y qué destacar. La imagen la busca el código."""
     tono: Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]
     portada: Literal["sangre", "banda", "caja", "neon", "ilustracion", "circulo", "collage"] = Field(
@@ -247,13 +259,15 @@ class PropuestaArte(BaseModel):
     remate: str | None = Field(default=None, description="El final del titular de portada, copiado literalmente (de 2 a 6 palabras), que irá en cursiva")
     acento: Literal["pluma", "marcador"] | None = Field(default=None, description="Color de la pieza: pluma (magenta) o marcador (amarillo); null si es grave")
     suceso_con_victimas: bool = Field(description="La noticia trata de muertos, heridos o víctimas")
-    recurso: Literal["foto", "grabado"] = Field(description="Foto de archivo o ilustración antigua (grabado, dibujo)")
-    consultas: list[str] = Field(description="3 o 4 búsquedas de 1 a 3 palabras, en inglés, sueco o alemán")
-    evitar: list[str] = Field(description="Lo que la imagen no debe mostrar")
+    recurso: Literal["foto", "grabado", "ilustracion"] = Field(description="Foto de archivo, ilustración antigua (grabado, dibujo) o ilustración editorial nueva (ver el prompt)")
+    escena: Texto = Field(default="", description="Con recurso «ilustracion»: la metáfora visual, en inglés, de 12 a 70 palabras, sin nombres propios, personas reales, texto ni marcas")
+    pregunta: Texto = Field(default="", description="La pregunta que la noticia deja en el aire, para el buscador de la portada: de 3 a 9 palabras, en minúsculas, sin cifras ni nombres propios")
+    consultas: list[str] = Field(default_factory=list, description="3 o 4 búsquedas de 1 a 3 palabras, en inglés, sueco o alemán")
+    evitar: list[str] = Field(default_factory=list, description="Lo que la imagen no debe mostrar")
     cifra: str | None = Field(default=None, description="Una cifra copiada literalmente de la diapositiva de actualidad, o null")
     cifra_rotulo: str | None = Field(default=None, description="De 2 a 6 palabras de esa misma diapositiva que explican la cifra")
-    sin_foto: SinFoto | None = Field(default=None, description="Recurso gráfico de la diapositiva de actualidad si se queda sin foto ni cifra")
-    infografia: Infografia | None = Field(default=None, description="Infografía de la diapositiva de la idea, o null si ninguna aporta")
+    sin_foto: SinFoto = Field(description="Recurso gráfico de la diapositiva de actualidad si se queda sin foto ni cifra")
+    infografia: Infografia = Field(description="Infografía de la diapositiva de la idea (tipo «ninguna» si ninguna aporta)")
     por_que: str
 
 
@@ -282,7 +296,7 @@ class Arte(BaseModel):
     imagen: str | None = None            # clave de la imagen fijada («europeana:/…»)
     # Composición de la portada: «circulo» (imagen en círculo), «collage» (grabado a sangre sobre
     # campo de color) o «ilustracion» (ilustración vectorial del ilustrador)
-    portada: Literal["sangre", "banda", "caja", "neon", "circulo", "collage", "ilustracion"] = "sangre"
+    portada: Literal["sangre", "banda", "caja", "neon", "circulo", "collage", "ilustracion", "panorama"] = "sangre"
     antetitulo: str | None = None
     remate: str | None = None            # final del titular que va en cursiva (marca Alighieria)
     acento: Literal["pluma", "marcador"] | None = None   # color de la pieza; sin color en las graves
@@ -291,6 +305,8 @@ class Arte(BaseModel):
     sin_foto: SinFoto | None = None    # recurso de la diapositiva de actualidad sin foto ni cifra
     infografia: Infografia | None = None  # infografía de la diapositiva de la idea
     esquema: str | None = None           # crédito de la ilustración técnica de Magnific (infografía «esquema»)
+    escena: str | None = None            # metáfora de la ilustración editorial (recurso «ilustracion», portada «panorama»)
+    pregunta: str | None = None          # la del buscador de la portada (B2)
     credito: str | None = None
     por_que: str = ""
     avisos: list[str] = Field(default_factory=list)

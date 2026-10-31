@@ -15,7 +15,7 @@ from folio.imagenes import cubiertas, ilustracion, libres
 from folio.modelos import LibroVerificado, Pieza
 
 # Composiciones que necesitan una imagen; sin ella, la portada es tipográfica
-_CON_IMAGEN = ("sangre", "banda", "caja", "neon")
+_CON_IMAGEN = ("sangre", "banda", "caja", "neon", "panorama")
 
 
 def como_uri(ruta: Path) -> str:

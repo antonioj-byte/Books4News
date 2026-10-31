@@ -26,22 +26,22 @@ def test_todo_lo_que_se_pinta_sale_literalmente_del_texto():
     assert avisos == [] and sf.recurso == "golpe" and sf.etiquetas == ["Barcelona", "ensayo", "miedo"]
     # Sin tildes ni mayúsculas también vale, pero no lo que no está en el texto
     sf, avisos = sin_foto.validar(_sf(sello="sin capítulos", palabra="VERTEBRAS", etiquetas=["Barcelona", "terror"]), TEXTO, TODOS)
-    assert sf.sello is None and sf.palabra == "VERTEBRAS" and sf.etiquetas == ["Barcelona"]
+    assert not sf.sello and sf.palabra == "VERTEBRAS" and sf.etiquetas == ["Barcelona"]
     assert any("sello" in a for a in avisos) and any("etiqueta" in a for a in avisos)
 
 
 def test_el_golpe_es_el_final_del_texto_y_su_remate_el_final_del_golpe():
     sf, _ = sin_foto.validar(_sf(golpe="No tiene capítulos"), TEXTO, TODOS)        # no es el final
-    assert sf.golpe is None and sf.golpe_remate is None and sf.recurso == "gigante"   # pasa al siguiente con datos
+    assert not sf.golpe and not sf.golpe_remate and sf.recurso == "gigante"   # pasa al siguiente con datos
     sf, _ = sin_foto.validar(_sf(golpe_remate="No tiene"), TEXTO, TODOS)
-    assert sf.golpe and sf.golpe_remate is None
+    assert sf.golpe and not sf.golpe_remate
     sf, _ = sin_foto.validar(_sf(golpe=TEXTO), TEXTO, TODOS)                         # el texto entero, no
-    assert sf.golpe is None
+    assert not sf.golpe
 
 
 def test_con_victimas_no_hay_numero_y_sin_datos_no_hay_recurso():
     sf, _ = sin_foto.validar(_sf(recurso="teletipo"), TEXTO, TODOS, victimas=True)
-    assert sf.recurso == "teletipo" and sf.numero is None and sf.numero_rotulo is None
+    assert sf.recurso == "teletipo" and not sf.numero and not sf.numero_rotulo
     vacio = SinFoto(recurso="gigante", palabra="inventada")
     sf, avisos = sin_foto.validar(vacio, TEXTO, TODOS)
     assert sf is None and "solo con texto" in avisos[-1]

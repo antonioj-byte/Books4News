@@ -8,6 +8,12 @@
       <div class="linea"><span class="linea__eje"></span>
         {% for h in infografia.hitos %}<div class="hito{% if h.ahora %} hito--ahora{% endif %}" style="left: {{ h.x }}%; --i: {{ loop.index0 }}"><b class="hito__punto"></b><span class="hito__anio">{{ h.anio }}</span><span class="hito__que">{{ h.que_html }}</span><span class="hito__detalle">{{ h.detalle }}</span></div>{% endfor %}
       </div>
+      {% elif infografia.tipo == "mapa" and infografia.salas %}
+      <div class="salas"><img src="{{ infografia.salas }}" alt="">
+        <span class="salas__rotulo salas__rotulo--1" style="--i: 0">noticia<i>{{ infografia.etiquetas[0] }}</i></span>
+        <span class="salas__rotulo salas__rotulo--2" style="--i: 1">idea<i>{{ infografia.etiquetas[1] }}</i></span>
+        <span class="salas__rotulo salas__rotulo--3" style="--i: 2">libro<i>{{ infografia.libro }}</i></span>
+      </div>
       {% elif infografia.tipo == "mapa" %}
       <svg class="mapa" viewBox="0 0 920 560">
         <path class="mapa__linea" d="M190 120 C 420 120, 560 200, 700 280"/>

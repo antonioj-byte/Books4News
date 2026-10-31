@@ -2,10 +2,13 @@
 {% block fondo %}
 {%- if portada_estilo == "banda" %}{% with clase="imagen--abajo" %}{% include "_imagen.html" %}{% endwith %}<div class="banda"></div>
 {%- elif portada_estilo == "neon" %}{% with clase="imagen--sangre imagen--neon" %}{% include "_imagen.html" %}{% endwith %}<span class="bloque-neon"></span>
+{%- elif portada_estilo == "panorama" %}{% with clase="imagen--panorama" %}{% include "_imagen.html" %}{% endwith %}
 {%- elif portada_estilo in ("sangre", "caja") %}{% with clase="imagen--sangre" %}{% include "_imagen.html" %}{% endwith %}
 {%- else %}<div class="muro" aria-hidden="true">{% for i in range(14) %}<p class="muro__fila muro__fila--{{ i % 3 }}">{{ tokens.vocabulario }} · {{ tokens.vocabulario }}</p>{% endfor %}</div><div class="velo"></div>{% endif %}
 {% endblock %}
 {% block cuerpo %}
+    {% if buscador %}<div class="buscador" aria-hidden="true"><svg class="buscador__lupa" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/><path d="M15.5 15.5 L22 22"/></svg><span class="buscador__texto">{{ buscador.pregunta }}</span><span class="buscador__cursor"></span></div>
+    {% if buscador.respuesta %}<p class="buscador__respuesta">→ {{ buscador.respuesta }}</p>{% endif %}{% endif %}
     <div class="titulo">
       {% if antetitulo %}<div class="antetitulo">{{ antetitulo }}</div>{% endif %}
       {% if interferencia %}<div class="titular-caja"><h1 class="titular">{{ titular_remate }}</h1>

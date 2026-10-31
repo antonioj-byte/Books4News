@@ -131,6 +131,12 @@ class Esquema(_Seccion):
     espera_max_s: int = Field(default=240, gt=0)
 
 
+class IlustracionEditorial(_Seccion):
+    activo: bool = True
+    max_por_dia: int = Field(default=3, ge=0)     # ilustraciones por día (unos 25 créditos cada una)
+    espera_max_s: int = Field(default=240, gt=0)
+
+
 class Arte(_Seccion):
     # Composiciones de portada que puede elegir el director de arte. La ilustración vectorial
     # dibujada por el modelo se desactivó el 31/10: el resultado parece clip-art.
@@ -148,6 +154,11 @@ class Arte(_Seccion):
     # Infografías de la diapositiva de la idea (31/10) y la ilustración técnica de Magnific del «esquema»
     infografias: list[Literal["linea", "mapa", "esquema"]] = Field(default_factory=lambda: ["linea", "mapa", "esquema"])
     esquema: Esquema = Field(default_factory=lambda: Esquema())
+    # Ilustración editorial de la pieza (B1), que cruza la portada y la noticia (B6); el buscador de la
+    # portada (B2) y el mapa de la idea dibujado como tres salas (B4)
+    ilustracion_editorial: IlustracionEditorial = Field(default_factory=lambda: IlustracionEditorial())
+    buscador: bool = True
+    mapa_ilustrado: bool = True
     # Tonos en los que la portada en vídeo lleva la interferencia (M10)
     interferencia: list[Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]] = Field(default_factory=lambda: ["ironico"])
 
@@ -257,6 +268,7 @@ def perfil_dev(cfg: Config) -> Config:
     dev.pipeline.esfuerzo = {etapa: "low" for etapa in dev.pipeline.esfuerzo}
     dev.pipeline.arte.retrato_generado.activo = False      # tampoco se pagan retratos generados
     dev.pipeline.arte.esquema.activo = False               # ni ilustraciones de esquema (Magnific)
+    dev.pipeline.arte.ilustracion_editorial.activo = False # ni ilustraciones editoriales
     return dev
 
 

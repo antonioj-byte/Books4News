@@ -277,6 +277,56 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .en-video .esquema img { animation: acercar calc(var(--video-segundos) * 1s) ease-out both; }
 .en-video .esquema__rotulo { animation: asomar 0.6s ease-out both; animation-delay: calc(1s + var(--i) * 0.7s); }
 
+/* Ilustración editorial en panorámica (B1 y B6): la misma imagen, al doble de ancho, cruza la portada
+   (mitad izquierda) y la noticia (mitad derecha) sin costura. Nunca se anima: movería el corte. */
+.imagen--panorama { top: 0; bottom: 0; left: 0; width: 200%; }
+.imagen--panorama-2 { left: -100%; }
+.imagen--panorama img { filter: none; }
+.imagen--panorama::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(18, 14, 15, 0.62) 66%, var(--colores-tinta-honda) 97%); }
+.imagen--panorama-2::after { background: linear-gradient(180deg, transparent 36%, rgba(18, 14, 15, 0.7) 60%, var(--colores-tinta-honda) 92%); }
+.portada--panorama { background: var(--colores-tinta-honda); color: var(--colores-papel); }
+.portada--panorama .subtitulo { color: var(--colores-papel); }
+.portada--panorama .antetitulo { background: var(--colores-papel); color: var(--colores-tinta); }
+.portada--panorama .remate {
+  color: var(--colores-tinta); padding: 0 0.12em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: linear-gradient(100deg, rgba(255, 245, 0, 0) 0.9%, rgba(255, 245, 0, 1) 2.4%, rgba(255, 245, 0, 0.88) 5.8%, rgba(255, 245, 0, 0.78) 93%, rgba(255, 245, 0, 0.95) 96%, rgba(255, 245, 0, 0) 98%);
+  background-size: 100% 78%; background-position: 0 70%; background-repeat: no-repeat;
+}
+.en-video .imagen--panorama img { animation: none; }
+
+/* El buscador de la portada (B2): escribe la pregunta que deja la noticia y responde con el libro */
+.buscador {
+  display: flex; align-items: center; gap: 18px; align-self: flex-start; max-width: 100%;
+  background: var(--colores-papel); color: var(--colores-tinta); border-radius: 22px; padding: 20px 30px;
+  font-family: var(--fuentes-texto); font-size: 30px; line-height: 1.2;
+  box-shadow: 0 0 0 6px rgba(255, 245, 0, 0.28), 0 24px 50px -16px rgba(18, 14, 15, 0.7);
+}
+.buscador__lupa { flex: none; width: 32px; height: 32px; fill: none; stroke: var(--colores-tinta); stroke-width: 2.4; stroke-linecap: round; }
+.buscador__texto { display: inline-block; overflow: hidden; white-space: nowrap; vertical-align: bottom; max-width: 760px; }
+.buscador__cursor { flex: none; width: 2px; height: 1.1em; background: var(--colores-tinta); margin-left: -12px; }
+.buscador__respuesta {
+  align-self: flex-start; margin-top: 14px; padding: 8px 18px 10px; border-radius: 14px; background: var(--colores-tinta-honda);
+  font-family: var(--fuentes-remate); font-style: italic; font-size: 34px; line-height: 1.2; color: var(--colores-papel);
+}
+.buscador__respuesta em { font-size: 1em; }
+@keyframes escribir { from { max-width: 0; } to { max-width: 760px; } }
+@keyframes parpadear { 50% { opacity: 0; } }
+.en-video .buscador__texto { animation: escribir 2.2s steps(30) 0.4s both; }
+.en-video .buscador__cursor { animation: parpadear 1s steps(1) infinite; }
+.en-video .buscador__respuesta { animation: asomar 0.6s ease-out 2.9s both; }
+
+/* El mapa de la idea dibujado como tres salas (B4): una ilustración de la casa y los rótulos del guion */
+.infografia--mapa:has(.salas) { background: var(--colores-papel-salas); }
+.salas { position: absolute; left: 0; right: 0; bottom: 0; aspect-ratio: 16 / 9; }
+.salas img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.salas__rotulo {
+  position: absolute; transform: translateX(-50%); font-family: var(--fuentes-titular); font-weight: 700; font-size: 26px; line-height: 1.1;
+  letter-spacing: -0.02em; background: var(--colores-papel); border: 3px solid var(--colores-tinta); padding: 8px 14px; text-align: center; max-width: 300px;
+}
+.salas__rotulo i { display: block; font-family: var(--fuentes-remate); font-weight: 400; font-size: 26px; color: var(--colores-pluma); }
+.salas__rotulo--1 { left: 17%; top: 2%; } .salas__rotulo--2 { left: 50%; top: 12%; } .salas__rotulo--3 { left: 80%; top: 22%; }
+.en-video .salas__rotulo { animation: asomar 0.6s ease-out both; animation-delay: calc(0.8s + var(--i) * 0.8s); }
+
 /* Noticias graves: sin marcador; el remate, en cursiva sin subrayar */
 .grave .remate { background: none !important; color: inherit !important; padding: 0; }
 .grave .cifra__numero { color: var(--colores-papel); }

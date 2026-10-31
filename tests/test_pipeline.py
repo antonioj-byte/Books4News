@@ -10,7 +10,8 @@ from folio.ingesta import agrupacion
 from folio.historial import Historial
 from folio.libros.verificacion import Verificador
 from folio.llm import LLM
-from folio.modelos import Arte, Articulo, ComprobacionHechos, HechoComprobado, PropuestaArte, ResumenHistoria, SeleccionJefe
+from folio.modelos import (Arte, Articulo, ComprobacionHechos, HechoComprobado, Infografia, PropuestaArte, ResumenHistoria,
+                           SeleccionJefe, SinFoto)
 from folio.pipeline import Pipeline
 
 from conftest import transporte_openlibrary
@@ -42,6 +43,7 @@ class LLMFalso(LLM):
             ]), []
         if esquema is PropuestaArte:
             return PropuestaArte(tono="sereno", portada="circulo", suceso_con_victimas=False, recurso="grabado", consultas=["court"],
+                                 sin_foto=SinFoto(recurso="golpe"), infografia=Infografia(tipo="ninguna"),
                                  evitar=[], cifra=None, por_que="Un tribunal antiguo"), []
         return self.guiones.pop(0), []
 

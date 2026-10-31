@@ -61,7 +61,7 @@ def _titulo(texto: str | None) -> str | None:
 
 def validar(info: Infografia | None, pieza: Pieza, permitidos: list[str], hay_imagen: bool) -> tuple[Infografia | None, list[str]]:
     """La infografía si se puede pintar con datos comprobados; si no, None y el motivo en los avisos."""
-    if info is None or not pieza.guion:
+    if info is None or info.tipo == "ninguna" or not pieza.guion:
         return None, []
     if info.tipo not in permitidos:
         return None, [f"Infografía: «{info.tipo}» no está permitida en la configuración"]
@@ -70,7 +70,7 @@ def validar(info: Infografia | None, pieza: Pieza, permitidos: list[str], hay_im
     titulo = _titulo(info.titulo)
     if info.titulo and not titulo:
         avisos.append(f"Infografía: título descartado («{info.titulo}»): de 3 a 8 palabras y sin cifras")
-    info.titulo = titulo
+    info.titulo = titulo or ""
     if info.tipo == "linea":
         info.etiquetas = []
         if not hitos(pieza):
