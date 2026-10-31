@@ -97,3 +97,33 @@ def test_la_foto_pequena_va_en_copia_y_la_grande_a_sangre(cfg_diseno, monkeypatc
     _foto_prensa(cfg_diseno, lado=LADO_SANGRE + 200)
     html = render.Plantillas(cfg_diseno).html_diapositiva(p, 1)
     assert "portada--sangre" in html and 'class="copia"' not in html
+
+
+def test_la_pregunta_admite_siglas_pero_no_nombres():
+    assert arte.validar_pregunta("Por qué la IA nos da miedo") == "por qué la IA nos da miedo"
+    assert arte.validar_pregunta("qué leer sobre Mariana Enriquez") is None
+    assert arte.validar_pregunta("qué pasó en 2008 con los bancos") is None
+    assert arte.validar_pregunta("") is None
+
+
+def test_wikidata_bloqueado_no_se_vuelve_a_consultar(tmp_path, monkeypatch):
+    import httpx
+    llamadas = []
+    def falla(nombre, cliente):
+        llamadas.append(nombre)
+        raise httpx.HTTPStatusError("403", request=httpx.Request("GET", "https://query.wikidata.org"),
+                                    response=httpx.Response(403))
+    monkeypatch.setattr(retratos, "archivo_en_commons", falla)
+    img, motivo = retratos.buscar_y_fijar("Ana Pérez", "p1", tmp_path)
+    assert img is None and "403" in motivo and "sin reintentar" in motivo
+    img, motivo = retratos.buscar_y_fijar("Otra Persona", "p2", tmp_path)
+    assert img is None and llamadas == ["Ana Pérez"]
+
+
+def test_si_el_mapa_no_se_sostiene_va_la_linea(cfg):
+    from folio.modelos import Infografia
+    p = _pieza()
+    a = Arte(tono="sereno", recurso="foto")
+    arte._composicion(cfg, p, _propuesta(infografia=Infografia(tipo="mapa", titulo="Del tribunal a la obediencia",
+                                                               etiquetas=["inventado del todo", "tampoco está"])), a)
+    assert a.infografia.tipo == "linea" and "pasa a la línea de tiempo" in a.avisos[-1]

@@ -80,12 +80,16 @@ def validar_antetitulo(texto: str | None) -> str | None:
 
 def validar_pregunta(texto: str | None) -> str | None:
     """La pregunta del buscador (B2): de 3 a 9 palabras y 48 caracteres, sin cifras ni nombres propios
-    (ninguna mayúscula), sin signos de interrogación (el buscador no los lleva)."""
+    (solo siglas en mayúsculas), sin signos de interrogación (el buscador no los lleva)."""
     if not texto:
         return None
-    t = " ".join(texto.split()).strip(" ¿?.").lower() if texto[:1].isupper() and not any(c.isupper() for c in texto[1:]) \
-        else " ".join(texto.split()).strip(" ¿?.")
-    if not 3 <= len(t.split()) <= 9 or len(t) > 48 or any(c.isdigit() or c.isupper() for c in t):
+    palabras = " ".join(texto.split()).strip(" ¿?.").split()
+    if palabras and palabras[0][:1].isupper() and not palabras[0].isupper():
+        palabras[0] = palabras[0].lower()                     # la mayúscula de inicio de frase no cuenta
+    t = " ".join(palabras)
+    # Siglas en mayúsculas (IA, ONU) sí; nombres propios (una mayúscula y minúsculas) no
+    propios = [w for w in palabras if w[:1].isupper() and not (w.isupper() and len(w) <= 5)]
+    if not 3 <= len(palabras) <= 9 or len(t) > 48 or any(c.isdigit() for c in t) or propios:
         return None
     return t
 
@@ -264,6 +268,12 @@ def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte
     tipos = [t for t in cfg.pipeline.arte.infografias if not grave or t == "linea"]     # en graves, solo la línea
     arte.infografia, avisos = infografia.validar(propuesta.infografia, pieza, tipos, bool(arte.imagen))
     arte.avisos += avisos
+    if not arte.infografia and propuesta.infografia.tipo in ("mapa", "esquema") and "linea" in tipos:
+        # Si el mapa o el esquema no se sostienen (rótulos que no salen del guion), la línea de tiempo
+        arte.infografia, _ = infografia.validar(Infografia(tipo="linea", titulo=propuesta.infografia.titulo),
+                                                pieza, tipos, bool(arte.imagen))
+        if arte.infografia:
+            arte.avisos.append("Infografía: pasa a la línea de tiempo")
 
 
 def _ilustracion(llm: LLM, cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:

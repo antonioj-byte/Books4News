@@ -54,7 +54,7 @@ def test_en_piezas_graves_solo_la_linea(cfg):
     p = _pieza()
     a = Arte(tono="grave", recurso="foto")
     arte._composicion(cfg, p, _propuesta(tono="grave", infografia=MAPA), a)
-    assert a.infografia is None
+    assert a.infografia.tipo == "linea"                    # el mapa no se permite en graves: pasa a la línea
     arte._composicion(cfg, p, _propuesta(tono="grave", infografia=Infografia(tipo="linea", titulo="Antes de la noticia, el libro")), a)
     assert a.infografia.tipo == "linea"
 

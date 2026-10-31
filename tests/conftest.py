@@ -16,6 +16,15 @@ def sin_esperas(monkeypatch):
     monkeypatch.setattr(OpenLibrary, "ESPERA_S", 0)
 
 
+@pytest.fixture(autouse=True)
+def sin_bloqueos():
+    """Los bloqueos (403/429) se recuerdan durante la ejecución; cada test empieza sin ninguno."""
+    from folio.imagenes import retratos
+    retratos.reiniciar()
+    yield
+    retratos.reiniciar()
+
+
 @pytest.fixture
 def cfg(tmp_path):
     """Config real del repo, pero con datos e informes en un directorio temporal."""

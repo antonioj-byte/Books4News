@@ -63,10 +63,29 @@ def licencia_retrato(img: imagenes.ImagenLibre, permitir_cc_by_sa: bool) -> imag
     return img
 
 
+# Motivo del bloqueo de Wikidata (403/429) en esta ejecución: no se vuelve a llamar hasta la siguiente
+_bloqueo: str | None = None
+
+
+def reiniciar() -> None:
+    global _bloqueo
+    _bloqueo = None
+
+
 def buscar_y_fijar(autor: str, pieza_id: str, dir_cache_fecha: Path, permitir_cc_by_sa: bool = False) -> tuple[imagenes.ImagenLibre | None, str]:
-    """Busca el retrato del autor y lo fija para la pieza. Devuelve (imagen o None, motivo)."""
+    """Busca el retrato del autor y lo fija para la pieza. Devuelve (imagen o None, motivo). Si Wikidata
+    responde 403 o 429, se para sin reintentar y no se le vuelve a preguntar en esta ejecución."""
+    global _bloqueo
+    if _bloqueo:
+        return None, f"Retrato de {autor}: no se consulta Wikidata ({_bloqueo})"
     with httpx.Client(headers={"User-Agent": imagenes.AGENTE}, timeout=30) as c:
-        archivo = archivo_en_commons(autor, c)
+        try:
+            archivo = archivo_en_commons(autor, c)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code in (403, 429):
+                _bloqueo = f"Wikidata respondió {e.response.status_code}; se para sin reintentar"
+                return None, f"Retrato de {autor}: {_bloqueo}"
+            raise
     if not archivo:
         return None, f"Sin retrato de {autor} en Wikidata"
     img = licencia_retrato(imagenes.ficha(f"commons:File:{archivo}"), permitir_cc_by_sa)
