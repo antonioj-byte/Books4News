@@ -152,3 +152,4 @@ uv run pytest                            # tests (sin red ni gasto)
 - Los prompts tienen marcadores (`[pegar lista]`, `[pegar]`, `[pegar o «propón tú»]`) que el código sustituye por los datos del día. Si se cambia un marcador en el `.md`, hay que cambiarlo en el código; la carga falla si falta.
 - Los esquemas de salida de los agentes están en `src/folio/modelos.py` y deben reflejar lo que pide cada prompt.
 - El plan de la Fase 1 está en `docs/plan-fase-1.md`.
+- El manual de estilo y dirección de arte está en `docs/manual/index.html` (publicado también como Artifact). Cuando cambie una decisión editorial o visual, se actualiza ahí además de aquí.
