@@ -51,6 +51,7 @@ class Articulo(BaseModel):
     acceso: Acceso
     carril: Carril = "actualidad"
     tier: int | None = None
+    visto_en: datetime | None = None     # cuándo lo leyó Folio por primera vez (lectura periódica, folio.ingesta.lecturas)
 
 
 class Historia(BaseModel):

@@ -104,6 +104,12 @@ class Pipeline:
             return self.etapas.articulos()
         articulos, errores = rss.ingerir(self.cfg)
         self.avisos += [f"Feed fallido: {e}" for e in errores]
+        # Lo leído durante el día (lectura periódica): los que ya han salido del RSS y desde cuándo circula cada uno
+        from folio.ingesta import lecturas
+        antes = len(articulos)
+        articulos = lecturas.juntar(self.cfg, articulos)
+        if len(articulos) > antes:
+            self.avisos.append(f"Lectura periódica: {len(articulos) - antes} artículos leídos antes que ya no salían en el RSS")
         self._guardar_etapa(self.etapas.guardar_articulos, articulos)
         return articulos
 

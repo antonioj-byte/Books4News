@@ -16,6 +16,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import subprocess
+import sys
 import threading
 from datetime import datetime, time, timedelta
 from pathlib import Path
@@ -99,6 +101,49 @@ class Programador:
                     log.exception("Error en la ejecución diaria programada")
         threading.Thread(target=bucle, daemon=True, name="ejecucion-diaria").start()
         log.info("Ejecución diaria a las %s (%s)", self.hora.strftime("%H:%M"), self.zona)
+
+    def parar(self) -> None:
+        self._parar.set()
+
+
+def lectura_de_entorno() -> int | None:
+    """FOLIO_LECTURA_CADA: minutos entre lecturas periódicas de los RSS (sin la variable, no se lee)."""
+    valor = (os.getenv("FOLIO_LECTURA_CADA") or "").strip()
+    return max(30, int(valor)) if valor else None
+
+
+class Lector:
+    """Lectura periódica de las noticias (folio leer) en un proceso aparte, cada `cada` minutos. No usa el ejecutor
+    (no bloquea «Proceder» ni la diaria) y se salta la vuelta si hay una ejecución en marcha."""
+
+    def __init__(self, ejecutor: Ejecutor, cada: int | None, lanzar: Callable[[], int] | None = None):
+        self.ejecutor, self.cada = ejecutor, cada
+        self._lanzar = lanzar or (lambda: subprocess.run([sys.executable, "-m", "folio.cli", "leer", "--quiet"],
+                                                         timeout=600, capture_output=True).returncode)
+        self._parar = threading.Event()
+        self.ultima: str | None = None
+
+    def una_vuelta(self) -> bool:
+        if self.ejecutor.ocupado():
+            return False
+        codigo = self._lanzar()
+        self.ultima = datetime.now().astimezone().isoformat(timespec="minutes")
+        if codigo:
+            log.warning("Lectura periódica: salió con código %s", codigo)
+        return codigo == 0
+
+    def arrancar(self) -> None:
+        if not self.cada:
+            return
+
+        def bucle():
+            while not self._parar.wait(self.cada * 60):
+                try:
+                    self.una_vuelta()
+                except Exception:
+                    log.exception("Error en la lectura periódica")
+        threading.Thread(target=bucle, daemon=True, name="lectura-periodica").start()
+        log.info("Lectura periódica de los RSS cada %s minutos", self.cada)
 
     def parar(self) -> None:
         self._parar.set()

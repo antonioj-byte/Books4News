@@ -175,3 +175,10 @@ def test_la_ruta_de_la_editorial_tiene_que_casar_con_el_nombre():
     assert catalogo.ruta_que_casa("Pre-Textos", ["plaza-janes_84460"]) is None
     assert catalogo.ruta_que_casa("Libros del Asteroide", ["libros-del-asteroide-s-l-u_81623"]) == "libros-del-asteroide-s-l-u_81623"
     assert catalogo.ruta_que_casa("Errata Naturae", ["desconocido_173060"]) is None
+
+
+def test_las_de_referencia_se_intercalan_y_son_75():
+    from folio.config import RAIZ
+    eds = catalogo.editoriales(RAIZ)
+    assert sum(e.referencia for e in eds) == 75
+    assert len({e.nombre for e in eds}) == len(eds)

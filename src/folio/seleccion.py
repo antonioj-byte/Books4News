@@ -8,7 +8,8 @@ from folio.modelos import Historia, SeleccionJefe
 
 def _desde(h: Historia) -> str:
     """Fecha del artículo más antiguo del grupo: el jefe la usa para no tratar en caliente un suceso doloroso."""
-    fechas = [a.publicado_en for a in h.articulos if a.publicado_en]
+    # La más antigua entre la fecha del medio y la hora en que Folio lo leyó por primera vez (lectura periódica)
+    fechas = [f for a in h.articulos for f in (a.publicado_en, a.visto_en) if f]
     return min(fechas).strftime("%Y-%m-%d %H:%M UTC") if fechas else "desconocida"
 
 

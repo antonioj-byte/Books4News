@@ -14,7 +14,7 @@ from folio.config import Config
 from folio.render import Plantillas, dir_diseno
 from folio_api.dependencias import Contexto
 from folio_api.ejecutor import Ejecutor
-from folio_api.programador import Programador, hora_de_entorno
+from folio_api.programador import Lector, Programador, hora_de_entorno, lectura_de_entorno
 from folio_api.rutas import dias, diseno, ejecuciones, evaluaciones, gastos, memoria, piezas, publico
 from folio_api.servicio import hechos_ligados  # noqa: F401  (se importa desde aquí en los tests)
 
@@ -31,6 +31,7 @@ def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importa
     if programador is None:                     # FOLIO_EJECUCION_DIARIA; sin ella, no se programa nada
         programador = Programador(ejecutor, *hora_de_entorno(), cfg.dir_datos)
         programador.arrancar()
+        Lector(ejecutor, lectura_de_entorno()).arrancar()   # FOLIO_LECTURA_CADA; sin ella, no se lee
     app.state.folio = Contexto(cfg=cfg, almacen=almacen, ejecutor=ejecutor, programador=programador,
                                plantillas=Plantillas(cfg, url_medio=diseno.url_medio(cfg.dir_cache("x").parent)))
     app.mount("/diseno", StaticFiles(directory=dir_diseno(cfg)), name="diseno")

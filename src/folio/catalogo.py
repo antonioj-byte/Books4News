@@ -51,6 +51,7 @@ class Editorial(BaseModel):
     origen: str = ""
     todostuslibros: str | None = None
     excluir: str | None = None
+    referencia: bool = False         # una de las 75 de referencia (2/11): se intercalan con las demás cada día
 
 
 class Novedad(BaseModel):
@@ -264,7 +265,10 @@ def candidatos(cfg, hoy: date, ya_usado=lambda titulo, autor: False, cat: Catalo
     p = cfg.pipeline.catalogo
     cat = cat or Catalogo(cfg, hoy=hoy)
     eds = {e.nombre: e for e in editoriales(cfg.raiz)}
-    orden = _orden_del_dia(list(eds), hoy)
+    # Una de referencia, una de las demás, y así: las 75 de referencia salen más, sin dejar fuera al resto
+    ref = _orden_del_dia([n for n, e in eds.items() if e.referencia], hoy)
+    resto = _orden_del_dia([n for n, e in eds.items() if not e.referencia], hoy)
+    orden = [n for par in zip(ref, resto) for n in par] + ref[len(resto):] + resto[len(ref):]
     salida: list[Historia] = []
     refrescadas = 0
     try:

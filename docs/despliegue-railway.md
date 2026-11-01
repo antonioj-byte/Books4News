@@ -23,6 +23,7 @@ Variables:
 | api | `FOLIO_EJECUCION_DIARIA` | opcional: `04:45` para tener la mesa del día a las 5:30 (pipeline y render, hora de Madrid) |
 | api | `INSTAGRAM_TOKEN` | opcional: token de la cuenta de Instagram de Folio (secreto; caduca a los 60 días). Ver `docs/instagram.md` |
 | api | `INSTAGRAM_USER_ID` | opcional: id de la cuenta de Instagram (si falta, se pide a la API) |
+| api | `FOLIO_LECTURA_CADA` | minutos entre lecturas de los RSS (p. ej. `120`); sin ella, no se lee durante el día |
 | api | `FOLIO_URL_PUBLICA` | para publicar: la URL pública del servicio «web» |
 | api | `FOLIO_CLAVE_ENLACES` | para publicar: clave larga y aleatoria con que se firman los enlaces (secreta) |
 | api | `EUROPEANA_API_KEY` | la clave de Europeana (secreta). Opcional: sin ella se usa la clave pública de demostración |

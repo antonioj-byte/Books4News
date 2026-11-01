@@ -413,6 +413,15 @@ def buffer_programar(pieza: str,
                f"descargará están en {r.carpeta}: no los borres hasta que salga.")
 
 
+@app.command()
+def leer(quiet: bool = typer.Option(False, "--quiet")):
+    """Lectura periódica: descarga los RSS y guarda lo nuevo con la hora de primera lectura (gratis, sin modelo)."""
+    from folio.ingesta import lecturas
+    nuevos, total, errores = lecturas.leer(config.cargar())
+    if not quiet:
+        typer.echo(f"Lectura: {nuevos} artículos nuevos; {total} guardados; {len(errores)} feeds fallidos")
+
+
 cajon_app = typer.Typer(help="Cajón de historias editoriales y su nevera (historias nuevas que se buscan cada día)")
 app.add_typer(cajon_app, name="cajon")
 

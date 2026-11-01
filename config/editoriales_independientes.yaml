@@ -2,29 +2,37 @@
 # «busca en editoriales independientes de prestigio: las que van a Back to the Book, las que tienen caseta en la
 # Feria del Libro de Madrid… mira en sus catálogos y selecciona cosas»).
 #
-# Las de «Back to the Book 2026» salen de su lista oficial (backtothebook.es/editoriales-2026); las de «independiente
-# de referencia» las añadió Folio y conviene revisarlas. Las novedades se leen en todostuslibros.com (el portal de
+# Las de «Back to the Book 2026» salen de su lista oficial (backtothebook.es/editoriales-2026). `referencia: true` marca las 75
+# editoriales de referencia que aprobó el usuario el 2/11 (algunas ya estaban en el Back to the Book): en los candidatos de
+# cada día se intercalan con las demás. Las novedades se leen en todostuslibros.com (el portal de
 # las librerías de CEGAL), que tiene una página por editorial: `todostuslibros` es su ruta («impedimenta_79803»);
 # si falta, se busca una vez desde el nombre y se guarda en la caché. `excluir` deja fuera la editorial (infantil).
-
 - nombre: Adeshoras
   web: https://www.adeshoras.com/
   origen: Back to the Book 2026
 - nombre: Adriana Hidalgo
   web: https://adrianahidalgo.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: adriana-hidalgo-editora_159426
 - nombre: Almadía
   web: https://editorialalmadia.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: almadia_145202
 - nombre: Alpha Decay
   web: http://www.alphadecay.org/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: ediciones-alpha-decay-s-a_143084
 - nombre: Alquimia ediciones
   web: https://alquimiaediciones.com/
   origen: Back to the Book 2026
 - nombre: Altamarea
   web: https://altamarea.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: altamarea-edicion-de-libros-sl_179006
 - nombre: Amarillo Editora
   web: https://www.amarilloeditora.com/
   origen: Back to the Book 2026
@@ -43,9 +51,13 @@
 - nombre: Astiberri
   web: https://astiberri.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: astiberri-ediciones_66490
 - nombre: Automática
   web: https://www.automaticaeditorial.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: automatica-editorial_176593
 - nombre: Báltica Editorial
   web: https://balticaeditorial.com/
   origen: Back to the Book 2026
@@ -55,15 +67,21 @@
 - nombre: Barlin Libros
   web: https://www.barlinlibros.org/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: barlin-libros_112487
 - nombre: Barrett
   web: https://editorialbarrett.org/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: editorial-barrett_110615
 - nombre: Bartlebooth
   web: https://bartlebooth.org/
   origen: Back to the Book 2026
 - nombre: Bartleby Editores
   web: https://www.bartlebyeditores.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: bartleby-editores_115454
 - nombre: Bauplan
   web: https://bauplanbooks.com/
   origen: Back to the Book 2026
@@ -83,6 +101,8 @@
 - nombre: Caja Negra Editora
   web: https://cajanegraeditora.com.ar/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: caja-negra-editora_12070
 - nombre: Caleidoscopio
   web: https://www.caleidoscopiodelibros.es/
   origen: Back to the Book 2026
@@ -90,9 +110,12 @@
 - nombre: Candaya
   web: https://www.candaya.com/
   origen: Back to the Book 2026
+  referencia: true
 - nombre: Capitán Swing
   web: https://capitanswing.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: swing_179787
 - nombre: Chai
   web: https://chaieditora.com/
   origen: Back to the Book 2026
@@ -112,6 +135,8 @@
 - nombre: consonni
   web: https://consonni.org/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: consonni_98887
 - nombre: Continta Me Tienes
   web: https://www.contintametienes.com/
   origen: Back to the Book 2026
@@ -135,12 +160,16 @@
 - nombre: Dos Bigotes
   web: https://dosbigotes.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: editorial-dos-bigotes-sl_127277
 - nombre: dosmanos
   web: https://www.editorialdosmanos.com/
   origen: Back to the Book 2026
 - nombre: Ediciones Akal
   web: https://www.akal.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: ediciones-akal_64555
 - nombre: Ediciones Jaguar
   web: https://www.edicionesjaguar.com/
   origen: Back to the Book 2026
@@ -154,6 +183,8 @@
 - nombre: Eterna Cadencia Editora
   web: https://eternacadencia.com.ar/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: eterna-cadencia-sl_161435
 - nombre: Fiordo
   web: https://www.fiordoeditorial.com.es/
   origen: Back to the Book 2026
@@ -163,12 +194,18 @@
 - nombre: Fórcola
   web: https://forcolaediciones.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: forcola-ediciones_77169
 - nombre: Fulgencio Pimentel
   web: https://www.fulgenciopimentel.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: fulgencio-pimentel-s-l_77336
 - nombre: Galaxia Gutenberg
   web: https://www.galaxiagutenberg.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: galaxia-gutenberg-s-l_179728
 - nombre: Galimatazo
   web: https://www.galimatazo.com/
   origen: Back to the Book 2026
@@ -176,6 +213,8 @@
 - nombre: Gallo Nero
   web: https://www.gallonero.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: gallo-nero-ediciones_78449
 - nombre: Garbuix Books
   web: https://garbuixbooks.com/
   origen: Back to the Book 2026
@@ -186,6 +225,8 @@
 - nombre: Gatopardo
   web: https://gatopardoediciones.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: gatopardo-ediciones_144771
 - nombre: Godot
   web: https://edicionesdogot.com.ar/
   origen: Back to the Book 2026
@@ -198,9 +239,13 @@
 - nombre: Hoja de Lata
   web: https://hojadelata.net/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: hoja-de-lata_187239
 - nombre: Impedimenta
   web: https://impedimenta.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: impedimenta_79803
 - nombre: interZona
   web: https://www.interzonaeditora.com/
   origen: Back to the Book 2026
@@ -235,6 +280,8 @@
 - nombre: La Navaja Suiza Editores
   web: https://www.lanavajasuizaeditores.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: la-navaja-suiza-editores_174844
 - nombre: La Pollera Ediciones
   web: https://lapollera.cl/
   origen: Back to the Book 2026
@@ -247,6 +294,8 @@
 - nombre: La uÑa RoTa
   web: https://www.larota.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: ediciones-la-una-rota_156192
 - nombre: Ladera Norte
   web: https://laderanorte.es/
   origen: Back to the Book 2026
@@ -254,6 +303,8 @@
 - nombre: Las afueras
   web: https://www.lasafueras.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: editorial-las-afueras_144609
 - nombre: Lecturas de arraigo
   web: https://lecturasdearraigo.com/
   origen: Back to the Book 2026
@@ -276,12 +327,18 @@
 - nombre: Libros de la resistencia
   web: https://www.librosdelaresistencia.com/libros/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: libros-de-la-resistencia_13509
 - nombre: Libros del K.O.
   web: https://www.librosdelko.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: libros-del-ko-sll_81635
 - nombre: Libros del Zorro Rojo
   web: https://librosdelzorrorojo.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: libros-del-zorro-rojo_179696
 - nombre: Liburuak
   web: https://liburuak.org/
   origen: Back to the Book 2026
@@ -297,6 +354,8 @@
 - nombre: Malas Tierras
   web: https://www.malastierraseditorial.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: malas-tierras-editorial_127055
 - nombre: Manos de Pan
   web: https://www.manosdepan.com/
   origen: Back to the Book 2026
@@ -310,15 +369,21 @@
 - nombre: minúscula
   web: https://www.editorialminuscula.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: editorial-minuscula-s-l-u_75078
 - nombre: Muñeca Infinita
   web: https://munecainfinita.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: muneca-infinita_159731
 - nombre: Ned Ediciones
   web: https://www.nedediciones.com/
   origen: Back to the Book 2026
 - nombre: Nórdica Libros
   web: https://nordicalibros.com/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: nordica-libros_83491
 - nombre: NubeOcho
   web: https://nubeocho.com/
   origen: Back to the Book 2026
@@ -326,6 +391,7 @@
 - nombre: Páginas de Espuma
   web: https://www.paginasdeespuma.com/
   origen: Back to the Book 2026
+  referencia: true
 - nombre: Papelillo Editorial
   web: https://papelilloed.es/
   origen: Back to the Book 2026
@@ -385,6 +451,8 @@
 - nombre: Tránsito
   web: https://editorialtransito.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: editorial-transito_149938
 - nombre: Tres Hermanas Libros
   web: https://www.treshermanaslibros.com/
   origen: Back to the Book 2026
@@ -408,6 +476,8 @@
 - nombre: Wunderkammer
   web: https://www.wunderkammer.es/
   origen: Back to the Book 2026
+  referencia: true
+  todostuslibros: wunderkammer_149555
 - nombre: Ya lo dijo Casimiro Parker
   web: https://yalodijocasimiroparker.com/
   origen: Back to the Book 2026
@@ -418,33 +488,157 @@
   web: https://zahoribooks.com/
   origen: Back to the Book 2026
   excluir: infantil
-- nombre: Anagrama
-  origen: independiente de referencia
 - nombre: Acantilado
-  origen: independiente de referencia
-- nombre: Periférica
-  origen: independiente de referencia
-- nombre: Sexto Piso
-  origen: independiente de referencia
-- nombre: Libros del Asteroide
-  origen: independiente de referencia
-- nombre: Siruela
-  origen: independiente de referencia
-- nombre: Errata Naturae
-  origen: independiente de referencia
-- nombre: Blackie Books
-  origen: independiente de referencia
-- nombre: Pre-Textos
-  origen: independiente de referencia
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: acantilado_75845
+- nombre: Anagrama
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: editorial-anagrama-s-a-u_73939
 - nombre: Alba Editorial
-  origen: independiente de referencia
-- nombre: Turner
-  origen: independiente de referencia
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: alba-editorial_64591
+- nombre: Siruela
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: siruela_174685
+- nombre: Periférica
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: periferica_75269
+- nombre: Sexto Piso
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: editorial-sexto-piso_75460
+- nombre: Libros del Asteroide
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: libros-del-asteroide-s-l-u_81623
+- nombre: Errata Naturae
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: errata-naturae-editores_13317
+- nombre: Blackie Books
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: blackie-books_68002
 - nombre: Salto de Página
-  origen: independiente de referencia
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: editorial-salto-de-pagina-s-l_179724
 - nombre: Jekyll & Jill
-  origen: independiente de referencia
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: jekyll-jill_160319
 - nombre: Ático de los Libros
-  origen: independiente de referencia
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: atico-de-los-libros_66562
 - nombre: Alfabia
-  origen: independiente de referencia
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: ediciones-alfabia_71570
+- nombre: Navona
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+- nombre: Rayo Verde
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: rayo-verde-editorial-s-l_178281
+- nombre: Contra
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: contra_174713
+- nombre: Sajalín
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: sajalin-editores_149871
+- nombre: Edhasa
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: editora-y-distribuidora-hispano-americana-s-a_71483
+- nombre: Ediciones del Subsuelo
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: ediciones-del-subsuelo_152529
+- nombre: Pálido Fuego
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: palido-fuego_150879
+- nombre: Cabaret Voltaire
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: editorial-cabaret-voltaire_68242
+- nombre: Lengua de Trapo
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: lengua-de-trapo_72554
+- nombre: Valdemar
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: valdemar_88268
+- nombre: Volcano
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: volcano-libros_151824
+- nombre: Ardicia
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: ardicia-editorial-s-l_93277
+- nombre: Turner
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: turner-publicaciones-s-l_107958
+- nombre: Pepitas de Calabaza
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: pepitas-de-calabaza_84229
+- nombre: Trotta
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: editorial-trotta-s-a_152342
+- nombre: Arpa
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: editorial-arpa_170417
+- nombre: Catarata
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+- nombre: Siglo XXI de España
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: siglo-xxi-de-espana-editores-s-a_9409
+- nombre: Ediciones del Oriente y del Mediterráneo
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: ediciones-del-oriente-y-del-mediterraneo_192362
+- nombre: Herder
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: herder_198173
+- nombre: Pre-Textos
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: editorial-pre-textos_176107
+- nombre: La Bella Varsovia
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: la-bella-varsovia_127469
+- nombre: Visor Libros
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: visor-libros-s-l_88512
+- nombre: Hiperión
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: hiperion_72337
+- nombre: Kriller71
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: kriller71-ediciones_145246
+- nombre: Vaso Roto
+  origen: referencia (aprobada el 2/11)
+  referencia: true
+  todostuslibros: vaso-roto-ediciones_126927

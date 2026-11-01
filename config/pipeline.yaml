@@ -63,7 +63,7 @@ seleccion:
   # curiosidad (1/11): una historia del cajón (config/cajon_curiosidades.yaml), sin percha y sin libro obligatorio
   # recomendado (1/11): una novedad de las editoriales independientes (catalogo, más abajo)
   reparto: {lateral: 2, dialogo: 2, edicion: 2, curiosidad: 1, recomendado: 1}
-  desarrollar_al_inicio: 1
+  desarrollar_al_inicio: 3       # 2/11 (a petición del usuario, «lo lento que es»): las 3 primeras se escriben de madrugada, en paralelo
   antiguedad_libros: 2          # novedad: libros publicados en los últimos 2 años (primera edición o edición española)
   dias_curiosidades: 90         # una curiosidad del cajón no se repite en 90 días
   nevera_por_dia: 3             # historias editoriales nuevas que se buscan cada día para el cajón (2/11)
