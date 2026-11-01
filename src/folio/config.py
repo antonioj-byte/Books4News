@@ -191,6 +191,7 @@ class Arte(_Seccion):
     # Lo que va en el pie, también en las diapositivas (1/11): colofón final con fuentes, ficha y créditos (A),
     # sello de ficha verificada en la del libro (B) y los medios que cuentan la noticia (C)
     colofon: bool = True
+    impulsado_por: bool = True        # «Impulsado por» con el logo de Alighieria bajo la ficha del colofón (2/11)
     sello_verificacion: bool = True
     medios_en_noticia: bool = True   # hasta que haya una ilustración de las salas elegida por el usuario
     # Tonos en los que la portada en vídeo lleva la interferencia (M10)

@@ -21,3 +21,6 @@
       <p class="colofon__pie">{{ "Una historia editorial de Folio." if colofon.curiosidad else "Folio lee la actualidad a través de los libros." }}</p>
     </div>
 {% endblock %}
+{% block despues %}{% if impulsado_por %}
+  <div class="impulso"><span>Impulsado por</span>{% include "_alighieria.svg" %}</div>
+{% endif %}{% endblock %}

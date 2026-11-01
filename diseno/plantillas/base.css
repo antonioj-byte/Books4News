@@ -393,6 +393,10 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .colofon__bloque li em { font-family: var(--fuentes-remate); font-size: 1.1em; }
 .colofon__bloque li span { color: var(--colores-tinta-60); font-size: 22px; }
 .colofon__bloque li .colofon__ok { color: var(--colores-tinta); }
+.diapositiva--colofon:has(.impulso) .cuerpo { margin-bottom: 84px; }
+.impulso { position: absolute; left: 0; right: 0; bottom: 22px; display: flex; align-items: center; justify-content: center; gap: 14px; color: var(--colores-papel); opacity: 0.72; }
+.impulso span { font-family: var(--fuentes-titular); font-size: 14px; letter-spacing: 0.22em; text-transform: uppercase; }
+.impulso svg { height: 20px; width: auto; }
 .colofon__pie { margin-top: auto; font-family: var(--fuentes-remate); font-style: italic; font-size: 30px; }
 .sello-verificado {
   align-self: flex-start; margin-top: 18px; font-family: var(--fuentes-titular); font-weight: 500; font-size: 18px; letter-spacing: 0.16em;

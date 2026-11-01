@@ -92,7 +92,7 @@ class Plantillas:
         if n == len(pieza.guion.diapositivas) + 1 and self.con_colofon(pieza):
             return self.env.get_template("colofon.html").render(
                 **self._base(base_url), tipo="colofon", n=n, total=self.total(pieza), pieza_id=pieza.id,
-                colofon=self._colofon(pieza))
+                colofon=self._colofon(pieza), impulsado_por=self.cfg.pipeline.arte.impulsado_por)
         d = pieza.guion.diapositivas[n - 1]
         return self.env.get_template(f"{d.tipo}.html").render(
             **self._base(base_url), **self._texto(pieza, d, n), **self._medios_y_arte(pieza, d, n))

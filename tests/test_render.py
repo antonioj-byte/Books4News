@@ -231,3 +231,15 @@ def test_la_imagen_de_archivo_no_se_repite_en_la_noticia(cfg_diseno, pieza):
     fijar(pieza.id + "-noticia", "europeana:/2")
     noticia = render.Plantillas(cfg_diseno).html_diapositiva(pieza, 2)
     assert f"{pieza.id}-noticia.jpg" in noticia and f"{pieza.id}.jpg\"" not in noticia
+
+
+def test_el_colofon_lleva_impulsado_por_alighieria_sobre_la_mesa(cfg_diseno, pieza):
+    """2/11 (opción B elegida por el usuario): «Impulsado por» con el logo, fuera de la ficha; se apaga en config."""
+    p = render.Plantillas(cfg_diseno)
+    n = len(pieza.guion.diapositivas) + 1
+    html = p.html_diapositiva(pieza, n)
+    assert '<div class="impulso"><span>Impulsado por</span>' in html and 'aria-label="Alighieria"' in html
+    assert html.index('class="impulso"') > html.index("</section>")          # sobre la mesa, no en la tarjeta
+    cfg_diseno.pipeline.arte.impulsado_por = False
+    assert "impulso" not in render.Plantillas(cfg_diseno).html_diapositiva(pieza, n)
+    assert "impulso" not in p.html_diapositiva(pieza, 1)

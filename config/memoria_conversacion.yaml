@@ -237,3 +237,10 @@
   patron: "«Se nota mucho que es IA; es muy feo las letras esas de IA arriba». No quería apagar la ilustración: «quería mejorarla, evitar esas letras»."
   propuesta: "El estilo de la ilustración describe una imagen sin palabras con superficies lisas y sin nada de revista, y un revisor descarta las variantes con letras o manchas sueltas antes de elegir."
   evidencia: ["Conversación, 2/11: portada de La generación ansiosa con letras falsas («epfal Ediiorial Beslgnes») y cuadros verdes"]
+
+- clave: impulsado-por-alighieria
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "«En el colofón, en pequeñito, molaría poner un Impulsado por (logo Alighieria), para aprovechar y hacer publi»."
+  propuesta: "El colofón lleva «Impulsado por» con el logo de Alighieria, pequeño, fuera de la ficha y centrado sobre la mesa oscura (opción B)."
+  evidencia: ["Conversación, 2/11: elección entre tres opciones (pie de ficha, sobre la mesa, sello)"]
