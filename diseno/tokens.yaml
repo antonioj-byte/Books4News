@@ -33,6 +33,8 @@ colores:
   marcador: "#FFF500"
   papel_salas: "#F6E8CF"     # el fondo de la ilustración de las tres salas (B4)
   cian: "#3FE0FF"            # solo en la interferencia de la portada en vídeo (M10)
+  cartulina: "#F4EEDC"       # la ficha de biblioteca del colofón
+  pauta: "rgba(40, 90, 140, 0.16)"   # las líneas azules de la ficha
 
 fuentes:
   archivo: fuentes/fuentes.css

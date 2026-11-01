@@ -366,10 +366,24 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 
 /* Lo del pie, en las diapositivas (1/11): el colofón final (fuentes, ficha verificada, imágenes), el sello de
    ficha verificada en la diapositiva del libro y los medios que cuentan la noticia */
-.diapositiva--colofon { background: var(--colores-papel); color: var(--colores-tinta); }
+/* Colofón (1/11, elegida la «ficha de biblioteca» sin sello): una ficha pautada y perforada sobre la mesa oscura con grano */
+.diapositiva--colofon { background-color: var(--colores-tinta-honda); color: var(--colores-tinta); }
+.diapositiva--colofon::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0.35; mix-blend-mode: screen; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)' opacity='0.5'/></svg>");
+}
+.diapositiva--colofon .cuerpo {
+  position: relative; margin: 70px 46px; padding: 84px 56px 52px 64px; border-radius: 6px; transform: rotate(-1.3deg);
+  background-color: var(--colores-cartulina);
+  background-image: linear-gradient(180deg, transparent 64px, var(--colores-pluma) 64px, var(--colores-pluma) 66px, transparent 66px),
+                    repeating-linear-gradient(180deg, transparent 0 41px, var(--colores-pauta) 41px 42px);
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
+}
+.diapositiva--colofon .cuerpo::before { content: ""; position: absolute; left: 50%; top: 22px; width: 34px; height: 34px; margin-left: -17px; border-radius: 50%; background: var(--colores-tinta-honda); }
+.grave.diapositiva--colofon .cuerpo { background-image: repeating-linear-gradient(180deg, transparent 0 41px, var(--colores-pauta) 41px 42px); }
 .colofon { display: flex; flex-direction: column; gap: 34px; min-height: 0; }
 .colofon .antetitulo { align-self: flex-start; margin-bottom: 0; }
-.colofon__titulo { font-family: var(--fuentes-titular); font-size: 76px; line-height: 1; font-weight: 700; letter-spacing: -0.05em; }
+.colofon__titulo { font-family: var(--fuentes-titular); font-size: 64px; line-height: 1; font-weight: 700; letter-spacing: -0.05em; }
 .colofon__titulo em { font-family: var(--fuentes-remate); font-weight: 400; color: var(--colores-pluma); letter-spacing: -0.02em; }
 .colofon__bloque { border-top: 2px solid var(--colores-tinta); padding-top: 18px; }
 .colofon__bloque h2 { font-family: var(--fuentes-titular); font-weight: 500; font-size: 20px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--colores-pluma); margin-bottom: 14px; }
