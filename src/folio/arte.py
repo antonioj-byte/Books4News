@@ -432,6 +432,8 @@ def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte
                                              propuesta.suceso_con_victimas)
     arte.avisos += avisos
     tipos = [t for t in cfg.pipeline.arte.infografias if not grave or t == "linea"]     # en graves, solo la línea
+    if pieza.eleccion.formato == "balda":
+        tipos = []          # tres libros: la infografía no cuenta nada que no cuenten ellos (2/11, feedback de Tavares)
     arte.infografia, avisos = infografia.validar(propuesta.infografia, pieza, tipos, bool(arte.imagen))
     arte.avisos += avisos
     if not arte.infografia and propuesta.infografia.tipo in ("mapa", "esquema") and "linea" in tipos:

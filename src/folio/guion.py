@@ -279,8 +279,9 @@ MAX_CRITICAS = 2          # citas de la crítica por guion (formato «recomendad
 
 def citas_de_la_critica(g: GuionLLM, libros: list[LibroVerificado], textos: list[tuple[FuenteNoticia, str]]) -> list[CitaVerificada]:
     """Las frases entre comillas del guion que aparecen letra por letra (salvo mayúsculas, tildes y signos) en un
-    texto de crítica recibido. Solo esas pueden ir entre comillas además de la cita verificada del libro."""
-    criticas = [(f, normalizar(t)) for f, t in textos if f.critica]
+    texto de crítica recibido o en la prensa sobre el libro (entrevistas, reseñas; 2/11, a petición del usuario: «busca
+    un quote ilustrativo y compartible»). Solo esas pueden ir entre comillas además de la cita verificada del libro."""
+    criticas = [(f, normalizar(t)) for f, t in textos if f.critica or f.prensa]
     if not criticas:
         return []
     textos_g = [t for x in g.diapositivas for t in (x.texto, x.subtitulo) if t] + [g.pie_instagram]
@@ -294,7 +295,7 @@ def citas_de_la_critica(g: GuionLLM, libros: list[LibroVerificado], textos: list
             vistos.add(n)
             libro = libros[0] if libros else None
             salida.append(CitaVerificada(texto=frase, libro=libro.titulo_propuesto if libro else "", autor=(libro.autores or [""])[0] if libro else "",
-                                         fragmento=frase, tipo="critica", fuente=fuente.url))
+                                         fragmento=frase, tipo="critica" if fuente.critica else "prensa", fuente=fuente.url))
     return salida
 
 

@@ -42,6 +42,7 @@ export function EstadoChip({ estado }: { estado: string }) {
 const FORMATOS: Record<string, { texto: string; clase: string }> = {
   lateral: { texto: "Lectura lateral", clase: "border border-tinta text-tinta" },
   dialogo: { texto: "Diálogo con la actualidad", clase: "bg-tinta text-papel" },
+  balda: { texto: "Tres libros", clase: "bg-tinta text-subrayador" },
   edicion: { texto: "Mundo del libro", clase: "bg-carmesi text-papel" },
   curiosidad: { texto: "Historia editorial", clase: "bg-subrayador text-tinta" },
   recomendado: { texto: "Libro recomendado", clase: "bg-verde text-papel" },

@@ -89,8 +89,11 @@ def _buscar_retrato(cfg: Config, p: Pieza, nueva: Pieza, ar, a: AccionImagen, di
     persona = " ".join(a.persona.split()) or direccion.autor_principal(p) or ""
     if not persona:
         return None, "(Dime de quién es el retrato: el nombre completo de la persona.)"
-    if p.libros and direccion.autor_principal(p) and persona.lower() != direccion.autor_principal(p).lower():
-        return None, f"(El retrato de la portada es el del autor del libro, {direccion.autor_principal(p)}; no se pone la cara de otra persona.)"
+    from folio.verificacion_texto import autor_coincide
+    principal = direccion.autor_principal(p)
+    # Por apellido, no letra por letra: «Gonçalo Tavares» es «Gonçalo M. Tavares» (2/11, el editor se negó a su retrato)
+    if p.libros and principal and not autor_coincide(persona, [principal]):
+        return None, f"(El retrato de la portada es el del autor del libro, {principal}; no se pone la cara de otra persona.)"
     img, motivo = retratos.buscar_y_fijar(persona, p.id, dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
     if not img and cfg.pipeline.arte.fotos_editoriales and p.libros:
         from folio.infografia import libro_principal

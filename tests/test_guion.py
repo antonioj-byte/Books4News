@@ -286,3 +286,29 @@ def test_el_guionista_recibe_la_estructura_de_su_formato(cfg):
         assert señal in texto and "[pegar formato]" not in texto
     with pytest.raises(ValueError):
         guion.instrucciones_formato(cfg, "otro")
+
+
+def test_una_balda_de_tres_libros_en_siete_diapositivas_es_valida(cfg):
+    """2/11: el formato «Tres libros» (balda) pasa las reglas: tres libros verificados, uno por diapositiva, y la idea."""
+    from datos import LIBRO
+    from folio.modelos import Diapositiva, LibroGuion
+    libros = [LIBRO, LIBRO.model_copy(update={"titulo": "Los orígenes del totalitarismo", "titulo_propuesto": "Los orígenes del totalitarismo",
+                                             "isbn_es": None, "olid": "OL2W"}),
+              LIBRO.model_copy(update={"titulo": "La condición humana", "titulo_propuesto": "La condición humana", "isbn_es": None, "olid": "OL3W"})]
+    g = guion_valido(
+        diapositivas=[
+            Diapositiva(n=1, tipo="portada", texto="Hannah Arendt, en tres libros",
+                        subtitulo="Eichmann en Jerusalén, Los orígenes del totalitarismo y La condición humana explican por qué vuelve a leerse."),
+            Diapositiva(n=2, tipo="actualidad", texto="Un tribunal juzga a un funcionario que firmaba órdenes."),
+            Diapositiva(n=3, tipo="libro", texto="En Eichmann en Jerusalén, Arendt vio a un hombre corriente."),
+            Diapositiva(n=4, tipo="libro", texto="Los orígenes del totalitarismo explica cómo se fabrica la obediencia."),
+            Diapositiva(n=5, tipo="libro", texto="La condición humana defiende la acción frente a la rutina."),
+            Diapositiva(n=6, tipo="idea", texto="Juntos dicen que pensar es la primera forma de resistir."),
+            Diapositiva(n=7, tipo="cierre", texto="Empieza por Eichmann en Jerusalén, de Hannah Arendt. Folio."),
+        ],
+        justificacion_extra=["tres libros", "lo que dicen juntos"],
+        libros=[LibroGuion(titulo=l.titulo_propuesto, autor="Hannah Arendt", editorial_espanola="", traductor="", edicion_original="") for l in libros],
+        pie_instagram="Hannah Arendt en tres libros: Eichmann en Jerusalén, Los orígenes del totalitarismo y La condición humana. "
+                      + "Lo cuenta The Guardian. " + " ".join(["palabra"] * 80))
+    errores = guion.validar(cfg, g, libros, FUENTES, formato="balda")
+    assert errores == [], errores

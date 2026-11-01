@@ -28,7 +28,7 @@ Seccion = Literal[
 ]
 # «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
 EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
-Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar"]
+Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda"]
 # Formatos que pueden salir sin libro: la curiosidad del cajón y los temas del radar del libro
 SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar")
 # «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml); «catalogo»: novedades de
@@ -86,7 +86,7 @@ class LibroCandidato(BaseModel):
 
 
 class HistoriaElegida(BaseModel):
-    formato: Formato = Field(default="lateral", description="lateral (lectura lateral), dialogo (diálogo con la actualidad), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes)")
+    formato: Formato = Field(default="lateral", description="lateral (lectura lateral), dialogo (diálogo con la actualidad), balda (tres libros para entender algo, en lugar del diálogo), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes)")
     historia_id: str = Field(description="Identificador de la historia tal como aparece en la lista")
     titular: str = Field(description="Titular en una línea")
     de_que_se_habla: str = Field(description="De qué se está hablando, en dos frases")
@@ -358,7 +358,7 @@ class CitaVerificada(BaseModel):
     autor: str
     volumen_google: str = ""             # id del volumen de Google Books en cuyo texto aparece (citas del libro)
     fragmento: str                       # el fragmento del texto que la contiene
-    tipo: Literal["libro", "critica"] = "libro"
+    tipo: Literal["libro", "critica", "prensa"] = "libro"   # prensa: entrevista o reseña sobre el libro (2/11)
     fuente: str | None = None            # citas de la crítica: URL del texto donde aparece
 
 

@@ -30,7 +30,7 @@ from folio.llm import LLM, ErrorLLM, cargar_prompt
 from folio.modelos import Articulo, Historia, HistoriaElegida
 
 PREFIJO = "tema-"
-FORMATOS = ("lateral", "dialogo", "edicion")
+FORMATOS = ("lateral", "dialogo", "edicion", "balda")
 _MIN_CARACTERES = 600
 MAX_ENLACES = 4
 

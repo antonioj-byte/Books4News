@@ -43,7 +43,9 @@ def anio_minimo(fecha: str, anios: int) -> int:
     return int(fecha[:4]) - anios
 
 
-NOMBRES_FORMATO = {"lateral": "lectura lateral", "dialogo": "diálogo con la actualidad", "edicion": "mundo del libro",
+# «Tres libros» (balda, 2/11) va en el hueco del diálogo: cuenta como él en el reparto
+ALIAS_REPARTO = {"balda": "dialogo"}
+NOMBRES_FORMATO = {"lateral": "lectura lateral", "dialogo": "diálogo con la actualidad", "balda": "tres libros", "edicion": "mundo del libro",
                    "curiosidad": "historia editorial", "recomendado": "libro recomendado", "radar": "radar del libro"}
 _EN_EL_REPARTO = {"lateral": "de lectura lateral", "dialogo": "de diálogo con la actualidad", "edicion": "del mundo del libro",
                   "curiosidad": "de historia editorial (del cajón)", "recomendado": "de libro recomendado"}
@@ -114,7 +116,7 @@ def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[st
             if e.historia_id not in carriles:
                 avisos.append(f"El jefe de cultura devolvió un id inexistente ({e.historia_id}); se descarta «{e.titular}»")
                 continue
-            if e.formato not in reparto:
+            if ALIAS_REPARTO.get(e.formato, e.formato) not in reparto:
                 avisos.append(f"«{e.titular}»: formato «{e.formato}» fuera de esta parte de la mesa; se descarta")
                 continue
             carril = carriles[e.historia_id]
@@ -123,13 +125,14 @@ def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[st
                               "cada uno solo sirve para su formato); se descarta")
                 continue
             minimo = {"curiosidad": 0, "recomendado": 1}.get(e.formato, 3)
-            if not minimo <= len(e.libros_candidatos) <= 4:
-                avisos.append(f"«{e.titular}»: {len(e.libros_candidatos)} libros candidatos (se pedían {minimo}–4)")
+            maximo_libros = 6 if e.formato == "balda" else 4
+            if not minimo <= len(e.libros_candidatos) <= maximo_libros:
+                avisos.append(f"«{e.titular}»: {len(e.libros_candidatos)} libros candidatos (se pedían {minimo}–{maximo_libros})")
             validas.append(e)
         setattr(sel, grupo, validas)
     faltan = {}
     for formato, n in reparto.items():
-        hay = sum(e.formato == formato for e in sel.elegidas)
+        hay = sum(ALIAS_REPARTO.get(e.formato, e.formato) == formato for e in sel.elegidas)
         if hay != n:
             avisos.append(f"Propuestas {_EN_EL_REPARTO[formato]}: {hay} (se pedían {n})")
         if hay < n:

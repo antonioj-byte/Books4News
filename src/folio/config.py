@@ -51,6 +51,7 @@ class Seleccion(_Seccion):
     historias_editoriales: int = 12     # contexto del mundo del libro para el jefe de cultura
     elegidas: int
     reserva: int
+    buscar_balda: bool = True   # 2/11: libros reales de la misma balda para las propuestas de actualidad (folio.balda)
     puente_minimo: int = Field(default=3, ge=1, le=5)   # 2/11: propuestas con un puente peor se quedan fuera (evaluador de puentes)
     puente_para_escribir: int = Field(default=4, ge=1, le=5)  # la que se escribe sola tiene que llegar a esto
     # Mesa del día (31/10, a petición del usuario): propuestas por formato y cuántas se escriben solas

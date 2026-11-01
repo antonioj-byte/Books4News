@@ -65,6 +65,7 @@ seleccion:
   # Mesa del día (31/10): el jefe propone `elegidas` con este reparto por formato; se escriben solas las
   # `desarrollar_al_inicio` primeras y el resto espera a «Proceder» en la web. Sin reserva: las demás lo son.
   elegidas: 6                    # 2/11 (a petición del usuario): seis propuestas, no ocho
+  buscar_balda: true             # 2/11 (a petición del usuario): antes de verificar, se buscan en la web los libros reales de la misma balda (~0,04 $ por propuesta de actualidad)
   puente_minimo: 3               # 2/11 (a petición del usuario: «contenido muy pillado con pinzas»): el evaluador de puentes deja fuera las de 1–2
   puente_para_escribir: 4        # la que se escribe sola de madrugada tiene que tener un puente de 4 o 5
   reserva: 0

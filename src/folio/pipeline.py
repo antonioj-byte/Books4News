@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 import numpy as np
 from folio import guion as guionista
-from folio import arte, cajon, catalogo, hechos, informe, puentes, radar, seleccion, temas, textos
+from folio import arte, balda, cajon, catalogo, hechos, informe, puentes, radar, seleccion, temas, textos
 from folio.imagenes import cubiertas
 from folio.libros import citas
 from folio.etapas import ORDEN, Etapa, EtapasGuardadas
@@ -274,6 +274,11 @@ class Pipeline:
     def seleccion(self, al_jefe: list[Historia]) -> SeleccionJefe:
         sel, avisos = seleccion.seleccionar(self.llm, al_jefe, self.fecha)
         self.avisos += avisos
+        # Los libros reales de la misma balda, para las propuestas de actualidad: el jefe vuelve a elegir (2/11)
+        if self.cfg.pipeline.seleccion.buscar_balda and not self.dev:
+            sel, avisos = balda.mejorar(self.llm, self.cfg, sel,
+                                        seleccion.anio_minimo(self.fecha, self.cfg.pipeline.seleccion.antiguedad_libros))
+            self.avisos += avisos
         # Un editor escéptico puntúa el vínculo historia-libro de cada propuesta: las forzadas se quedan fuera (2/11)
         sel, self.puentes, avisos = puentes.evaluar(self.llm, sel)
         self.avisos += avisos
@@ -447,7 +452,8 @@ class Pipeline:
         Haiku con búsqueda (~0,04 $), solo URLs que salieron en la búsqueda y se descargan con texto. Se congela con los
         demás textos de la historia, así que la comprobación de hechos la ve y relanzar no vuelve a buscar."""
         n = self.cfg.pipeline.guion.prensa_del_libro
-        if (not n or self.dev or pieza.eleccion.formato not in ("edicion", "recomendado") or not pieza.libros
+        # En todas las piezas con libro (2/11): de la prensa salen también las citas compartibles, comprobadas
+        if (not n or self.dev or pieza.eleccion.formato in ("curiosidad", "radar") or not pieza.libros
                 or any(f.prensa for f, _ in textos_h)):
             return textos_h
         libro = pieza.libros[0]

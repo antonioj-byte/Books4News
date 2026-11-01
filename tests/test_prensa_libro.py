@@ -41,5 +41,17 @@ def test_mundo_del_libro_busca_prensa_y_la_congela(cfg, monkeypatch):
     assert [f.url for f, _ in t.etapas.textos("e1")] == [f.url for f, _ in textos]     # congelados: los ve la comprobación de hechos
     pasos = len(llm.pasos)
     assert t._prensa_del_libro(p, h, textos) == textos and len(llm.pasos) == pasos      # ya buscada: no vuelve a buscar
-    lateral = p.model_copy(update={"eleccion": ELECCION})
-    assert t._prensa_del_libro(lateral, h, previos) == previos                          # en una lectura lateral, no
+    curiosidad = p.model_copy(update={"eleccion": ELECCION.model_copy(update={"formato": "curiosidad"})})
+    assert t._prensa_del_libro(curiosidad, h, previos) == previos                       # en la historia editorial, no
+
+
+def test_una_frase_de_la_prensa_se_puede_citar_si_esta_letra_por_letra():
+    """2/11 («busca un quote ilustrativo y compartible»): como las de la crítica, comprobadas contra el texto."""
+    from folio import guion
+    from datos import guion_valido
+    g = guion_valido()
+    g.diapositivas[3].texto = "«La IA no es neutral», dijo Marcet a El Cultural. Y «la máquina sueña sola», añadió."
+    textos = [(FuenteNoticia(medio="El Cultural", titulo="T", url="https://elcultural.com/x", acceso="abierto", prensa=True),
+               "Marcet: la IA no es neutral ni inevitable.")]
+    citas = guion.citas_de_la_critica(g, [LIBRO], textos)
+    assert [c.texto for c in citas] == ["La IA no es neutral"] and citas[0].tipo == "prensa"

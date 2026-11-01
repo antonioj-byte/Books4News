@@ -342,3 +342,10 @@
   patron: "«Si se trata de una novedad editorial, molaría que la herramienta buscara varias fuentes (seguramente hay más de una entrevista)»."
   propuesta: "En mundo del libro y recomendado, el guionista recibe además hasta tres artículos de prensa sobre el libro (entrevistas, reseñas), buscados y comprobados."
   evidencia: ["Conversación, 2/11: propuesta sobre Espiral, de Isaac Marcet"]
+
+- clave: balda-y-tres-libros
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«Busca qué libros pueden estar en la misma balda temática… busca un quote ilustrativo y compartible… opción dos: busca 3 libros que expliquen un tema». Y en Tavares: «no tiene sentido que hables solo de un libro; es un premio a la obra»."
+  propuesta: "Los libros de las propuestas de actualidad se eligen entre los reales de la misma balda, buscados en la web; la frase destacada puede salir de entrevistas y reseñas, comprobada; y existe el formato «Tres libros» (tres miradas o, en un perfil, los tres libros más sonados del autor)."
+  evidencia: ["Conversación, 2/11: caso Mbappé y perfil de Gonçalo M. Tavares"]

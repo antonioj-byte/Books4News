@@ -124,3 +124,16 @@ def test_retrato_de_una_persona_real_solo_desde_una_foto_libre(cfg, monkeypatch)
     con_libro = _pieza()
     nueva, nota = edicion.aplicar_imagen(None, cfg, con_libro, _accion("buscar_retrato", persona="Georges Perec"))
     assert nueva is None and "Hannah Arendt" in nota
+
+
+def test_el_retrato_del_autor_casa_por_apellido(cfg, monkeypatch):
+    """2/11: «Gonçalo Tavares» es el autor «Gonçalo M. Tavares»; antes se comparaba letra por letra y se negaba."""
+    from folio.imagenes import retratos
+    pedidos = []
+    monkeypatch.setattr(retratos, "buscar_y_fijar", lambda persona, *a, **k: pedidos.append(persona) or (None, "sin foto"))
+    p = _pieza()
+    autor = p.libros[0].autores[0]                       # Hannah Arendt
+    nota = edicion.aplicar_imagen(None, cfg, p, _accion("buscar_retrato", persona="Arendt"))[1]
+    assert pedidos == ["Arendt"] and "otra persona" not in nota
+    nota = edicion.aplicar_imagen(None, cfg, p, _accion("buscar_retrato", persona="Simone Weil"))[1]
+    assert "otra persona" in nota and autor in nota
