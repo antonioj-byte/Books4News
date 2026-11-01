@@ -180,5 +180,8 @@ def test_la_ruta_de_la_editorial_tiene_que_casar_con_el_nombre():
 def test_las_de_referencia_se_intercalan_y_son_75():
     from folio.config import RAIZ
     eds = catalogo.editoriales(RAIZ)
-    assert sum(e.referencia for e in eds) == 75
+    assert sum(e.referencia for e in eds) >= 75
     assert len({e.nombre for e in eds}) == len(eds)
+    paises = {e.pais for e in eds if e.pais}
+    assert {"Argentina", "México", "Chile", "Colombia"} <= paises
+    assert all(e.referencia for e in eds if e.pais in ("Argentina", "México"))

@@ -7,6 +7,8 @@
 # cada día se intercalan con las demás. Las novedades se leen en todostuslibros.com (el portal de
 # las librerías de CEGAL), que tiene una página por editorial: `todostuslibros` es su ruta («impedimenta_79803»);
 # si falta, se busca una vez desde el nombre y se guarda en la caché. `excluir` deja fuera la editorial (infantil).
+# `pais` marca las latinoamericanas (2/11, a petición del usuario): Argentina y México, como referencia (prioridad);
+# Chile y Colombia, con las demás. Solo las que están en todostuslibros (las que se distribuyen en España).
 - nombre: Adeshoras
   web: https://www.adeshoras.com/
   origen: Back to the Book 2026
@@ -28,6 +30,8 @@
 - nombre: Alquimia ediciones
   web: https://alquimiaediciones.com/
   origen: Back to the Book 2026
+  pais: Chile
+  todostuslibros: alquimia-ediciones_189310
 - nombre: Altamarea
   web: https://altamarea.es/
   origen: Back to the Book 2026
@@ -39,6 +43,9 @@
 - nombre: Ampersand
   web: https://www.edicionesampersand.com/
   origen: Back to the Book 2026
+  pais: Argentina
+  todostuslibros: ediciones-ampersand_157629
+  referencia: true
 - nombre: Anexo
   web: https://www.anexoeditorial.com/
   origen: Back to the Book 2026
@@ -64,6 +71,8 @@
 - nombre: Banda Propia
   web: https://bandapropia.cl/
   origen: Back to the Book 2026
+  pais: Chile
+  todostuslibros: banda-propia-chile_192040
 - nombre: Barlin Libros
   web: https://www.barlinlibros.org/
   origen: Back to the Book 2026
@@ -88,6 +97,9 @@
 - nombre: Blatt & Ríos
   web: https://blattyrios.es/
   origen: Back to the Book 2026
+  pais: Argentina
+  todostuslibros: blatt-rios_126921
+  referencia: true
 - nombre: bookolia
   web: https://bookolia.es/
   origen: Back to the Book 2026
@@ -230,9 +242,15 @@
 - nombre: Godot
   web: https://edicionesdogot.com.ar/
   origen: Back to the Book 2026
+  pais: Argentina
+  todostuslibros: ediciones-godot_11398
+  referencia: true
 - nombre: Gris Tormenta
   web: https://www.gristormenta.com/
   origen: Back to the Book 2026
+  pais: México
+  todostuslibros: gris-tormenta_187288
+  referencia: true
 - nombre: H&O Editorial
   web: https://www.ho-editorial.com/
   origen: Back to the Book 2026
@@ -249,6 +267,9 @@
 - nombre: interZona
   web: https://www.interzonaeditora.com/
   origen: Back to the Book 2026
+  pais: Argentina
+  todostuslibros: interzona_10579
+  referencia: true
 - nombre: Itineraria editorial
   web: https://www.itinerariaeditorial.com/
   origen: Back to the Book 2026
@@ -274,6 +295,9 @@
 - nombre: La Flor Azul
   web: https://laflorazuleditorial.com.ar/
   origen: Back to the Book 2026
+  pais: Argentina
+  todostuslibros: la-flor-azul_195543
+  referencia: true
 - nombre: La Granja Editorial
   web: https://lagranjaeditorial.com/editorial/
   origen: Back to the Book 2026
@@ -285,6 +309,8 @@
 - nombre: La Pollera Ediciones
   web: https://lapollera.cl/
   origen: Back to the Book 2026
+  pais: Chile
+  todostuslibros: la-pollera_160780
 - nombre: La Tortuga Búlgara
   web: https://latortugabulgara.com/
   origen: Back to the Book 2026
@@ -425,6 +451,9 @@
 - nombre: Sigilo editorial
   web: https://www.sigilo.es/
   origen: Back to the Book 2026
+  pais: Argentina
+  todostuslibros: sigilo-argentina_173532
+  referencia: true
 - nombre: Siglo XXI Editores
   web: https://www.sigloxxieditores.com/
   origen: Back to the Book 2026
@@ -470,6 +499,9 @@
 - nombre: Vinilo
   web: https://www.viniloeditora.com.ar/
   origen: Back to the Book 2026
+  pais: Argentina
+  todostuslibros: vinilo-editora_195909
+  referencia: true
 - nombre: WeRstories
   web: https://werstories.com/
   origen: Back to the Book 2026
@@ -642,3 +674,154 @@
   origen: referencia (aprobada el 2/11)
   referencia: true
   todostuslibros: vaso-roto-ediciones_126927
+- nombre: Mardulce
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: mardulce-editora-sl_163828
+  referencia: true
+- nombre: Entropía
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: entropia-ediciones_144204
+  referencia: true
+- nombre: La Bestia Equilátera
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: bestia-equilatera_9798
+  referencia: true
+- nombre: Beatriz Viterbo
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: beatriz-viterbo-editora_10087
+  referencia: true
+- nombre: Mansalva
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: mansalva_187365
+  referencia: true
+- nombre: Excursiones
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: editorial-excursiones-argentina_120089
+  referencia: true
+- nombre: Bajo la Luna
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: bajo-la-luna_126803
+  referencia: true
+- nombre: Tenemos las Máquinas
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: tenemos-las-maquinas_98900
+  referencia: true
+- nombre: Rara Avis
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: rara-avis_161420
+  referencia: true
+- nombre: Gog & Magog
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: ediciones-gog-y-magog_12066
+  referencia: true
+- nombre: El Cuenco de Plata
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: el-cuenco-de-plata_9805
+  referencia: true
+- nombre: Cía. Naviera Ilimitada
+  origen: Latinoamérica (2/11)
+  pais: Argentina
+  todostuslibros: cia-naviera-ilimitada-argentina_149167
+  referencia: true
+- nombre: Ediciones Era
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: era-ediciones_9475
+  referencia: true
+- nombre: Antílope
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: antilope_171906
+  referencia: true
+- nombre: Elefanta
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: elefanta-editorial_177745
+  referencia: true
+- nombre: Paraíso Perdido
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: paraiso-perdido_142689
+  referencia: true
+- nombre: Textofilia
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: textofilia_195843
+  referencia: true
+- nombre: Impronta
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: impronta_142434
+  referencia: true
+- nombre: La Cifra
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: cifra-editorial_12086
+  referencia: true
+- nombre: Cal y Arena
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: cal-y-arena_95299
+  referencia: true
+- nombre: Libros Magenta
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: magenta-ediciones_11582
+  referencia: true
+- nombre: Fondo de Cultura Económica
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: fondo-de-cultura-economica-de-espana-s-l_95300
+  referencia: true
+- nombre: Nitro Press
+  origen: Latinoamérica (2/11)
+  pais: México
+  todostuslibros: nitro-press-mexico_97839
+  referencia: true
+- nombre: Hueders
+  origen: Latinoamérica (2/11)
+  pais: Chile
+  todostuslibros: hueders_10750
+- nombre: Overol
+  origen: Latinoamérica (2/11)
+  pais: Chile
+  todostuslibros: overol_117054
+- nombre: Cuneta
+  origen: Latinoamérica (2/11)
+  pais: Chile
+  todostuslibros: editorial-cuneta_11833
+- nombre: Montacerdos
+  origen: Latinoamérica (2/11)
+  pais: Chile
+  todostuslibros: montacerdos_111603
+- nombre: LOM
+  origen: Latinoamérica (2/11)
+  pais: Chile
+  todostuslibros: lom-ediciones_9588
+- nombre: Angosta Editores
+  origen: Latinoamérica (2/11)
+  pais: Colombia
+  todostuslibros: angosta-colombia_117343
+- nombre: Rey Naranjo
+  origen: Latinoamérica (2/11)
+  pais: Colombia
+  todostuslibros: rey-naranjo-editores-colombia_104464
+- nombre: Tragaluz
+  origen: Latinoamérica (2/11)
+  pais: Colombia
+  todostuslibros: tragaluz_97729
+- nombre: Himpar
+  origen: Latinoamérica (2/11)
+  pais: Colombia
+  todostuslibros: himpar_199530
