@@ -352,7 +352,7 @@
 
 - clave: temas-a-la-vez
   fecha: "2026-11-02"
-  destino: programa
+  destino: codigo
   patron: "«¿No puede hacer dos cosas a la vez? Debería, ¿no?» (Proponer un tema bloqueado por una ejecución en marcha)."
   propuesta: "«Proponer ahora» y las réplicas solo esperan al pipeline del día; con «Proceder», el render, la nevera o la Memoria en marcha se pueden usar."
   evidencia: ["Conversación, 2/11: el tema de Tavares rechazado con «Hay una ejecución en marcha»"]
