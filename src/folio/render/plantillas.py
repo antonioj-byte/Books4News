@@ -224,7 +224,12 @@ class Plantillas:
         cara_de = (libro or (libros[:1] or [{}])[0]).get("autor") if libros else (pieza.eleccion.protagonista or None)
         if retrato and not misma_persona(retrato["persona"], cara_de):
             retrato = None
-        if d.tipo == "portada" and retrato and not (a and (a.portada == "panorama" or (a.registro == "archivo" and imagen))):
+        cara_en_portada = bool(retrato and not (a and (a.portada == "panorama" or (a.registro == "archivo" and imagen))))
+        if d.tipo == "actualidad" and imagen and not cara_en_portada and not (a and a.portada == "panorama"):
+            # La imagen de archivo ya va en la portada: la noticia lleva la segunda, distinta, o ninguna (y entonces
+            # la cifra o un recurso sin foto). Regla del usuario, 1/11: no se repite imagen de archivo.
+            imagen = self.medios.imagen(pieza, "-noticia")
+        if d.tipo == "portada" and cara_en_portada:
             imagen = retrato        # la cara del autor manda en la portada (salvo en la panorámica o si se eligió el archivo)
         estilo, svg = self.medios.portada(pieza, imagen)
         if d.tipo == "portada" and imagen is retrato and retrato and retrato.get("pequena") and estilo != "panorama":

@@ -474,7 +474,8 @@ class Pipeline:
         únicamente esas piezas: las demás cuentan para no repetir imagen ni composición."""
         por_id = {h.id: h for h in al_jefe}
         con_guion = [p for p in piezas if p.guion and p.estado != "fallida"]
-        usadas: set[str] = {x for p in con_guion if solo and p.id not in solo and p.arte and p.arte.imagen for x in [p.arte.imagen]}
+        usadas: set[str] = {x for p in con_guion if solo and p.id not in solo and p.arte
+                            for x in (p.arte.imagen, p.arte.imagen_noticia) if x}
         for i, pieza in enumerate(con_guion):
             if solo is not None and pieza.id not in solo:
                 continue

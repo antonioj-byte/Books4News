@@ -1,0 +1,345 @@
+<title>Mapa de la dirección de arte</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;700&family=EB+Garamond:ital,wght@0,400;1,400&family=Open+Sans:wght@400;600;700&display=swap">
+<style>
+/* Una galerada de Folio: índice arriba, dos mapas grandes y, debajo, las reglas de cada diapositiva como fichas «si… entonces» */
+:root {
+  --papel: #F6F3EE; --tarjeta: #FBF9F6; --tinta: #1C1618; --gris: #6B6163; --linea: #E1DAD2;
+  --pluma: #D40549; --marcador: #FFF500; --marcador-suave: #FFF9A8; --codigo: #1C1618; --tope: #2F6B5E;
+  --display: "Alexandria", "Helvetica Neue", Arial, sans-serif;
+  --remate: "EB Garamond", Garamond, Georgia, serif;
+  --texto: "Open Sans", "Segoe UI", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --papel: #161213; --tarjeta: #201A1C; --tinta: #F2EDE6; --gris: #A79C9E; --linea: #3A3033;
+  --pluma: #FF4D82; --marcador: #FFF500; --marcador-suave: #4A4510; --codigo: #F2EDE6; --tope: #6FC2AE; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --papel: #161213; --tarjeta: #201A1C; --tinta: #F2EDE6; --gris: #A79C9E; --linea: #3A3033;
+  --pluma: #FF4D82; --marcador: #FFF500; --marcador-suave: #4A4510; --codigo: #F2EDE6; --tope: #6FC2AE; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--papel); color: var(--tinta); font: 16px/1.6 var(--texto); }
+.marco { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 44px 72px; display: grid; gap: 52px; }
+header { display: grid; gap: 16px; }
+.pildora { justify-self: start; font: 500 .72rem/1 var(--display); letter-spacing: .2em; text-transform: uppercase; padding: .62em 1.1em .52em; border-radius: 999px; background: var(--tinta); color: var(--papel); }
+h1 { margin: 0; font: 700 clamp(2.4rem, 7vw, 4.6rem)/.95 var(--display); letter-spacing: -.055em; text-wrap: balance; }
+h1 em, h2 em { font: italic 400 1.05em var(--remate); color: var(--pluma); letter-spacing: -.02em; }
+.entrada { margin: 0; max-width: 66ch; font-size: 1.08rem; color: var(--gris); }
+.entrada b { color: var(--tinta); }
+.leyenda { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: .9rem; color: var(--gris); }
+.leyenda span { display: inline-flex; align-items: center; gap: 8px; }
+.tag { display: inline-block; font: 600 .66rem/1 var(--texto); letter-spacing: .12em; text-transform: uppercase; padding: .45em .7em .4em; border-radius: 4px; border: 1.5px solid currentColor; white-space: nowrap; vertical-align: .12em; }
+.tag.codigo { color: var(--codigo); }
+.tag.director { color: var(--pluma); }
+.tag.tope { color: var(--tope); }
+section { display: grid; gap: 18px; }
+.parte { margin: 0; font: 500 .72rem/1 var(--display); letter-spacing: .2em; text-transform: uppercase; color: var(--pluma); }
+h2 { margin: 0; font: 700 clamp(1.8rem, 4.4vw, 2.7rem)/1.02 var(--display); letter-spacing: -.05em; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+figure { margin: 0; display: grid; gap: 12px; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 8px; padding: 18px; }
+.lienzo { overflow-x: auto; }
+.lienzo svg { display: block; min-width: 760px; width: 100%; height: auto; color: var(--tinta); }
+figcaption { font-size: .9rem; color: var(--gris); max-width: 80ch; }
+figcaption b { color: var(--tinta); }
+.fichas { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); }
+.ficha { background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 8px; padding: 18px 20px 20px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.ficha h3 { margin: 0; font: 700 1.25rem/1.1 var(--display); letter-spacing: -.035em; }
+.ficha h3 small { display: block; margin-top: 4px; font: italic 400 1rem/1.2 var(--remate); color: var(--gris); letter-spacing: 0; }
+.reglas { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.reglas li { font-size: .93rem; line-height: 1.5; padding-left: 0; }
+.reglas li .si { font-weight: 700; }
+.tabla { overflow-x: auto; border: 1px solid var(--linea); border-radius: 8px; background: var(--tarjeta); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: .9rem; }
+th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-bottom: 1px solid var(--linea); }
+tr:last-child td { border-bottom: 0; }
+th { font: 600 .68rem/1.2 var(--texto); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+td:first-child { font: 700 .95rem/1.25 var(--display); letter-spacing: -.02em; white-space: nowrap; }
+.no { color: var(--gris); }
+.ajustes { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.ajustes li { background: var(--tarjeta); border: 1px solid var(--linea); border-left: 4px solid var(--pluma); border-radius: 6px; padding: 14px 18px; display: grid; gap: 4px; }
+.ajustes b { font: 700 1.02rem/1.25 var(--display); letter-spacing: -.02em; }
+.ajustes span { font-size: .92rem; color: var(--gris); }
+.marca { background: linear-gradient(transparent 55%, var(--marcador-suave) 55%); padding: 0 .1em; }
+code { font: .84em ui-monospace, Menlo, monospace; background: var(--papel); border: 1px solid var(--linea); padding: 1px 5px; border-radius: 3px; }
+:focus-visible { outline: 2px solid var(--pluma); outline-offset: 2px; }
+</style>
+
+<div class="marco">
+  <header>
+    <span class="pildora">Folio · Dirección de arte</span>
+    <h1>Qué se usa, <em>y cuándo</em></h1>
+    <p class="entrada">Las reglas tal como están hoy en el código y en los prompts, para ver qué ajustar. <b>Dos cosas deciden casi todo: si la pieza tiene una cara y qué tono tiene.</b> Lo demás se reparte diapositiva por diapositiva. Al final, lo que yo revisaría.</p>
+    <div class="leyenda" aria-label="Leyenda">
+      <span><i class="tag codigo">Código</i> se cumple siempre</span>
+      <span><i class="tag director">Director</i> lo decide el director de arte (Haiku) con su prompt: puede equivocarse</span>
+      <span><i class="tag tope">Tope</i> límite diario o de configuración</span>
+    </div>
+  </header>
+
+  <!-- MAPA 1 -->
+  <section aria-labelledby="h-portada">
+    <p class="parte">Mapa 1</p>
+    <h2 id="h-portada">La imagen de la <em>portada</em></h2>
+    <figure>
+      <div class="lienzo">
+        <svg viewBox="0 0 1000 560" role="img" aria-label="Flujo de decisión de la imagen de portada: si hay cara, foto de Commons o de prensa; si no, ilustración editorial si el director la pide; si no, archivo; sin imagen, tipográfica.">
+          <defs>
+            <marker id="f1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+          </defs>
+          <g font-family="Open Sans, Arial, sans-serif" font-size="13" fill="currentColor">
+            <!-- inicio -->
+            <rect x="20" y="245" width="150" height="50" rx="25" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="95" y="275" text-anchor="middle" font-weight="700">Pieza escrita</text>
+            <line x1="170" y1="270" x2="198" y2="270" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <!-- Q1 -->
+            <rect x="200" y="238" width="190" height="64" rx="8" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <text x="295" y="264" text-anchor="middle" font-weight="700">¿Hay una cara?</text>
+            <text x="295" y="284" text-anchor="middle" font-size="11.5" opacity=".75">autor del libro o protagonista</text>
+            <!-- tronco -->
+            <polyline points="390,270 410,270 410,85 428,85" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <text x="416" y="76" font-size="12" font-weight="700">sí</text>
+            <polyline points="410,270 410,360 428,360" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <text x="416" y="352" font-size="12" font-weight="700">no</text>
+            <!-- Commons -->
+            <rect x="430" y="60" width="200" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="530" y="82" text-anchor="middle" font-weight="700">Foto libre en Commons</text>
+            <text x="530" y="100" text-anchor="middle" font-size="11.5" opacity=".75">licencia leída de la API</text>
+            <line x1="530" y1="110" x2="530" y2="148" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <text x="538" y="134" font-size="12">no hay</text>
+            <!-- prensa -->
+            <rect x="430" y="150" width="200" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="530" y="172" text-anchor="middle" font-weight="700">Foto de prensa</text>
+            <text x="530" y="190" text-anchor="middle" font-size="11.5" opacity=".75">web de su editorial (Anagrama)</text>
+            <line x1="530" y1="200" x2="530" y2="328" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#f1)"/>
+            <text x="538" y="268" font-size="12">tampoco</text>
+            <!-- Q3 -->
+            <line x1="630" y1="85" x2="668" y2="85" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <rect x="670" y="52" width="150" height="66" rx="8" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <text x="745" y="76" text-anchor="middle" font-weight="700">¿Toca 3D?</text>
+            <text x="745" y="93" text-anchor="middle" font-size="11" opacity=".75">alterna con la real</text>
+            <text x="745" y="108" text-anchor="middle" font-size="11" opacity=".75">no grave · máx. 3/día</text>
+            <polyline points="820,72 835,72 835,52 848,52" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <text x="826" y="44" font-size="12" font-weight="700">sí</text>
+            <polyline points="820,100 835,100 835,122 848,122" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <text x="826" y="140" font-size="12" font-weight="700">no</text>
+            <rect x="850" y="30" width="140" height="44" rx="6" fill="currentColor" fill-opacity=".07" stroke="currentColor" stroke-width="1.5"/>
+            <text x="920" y="50" text-anchor="middle" font-weight="700">Retrato 3D</text>
+            <text x="920" y="66" text-anchor="middle" font-size="11" opacity=".75">estilo según el tono</text>
+            <rect x="850" y="100" width="140" height="44" rx="6" fill="currentColor" fill-opacity=".07" stroke="currentColor" stroke-width="1.5"/>
+            <text x="920" y="120" text-anchor="middle" font-weight="700">Foto real</text>
+            <text x="920" y="136" text-anchor="middle" font-size="11" opacity=".75">a sangre, B/N</text>
+            <!-- prensa → copia -->
+            <line x1="630" y1="175" x2="848" y2="175" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <text x="740" y="168" text-anchor="middle" font-size="11.5" opacity=".75">pequeña, nunca 3D</text>
+            <rect x="850" y="155" width="140" height="44" rx="6" fill="currentColor" fill-opacity=".07" stroke="currentColor" stroke-width="1.5"/>
+            <text x="920" y="175" text-anchor="middle" font-weight="700">Copia en papel</text>
+            <text x="920" y="191" text-anchor="middle" font-size="11" opacity=".75">con cinta de marcador</text>
+            <!-- Q2 (director) -->
+            <rect x="430" y="330" width="200" height="64" rx="8" fill="none" stroke="var(--pluma)" stroke-width="2.5"/>
+            <text x="530" y="355" text-anchor="middle" font-weight="700">¿Pide ilustración?</text>
+            <text x="530" y="374" text-anchor="middle" font-size="11.5" opacity=".75">tema conceptual, sin víctimas</text>
+            <text x="530" y="414" text-anchor="middle" font-size="11.5" fill="var(--pluma)">o, con cara, para barajar</text>
+            <line x1="630" y1="352" x2="668" y2="352" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <text x="640" y="344" font-size="12" font-weight="700">sí</text>
+            <!-- ilustración -->
+            <rect x="670" y="318" width="150" height="68" rx="6" fill="none" stroke="var(--pluma)" stroke-width="1.5"/>
+            <text x="745" y="340" text-anchor="middle" font-weight="700">Ilustración</text>
+            <text x="745" y="357" text-anchor="middle" font-size="11" opacity=".75">2 escenas → 2 dibujos</text>
+            <text x="745" y="373" text-anchor="middle" font-size="11" opacity=".75">el director elige · máx. 10</text>
+            <line x1="820" y1="352" x2="848" y2="352" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <rect x="850" y="330" width="140" height="44" rx="6" fill="currentColor" fill-opacity=".07" stroke="currentColor" stroke-width="1.5"/>
+            <text x="920" y="350" text-anchor="middle" font-weight="700">Panorámica</text>
+            <text x="920" y="366" text-anchor="middle" font-size="11" opacity=".75">portada + noticia</text>
+            <line x1="745" y1="386" x2="745" y2="438" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#f1)"/>
+            <text x="753" y="416" font-size="12">falla o tope</text>
+            <!-- archivo -->
+            <polyline points="530,394 530,470 668,470" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <text x="538" y="440" font-size="12" font-weight="700">no</text>
+            <rect x="670" y="440" width="150" height="62" rx="6" fill="none" stroke="var(--pluma)" stroke-width="1.5"/>
+            <text x="745" y="462" text-anchor="middle" font-weight="700">Archivo</text>
+            <text x="745" y="478" text-anchor="middle" font-size="11" opacity=".75">Europeana, Commons</text>
+            <text x="745" y="493" text-anchor="middle" font-size="11" opacity=".75">hoja de contactos</text>
+            <line x1="820" y1="460" x2="848" y2="460" stroke="currentColor" stroke-width="1.5" marker-end="url(#f1)"/>
+            <rect x="850" y="430" width="140" height="58" rx="6" fill="currentColor" fill-opacity=".07" stroke="var(--pluma)" stroke-width="1.5"/>
+            <text x="920" y="452" text-anchor="middle" font-weight="700">Composición</text>
+            <text x="920" y="470" text-anchor="middle" font-size="11" opacity=".75">sangre · banda</text>
+            <text x="920" y="484" text-anchor="middle" font-size="11" opacity=".75">caja · neón</text>
+            <polyline points="820,490 835,490 835,526 848,526" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#f1)"/>
+            <text x="760" y="530" font-size="12">nada sirve</text>
+            <rect x="850" y="506" width="140" height="42" rx="6" fill="currentColor" fill-opacity=".07" stroke="currentColor" stroke-width="1.5"/>
+            <text x="920" y="525" text-anchor="middle" font-weight="700">Tipográfica</text>
+            <text x="920" y="540" text-anchor="middle" font-size="11" opacity=".75">muro del oficio</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>La cara manda.</b> Con foto libre del autor (o del protagonista, si no hay libro), la portada lleva su cara; la de prensa va pequeña, como copia en papel, y nunca se pasa a 3D. Sin cara, ilustración si el director la pide y queda cupo; si no, archivo. En rosa, lo que decide el director; en negro, el código. Las flechas discontinuas son caídas: cuando algo falla, se baja al siguiente.</figcaption>
+    </figure>
+  </section>
+
+  <!-- MAPA 2 -->
+  <section aria-labelledby="h-tono">
+    <p class="parte">Mapa 2</p>
+    <h2 id="h-tono">Lo que cambia <em>el tono</em></h2>
+    <figure>
+      <div class="lienzo">
+        <svg viewBox="0 0 760 420" role="img" aria-label="El tono de la pieza fija el estilo del retrato 3D y la interferencia; el tono grave apaga el color, el marcador, el collage, el retrato 3D y las infografías salvo la línea.">
+          <defs>
+            <marker id="f2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+            <marker id="f2p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--pluma)"/></marker>
+          </defs>
+          <g font-family="Open Sans, Arial, sans-serif" font-size="13" fill="currentColor">
+            <text x="40" y="22" font-size="11" letter-spacing="2" opacity=".7">TONO (LO ELIGE EL DIRECTOR)</text>
+            <text x="440" y="22" font-size="11" letter-spacing="2" opacity=".7">LO QUE FIJA EL CÓDIGO</text>
+            <g stroke="var(--pluma)" stroke-width="2" fill="none">
+              <rect x="40" y="40" width="150" height="40" rx="20"/>
+              <rect x="40" y="96" width="150" height="40" rx="20"/>
+              <rect x="40" y="152" width="150" height="40" rx="20"/>
+              <rect x="40" y="226" width="150" height="40" rx="20"/>
+              <rect x="40" y="322" width="150" height="40" rx="20"/>
+            </g>
+            <g text-anchor="middle" font-weight="700">
+              <text x="115" y="65">sereno</text><text x="115" y="121">reflexivo</text><text x="115" y="177">irónico</text>
+              <text x="115" y="251">luminoso</text><text x="115" y="347">grave</text>
+            </g>
+            <g stroke="currentColor" stroke-width="1.5" fill="none">
+              <rect x="440" y="40" width="250" height="40" rx="6"/>
+              <rect x="440" y="120" width="250" height="40" rx="6"/>
+              <rect x="440" y="172" width="250" height="40" rx="6"/>
+              <rect x="440" y="226" width="250" height="40" rx="6"/>
+            </g>
+            <text x="455" y="65" font-weight="700">Retrato 3D low-poly</text>
+            <text x="455" y="145" font-weight="700">Retrato 3D render de los 2000</text>
+            <text x="455" y="197" font-weight="700">Interferencia en el vídeo</text>
+            <text x="455" y="251" font-weight="700">Retrato 3D vóxel</text>
+            <g stroke="currentColor" stroke-width="1.5" marker-end="url(#f2)">
+              <line x1="190" y1="60" x2="438" y2="60"/>
+              <line x1="190" y1="116" x2="438" y2="68"/>
+              <line x1="190" y1="168" x2="438" y2="142"/>
+              <line x1="190" y1="176" x2="438" y2="190"/>
+              <line x1="190" y1="246" x2="438" y2="246"/>
+            </g>
+            <!-- grave -->
+            <rect x="440" y="290" width="300" height="112" rx="6" fill="none" stroke="var(--pluma)" stroke-width="2" stroke-dasharray="6 4"/>
+            <text x="455" y="313" font-weight="700" fill="var(--pluma)">Apaga</text>
+            <text x="455" y="334" font-size="12.5">color de la pieza · marcador · collage</text>
+            <text x="455" y="353" font-size="12.5">retrato 3D (va la foto) · interferencia</text>
+            <text x="455" y="372" font-size="12.5">infografías salvo la línea</text>
+            <text x="455" y="391" font-size="12.5">con víctimas: ilustración, cifra, caras</text>
+            <line x1="190" y1="342" x2="438" y2="342" stroke="var(--pluma)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#f2p)"/>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>El tono solo obliga en tres cosas:</b> el estilo del retrato 3D, la interferencia (solo irónico) y todo lo que apaga el grave. El resto (qué composición, qué color, qué recurso sin foto, qué infografía) el director lo elige guiándose por una tabla de su prompt, pero el código no lo impone.</figcaption>
+    </figure>
+  </section>
+
+  <!-- DIAPOSITIVA A DIAPOSITIVA -->
+  <section aria-labelledby="h-diapos">
+    <p class="parte">Diapositiva a diapositiva</p>
+    <h2 id="h-diapos">Si pasa esto, <em>sale esto</em></h2>
+    <div class="fichas">
+      <article class="ficha">
+        <h3>1 · Portada<small>la imagen, en el mapa 1; la cara, una sola vez y en una sola versión</small></h3>
+        <ul class="reglas">
+          <li><i class="tag director">Director</i> <span class="si">Composición:</span> sangre, banda, caja o neón. El prompt le pide no repetir en el día.</li>
+          <li><i class="tag codigo">Código</i> <span class="si">Si hay ilustración</span> → siempre panorámica. <span class="si">Si es neón sin color de pieza</span> → sangre. <span class="si">Si no hay imagen</span> → tipográfica.</li>
+          <li><i class="tag director">Director</i><i class="tag codigo">Código</i> <span class="si">Antetítulo</span> (1–3 palabras) y <span class="si">remate</span> en cursiva (el final literal del titular, 2–6 palabras): los propone el director y, si no cumplen, no salen.</li>
+          <li><i class="tag director">Director</i><i class="tag codigo">Código</i> <span class="si">Buscador:</span> si escribe una pregunta válida (3–9 palabras, sin cifras ni nombres) y la pieza tiene libro, sale con el título como respuesta.</li>
+          <li><i class="tag codigo">Código</i> <span class="si">Vídeo</span> si hay imagen (salvo panorámica), buscador o interferencia.</li>
+        </ul>
+      </article>
+      <article class="ficha">
+        <h3>2 · La noticia<small>la primera opción que se cumpla</small></h3>
+        <ul class="reglas">
+          <li><i class="tag codigo">Código</i> <span class="si">1. Panorámica:</span> la mitad derecha de la ilustración.</li>
+          <li><i class="tag director">Director</i><i class="tag codigo">Código</i> <span class="si">2. Cifra destacada:</span> si la propuso y sigue letra por letra en el texto. Nunca con víctimas. En vídeo, cuenta.</li>
+          <li><i class="tag codigo">Código</i> <span class="si">3. Imagen de archivo</span> arriba, con borde rasgado. Si la de archivo ya va en la portada, otra distinta que el director elige en la misma hoja de contactos; si no hay, sigue al punto 4. La misma imagen nunca sale dos veces.</li>
+          <li><i class="tag director">Director</i> <span class="si">4. Sin foto:</span> golpe, gigante, teletipo o collage. Si faltan datos, el siguiente de la lista; el collage, nunca en graves. Todo sale literal del texto.</li>
+          <li><i class="tag codigo">Código</i> <span class="si">«Lo cuentan»</span> con los medios, salvo con teletipo y en el libro recomendado.</li>
+        </ul>
+      </article>
+      <article class="ficha">
+        <h3>3 · El libro<small>una diapositiva por libro</small></h3>
+        <ul class="reglas">
+          <li><i class="tag codigo">Código</i> <span class="si">Cubierta real:</span> la de la edición española por ISBN; si no, la de la obra. <span class="si">Si mide menos de 280 px o es genérica</span> → cubierta tipográfica.</li>
+          <li><i class="tag codigo">Código</i> <span class="si">Cara en círculo</span> junto a la cubierta, solo si es el autor de ese libro.</li>
+          <li><i class="tag codigo">Código</i> «✓ Ficha verificada» y la cubierta no se repite en el carrusel.</li>
+        </ul>
+      </article>
+      <article class="ficha">
+        <h3>4 · La idea<small>texto grande en el color de la pieza</small></h3>
+        <ul class="reglas">
+          <li><i class="tag director">Director</i> <span class="si">Color:</span> pluma o marcador, alternando en el día. Ninguno en graves.</li>
+          <li><i class="tag director">Director</i> <span class="si">Infografía:</span> solo si cuenta algo que el texto no cuenta; lo normal es ninguna.</li>
+          <li><i class="tag codigo">Código</i> <span class="si">Línea</span> (años de la ficha verificada) y <span class="si">mapa</span> (dos rótulos literales) solo con libro. <span class="si">Esquema</span> solo con imagen. Si el mapa o el esquema fallan → línea. En graves, solo línea. En vídeo, se dibuja.</li>
+        </ul>
+      </article>
+      <article class="ficha">
+        <h3>5 · El cierre<small>la recomendación</small></h3>
+        <ul class="reglas">
+          <li><i class="tag codigo">Código</i> <span class="si">Con libro:</span> la frase y una tarjeta con la ficha; en la del libro principal, la cara del autor en círculo. Sin cubierta.</li>
+          <li><i class="tag codigo">Código</i> <span class="si">Sin libro</span> (historia editorial, radar): la frase a tamaño de titular con la píldora del formato.</li>
+        </ul>
+      </article>
+      <article class="ficha">
+        <h3>6 · Colofón<small>de dónde sale la pieza</small></h3>
+        <ul class="reglas">
+          <li><i class="tag codigo">Código</i> Ficha de biblioteca sobre la mesa oscura: fuentes, ficha verificada e imágenes, todo de datos guardados.</li>
+          <li><i class="tag codigo">Código</i> El encabezado cambia: «La noticia», «Las fuentes» (historia editorial) o «La ficha y la crítica» (recomendado).</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- POR FORMATO -->
+  <section aria-labelledby="h-formatos">
+    <p class="parte">Por formato</p>
+    <h2 id="h-formatos">Qué cambia <em>en cada uno</em></h2>
+    <div class="tabla"><table>
+      <thead><tr><th>Formato</th><th>¿Libro?</th><th>Cara de la portada</th><th>Buscador</th><th>Línea y mapa</th><th>Lo propio</th></tr></thead>
+      <tbody>
+        <tr><td>Lectura lateral</td><td>Sí</td><td>Autor del libro</td><td>Sí</td><td>Sí</td><td class="no">Las reglas de base</td></tr>
+        <tr><td>Diálogo</td><td>Sí</td><td>Autor del libro</td><td>Sí</td><td>Sí</td><td class="no">Las reglas de base</td></tr>
+        <tr><td>Mundo del libro</td><td>Sí</td><td>Autor del libro</td><td>Sí</td><td>Sí</td><td class="no">Las reglas de base</td></tr>
+        <tr><td>Historia editorial</td><td>Opcional</td><td>Autor o protagonista</td><td>Solo con libro</td><td>Solo con libro</td><td>Cierre grande con «Historia editorial»; colofón «Las fuentes»</td></tr>
+        <tr><td>Radar del libro</td><td>Opcional</td><td>Autor o protagonista</td><td>Solo con libro</td><td>Solo con libro</td><td>Cierre grande con «Mundo del libro»</td></tr>
+        <tr><td>Libro recomendado</td><td>Sí, del catálogo</td><td>Autor del libro</td><td>Sí</td><td>Sí</td><td>Sin «Lo cuentan»; citas de la crítica; colofón «La ficha y la crítica»</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- TOPES -->
+  <section aria-labelledby="h-topes">
+    <p class="parte">Topes</p>
+    <h2 id="h-topes">Lo que <em>se limita</em></h2>
+    <div class="tabla"><table>
+      <thead><tr><th>Recurso</th><th>Tope</th><th>Al pasarse</th></tr></thead>
+      <tbody>
+        <tr><td><i class="tag tope">Tope</i> Ilustración editorial</td><td>10 al día (2 dibujos cada una, ~50 créditos)</td><td>Archivo</td></tr>
+        <tr><td><i class="tag tope">Tope</i> Retrato 3D</td><td>3 al día; alterna con la foto real</td><td>Foto real</td></tr>
+        <tr><td><i class="tag tope">Tope</i> Esquema (Magnific)</td><td>3 al día</td><td>Línea de tiempo o nada</td></tr>
+        <tr><td><i class="tag tope">Tope</i> Vídeo</td><td>3 diapositivas por pieza</td><td>El resto, imagen fija</td></tr>
+        <tr><td><i class="tag codigo">Código</i> Imagen de archivo</td><td>Dos piezas del día no la repiten</td><td>Otra de la hoja de contactos</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section aria-labelledby="h-ajustes">
+    <p class="parte">Para revisar</p>
+    <h2 id="h-ajustes">Lo que yo <em>ajustaría</em></h2>
+    <p>Salen de leer el código para hacer este mapa. Ninguno está cambiado: dime cuáles tocar.</p>
+    <ul class="ajustes">
+      <li><b>Hecho · La imagen de archivo no se repite.</b><span>Si va en la portada, la noticia lleva una segunda distinta (se comprueba también que no sea otra copia de la misma obra) o, si no hay, la cifra o un recurso sin foto.</span></li>
+      <li><b>Hecho · Nunca dos caras.</b><span>La cara sale en una sola versión, real o 3D (las imágenes llevan su versión en la dirección y el navegador ya no mezcla la real y la 3D), y si la pieza lleva cara, la imagen de archivo no puede mostrar personas reconocibles.</span></li>
+      <li><b>Con cara, la pieza mezcla dos registros.</b><span>La portada lleva el retrato y la noticia una imagen de archivo (a veces un grabado). Ya no habrá otra cara, pero los dos registros conviven.</span></li>
+      <li><b>La cifra tapa la imagen de la noticia.</b><span>Si hay cifra destacada, la imagen de archivo que se buscó no sale. Se paga la búsqueda (y la elección) para nada.</span></li>
+      <li><b>Con cara, la ilustración que pide el director se pierde.</b><span>Solo sale para barajar, si la pieza anterior del día fue otra cara. Un tema muy conceptual con autor conocido nunca lleva ilustración.</span></li>
+      <li><b>«Sin repetir composición en el día» solo lo pide el prompt.</b><span>El código no lo impide: pueden salir dos sangres seguidas.</span></li>
+      <li><b>Ilustración siempre es panorámica.</b><span>No hay ilustración en una sola diapositiva ni otra composición con ilustración.</span></li>
+      <li><b>El buscador no tiene tope.</b><span>Puede salir en todas las piezas con libro del día y perder la gracia.</span></li>
+      <li><b>El tono apenas obliga.</b><span>Fuera del retrato, la interferencia y el grave, la tabla de recursos por tono es una sugerencia al director.</span></li>
+      <li><b>Sin foto libre del protagonista no hay cara.</b><span>Casos como Perec (fotos con derechos) caen a ilustración o archivo; la ilustración de su cara exige partir de una foto libre.</span></li>
+      <li><b>El mapa sobre las tres salas sigue apagado.</b><span>Hasta que elijas la ilustración definitiva, el mapa es el de círculos.</span></li>
+    </ul>
+  </section>
+</div>

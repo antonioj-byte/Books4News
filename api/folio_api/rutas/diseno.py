@@ -31,7 +31,13 @@ def ruta_medio(raiz_cache: Path, ruta: str) -> Path | None:
 
 def url_medio(raiz_cache: Path):
     """Archivo de data/cache → URL de la API (para la vista previa de las diapositivas)."""
-    return lambda archivo: "/api/medios/" + archivo.resolve().relative_to(raiz_cache.resolve()).as_posix()
+    def url(archivo: Path) -> str:
+        # Con la fecha del archivo en la dirección: una imagen que cambia con el mismo nombre (la foto que pasa a
+        # retrato 3D) no puede quedarse vieja en el navegador. El 1/11 salían la real y la 3D en la misma pieza.
+        ruta = archivo.resolve()
+        v = int(ruta.stat().st_mtime) if ruta.exists() else 0
+        return "/api/medios/" + ruta.relative_to(raiz_cache.resolve()).as_posix() + f"?v={v}"
+    return url
 
 
 @router.get("/api/medios/{ruta:path}")

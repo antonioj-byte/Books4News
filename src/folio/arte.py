@@ -181,13 +181,28 @@ def hoja_de_contactos(imgs: list[Image.Image]) -> bytes:
 
 
 def _guardar_imagen(cand: libres.ImagenLibre, im: Image.Image, eleccion: EleccionImagen,
-                    pieza_id: str, dir_cache_fecha: Path) -> None:
+                    pieza_id: str, dir_cache_fecha: Path, sufijo: str = "") -> None:
     carpeta = libres.dir_imagenes(dir_cache_fecha)
     carpeta.mkdir(parents=True, exist_ok=True)
-    im.convert("RGB").save(carpeta / f"{pieza_id}.jpg", quality=92)
-    cand.local = f"{pieza_id}.jpg"
-    cand.enfoque = (max(0, min(100, eleccion.enfoque_x)), max(0, min(100, eleccion.enfoque_y)))
-    libres.guardar_metadatos(cand, pieza_id, dir_cache_fecha)
+    im.convert("RGB").save(carpeta / f"{pieza_id}{sufijo}.jpg", quality=92)
+    cand.local = f"{pieza_id}{sufijo}.jpg"
+    cand.enfoque = (max(0, min(100, eleccion.enfoque_x)), max(0, min(100, eleccion.enfoque_y))) if not sufijo else (50, 50)
+    libres.guardar_metadatos(cand, pieza_id + sufijo, dir_cache_fecha)
+
+
+SUFIJO_NOTICIA = "-noticia"
+
+
+def _huella(im: Image.Image) -> int:
+    """Huella visual (dHash de 64 bits): la misma obra en dos copias o recortes da huellas casi iguales."""
+    g = im.convert("L").resize((9, 8))
+    px = list(g.tobytes())
+    return sum(1 << i for i, (a, b) in enumerate((px[f * 9 + c], px[f * 9 + c + 1]) for f in range(8) for c in range(8)) if a > b)
+
+
+def misma_imagen(a: Image.Image, b: Image.Image, umbral: int = 10) -> bool:
+    """¿Son la misma imagen (otra copia, otro tamaño u otro recorte leve)? Menos de `umbral` bits distintos."""
+    return bin(_huella(a) ^ _huella(b)).count("1") < umbral
 
 
 def _propuesta(llm: LLM, cfg: Config, pieza: Pieza, datos: str, portadas_del_dia: list[str] | None) -> PropuestaArte:
@@ -201,8 +216,17 @@ def _propuesta(llm: LLM, cfg: Config, pieza: Pieza, datos: str, portadas_del_dia
 
 def _imagen_de_archivo(llm: LLM, cfg: Config, pieza: Pieza, datos: str, propuesta: PropuestaArte, arte: Arte,
                        usadas: set[str], dir_fecha: Path) -> None:
-    """Busca candidatas libres, el modelo elige una viendo la hoja de contactos y se fija."""
+    """Busca candidatas libres, el modelo elige una viendo la hoja de contactos y se fija.
+
+    Reglas del usuario (1/11): la imagen de archivo no se repite en la pieza. Si va en la portada (no hay
+    cara), el director elige una segunda, distinta, para la noticia; si no hay, la noticia lleva la cifra
+    o un recurso sin foto. Y nunca dos caras: si la pieza lleva la cara del autor o protagonista, la de
+    archivo no puede mostrar personas reconocibles."""
     libres.olvidar(pieza.id, dir_fecha)
+    libres.olvidar(pieza.id + SUFIJO_NOTICIA, dir_fecha)
+    arte.imagen_noticia = arte.credito_noticia = None
+    en_portada = arte.registro == "archivo"
+    con_cara = arte.registro in ("foto_autor", "retrato_ia")
     cands = candidatas(propuesta, usadas)
     if not cands:
         arte.avisos.append("Sin imagen: ninguna candidata libre y con tamaño suficiente")
@@ -210,7 +234,9 @@ def _imagen_de_archivo(llm: LLM, cfg: Config, pieza: Pieza, datos: str, propuest
     lista = "\n".join(f"{i}. {c.descripcion[:160]} ({c.institucion or c.fuente})" for i, (c, _) in enumerate(cands, 1))
     texto = cargar_prompt(cfg, "director_arte_eleccion", {
         "[pegar pieza]": f"{datos}\nevitar: {', '.join(propuesta.evitar) or 'nada en particular'}\n"
-                         f"suceso con víctimas: {'sí' if propuesta.suceso_con_victimas else 'no'}",
+                         f"suceso con víctimas: {'sí' if propuesta.suceso_con_victimas else 'no'}\n"
+                         f"la pieza ya lleva la cara de una persona: {'sí' if con_cara else 'no'}\n"
+                         f"hace falta una segunda imagen para la noticia: {'sí' if en_portada else 'no'}",
         "[pegar candidatas]": lista,
     })
     hoja = base64.b64encode(hoja_de_contactos([im for _, im in cands])).decode()
@@ -223,11 +249,35 @@ def _imagen_de_archivo(llm: LLM, cfg: Config, pieza: Pieza, datos: str, propuest
         arte.avisos.append("Sin imagen: el director de arte no vio ninguna a la altura")
     elif propuesta.suceso_con_victimas and eleccion.personas_reconocibles:
         arte.avisos.append("Sin imagen: la elegida tiene personas reconocibles y la noticia tiene víctimas")
+    elif con_cara and eleccion.personas_reconocibles:
+        arte.avisos.append("Sin imagen de archivo: la elegida tiene personas reconocibles y la pieza ya lleva una cara (nunca dos caras)")
     else:
         cand, im = cands[eleccion.elegida - 1]
         _guardar_imagen(cand, im, eleccion, pieza.id, dir_fecha)
         arte.imagen, arte.credito = cand.archivo, cand.credito
         usadas |= {cand.archivo, cand.url}
+        if en_portada:
+            _segunda(eleccion, cands, cand, propuesta, arte, pieza, usadas, dir_fecha)
+
+
+def _segunda(eleccion: EleccionImagen, cands, primera: libres.ImagenLibre, propuesta: PropuestaArte, arte: Arte,
+             pieza: Pieza, usadas: set[str], dir_fecha: Path) -> None:
+    """La segunda imagen de archivo, para la noticia: otra candidata, nunca la misma (ni otra copia suya)."""
+    n = eleccion.segunda
+    if n is None or not 1 <= n <= len(cands) or n == eleccion.elegida:
+        arte.avisos.append("Noticia sin imagen de archivo: no había una segunda distinta; lleva la cifra o un recurso sin foto")
+        return
+    cand, im = cands[n - 1]
+    im_primera = next(i for c, i in cands if c is primera)
+    if cand.archivo == primera.archivo or cand.url == primera.url or misma_imagen(im, im_primera):
+        arte.avisos.append("Noticia sin imagen de archivo: la segunda era la misma; lleva la cifra o un recurso sin foto")
+        return
+    if propuesta.suceso_con_victimas and eleccion.segunda_personas_reconocibles:
+        arte.avisos.append("Noticia sin imagen de archivo: la segunda tiene personas reconocibles y la noticia tiene víctimas")
+        return
+    _guardar_imagen(cand, im, eleccion, pieza.id, dir_fecha, SUFIJO_NOTICIA)
+    arte.imagen_noticia, arte.credito_noticia = cand.archivo, cand.credito
+    usadas |= {cand.archivo, cand.url}
 
 
 def _del_dia(contar, cfg: Config, pieza: Pieza, dir_fecha: Path) -> int:

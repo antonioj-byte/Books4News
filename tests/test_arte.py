@@ -71,3 +71,68 @@ def test_el_esquema_del_director_cabe_en_las_salidas_estructuradas():
     """Con un null en cada campo opcional anidado, la API rechazó el esquema («Schema is too complex»)."""
     import json
     assert json.dumps(PropuestaArte.model_json_schema()).count("anyOf") <= 6
+
+
+def _imagenes_distintas():
+    """Tres candidatas: dos distintas y una copia de la primera, más pequeña (como otra institución en Europeana)."""
+    from folio.imagenes import libres
+    a = Image.new("RGB", (1200, 900), "white")
+    for x in range(0, 1200, 150):
+        a.paste((0, 0, 0), (x, 0, x + 70, 900))
+    b = Image.new("RGB", (1200, 900), "white")
+    for y in range(0, 900, 120):
+        b.paste((0, 0, 0), (0, y, 1200, y + 40))
+    b.paste((90, 90, 90), (300, 200, 900, 700))
+    copia = a.resize((900, 675))
+    def cand(n):
+        return libres.ImagenLibre(archivo=f"europeana:/{n}", pagina="", url=f"https://x/{n}.jpg", ancho=1200, alto=900,
+                                  licencia="CC0", licencia_url=None, autor="A", descripcion=f"imagen {n}", libre=True, motivo="")
+    return [(cand(1), a), (cand(2), b), (cand(3), copia)]
+
+
+class _LLMEleccion:
+    def __init__(self, cfg, **eleccion):
+        self.cfg, self.eleccion, self.textos = cfg, eleccion, []
+
+    def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
+        self.textos.append(mensajes[0]["content"][1]["text"])
+        datos = dict(elegida=1, personas_reconocibles=False, enfoque_x=50, enfoque_y=50, por_que="x") | self.eleccion
+        return esquema(**datos), []
+
+
+def _archivo(cfg, monkeypatch, registro, **eleccion):
+    from folio.modelos import Arte
+    monkeypatch.setattr(arte, "candidatas", lambda propuesta, excluir=(): _imagenes_distintas())
+    a = Arte(tono="sereno", recurso="foto", registro=registro)
+    llm = _LLMEleccion(cfg, **eleccion)
+    arte._imagen_de_archivo(llm, cfg, _pieza(), "datos", _propuesta(), a, set(), cfg.dir_cache("2026-10-30"))
+    return a, llm
+
+
+def test_sin_cara_la_noticia_lleva_otra_imagen_de_archivo(cfg, monkeypatch):
+    from folio.imagenes import libres
+    a, llm = _archivo(cfg, monkeypatch, "archivo", segunda=2)
+    assert "hace falta una segunda imagen para la noticia: sí" in llm.textos[0]
+    assert a.imagen == "europeana:/1" and a.imagen_noticia == "europeana:/2" and a.credito_noticia
+    assert libres.de_pieza("2026-10-30-1-noticia", cfg.dir_cache("2026-10-30")).archivo == "europeana:/2"
+    # La misma imagen en otra copia no vale como segunda: la noticia va sin foto
+    a, _ = _archivo(cfg, monkeypatch, "archivo", segunda=3)
+    assert a.imagen_noticia is None and any("misma" in x for x in a.avisos)
+    a, _ = _archivo(cfg, monkeypatch, "archivo", segunda=1)
+    assert a.imagen_noticia is None
+    # Con cara en la portada, no hace falta segunda
+    a, llm = _archivo(cfg, monkeypatch, "foto_autor", segunda=2)
+    assert a.imagen == "europeana:/1" and a.imagen_noticia is None and "segunda imagen para la noticia: no" in llm.textos[0]
+
+
+def test_nunca_dos_caras(cfg, monkeypatch):
+    a, llm = _archivo(cfg, monkeypatch, "retrato_ia", personas_reconocibles=True)
+    assert a.imagen is None and any("nunca dos caras" in x for x in a.avisos)
+    assert "ya lleva la cara de una persona: sí" in llm.textos[0]
+    a, _ = _archivo(cfg, monkeypatch, "archivo", personas_reconocibles=True, segunda=2)
+    assert a.imagen == "europeana:/1"            # sin cara de autor, una persona en la imagen de archivo vale
+
+
+def test_misma_imagen():
+    (_, a), (_, b), (_, copia) = _imagenes_distintas()
+    assert arte.misma_imagen(a, copia) and not arte.misma_imagen(a, b)

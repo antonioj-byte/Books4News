@@ -19,6 +19,7 @@ def creditos_pie(a: Arte) -> list[str]:
     sa = " (la portada se publica con la misma licencia, CC BY-SA)" if a.retrato and "SA" in a.retrato.upper().replace("-", " ").split() else ""
     return ([f"Retrato: {a.retrato}{sa}"] if a.retrato else []) + \
            ([f"{'Ilustración' if a.recurso in ('grabado', 'ilustracion') else 'Imagen'}: {a.credito}"] if a.credito else []) + \
+           ([f"Imagen de la noticia: {a.credito_noticia}"] if a.credito_noticia else []) + \
            ([f"Infografía: {a.esquema}"] if a.esquema and a.infografia and a.infografia.tipo == "esquema" else [])
 
 

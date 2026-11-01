@@ -211,3 +211,23 @@ def test_la_hoja_de_estilos_lleva_su_version(cfg_diseno, pieza):
     html = render.Plantillas(cfg_diseno).html_diapositiva(pieza, 1)
     v = render.Plantillas(cfg_diseno).version_diseno
     assert f'plantillas/base.css?v={v}"' in html and f'ajuste.js?v={v}"' in html and len(v) == 10
+
+
+def test_la_imagen_de_archivo_no_se_repite_en_la_noticia(cfg_diseno, pieza):
+    from PIL import Image
+    from folio.imagenes import libres as imagenes
+    from folio.modelos import Arte
+    cache = cfg_diseno.dir_cache(pieza.fecha)
+    imagenes.dir_imagenes(cache).mkdir(parents=True)
+    def fijar(clave, archivo):
+        Image.new("RGB", (1200, 1500), (90, 90, 90)).save(imagenes.dir_imagenes(cache) / f"{clave}.jpg")
+        imagenes.guardar_metadatos(imagenes.ImagenLibre(archivo=archivo, pagina="", url="", ancho=1200, alto=1500, licencia="CC0",
+                                   licencia_url=None, autor="A", descripcion="", libre=True, motivo="", local=f"{clave}.jpg"), clave, cache)
+    fijar(pieza.id, "europeana:/1")
+    pieza.arte = Arte(tono="sereno", recurso="foto", portada="sangre", registro="archivo", imagen="europeana:/1")
+    p = render.Plantillas(cfg_diseno)
+    portada, noticia = p.html_diapositiva(pieza, 1), p.html_diapositiva(pieza, 2)
+    assert f"{pieza.id}.jpg" in portada and f"{pieza.id}.jpg" not in noticia      # sin segunda: noticia sin foto
+    fijar(pieza.id + "-noticia", "europeana:/2")
+    noticia = render.Plantillas(cfg_diseno).html_diapositiva(pieza, 2)
+    assert f"{pieza.id}-noticia.jpg" in noticia and f"{pieza.id}.jpg\"" not in noticia

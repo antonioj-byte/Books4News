@@ -300,6 +300,8 @@ class EleccionImagen(BaseModel):
     """Segunda llamada: el modelo ve las candidatas (ya con licencia libre) y elige una o ninguna."""
     elegida: int | None = Field(description="Número de la candidata elegida, o null si ninguna sirve")
     personas_reconocibles: bool = Field(description="La elegida muestra caras reconocibles")
+    segunda: int | None = Field(default=None, description="Solo si se pide: el número de otra candidata, distinta de la elegida, para la diapositiva de la noticia; null si ninguna más sirve")
+    segunda_personas_reconocibles: bool = Field(default=False, description="La segunda muestra caras reconocibles")
     enfoque_x: int = Field(description="0–100: dónde está lo importante en horizontal")
     enfoque_y: int = Field(description="0–100: dónde está lo importante en vertical")
     por_que: str
@@ -327,6 +329,10 @@ class Arte(BaseModel):
     acento: Literal["pluma", "marcador"] | None = None   # color de la pieza; sin color en las graves
     concepto: str | None = None          # metáfora de la ilustración
     retrato: str | None = None           # crédito del retrato del autor, si lo hay
+    # Segunda imagen de archivo, para la diapositiva de la noticia cuando la portada ya lleva la primera
+    # (1/11, regla del usuario: «no se puede repetir imagen de archivo»)
+    imagen_noticia: str | None = None
+    credito_noticia: str | None = None
     sin_foto: SinFoto | None = None    # recurso de la diapositiva de actualidad sin foto ni cifra
     infografia: Infografia | None = None  # infografía de la diapositiva de la idea
     esquema: str | None = None           # crédito de la ilustración técnica de Magnific (infografía «esquema»)
