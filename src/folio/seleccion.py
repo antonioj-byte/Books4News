@@ -36,9 +36,11 @@ def anio_minimo(fecha: str, anios: int) -> int:
 
 
 NOMBRES_FORMATO = {"lateral": "lectura lateral", "dialogo": "diálogo con la actualidad", "edicion": "mundo del libro",
-                   "curiosidad": "curiosidad"}
+                   "curiosidad": "curiosidad", "recomendado": "libro recomendado", "radar": "radar del libro"}
 _EN_EL_REPARTO = {"lateral": "de lectura lateral", "dialogo": "de diálogo con la actualidad", "edicion": "del mundo del libro",
-                  "curiosidad": "del cajón de curiosidades"}
+                  "curiosidad": "del cajón de curiosidades", "recomendado": "de libro recomendado"}
+# El carril del que tiene que salir cada formato que no es de actualidad
+_CARRIL_DEL_FORMATO = {"curiosidad": "cajon", "recomendado": "catalogo"}
 
 
 def bloque_cajon(historias: list[Historia]) -> str:
@@ -51,10 +53,18 @@ def bloque_cajon(historias: list[Historia]) -> str:
 
 
 def reparto_del_dia(reparto: dict[str, int], historias: list[Historia]) -> dict[str, int]:
-    """El reparto de la configuración, sin la curiosidad si el cajón no tiene ninguna disponible hoy."""
-    if any(h.carril == "cajon" for h in historias):
-        return dict(reparto)
-    return {f: n for f, n in reparto.items() if f != "curiosidad"}
+    """El reparto de la configuración, sin la curiosidad si el cajón no tiene ninguna disponible hoy ni el
+    recomendado si el catálogo no ha dado candidatos."""
+    carriles = {h.carril for h in historias}
+    return {f: n for f, n in reparto.items() if f not in _CARRIL_DEL_FORMATO or _CARRIL_DEL_FORMATO[f] in carriles}
+
+
+def bloque_catalogo(historias: list[Historia]) -> str:
+    """Las novedades de las editoriales independientes: título, autor, editorial, fecha y sinopsis."""
+    if not historias:
+        return "<catalogo>\n(ninguna novedad disponible hoy)\n</catalogo>"
+    partes = [f"- id: {h.id}\n  libro: {h.titular_es}\n  sinopsis: {h.resumen_es}" for h in historias]
+    return "<catalogo>\n" + "\n\n".join(partes) + "\n</catalogo>"
 # Las propuestas de la mesa (seis, con 3–4 libros cada una) y el razonamiento del modelo no caben en
 # 16.000 tokens; 21.000 es lo máximo que el SDK permite sin streaming
 MAX_TOKENS_SELECCION = 21000
@@ -77,11 +87,12 @@ def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[st
             if e.historia_id not in carriles:
                 avisos.append(f"El jefe de cultura devolvió un id inexistente ({e.historia_id}); se descarta «{e.titular}»")
                 continue
-            if (carriles[e.historia_id] == "cajon") != (e.formato == "curiosidad"):
-                avisos.append(f"«{e.titular}»: la curiosidad tiene que salir del cajón y el cajón solo sirve para la "
-                              "curiosidad; se descarta")
+            carril = carriles[e.historia_id]
+            if carril == "radar" or any((carril == c) != (e.formato == f) for f, c in _CARRIL_DEL_FORMATO.items()):
+                avisos.append(f"«{e.titular}»: la curiosidad tiene que salir del cajón y el recomendado del catálogo (y "
+                              "cada uno solo sirve para su formato); se descarta")
                 continue
-            minimo = 0 if e.formato == "curiosidad" else 3
+            minimo = {"curiosidad": 0, "recomendado": 1}.get(e.formato, 3)
             if not minimo <= len(e.libros_candidatos) <= 4:
                 avisos.append(f"«{e.titular}»: {len(e.libros_candidatos)} libros candidatos (se pedían {minimo}–4)")
             validas.append(e)
@@ -114,6 +125,7 @@ def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[Selecc
         "[pegar lista]": bloque_historias([h for h in historias if h.carril == "actualidad"]),
         "[pegar lista editorial]": bloque_historias([h for h in historias if h.carril == "editorial"], "mundo_del_libro"),
         "[pegar cajón]": bloque_cajon([h for h in historias if h.carril == "cajon"]),
+        "[pegar catálogo]": bloque_catalogo([h for h in historias if h.carril == "catalogo"]),
     })
     mensajes = [{"role": "user", "content": prompt}]
     sel, contenido = llm.estructurado("seleccion", mensajes, SeleccionJefe,

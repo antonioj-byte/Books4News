@@ -28,9 +28,13 @@ Seccion = Literal[
 ]
 # «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
 EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
-Formato = Literal["lateral", "dialogo", "edicion", "curiosidad"]
-# «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml)
-Carril = Literal["actualidad", "editorial", "cajon"]
+Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar"]
+# Formatos que pueden salir sin libro: la curiosidad del cajón y los temas del radar del libro
+SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar")
+# «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml); «catalogo»: novedades de
+# las editoriales independientes (formato «recomendado»); «radar»: historias del mundo del libro que no pasan al jefe
+# pero sí a la lista del radar
+Carril = Literal["actualidad", "editorial", "cajon", "catalogo", "radar"]
 TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre"]
 
 
@@ -81,7 +85,7 @@ class LibroCandidato(BaseModel):
 
 
 class HistoriaElegida(BaseModel):
-    formato: Formato = Field(default="lateral", description="lateral (lectura lateral), dialogo (diálogo con la actualidad), edicion (mundo del libro) o curiosidad (del cajón de curiosidades)")
+    formato: Formato = Field(default="lateral", description="lateral (lectura lateral), dialogo (diálogo con la actualidad), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes)")
     historia_id: str = Field(description="Identificador de la historia tal como aparece en la lista")
     titular: str = Field(description="Titular en una línea")
     de_que_se_habla: str = Field(description="De qué se está hablando, en dos frases")
@@ -123,7 +127,7 @@ class LibroVerificado(BaseModel):
     olid: str | None = None
     google_id: str | None = None
     isbn13: list[str] = Field(default_factory=list)
-    fuentes_verificacion: list[Literal["openlibrary", "googlebooks"]]
+    fuentes_verificacion: list[Literal["openlibrary", "googlebooks", "todostuslibros"]]
     url_ficha: str | None = None
     confianza: Literal["alta", "media"]
     notas: list[str] = Field(default_factory=list)
@@ -190,6 +194,7 @@ class FuenteNoticia(BaseModel):
     url: str
     acceso: Acceso
     texto_completo: bool = False
+    critica: bool = False                # texto de crítica: lo único que se puede citar entre comillas además del libro
 
 
 class Traza(BaseModel):
@@ -200,6 +205,7 @@ class Traza(BaseModel):
     tokens_cache_escritura: int = 0
     tokens_cache_lectura: int = 0
     coste_usd: float = 0.0
+    segundos: float = 0.0                # lo que tardó la llamada (para saber dónde se va el tiempo)
     nota: str | None = None
 
 
@@ -335,12 +341,15 @@ class Arte(BaseModel):
 
 
 class CitaVerificada(BaseModel):
-    """Cita literal del libro encontrada letra por letra en su texto (búsqueda de Google Books)."""
+    """Cita literal encontrada letra por letra: del libro, en su texto (búsqueda de Google Books), o de la crítica,
+    en el texto de crítica recibido (1/11, a petición del usuario: «admite citas a la crítica»)."""
     texto: str
-    libro: str                           # título del libro verificado al que pertenece
+    libro: str                           # título del libro verificado al que pertenece (o del que habla la crítica)
     autor: str
-    volumen_google: str                  # id del volumen de Google Books en cuyo texto aparece
-    fragmento: str                       # el fragmento del texto que la contiene, tal como lo devolvió
+    volumen_google: str = ""             # id del volumen de Google Books en cuyo texto aparece (citas del libro)
+    fragmento: str                       # el fragmento del texto que la contiene
+    tipo: Literal["libro", "critica"] = "libro"
+    fuente: str | None = None            # citas de la crítica: URL del texto donde aparece
 
 
 class Pieza(BaseModel):
@@ -348,6 +357,7 @@ class Pieza(BaseModel):
     fecha: str
     estado: EstadoPieza
     reserva: bool = False                # True si sale de una historia de reserva
+    radar: bool = False                  # True si es un tema del radar del libro (lista aparte, a un clic)
     historia_id: str
     eleccion: HistoriaElegida
     n_medios: int

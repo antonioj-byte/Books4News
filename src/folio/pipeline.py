@@ -9,10 +9,10 @@ from __future__ import annotations
 import hashlib
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import numpy as np
 from folio import guion as guionista
-from folio import arte, cajon, hechos, informe, seleccion, textos
+from folio import arte, cajon, catalogo, hechos, informe, radar, seleccion, textos
 from folio.imagenes import cubiertas
 from folio.libros import citas
 from folio.etapas import ORDEN, Etapa, EtapasGuardadas
@@ -22,16 +22,25 @@ from folio.ingesta import agrupacion, resumen, rss
 from folio.libros.verificacion import NoVerificado, Verificador
 from folio.llm import LLM
 from folio.modelos import (
-    Articulo, FuenteNoticia, Historia, HistoriaElegida, HistoriaResumida, InformeDiario, LibroDescartado,
-    LibroVerificado, Pieza, SeleccionJefe,
+    SIN_LIBRO_OBLIGATORIO, Articulo, FuenteNoticia, Historia, HistoriaElegida, HistoriaResumida, InformeDiario,
+    LibroDescartado, LibroVerificado, Pieza, SeleccionJefe,
 )
 from folio.verificacion_texto import clave_libro
 
 log = logging.getLogger(__name__)
 
 
+_RELOJ: dict = {}
+
+
 def progreso(etapa: str) -> None:
-    """Anuncia la etapa en curso. La web la lee del registro de la ejecución (líneas «ETAPA: …»)."""
+    """Anuncia la etapa en curso. La web la lee del registro de la ejecución (líneas «ETAPA: …»). Cada línea
+    lleva lo que duró la etapa anterior, para saber dónde se va el tiempo («TIEMPO: 12,3 s · Leyendo…»)."""
+    import time
+    ahora = time.monotonic()
+    if "etapa" in _RELOJ:
+        print(f"TIEMPO: {ahora - _RELOJ['inicio']:.1f} s · {_RELOJ['etapa']}", flush=True)
+    _RELOJ.update(etapa=etapa, inicio=ahora)
     print(f"ETAPA: {etapa}", flush=True)
 
 
@@ -72,6 +81,7 @@ class Pipeline:
         # Estado de la ejecución: lo rellenan las etapas
         self.stats: dict = {}
         self.vectores_articulos: dict[str, np.ndarray] | None = None
+        self.radar: list[HistoriaElegida] = []     # temas del radar del libro (folio.radar)
         self._embedder: agrupacion.Embedder | None = None
 
     @property
@@ -135,13 +145,17 @@ class Pipeline:
         grupos.sort(key=lambda h: (h.n_medios, sum(a.tier == 1 for a in h.articulos),
                                    h.ultima_publicacion.timestamp() if h.ultima_publicacion else 0), reverse=True)
         maximo = p.seleccion.historias_editoriales
-        del_libro = self._no_repetidas(grupos, vectores, 2 * maximo if con_llm else maximo, usadas, excluidas)
+        # Se resumen el doble de las que ve el jefe (o las que pide el radar, que ve también las que no le llegan)
+        resumir = max(2 * maximo, p.radar.historias if p.radar.activo else 0)
+        del_libro = self._no_repetidas(grupos, vectores, resumir if con_llm else maximo, usadas, excluidas)
         for h in del_libro:
             h.carril = "editorial"
         if con_llm:
             self.avisos += resumen.resumir(self.llm, del_libro)
             del_libro = [h for h in del_libro if h.sobre_libros is not False]
-        return del_libro[:maximo]
+        for h in del_libro[maximo:]:
+            h.carril = "radar"          # no pasan al jefe, pero sí al radar del libro
+        return del_libro
 
     def _del_cajon(self) -> list[Historia]:
         """Cajón de curiosidades: las historias sin percha que no se han usado en los últimos días
@@ -154,6 +168,23 @@ class Pipeline:
         except Exception as exc:
             self.avisos.append(f"No se pudo leer el cajón de curiosidades: {exc}")
             return []
+
+    def _del_catalogo(self) -> list[Historia]:
+        """Formato «recomendado»: novedades de las editoriales independientes (folio.catalogo), sin los libros
+        usados en los últimos días. Nada si el reparto no pide ninguno."""
+        if not self.cfg.pipeline.seleccion.reparto.get("recomendado"):
+            return []
+        progreso("Leyendo el catálogo de las editoriales independientes")
+        dias = self.cfg.pipeline.exclusion.dias_libros
+        try:
+            libros, avisos = catalogo.candidatos(
+                self.cfg, date.fromisoformat(self.fecha),
+                lambda t, a: self.historial.libro_usado(self.fecha, dias, t, a, None) is not None)
+        except Exception as exc:
+            self.avisos.append(f"No se pudo leer el catálogo de las independientes: {type(exc).__name__}: {exc}")
+            return []
+        self.avisos += avisos
+        return libros
 
     def historias(self, articulos: list[Articulo], vectores, con_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
         """Agrupa, excluye las ya usadas y resume las que pasan al jefe de cultura.
@@ -177,6 +208,8 @@ class Pipeline:
         al_jefe += del_libro
         del_cajon = self._del_cajon()
         al_jefe += del_cajon
+        del_catalogo = self._del_catalogo()
+        al_jefe += del_catalogo
         ids_jefe = {h.id for h in al_jefe}
         mostradas = [h for h in candidatas if h.id in ids_jefe or h.id in excluidas]
         resumidas = [HistoriaResumida(
@@ -188,9 +221,11 @@ class Pipeline:
             "medios": len({a.medio for a in articulos}),
             "historias": len(todas),
             "historias_multimedio": len(candidatas),
-            "historias_al_jefe": len(al_jefe) - len(del_libro) - len(del_cajon),
+            "historias_al_jefe": len(al_jefe) - len(del_libro) - len(del_cajon) - len(del_catalogo),
             "articulos_editoriales": len(editoriales),
-            "historias_editoriales_al_jefe": len(del_libro),
+            "historias_editoriales_al_jefe": sum(h.carril == "editorial" for h in del_libro),
+            "historias_solo_radar": sum(h.carril == "radar" for h in del_libro),
+            "libros_del_catalogo": len(del_catalogo),
             "curiosidades_al_jefe": len(del_cajon),
         }
         self._guardar_etapa(self.etapas.guardar_historias, al_jefe, resumidas, self.stats)
@@ -202,6 +237,13 @@ class Pipeline:
         sel, avisos = seleccion.seleccionar(self.llm, al_jefe, self.fecha)
         self.avisos += avisos
         self._guardar_etapa(self.etapas.guardar_seleccion, sel)
+        try:
+            self.radar, avisos_radar = radar.temas(self.llm, al_jefe, sel)
+            self.avisos += avisos_radar
+        except Exception as exc:
+            self.radar = []
+            self.avisos.append(f"Radar del libro: no se pudo ({type(exc).__name__}: {exc})")
+        self._guardar_etapa(self.etapas.guardar_radar, self.radar)
         return sel
 
     # --- Etapa 3: verificación y guion --------------------------------------
@@ -258,7 +300,8 @@ class Pipeline:
         guardados = self.etapas.textos(h.id)
         if guardados is not None:
             return guardados
-        tx = textos.textos_historia(self.cfg, h, self._puntuaciones(h, e))
+        ficha = catalogo.ficha_guardada(self.cfg, h.id) if catalogo.es_del_catalogo(h.id) else None
+        tx = catalogo.textos(ficha) if ficha else textos.textos_historia(self.cfg, h, self._puntuaciones(h, e))
         self.etapas.guardar_textos(h.id, tx)  # también en las pruebas: son las noticias, no un resultado
         return tx
 
@@ -267,11 +310,16 @@ class Pipeline:
         repetir un libro de otra (`reservados`). False si ningún candidato pasa."""
         e = pieza.eleccion
         libros, descartes = self._verificar_libros(e, reservados)
+        if not libros and e.formato == "recomendado" and catalogo.es_del_catalogo(pieza.historia_id):
+            # Novedad reciente que Open Library y Google Books aún no tienen: vale la ficha de las librerías
+            ficha = catalogo.ficha_guardada(self.cfg, pieza.historia_id)
+            if ficha:
+                libros = [catalogo.libro_de_ficha(ficha)]
         pieza.libros, pieza.libros_descartados = libros, descartes
-        if not libros and e.formato == "curiosidad":
-            # Una curiosidad del cajón no necesita libro (decisión del usuario, 1/11)
+        if not libros and e.formato in SIN_LIBRO_OBLIGATORIO:
+            # La curiosidad del cajón y los temas del radar no necesitan libro (decisión del usuario, 1/11)
             if e.libros_candidatos:
-                pieza.avisos.append("Ningún libro candidato se pudo verificar: la curiosidad sale sin libro")
+                pieza.avisos.append("Ningún libro candidato se pudo verificar: la pieza sale sin libro")
             return True
         if not libros:
             pieza.error = "Ningún libro candidato se pudo verificar"
@@ -358,7 +406,13 @@ class Pipeline:
             if self._verificar(pieza, reservados):
                 pieza.estado = "pendiente"
                 self._cubiertas_de(pieza)
-        por_escribir = [p for p in piezas if p.estado == "pendiente"]
+        if self.solo_pieza is None:
+            for j, e in enumerate(self.radar, len(cola) + 1):
+                h = por_id.get(e.historia_id)
+                if h:
+                    piezas.append(Pieza(id=f"{self.fecha}-{j}", fecha=self.fecha, estado="pendiente", radar=True,
+                                        historia_id=h.id, eleccion=e, n_medios=h.n_medios))
+        por_escribir = [p for p in piezas if p.estado == "pendiente" and not p.radar]
         while por_escribir and sum(p.estado == "propuesta" for p in piezas) < objetivo:
             faltan = objetivo - sum(p.estado == "propuesta" for p in piezas)
             lote = [(p, self._textos(p, por_id[p.historia_id])) for p in por_escribir[:faltan]]
@@ -487,6 +541,7 @@ class Pipeline:
             sel = self.seleccion(al_jefe)
         else:
             sel = self.etapas.seleccion()
+            self.radar = self.etapas.radar()
         if inicio <= 2:
             piezas = self.piezas(sel, al_jefe)
             self._guardar_etapa(self.etapas.guardar_piezas, piezas)
@@ -511,7 +566,7 @@ class Pipeline:
     def _registrar_historial(self, buenas: list[Pieza], al_jefe: list[Historia], vectores) -> None:
         """Historias y libros usados hoy, para no repetirlos en los próximos días."""
         por_id = {h.id: h for h in al_jefe}
-        noticias = [p for p in buenas if not cajon.es_del_cajon(p.historia_id)]
+        noticias = [p for p in buenas if not cajon.es_del_cajon(p.historia_id) and not catalogo.es_del_catalogo(p.historia_id)]
         self.historial.registrar_dia(
             self.fecha,
             [(p.historia_id, p.eleccion.titular, agrupacion.centroide(por_id[p.historia_id], vectores)) for p in noticias],

@@ -149,7 +149,7 @@ class Plantillas:
                            "primera": primera, "espanola": espanola,
                            "verificado": " y ".join(fuentes_v.get(f, f) for f in v.fuentes_verificacion)})
         return {"fuentes": fuentes, "libros": libros, "imagenes": creditos_pie(pieza.arte) if pieza.arte else [],
-                "curiosidad": pieza.eleccion.formato == "curiosidad"}
+                "curiosidad": pieza.eleccion.formato == "curiosidad", "formato": pieza.eleccion.formato}
 
     def _infografia(self, pieza: Pieza, d: Diapositiva, n: int) -> dict | None:
         """La infografía de la (primera) diapositiva de la idea, comprobada otra vez contra el guion actual.
@@ -245,6 +245,7 @@ class Plantillas:
             "sello": bool(self.cfg.pipeline.arte.sello_verificacion and libro and libro.get("verificado")),
             "medios": (list(dict.fromkeys(f.medio for f in pieza.fuentes))[:4]
                        if d.tipo == "actualidad" and self.cfg.pipeline.arte.medios_en_noticia
+                       and pieza.eleccion.formato != "recomendado"           # no hay noticia: la ficha y su crítica
                        and not (sin_foto and sin_foto["recurso"] == "teletipo") else []),
             "video": (d.tipo == "portada" and ((bool(imagen) and estilo != "panorama") or interferencia or bool(buscador)))
                      or (d.tipo == "actualidad" and (contar or bool(sin_foto and sin_foto["recurso"] == "gigante")))

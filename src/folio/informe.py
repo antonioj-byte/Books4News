@@ -104,7 +104,8 @@ def _pieza_md(p: Pieza) -> list[str]:
         l += [f"_Hechos comprobados contra las fuentes: {len(p.hechos) - len(no_verificados)} de {len(p.hechos)}._", ""]
     if p.citas:
         l += ["**Citas literales verificadas** (en el texto del libro, Google Books)", ""]
-        l += [f"- «{c.texto}» — {c.autor}, *{c.libro}* (volumen {c.volumen_google}). Fragmento: «{c.fragmento}»"
+        l += [f"- «{c.texto}» — crítica, encontrada letra por letra en {c.fuente}" if c.tipo == "critica" else
+              f"- «{c.texto}» — {c.autor}, *{c.libro}* (volumen {c.volumen_google}). Fragmento: «{c.fragmento}»"
               for c in p.citas] + [""]
     if p.arte:
         a = p.arte
@@ -187,10 +188,10 @@ def markdown(inf: InformeDiario) -> str:
         l.append(f"| {i} | {titular} | {h.seccion or ''} | {h.n_medios}: {', '.join(h.medios)} | {h.excluida or ''} |")
     if inf.trazas:
         l += ["", "## Llamadas a modelos", "",
-              "| Paso | Modelo | Entrada | Caché (escritura / lectura) | Salida | Coste $ |", "|---|---|---|---|---|---|"]
+              "| Paso | Modelo | Entrada | Caché (escritura / lectura) | Salida | Coste $ | Segundos |", "|---|---|---|---|---|---|---|"]
         for t in inf.trazas:
             l.append(f"| {t.paso} | {t.modelo}{' · ' + t.nota if t.nota else ''} | {t.tokens_entrada} | "
-                     f"{t.tokens_cache_escritura} / {t.tokens_cache_lectura} | {t.tokens_salida} | {t.coste_usd:.4f} |")
+                     f"{t.tokens_cache_escritura} / {t.tokens_cache_lectura} | {t.tokens_salida} | {t.coste_usd:.4f} | {t.segundos:.0f} |")
     return "\n".join(l) + "\n"
 
 

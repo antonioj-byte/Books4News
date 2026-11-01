@@ -34,7 +34,11 @@ export function VistaDia() {
   const diaMes = fechaLarga.toLocaleDateString("es-ES", { day: "numeric", month: "long" });
   const escritas = (dia?.piezas ?? []).filter((p) => p.estado !== "pendiente");
   const libros = escritas.flatMap((p) => p.libros);
-  const pendientes = (dia?.piezas ?? []).filter((p) => p.estado === "pendiente").length;
+  // Los temas del radar del libro sin escribir van en una lista aparte, debajo de la mesa; escritos, a la mesa
+  const enRadar = (p: { radar: boolean; estado: string }) => p.radar && p.estado === "pendiente";
+  const mesa = (dia?.piezas ?? []).filter((p) => !enRadar(p));
+  const radar = (dia?.piezas ?? []).filter(enRadar);
+  const pendientes = mesa.filter((p) => p.estado === "pendiente").length;
   const select = "rounded-full border border-borde bg-panel px-3 py-1.5 font-mono text-[12px] outline-none focus:border-tinta";
 
   return (
@@ -42,7 +46,7 @@ export function VistaDia() {
       <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
         <div>
           <div className="antetitulo">
-            Mesa del día{dia ? ` · ${hora(dia.ejecucion.generado_en)} · ${dia.piezas.length} propuestas, ${dia.piezas.length - pendientes} escritas` : ""}
+            Mesa del día{dia ? ` · ${hora(dia.ejecucion.generado_en)} · ${mesa.length} propuestas, ${mesa.length - pendientes} escritas` : ""}
           </div>
           <h1 className="titular mt-2 text-[52px]">
             {diaSemana}, <em>{diaMes}</em>
@@ -72,7 +76,7 @@ export function VistaDia() {
       )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {dia?.piezas.map((p) => p.estado === "pendiente" ? (
+        {mesa.map((p) => p.estado === "pendiente" ? (
           <div key={p.pieza_id} className="panel flex flex-col gap-3 border-dashed p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <FormatoChip formato={p.formato} />
@@ -116,6 +120,27 @@ export function VistaDia() {
           </Link>
         ))}
       </div>
+
+      {radar.length > 0 && (
+        <section className="mt-12" aria-labelledby="h-radar">
+          <div className="antetitulo">Radar del libro</div>
+          <h2 id="h-radar" className="titular mb-1 mt-2 text-[30px]">Temas del mundo del libro <em>para hoy</em></h2>
+          <p className="mb-4 max-w-[62ch] text-[14px] text-tinta-suave">
+            Historias de los medios culturales y del sector que se sostienen solas. Sin escribir: «Desarrollar» hace la pieza (unos minutos).
+          </p>
+          <ul className="panel divide-y divide-borde">
+            {radar.map((p) => (
+              <li key={p.pieza_id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <Link href={`/pieza/${p.ejecucion_id}/${p.pieza_id}`} className="titular text-[19px] leading-snug hover:text-carmesi">{p.titular}</Link>
+                  {p.por_que && <p className="mt-1 text-[14px] text-tinta-suave">{p.por_que}</p>}
+                </div>
+                <div className="flex-none"><Proceder eid={p.ejecucion_id} pid={p.pieza_id} onHecho={recargarDia} texto="Desarrollar" /></div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {libros.length > 0 && (
         <div className="mt-12 max-w-xl">

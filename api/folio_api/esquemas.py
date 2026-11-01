@@ -49,8 +49,10 @@ class PiezaResumen(BaseModel):
     marcas: Marcas
     evaluada: bool
     libros: list[Lomo]
-    formato: str = "lateral"              # lateral, dialogo o edicion
+    formato: str = "lateral"              # lateral, dialogo, edicion, curiosidad, recomendado o radar
     gancho: str = ""                      # el gancho del libro que propuso el jefe (lo que se ve en la mesa)
+    radar: bool = False                   # tema del radar del libro: lista aparte, a un clic
+    por_que: str = ""                     # por qué merece una pieza (lo que se ve en la lista del radar)
 
 
 class DiaDetalle(BaseModel):

@@ -52,7 +52,7 @@ class Seleccion(_Seccion):
     reserva: int
     # Mesa del día (31/10, a petición del usuario): propuestas por formato y cuántas se escriben solas
     # (las primeras por preferencia); el resto espera a que se pulse «Proceder» en la web
-    reparto: dict[Literal["lateral", "dialogo", "edicion", "curiosidad"], int] = Field(
+    reparto: dict[Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado"], int] = Field(
         default_factory=lambda: {"lateral": 2, "dialogo": 2, "edicion": 2})
     desarrollar_al_inicio: int = Field(default=1, ge=0)
     # Novedad (31/10, a petición del usuario): solo libros publicados en los últimos N años (primera edición
@@ -61,6 +61,24 @@ class Seleccion(_Seccion):
     # Cajón de curiosidades (1/11, a petición del usuario): una historia del mundo del libro sin percha
     # (config/cajon_curiosidades.yaml) no vuelve a ofrecerse al jefe hasta pasados estos días
     dias_curiosidades: int = Field(default=90, ge=0)
+
+
+class Catalogo(_Seccion):
+    """Formato «recomendado» (1/11): novedades de las editoriales independientes (config/editoriales_independientes.yaml),
+    leídas en todostuslibros.com con cortesía (una petición cada `pausa_s` s)."""
+    meses: int = 6                      # novedades de los últimos 6 meses
+    candidatos: int = 20                # libros que pasan al jefe de cultura
+    max_por_editorial: int = 1          # por turnos: cada día empieza por editoriales distintas
+    editoriales_por_dia: int = 25       # páginas de novedades que se refrescan al día como mucho
+    refresco_dias: int = 7              # las novedades de cada editorial se leen una vez por semana
+    pausa_s: float = Field(default=1.2, ge=1.0)
+
+
+class Radar(_Seccion):
+    """Radar del libro (1/11): temas del mundo del libro sin desarrollar, que se escriben con un clic."""
+    activo: bool = True
+    max_temas: int = 8
+    historias: int = 32                 # historias del carril editorial que se resumen y ve el radar
 
 
 class Exclusion(_Seccion):
@@ -191,6 +209,8 @@ class ConfigPipeline(_Seccion):
     seleccion: Seleccion
     exclusion: Exclusion
     seleccion_textos: SeleccionTextos = Field(default_factory=SeleccionTextos)
+    catalogo: Catalogo = Field(default_factory=Catalogo)
+    radar: Radar = Field(default_factory=Radar)
     guion: Guion
     arte: Arte = Field(default_factory=Arte)
     gasto: Gasto = Field(default_factory=Gasto)

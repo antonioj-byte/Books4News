@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 import logging
 import re
 from pathlib import Path
@@ -126,6 +127,7 @@ class LLM:
         extra = {}
         if modelo in _CON_FALLBACK:
             extra = {"fallbacks": "default", "betas": [_BETA_FALLBACK]}
+        inicio = time.monotonic()
         try:
             resp = self._llamar(modelo, max_tokens, mensajes, esquema, esfuerzo, extra)
         except anthropic.APIConnectionError as exc:
@@ -134,7 +136,7 @@ class LLM:
             causa = exc.__cause__
             raise ErrorLLM(f"{paso}: no se pudo conectar con la API de Anthropic ({type(causa).__name__ if causa else 'sin causa'}: "
                            f"{causa})") from exc
-        return self._procesar(paso, modelo, resp, esquema, ruta_cache)
+        return self._procesar(paso, modelo, resp, esquema, ruta_cache, time.monotonic() - inicio)
 
     def _llamar(self, modelo, max_tokens, mensajes, esquema, esfuerzo, extra):
         return self.cliente.beta.messages.parse(
@@ -146,7 +148,7 @@ class LLM:
             **extra,
         )
 
-    def _procesar(self, paso, modelo, resp, esquema, ruta_cache):
+    def _procesar(self, paso, modelo, resp, esquema, ruta_cache, segundos: float = 0.0):
         modelo_real = getattr(resp, "model", None) or modelo
         traza = Traza(
             paso=paso,
@@ -158,6 +160,7 @@ class LLM:
             coste_usd=self._coste(modelo_real, resp.usage.input_tokens, resp.usage.output_tokens,
                                   getattr(resp.usage, "cache_creation_input_tokens", None) or 0,
                                   getattr(resp.usage, "cache_read_input_tokens", None) or 0),
+            segundos=round(segundos, 1),
         )
         if modelo_real != modelo:
             traza.nota = f"respondió el modelo de respaldo ({modelo_real})"

@@ -1,0 +1,450 @@
+# Editoriales independientes cuyo catálogo se lee para el formato «recomendado» (1/11, a petición del usuario:
+# «busca en editoriales independientes de prestigio: las que van a Back to the Book, las que tienen caseta en la
+# Feria del Libro de Madrid… mira en sus catálogos y selecciona cosas»).
+#
+# Las de «Back to the Book 2026» salen de su lista oficial (backtothebook.es/editoriales-2026); las de «independiente
+# de referencia» las añadió Folio y conviene revisarlas. Las novedades se leen en todostuslibros.com (el portal de
+# las librerías de CEGAL), que tiene una página por editorial: `todostuslibros` es su ruta («impedimenta_79803»);
+# si falta, se busca una vez desde el nombre y se guarda en la caché. `excluir` deja fuera la editorial (infantil).
+
+- nombre: Adeshoras
+  web: https://www.adeshoras.com/
+  origen: Back to the Book 2026
+- nombre: Adriana Hidalgo
+  web: https://adrianahidalgo.es/
+  origen: Back to the Book 2026
+- nombre: Almadía
+  web: https://editorialalmadia.com/
+  origen: Back to the Book 2026
+- nombre: Alpha Decay
+  web: http://www.alphadecay.org/
+  origen: Back to the Book 2026
+- nombre: Alquimia ediciones
+  web: https://alquimiaediciones.com/
+  origen: Back to the Book 2026
+- nombre: Altamarea
+  web: https://altamarea.es/
+  origen: Back to the Book 2026
+- nombre: Amarillo Editora
+  web: https://www.amarilloeditora.com/
+  origen: Back to the Book 2026
+- nombre: Ampersand
+  web: https://www.edicionesampersand.com/
+  origen: Back to the Book 2026
+- nombre: Anexo
+  web: https://www.anexoeditorial.com/
+  origen: Back to the Book 2026
+- nombre: Aristas Martínez
+  web: https://www.aristasmartinez.com/
+  origen: Back to the Book 2026
+- nombre: Armaenia Editorial
+  web: https://www.armaeniaeditorial.com/
+  origen: Back to the Book 2026
+- nombre: Astiberri
+  web: https://astiberri.com/
+  origen: Back to the Book 2026
+- nombre: Automática
+  web: https://www.automaticaeditorial.com/
+  origen: Back to the Book 2026
+- nombre: Báltica Editorial
+  web: https://balticaeditorial.com/
+  origen: Back to the Book 2026
+- nombre: Banda Propia
+  web: https://bandapropia.cl/
+  origen: Back to the Book 2026
+- nombre: Barlin Libros
+  web: https://www.barlinlibros.org/
+  origen: Back to the Book 2026
+- nombre: Barrett
+  web: https://editorialbarrett.org/
+  origen: Back to the Book 2026
+- nombre: Bartlebooth
+  web: https://bartlebooth.org/
+  origen: Back to the Book 2026
+- nombre: Bartleby Editores
+  web: https://www.bartlebyeditores.es/
+  origen: Back to the Book 2026
+- nombre: Bauplan
+  web: https://bauplanbooks.com/
+  origen: Back to the Book 2026
+- nombre: Blatt & Ríos
+  web: https://blattyrios.es/
+  origen: Back to the Book 2026
+- nombre: bookolia
+  web: https://bookolia.es/
+  origen: Back to the Book 2026
+- nombre: Bunker Books
+  web: https://www.bunkerbooks.es/
+  origen: Back to the Book 2026
+- nombre: Burro lector
+  web: https://burrolector.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Caja Negra Editora
+  web: https://cajanegraeditora.com.ar/
+  origen: Back to the Book 2026
+- nombre: Caleidoscopio
+  web: https://www.caleidoscopiodelibros.es/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Candaya
+  web: https://www.candaya.com/
+  origen: Back to the Book 2026
+- nombre: Capitán Swing
+  web: https://capitanswing.com/
+  origen: Back to the Book 2026
+- nombre: Chai
+  web: https://chaieditora.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: cielo santo
+  web: https://www.cielosanto.org/
+  origen: Back to the Book 2026
+- nombre: Col&Col
+  web: https://www.colandcol.com/
+  origen: Back to the Book 2026
+- nombre: Colectivo Bruxista
+  web: https://colectivobruxista.es/
+  origen: Back to the Book 2026
+- nombre: Comisura
+  web: https://edicionescomisura.com/
+  origen: Back to the Book 2026
+- nombre: consonni
+  web: https://consonni.org/
+  origen: Back to the Book 2026
+- nombre: Continta Me Tienes
+  web: https://www.contintametienes.com/
+  origen: Back to the Book 2026
+- nombre: Cuatro Lunas
+  web: https://editorialcuatrolunas.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Cuatro Tuercas
+  web: https://www.cuatrotuercas.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Demipage
+  web: https://www.demipage.com/tienda
+  origen: Back to the Book 2026
+- nombre: Dieciséis
+  web: https://editorialdieciseis.com/
+  origen: Back to the Book 2026
+- nombre: Disbauxa Editorial
+  web: https://disbauxa.es/
+  origen: Back to the Book 2026
+- nombre: Dos Bigotes
+  web: https://dosbigotes.es/
+  origen: Back to the Book 2026
+- nombre: dosmanos
+  web: https://www.editorialdosmanos.com/
+  origen: Back to the Book 2026
+- nombre: Ediciones Akal
+  web: https://www.akal.com/
+  origen: Back to the Book 2026
+- nombre: Ediciones Jaguar
+  web: https://www.edicionesjaguar.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Elephant Books
+  web: https://elephantbooks.es/
+  origen: Back to the Book 2026
+- nombre: Espinas
+  web: https://editorialespinas.com/
+  origen: Back to the Book 2026
+- nombre: Eterna Cadencia Editora
+  web: https://eternacadencia.com.ar/
+  origen: Back to the Book 2026
+- nombre: Fiordo
+  web: https://www.fiordoeditorial.com.es/
+  origen: Back to the Book 2026
+- nombre: Fondo de Cultura Económica de España
+  web: https://www.fcede.es/
+  origen: Back to the Book 2026
+- nombre: Fórcola
+  web: https://forcolaediciones.com/
+  origen: Back to the Book 2026
+- nombre: Fulgencio Pimentel
+  web: https://www.fulgenciopimentel.com/
+  origen: Back to the Book 2026
+- nombre: Galaxia Gutenberg
+  web: https://www.galaxiagutenberg.com/
+  origen: Back to the Book 2026
+- nombre: Galimatazo
+  web: https://www.galimatazo.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Gallo Nero
+  web: https://www.gallonero.es/
+  origen: Back to the Book 2026
+- nombre: Garbuix Books
+  web: https://garbuixbooks.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Gato Sueco
+  web: https://www.gatosueco.es/
+  origen: Back to the Book 2026
+- nombre: Gatopardo
+  web: https://gatopardoediciones.es/
+  origen: Back to the Book 2026
+- nombre: Godot
+  web: https://edicionesdogot.com.ar/
+  origen: Back to the Book 2026
+- nombre: Gris Tormenta
+  web: https://www.gristormenta.com/
+  origen: Back to the Book 2026
+- nombre: H&O Editorial
+  web: https://www.ho-editorial.com/
+  origen: Back to the Book 2026
+- nombre: Hoja de Lata
+  web: https://hojadelata.net/
+  origen: Back to the Book 2026
+- nombre: Impedimenta
+  web: https://impedimenta.es/
+  origen: Back to the Book 2026
+- nombre: interZona
+  web: https://www.interzonaeditora.com/
+  origen: Back to the Book 2026
+- nombre: Itineraria editorial
+  web: https://www.itinerariaeditorial.com/
+  origen: Back to the Book 2026
+- nombre: Kalandraka
+  web: https://kalandraka.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Katakrak
+  web: https://katakrak.net/cas/editorial/catalogo
+  origen: Back to the Book 2026
+- nombre: La biblioteca de Carfax
+  web: https://www.labibliotecadecarfax.com/
+  origen: Back to the Book 2026
+- nombre: La Caja Books
+  web: https://www.lacajabooks.com/
+  origen: Back to the Book 2026
+- nombre: La Diligencia Libros
+  web: https://www.ladiligencialibros.com/
+  origen: Back to the Book 2026
+- nombre: La Felguera
+  web: https://www.lafelguera.net/
+  origen: Back to the Book 2026
+- nombre: La Flor Azul
+  web: https://laflorazuleditorial.com.ar/
+  origen: Back to the Book 2026
+- nombre: La Granja Editorial
+  web: https://lagranjaeditorial.com/editorial/
+  origen: Back to the Book 2026
+- nombre: La Navaja Suiza Editores
+  web: https://www.lanavajasuizaeditores.com/
+  origen: Back to the Book 2026
+- nombre: La Pollera Ediciones
+  web: https://lapollera.cl/
+  origen: Back to the Book 2026
+- nombre: La Tortuga Búlgara
+  web: https://latortugabulgara.com/
+  origen: Back to the Book 2026
+- nombre: La Umbria y la Solana
+  web: https://laumbriaylasolana.es/
+  origen: Back to the Book 2026
+- nombre: La uÑa RoTa
+  web: https://www.larota.es/
+  origen: Back to the Book 2026
+- nombre: Ladera Norte
+  web: https://laderanorte.es/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Las afueras
+  web: https://www.lasafueras.com/
+  origen: Back to the Book 2026
+- nombre: Lecturas de arraigo
+  web: https://lecturasdearraigo.com/
+  origen: Back to the Book 2026
+- nombre: Lengua de Trapo/Círculo de Bellas Artes
+  web: https://lenguadetrapo.com/
+  origen: Back to the Book 2026
+- nombre: Letraversal
+  web: https://www.letraversal.com/
+  origen: Back to the Book 2026
+- nombre: Levanta Fuego
+  web: https://levantafuego.com/
+  origen: Back to the Book 2026
+- nombre: Liana editorial
+  web: https://www.lianaeditorial.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Libros de FILOSOFÍA&CO
+  web: https://filco.es/libros-de-filosofia-co/
+  origen: Back to the Book 2026
+- nombre: Libros de la resistencia
+  web: https://www.librosdelaresistencia.com/libros/
+  origen: Back to the Book 2026
+- nombre: Libros del K.O.
+  web: https://www.librosdelko.com/
+  origen: Back to the Book 2026
+- nombre: Libros del Zorro Rojo
+  web: https://librosdelzorrorojo.com/
+  origen: Back to the Book 2026
+- nombre: Liburuak
+  web: https://liburuak.org/
+  origen: Back to the Book 2026
+- nombre: Limonero
+  web: https://limonero.com.es/
+  origen: Back to the Book 2026
+- nombre: Línea del Horizonte
+  web: https://www.lineadelhorizonte.com/
+  origen: Back to the Book 2026
+- nombre: los tres editores
+  web: https://www.lostreseditores.org/
+  origen: Back to the Book 2026
+- nombre: Malas Tierras
+  web: https://www.malastierraseditorial.com/
+  origen: Back to the Book 2026
+- nombre: Manos de Pan
+  web: https://www.manosdepan.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Mapa
+  web: https://www.editorialmapa.com/
+  origen: Back to the Book 2026
+- nombre: Menguantes
+  web: https://menguantes.com/
+  origen: Back to the Book 2026
+- nombre: minúscula
+  web: https://www.editorialminuscula.com/
+  origen: Back to the Book 2026
+- nombre: Muñeca Infinita
+  web: https://munecainfinita.com/
+  origen: Back to the Book 2026
+- nombre: Ned Ediciones
+  web: https://www.nedediciones.com/
+  origen: Back to the Book 2026
+- nombre: Nórdica Libros
+  web: https://nordicalibros.com/
+  origen: Back to the Book 2026
+- nombre: NubeOcho
+  web: https://nubeocho.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Páginas de Espuma
+  web: https://www.paginasdeespuma.com/
+  origen: Back to the Book 2026
+- nombre: Papelillo Editorial
+  web: https://papelilloed.es/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Paripé Books
+  web: https://www.paripebooks.com/
+  origen: Back to the Book 2026
+- nombre: Pastel de Luna
+  web: https://www.pasteldeluna.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Pepitas ed.
+  web: https://www.pepitas.net/
+  origen: Back to the Book 2026
+- nombre: Plasson e Bartleboom
+  web: https://plassonebartleboom.com/
+  origen: Back to the Book 2026
+- nombre: Quaterni
+  web: https://quaterni.es/
+  origen: Back to the Book 2026
+- nombre: Rosita y Amparo Editores
+  web: https://www.rositayamparo.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Sabina Editorial
+  web: https://www.sabinaeditorial.com/
+  origen: Back to the Book 2026
+- nombre: Shiro Libros
+  web: https://www.shirolibros.com/
+  origen: Back to the Book 2026
+- nombre: Sigilo editorial
+  web: https://www.sigilo.es/
+  origen: Back to the Book 2026
+- nombre: Siglo XXI Editores
+  web: https://www.sigloxxieditores.com/
+  origen: Back to the Book 2026
+- nombre: Smol Books
+  web: https://smolbooks.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Sr. Scott
+  web: https://www.srscottlibros.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Superflua
+  web: https://www.superflua.es/
+  origen: Back to the Book 2026
+- nombre: Temporal Casa Editora
+  web: https://www.temporalcasaeditora.com/
+  origen: Back to the Book 2026
+- nombre: Traficantes de Sueños
+  web: https://traficantes.net/editorial
+  origen: Back to the Book 2026
+- nombre: Trama editorial
+  web: https://www.tramaeditorial.es/
+  origen: Back to the Book 2026
+- nombre: Tránsito
+  web: https://editorialtransito.es/
+  origen: Back to the Book 2026
+- nombre: Tres Hermanas Libros
+  web: https://www.treshermanaslibros.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Tutifruti editorial
+  web: https://tutifrutieditorial.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Ultramarina C & D
+  web: https://editorialultramarina.com/
+  origen: Back to the Book 2026
+- nombre: Verso Libros
+  web: https://versolibros.com/
+  origen: Back to the Book 2026
+- nombre: Vinilo
+  web: https://www.viniloeditora.com.ar/
+  origen: Back to the Book 2026
+- nombre: WeRstories
+  web: https://werstories.com/
+  origen: Back to the Book 2026
+- nombre: Wunderkammer
+  web: https://www.wunderkammer.es/
+  origen: Back to the Book 2026
+- nombre: Ya lo dijo Casimiro Parker
+  web: https://yalodijocasimiroparker.com/
+  origen: Back to the Book 2026
+- nombre: Yonki Books
+  web: https://www.yonkibooks.com/
+  origen: Back to the Book 2026
+- nombre: Zahorí Books
+  web: https://zahoribooks.com/
+  origen: Back to the Book 2026
+  excluir: infantil
+- nombre: Anagrama
+  origen: independiente de referencia
+- nombre: Acantilado
+  origen: independiente de referencia
+- nombre: Periférica
+  origen: independiente de referencia
+- nombre: Sexto Piso
+  origen: independiente de referencia
+- nombre: Libros del Asteroide
+  origen: independiente de referencia
+- nombre: Siruela
+  origen: independiente de referencia
+- nombre: Errata Naturae
+  origen: independiente de referencia
+- nombre: Blackie Books
+  origen: independiente de referencia
+- nombre: Pre-Textos
+  origen: independiente de referencia
+- nombre: Alba Editorial
+  origen: independiente de referencia
+- nombre: Turner
+  origen: independiente de referencia
+- nombre: Salto de Página
+  origen: independiente de referencia
+- nombre: Jekyll & Jill
+  origen: independiente de referencia
+- nombre: Ático de los Libros
+  origen: independiente de referencia
+- nombre: Alfabia
+  origen: independiente de referencia

@@ -91,7 +91,8 @@ def instrucciones_formato(cfg: Config, formato: str) -> str:
 def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
                      libros: list[LibroVerificado]) -> str:
     fuentes = "\n".join(
-        f'<fuente medio="{f.medio}" url="{f.url}" acceso="{f.acceso}">\n{t}\n</fuente>' for f, t in textos
+        f'<fuente medio="{f.medio}" url="{f.url}" acceso="{f.acceso}"{" critica=\"si\"" if f.critica else ""}>\n{t}\n</fuente>'
+        for f, t in textos
     )
     noticia = (
         "\n<noticia>\n"
@@ -163,6 +164,8 @@ class _Guion:
     fuentes: list[FuenteNoticia]
     p: ConfigGuion
     citas_ok: frozenset[str] = frozenset()   # citas encontradas en el texto del libro (normalizadas)
+    criticas_ok: frozenset[str] = frozenset()  # citas de la crítica encontradas en el texto de crítica (normalizadas)
+    formato: str = ""
 
     @property
     def sin_libro(self) -> bool:
@@ -271,6 +274,30 @@ def _firma(c: _Guion) -> list[str]:
     return ["El cierre debe llevar la firma de Folio."] if c.d and "folio" not in normalizar(c.d[-1].texto).split() else []
 
 
+MAX_CRITICAS = 2          # citas de la crítica por guion (formato «recomendado»; decisión del usuario, 1/11)
+
+
+def citas_de_la_critica(g: GuionLLM, libros: list[LibroVerificado], textos: list[tuple[FuenteNoticia, str]]) -> list[CitaVerificada]:
+    """Las frases entre comillas del guion que aparecen letra por letra (salvo mayúsculas, tildes y signos) en un
+    texto de crítica recibido. Solo esas pueden ir entre comillas además de la cita verificada del libro."""
+    criticas = [(f, normalizar(t)) for f, t in textos if f.critica]
+    if not criticas:
+        return []
+    textos_g = [t for x in g.diapositivas for t in (x.texto, x.subtitulo) if t] + [g.pie_instagram]
+    salida, vistos = [], set()
+    for frase in citas_entre_comillas(textos_g, libros):
+        n = normalizar(frase)
+        if len(n.split()) < 2 or n in vistos:
+            continue
+        fuente = next((f for f, t in criticas if f" {n} " in f" {t} "), None)
+        if fuente:
+            vistos.add(n)
+            libro = libros[0] if libros else None
+            salida.append(CitaVerificada(texto=frase, libro=libro.titulo_propuesto if libro else "", autor=(libro.autores or [""])[0] if libro else "",
+                                         fragmento=frase, tipo="critica", fuente=fuente.url))
+    return salida
+
+
 def citas_entre_comillas(textos: list[str], libros: list[LibroVerificado]) -> list[str]:
     """Los fragmentos entre comillas que no son títulos de libros: posibles citas literales."""
     return [f for t in textos for m in _COMILLAS.finditer(t)
@@ -280,13 +307,15 @@ def citas_entre_comillas(textos: list[str], libros: list[LibroVerificado]) -> li
 def _frases_vetadas_y_citas(c: _Guion) -> list[str]:
     """Texto a texto: primero las frases vetadas y luego los textos entre comillas que no son títulos
     ni citas encontradas en el texto del libro. Después, el número y la longitud de las citas."""
-    errores, citas = [], []
+    errores, citas, criticas = [], [], []
     for t in c.textos:
         tn = t.lower()
         errores += [f"Frase vetada: «{frase}…»." for frase in _FRASES_VETADAS if frase in tn]
         for fragmento in citas_entre_comillas([t], c.libros):
             if normalizar(fragmento) in c.citas_ok:
                 citas.append(fragmento)
+            elif normalizar(fragmento) in c.criticas_ok:
+                criticas.append(fragmento)
             else:
                 errores.append(f"Texto entre comillas que no es el título de un libro ni una cita encontrada en su "
                                f"texto: «{fragmento[:80]}». Parafrasea sin comillas.")
@@ -295,6 +324,8 @@ def _frases_vetadas_y_citas(c: _Guion) -> list[str]:
                 for x in citas if not minimo <= _palabras(x) <= maximo]
     if len(citas) > c.p.max_citas:
         errores.append(f"Hay {len(citas)} citas literales; como mucho {c.p.max_citas}.")
+    if len(set(criticas)) > MAX_CRITICAS:
+        errores.append(f"Hay {len(set(criticas))} citas de la crítica; como mucho {MAX_CRITICAS}.")
     return errores
 
 
@@ -313,6 +344,8 @@ def _longitud_pie(c: _Guion) -> list[str]:
 
 
 def _pie_cita_medio(c: _Guion) -> list[str]:
+    if c.formato == "recomendado":           # no hay noticia: los textos son la ficha del libro y su crítica
+        return []
     if any(normalizar(f.medio) in normalizar(c.g.pie_instagram) for f in c.fuentes):
         return []
     return ["El pie debe citar el medio de la noticia (uno de: " + ", ".join(f.medio for f in c.fuentes) + ")."]
@@ -364,10 +397,11 @@ REGLAS = (
 
 
 def validar(cfg: Config, g: GuionLLM, libros: list[LibroVerificado], fuentes: list[FuenteNoticia],
-            citas_ok: frozenset[str] = frozenset()) -> list[str]:
+            citas_ok: frozenset[str] = frozenset(), criticas_ok: frozenset[str] = frozenset(), formato: str = "") -> list[str]:
     """Errores del guion según las reglas editoriales (vacío si cumple todas). `citas_ok`: las citas
-    (normalizadas) que se han encontrado en el texto del libro."""
-    c = _Guion(g, libros, fuentes, cfg.pipeline.guion, citas_ok)
+    (normalizadas) que se han encontrado en el texto del libro; `criticas_ok`, las de la crítica encontradas
+    en su texto (ver citas_de_la_critica)."""
+    c = _Guion(g, libros, fuentes, cfg.pipeline.guion, citas_ok, criticas_ok, formato)
     return [error for regla in REGLAS for error in regla(c)]
 
 
@@ -496,12 +530,13 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
             avisos.append(f"Corregido en código en el intento {intento + 1}: {', '.join(corregido)}")
         citas = _verificar_citas(guion, libros, verificar_cita, citas, avisos)
         citas_ok = frozenset(normalizar(f) for f, c in citas.items() if c)
-        errores = validar(cfg, guion, libros, fuentes, citas_ok)
+        criticas = citas_de_la_critica(guion, libros, textos)
+        errores = validar(cfg, guion, libros, fuentes, citas_ok, frozenset(normalizar(c.texto) for c in criticas), eleccion.formato)
         if not errores:
             if intento:
                 avisos.append(f"Guion aceptado en el intento {intento + 1}")
             textos_finales = " ".join(t for x in guion.diapositivas for t in (x.texto, x.subtitulo) if t) + guion.pie_instagram
-            return guion, avisos, [c for f, c in citas.items() if c and f in textos_finales]
+            return guion, avisos, [c for f, c in citas.items() if c and f in textos_finales] + criticas
         # Se registra por qué se rechaza cada intento: es lo que permite saber qué reglas
         # provocan los reintentos y si conviene reforzarlas en el prompt.
         avisos.append(f"Rechazado en el intento {intento + 1}: " + " | ".join(errores))

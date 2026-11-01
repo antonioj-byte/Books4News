@@ -8,6 +8,7 @@ modelos:
   chat: claude-opus-5-5           # chat de edición de la web
   memoria: claude-opus-5-5        # memoria del feedback: patrones y propuestas de regla
   escena: claude-opus-5-5         # ilustrador: escenas de la ilustración editorial
+  radar: claude-haiku-5-5         # radar del libro: temas del mundo del libro sin desarrollar
 
 dev:                            # folio run --dev: todas las etapas con este modelo y esfuerzo bajo
   modelo: claude-haiku-5-5
@@ -22,6 +23,7 @@ esfuerzo:                       # output_config.effort
   chat: medium
   memoria: high
   escena: medium
+  radar: low
 
 # USD por millón de tokens (entrada, salida[, lectura de caché]). Solo para estimar el coste en el
 # informe. La escritura en caché cuesta 1,25 × entrada; sin tercer valor, la lectura es el 10 % de la entrada.
@@ -54,13 +56,29 @@ seleccion:
   historias_editoriales: 16     # carril editorial: material para las propuestas del mundo del libro
   # Mesa del día (31/10): el jefe propone `elegidas` con este reparto por formato; se escriben solas las
   # `desarrollar_al_inicio` primeras y el resto espera a «Proceder» en la web. Sin reserva: las demás lo son.
-  elegidas: 7
+  elegidas: 8
   reserva: 0
   # curiosidad (1/11): una historia del cajón (config/cajon_curiosidades.yaml), sin percha y sin libro obligatorio
-  reparto: {lateral: 2, dialogo: 2, edicion: 2, curiosidad: 1}
+  # recomendado (1/11): una novedad de las editoriales independientes (catalogo, más abajo)
+  reparto: {lateral: 2, dialogo: 2, edicion: 2, curiosidad: 1, recomendado: 1}
   desarrollar_al_inicio: 1
   antiguedad_libros: 2          # novedad: libros publicados en los últimos 2 años (primera edición o edición española)
   dias_curiosidades: 90         # una curiosidad del cajón no se repite en 90 días
+
+# Formato «recomendado»: novedades de config/editoriales_independientes.yaml leídas en todostuslibros.com
+catalogo:
+  meses: 6                      # publicadas en los últimos 6 meses
+  candidatos: 20                # libros que ve el jefe de cultura cada día
+  max_por_editorial: 1          # por turnos: cada día empieza por editoriales distintas
+  editoriales_por_dia: 25       # páginas de novedades que se refrescan al día como mucho (una por semana cada una)
+  refresco_dias: 7
+  pausa_s: 1.2                  # una petición cada 1,2 s (el robots.txt del portal pide 1)
+
+# Radar del libro: temas del mundo del libro sin desarrollar, en una lista aparte de la mesa, a un clic
+radar:
+  activo: true
+  max_temas: 8
+  historias: 32                 # historias del carril editorial que se resumen y ve el radar
 
 exclusion:
   dias_historias: 7

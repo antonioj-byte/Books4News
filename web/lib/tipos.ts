@@ -445,7 +445,8 @@ export interface components {
         };
         /**
          * CitaVerificada
-         * @description Cita literal del libro encontrada letra por letra en su texto (búsqueda de Google Books).
+         * @description Cita literal encontrada letra por letra: del libro, en su texto (búsqueda de Google Books), o de la crítica,
+         *     en el texto de crítica recibido (1/11, a petición del usuario: «admite citas a la crítica»).
          */
         CitaVerificada: {
             /** Texto */
@@ -454,10 +455,21 @@ export interface components {
             libro: string;
             /** Autor */
             autor: string;
-            /** Volumen Google */
+            /**
+             * Volumen Google
+             * @default
+             */
             volumen_google: string;
             /** Fragmento */
             fragmento: string;
+            /**
+             * Tipo
+             * @default libro
+             * @enum {string}
+             */
+            tipo: "libro" | "critica";
+            /** Fuente */
+            fuente: string | null;
         };
         /** ConceptoGasto */
         ConceptoGasto: {
@@ -684,6 +696,11 @@ export interface components {
              * @default false
              */
             texto_completo: boolean;
+            /**
+             * Critica
+             * @default false
+             */
+            critica: boolean;
         };
         /** GuionLLM */
         GuionLLM: {
@@ -768,11 +785,11 @@ export interface components {
         HistoriaElegida: {
             /**
              * Formato
-             * @description lateral (lectura lateral), dialogo (diálogo con la actualidad), edicion (mundo del libro) o curiosidad (del cajón de curiosidades)
+             * @description lateral (lectura lateral), dialogo (diálogo con la actualidad), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes)
              * @default lateral
              * @enum {string}
              */
-            formato: "lateral" | "dialogo" | "edicion" | "curiosidad";
+            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar";
             /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista
@@ -908,7 +925,7 @@ export interface components {
             /** Isbn13 */
             isbn13: string[];
             /** Fuentes Verificacion */
-            fuentes_verificacion: ("openlibrary" | "googlebooks")[];
+            fuentes_verificacion: ("openlibrary" | "googlebooks" | "todostuslibros")[];
             /** Url Ficha */
             url_ficha: string | null;
             /**
@@ -1041,6 +1058,11 @@ export interface components {
              * @default false
              */
             reserva: boolean;
+            /**
+             * Radar
+             * @default false
+             */
+            radar: boolean;
             /** Historia Id */
             historia_id: string;
             eleccion: components["schemas"]["HistoriaElegida"];
@@ -1144,6 +1166,16 @@ export interface components {
              * @default
              */
             gancho: string;
+            /**
+             * Radar
+             * @default false
+             */
+            radar: boolean;
+            /**
+             * Por Que
+             * @default
+             */
+            por_que: string;
         };
         /** RespuestaChat */
         RespuestaChat: {

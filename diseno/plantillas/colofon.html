@@ -4,7 +4,7 @@
       <div class="antetitulo">Colofón</div>
       <h1 class="colofon__titulo">De dónde sale <em>esta pieza</em></h1>
       {% if colofon.fuentes %}
-      <section class="colofon__bloque"><h2>{{ "Las fuentes" if colofon.curiosidad else "La noticia" }}</h2>
+      <section class="colofon__bloque"><h2>{{ "Las fuentes" if colofon.curiosidad else ("La ficha y la crítica" if colofon.formato == "recomendado" else "La noticia") }}</h2>
         <ul>{% for f in colofon.fuentes %}<li><b>{{ f.medio }}</b> {{ f.titulo }}{% if f.acceso %} <span>· {{ f.acceso }}</span>{% endif %}</li>{% endfor %}</ul>
       </section>
       {% endif %}

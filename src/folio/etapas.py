@@ -13,7 +13,7 @@ from typing import Literal
 
 from pydantic import TypeAdapter
 
-from folio.modelos import Articulo, FuenteNoticia, Historia, HistoriaResumida, Pieza, SeleccionJefe
+from folio.modelos import Articulo, FuenteNoticia, Historia, HistoriaElegida, HistoriaResumida, Pieza, SeleccionJefe
 
 Etapa = Literal["ingesta", "seleccion", "guion", "hechos", "arte"]
 ORDEN: dict[str, int] = {"ingesta": 0, "seleccion": 1, "guion": 2, "hechos": 3, "arte": 4}
@@ -61,6 +61,14 @@ class EtapasGuardadas:
 
     def guardar_seleccion(self, sel: SeleccionJefe) -> None:
         guardar_json(self.directorio / "seleccion.json", sel.model_dump(mode="json"))
+
+    def radar(self) -> list[HistoriaElegida]:
+        """Los temas del radar del libro (vacío si la ejecución es anterior al radar)."""
+        ruta = self.directorio / "radar.json"
+        return TypeAdapter(list[HistoriaElegida]).validate_python(cargar_json(ruta)) if ruta.exists() else []
+
+    def guardar_radar(self, temas: list[HistoriaElegida]) -> None:
+        guardar_json(self.directorio / "radar.json", [t.model_dump(mode="json") for t in temas])
 
     def piezas(self) -> list[Pieza]:
         return TypeAdapter(list[Pieza]).validate_python(cargar_json(self.directorio / "piezas.json"))

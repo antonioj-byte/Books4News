@@ -38,12 +38,14 @@ export function EstadoChip({ estado }: { estado: string }) {
   return <span className={`chip ${e.clase}`}>{e.texto}</span>;
 }
 
-// Formato de la propuesta (la mesa del día tiene cuatro)
+// Formato de la propuesta (cinco en la mesa y el radar del libro)
 const FORMATOS: Record<string, { texto: string; clase: string }> = {
   lateral: { texto: "Lectura lateral", clase: "border border-tinta text-tinta" },
   dialogo: { texto: "Diálogo con la actualidad", clase: "bg-tinta text-papel" },
   edicion: { texto: "Mundo del libro", clase: "bg-carmesi text-papel" },
   curiosidad: { texto: "Curiosidad", clase: "bg-subrayador text-tinta" },
+  recomendado: { texto: "Libro recomendado", clase: "bg-verde text-papel" },
+  radar: { texto: "Radar del libro", clase: "border border-carmesi text-carmesi" },
 };
 
 export function FormatoChip({ formato }: { formato: string }) {

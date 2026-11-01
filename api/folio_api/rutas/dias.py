@@ -41,6 +41,7 @@ def dia(fecha: str, ejecucion: int | None = None, ctx: Contexto = Depends(contex
         reserva=p.reserva, version=v, marcas=marcas(p), evaluada=ctx.almacen.evaluacion(eid, p.id) is not None,
         # En el lomo, el título que propuso el jefe: el de la ficha puede venir bilingüe («La Rusia de Putin/ Putin's Russia»)
         libros=lomos(ctx, p), formato=p.eleccion.formato, gancho=p.eleccion.gancho_libro,
+        radar=p.radar, por_que=p.eleccion.por_que,
     ) for p, v in ctx.almacen.piezas(eid)]
     return DiaDetalle(fecha=fecha, ejecucion=next(e for e in ejecuciones if e.id == eid), ejecuciones=ejecuciones,
                       aviso_jefe=inf.seleccion.aviso if inf.seleccion else None, avisos=inf.avisos,

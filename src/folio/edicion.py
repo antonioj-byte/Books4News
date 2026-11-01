@@ -53,12 +53,13 @@ class RespuestaChat(BaseModel):
     imagen: AccionImagen | None = Field(default=None, description="Un cambio en la imagen, solo si lo piden; null si no")
 
 
-def _citas_ok(p: Pieza) -> frozenset[str]:
-    return frozenset(normalizar(c.texto) for c in p.citas)
+def _citas_ok(p: Pieza, tipo: str = "libro") -> frozenset[str]:
+    return frozenset(normalizar(c.texto) for c in p.citas if c.tipo == tipo)
 
 
 def validar(cfg: Config, p: Pieza, g: GuionLLM) -> list[str]:
-    return guionista.validar(cfg, g, p.libros, p.fuentes, _citas_ok(p))
+    """Las citas que valen son las que ya se verificaron al escribir la pieza (del libro y de la crítica)."""
+    return guionista.validar(cfg, g, p.libros, p.fuentes, _citas_ok(p), _citas_ok(p, "critica"), p.eleccion.formato)
 
 
 def editar_diapositiva(cfg: Config, p: Pieza, n: int, texto: str, subtitulo: str | None = None) -> tuple[Pieza, list[str]]:

@@ -19,6 +19,9 @@ const ETAPAS: Record<string, string> = {
   retrato: "Retratos generados",
   "ilustración": "Ilustraciones editoriales",
   esquema: "Esquemas de infografía",
+  radar: "Radar del libro",
+  memoria: "Memoria del feedback",
+  escena: "Ilustrador (escenas)",
 };
 
 // Por debajo de un céntimo, con cuatro decimales: un resumen cuesta centésimas de céntimo

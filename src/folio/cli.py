@@ -171,7 +171,7 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
     if p.estado not in ("pendiente", "fallida") or p.guion:
         typer.echo(f"La pieza está «{p.estado}» y ya tiene guion: no hay nada que desarrollar", err=True)
         raise typer.Exit(1)
-    if not p.libros and p.eleccion.formato != "curiosidad":
+    if not p.libros and p.eleccion.formato not in ("curiosidad", "radar"):
         typer.echo("La propuesta no tiene ningún libro verificado", err=True)
         raise typer.Exit(1)
     al_jefe, _, _ = EtapasGuardadas(cfg.dir_cache(fecha)).historias()
