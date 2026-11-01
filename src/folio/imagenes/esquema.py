@@ -19,6 +19,7 @@ from pathlib import Path
 import httpx
 from PIL import Image
 
+from folio import gastos
 from folio.config import Config
 from folio.imagenes import libres, retrato_generado
 
@@ -63,6 +64,7 @@ def generar(cfg: Config, pieza_id: str, dir_fecha: Path, cliente: httpx.Client |
     if not cache.exists():
         try:
             datos, _, _ = retrato_generado.generar(foto, texto, cfg.magnific_api_key, ec.aspecto, ec.espera_max_s, cliente)
+            gastos.imagen_magnific(cfg, "esquema", pieza_id)
         except retrato_generado.ErrorMagnific as e:
             if e.bloqueo:
                 retrato_generado._bloqueo = str(e)

@@ -3,7 +3,10 @@
     <p class="texto">{{ texto }}</p>
     <div class="estante">
       {% for l in libros %}
-      <div class="tarjeta">{% include "_cubierta.html" %}
+      {# La cubierta sale una sola vez en el carrusel, en la diapositiva del libro (1/11, a petición del usuario):
+         en la tarjeta, la foto del autor del libro principal si la hay; si no, solo la ficha #}
+      <div class="tarjeta{% if loop.first and retrato %} tarjeta--cara{% endif %}">
+        {% if loop.first and retrato %}<figure class="tarjeta__cara"><img src="{{ retrato.src }}" alt="" style="object-position: {{ retrato.enfoque[0] }}% {{ retrato.enfoque[1] }}%"></figure>{% endif %}
         <div class="tarjeta__ficha"><b>{{ l.titulo }}</b><i>{{ l.autor }}</i>{% if l.datos %}<span>{{ l.datos }}</span>{% endif %}</div>
       </div>
       {% endfor %}

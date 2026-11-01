@@ -51,7 +51,8 @@ def test_html_de_cada_diapositiva(cfg_diseno, pieza):
     # La firma del texto no se repite; la ficha lleva los datos verificados
     assert "Léelo." in cierre and "Léelo. Folio" not in cierre
     assert "Debolsillo, 2014" in cierre and "tarjeta" in cierre
-    assert "cubierta--dibujada" in cierre             # sin cubierta en la caché, se dibuja
+    assert "cubierta" not in cierre.split("<body>")[1]   # la cubierta sale una vez, en la diapositiva del libro
+    assert "cubierta--dibujada" in p.html_diapositiva(pieza, 3)   # sin cubierta en la caché, se dibuja
 
 
 def test_imagen_cifra_antetitulo_y_cubierta(cfg_diseno, pieza):
@@ -77,7 +78,7 @@ def test_imagen_cifra_antetitulo_y_cubierta(cfg_diseno, pieza):
     assert "Ana Pérez" not in portada                  # el crédito va en el pie de la publicación
     noticia = p.html_diapositiva(pieza, 2)
     assert 'class="cifra__numero" data-encajar>tribunal<' in noticia and "imagen--arriba" not in noticia
-    assert "/api/medios/c.jpg" in p.html_diapositiva(pieza, 5)
+    assert "/api/medios/c.jpg" in p.html_diapositiva(pieza, 3) and "/api/medios/c.jpg" not in p.html_diapositiva(pieza, 5)
 
 
 def test_render_png_de_1080x1350(cfg_diseno, pieza, tmp_path, monkeypatch):

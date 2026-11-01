@@ -123,3 +123,47 @@ class ResumenDia(BaseModel):
     idea: float | None
     voz: float | None
     publicaria: float | None
+
+
+# --- Panel de gasto -----------------------------------------------------------------
+
+class DiaGasto(BaseModel):
+    fecha: str
+    anthropic_usd: float
+    magnific_eur: float
+    magnific_imagenes: int
+
+
+class ConceptoGasto(BaseModel):
+    servicio: str
+    concepto: str
+    moneda: str
+    coste: float
+    n: int                                # llamadas o imágenes
+
+
+class ApunteGasto(BaseModel):
+    ts: str
+    fecha: str
+    servicio: str
+    concepto: str
+    modelo: str | None = None
+    unidades: float
+    coste: float
+    moneda: str
+    detalle: str | None = None
+
+
+class PanelGasto(BaseModel):
+    hoy: str
+    mes: str                              # primer día del mes en curso
+    registro_desde: str                   # desde cuándo se apunta todo (antes, solo las ejecuciones del día)
+    anthropic_hoy_usd: float
+    anthropic_mes_usd: float
+    magnific_hoy_eur: float
+    magnific_mes_eur: float
+    magnific_mes_creditos: float
+    magnific_mes_imagenes: int
+    dias: list[DiaGasto]
+    conceptos: list[ConceptoGasto]        # del mes en curso
+    ultimos: list[ApunteGasto]            # los 40 apuntes más recientes

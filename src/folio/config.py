@@ -165,6 +165,12 @@ class Arte(_Seccion):
     interferencia: list[Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]] = Field(default_factory=lambda: ["ironico"])
 
 
+class Gasto(_Seccion):
+    # Magnific no devuelve el coste por la API: medido en su panel el 31/10 (16.000 créditos por 16 €)
+    magnific_creditos_imagen: float = 25
+    magnific_euros_credito: float = 0.001
+
+
 class ConfigPipeline(_Seccion):
     """config/pipeline.yaml, tipado."""
     modelos: dict[str, str]
@@ -178,6 +184,7 @@ class ConfigPipeline(_Seccion):
     seleccion_textos: SeleccionTextos = Field(default_factory=SeleccionTextos)
     guion: Guion
     arte: Arte = Field(default_factory=Arte)
+    gasto: Gasto = Field(default_factory=Gasto)
     ab: AB | None = None
 
     @model_validator(mode="after")

@@ -29,6 +29,7 @@ from pathlib import Path
 import httpx
 from PIL import Image
 
+from folio import gastos
 from folio.config import Config
 from folio.imagenes import libres
 
@@ -182,6 +183,7 @@ def aplicar(cfg: Config, pieza_id: str, dir_fecha: Path, estilo: str,
         rg = cfg.pipeline.arte.retrato_generado
         try:
             bruto, tid, segundos = generar(foto, texto_prompt, cfg.magnific_api_key, rg.aspecto, rg.espera_max_s, cliente)
+            gastos.imagen_magnific(cfg, "retrato", f"{pieza_id} · {estilo}")
         except ErrorMagnific as exc:
             if exc.bloqueo:
                 _bloqueo = str(exc)

@@ -83,6 +83,9 @@ guion:
   pie_min_palabras: 80
   pie_max_palabras: 150
 
+# Precios de Magnific para el panel de gasto (la API no los devuelve; medidos en su panel el 31/10)
+gasto: {magnific_creditos_imagen: 25, magnific_euros_credito: 0.001}
+
 # Prueba A/B del guionista (folio ab / folio ab-resultados). El control es el de producción y se
 # reutiliza su guion; las demás variantes reescriben con los mismos libros y textos.
 arte:

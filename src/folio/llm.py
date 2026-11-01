@@ -162,6 +162,10 @@ class LLM:
         if modelo_real != modelo:
             traza.nota = f"respondió el modelo de respaldo ({modelo_real})"
         self.trazas.append(traza)
+        from folio import gastos
+        gastos.apuntar(self.cfg, "anthropic", paso.split(":")[0], traza.coste_usd, "USD",
+                       unidades=traza.tokens_entrada + traza.tokens_salida + traza.tokens_cache_escritura + traza.tokens_cache_lectura,
+                       modelo=modelo_real, detalle=paso)
 
         if resp.stop_reason == "refusal":
             raise ErrorLLM(f"{paso}: el modelo rechazó la petición ({getattr(resp, 'stop_details', None)})")

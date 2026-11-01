@@ -78,7 +78,38 @@ _MIGRACIONES = [
         PRIMARY KEY (ejecucion_id, pieza_id, n)
     );
     """,
+    # 3: gasto en servicios de pago (1/11): un apunte por llamada a Anthropic y por imagen nueva de Magnific
+    """
+    CREATE TABLE gastos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ts TEXT NOT NULL,                  -- UTC, ISO
+        fecha TEXT NOT NULL,               -- día local (FOLIO_ZONA) del gasto
+        servicio TEXT NOT NULL,            -- anthropic | magnific
+        concepto TEXT NOT NULL,            -- etapa (seleccion, guion, arte…) o tipo de imagen
+        modelo TEXT,
+        unidades REAL NOT NULL DEFAULT 0,  -- tokens (Anthropic) o créditos (Magnific)
+        coste REAL NOT NULL DEFAULT 0,
+        moneda TEXT NOT NULL,              -- USD | EUR
+        detalle TEXT,
+        ejecucion_id INTEGER               -- solo en los apuntes cargados de ejecuciones anteriores al registro
+    );
+    CREATE INDEX gastos_fecha ON gastos (fecha);
+    CREATE TABLE gastos_inicio (ts TEXT NOT NULL);
+    INSERT INTO gastos_inicio (ts) VALUES (strftime('%Y-%m-%dT%H:%M:%S+00:00', 'now'));
+    """,
 ]
+
+
+class Gasto(BaseModel):
+    ts: str
+    fecha: str
+    servicio: str
+    concepto: str
+    modelo: str | None = None
+    unidades: float
+    coste: float
+    moneda: str
+    detalle: str | None = None
 
 
 class Evaluacion(BaseModel):
@@ -196,6 +227,45 @@ class Almacen:
                 db.execute("INSERT INTO versiones VALUES (?, ?, 1, ?, 'pipeline', 'Generada por el pipeline', ?)",
                                 (eid, p.id, generado, p.model_dump_json()))
         return eid
+
+    # --- Gasto -----------------------------------------------------------------------
+
+    def apuntar_gasto(self, g: Gasto) -> None:
+        with self._transaccion() as db:
+            db.execute("INSERT INTO gastos (ts, fecha, servicio, concepto, modelo, unidades, coste, moneda, detalle) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       (g.ts, g.fecha, g.servicio, g.concepto, g.modelo, g.unidades, g.coste, g.moneda, g.detalle))
+
+    def gastos(self, desde: str) -> list[Gasto]:
+        """Los apuntes desde la fecha `desde` (AAAA-MM-DD), del más antiguo al más reciente."""
+        filas = self.db.execute("SELECT ts, fecha, servicio, concepto, modelo, unidades, coste, moneda, detalle "
+                                "FROM gastos WHERE fecha >= ? ORDER BY ts", (desde,)).fetchall()
+        return [Gasto(**dict(f)) for f in filas]
+
+    def inicio_gastos(self) -> str:
+        return self.db.execute("SELECT ts FROM gastos_inicio").fetchone()["ts"]
+
+    def importar_gastos_historicos(self) -> int:
+        """Carga el gasto en Anthropic de las ejecuciones anteriores al registro (de las trazas que
+        guardaba cada informe), una vez. Las posteriores ya dejan sus apuntes al gastar."""
+        inicio = self.inicio_gastos()
+        hechas = {f[0] for f in self.db.execute("SELECT DISTINCT ejecucion_id FROM gastos WHERE ejecucion_id IS NOT NULL")}
+        n = 0
+        for f in self.db.execute("SELECT id, fecha, generado_en, informe FROM ejecuciones WHERE generado_en < ?", (inicio,)).fetchall():
+            if f["id"] in hechas:
+                continue
+            trazas = json.loads(f["informe"]).get("trazas") or []
+            with self._transaccion() as db:
+                for t in trazas:
+                    if not t.get("coste_usd"):
+                        continue
+                    db.execute("INSERT INTO gastos (ts, fecha, servicio, concepto, modelo, unidades, coste, moneda, detalle, ejecucion_id) "
+                               "VALUES (?, ?, 'anthropic', ?, ?, ?, ?, 'USD', ?, ?)",
+                               (f["generado_en"], f["fecha"], t["paso"].split(":")[0], t.get("modelo"),
+                                sum(t.get(k) or 0 for k in ("tokens_entrada", "tokens_salida", "tokens_cache_escritura", "tokens_cache_lectura")),
+                                t["coste_usd"], t["paso"], f["id"]))
+                    n += 1
+        return n
 
     def importar_informes(self, dir_informes: Path) -> list[int]:
         """Importa informes/<fecha>/informe.json (no los de prueba: -dev, solo-pieza)."""
