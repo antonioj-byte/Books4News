@@ -82,6 +82,7 @@ class Pipeline:
         self.stats: dict = {}
         self.vectores_articulos: dict[str, np.ndarray] | None = None
         self.radar: list[HistoriaElegida] = []     # temas del radar del libro (folio.radar)
+        self._preverificados: dict = {}             # (título, autor) → ficha o NoVerificado (folio.pipeline._preverificar)
         self._embedder: agrupacion.Embedder | None = None
 
     @property
@@ -300,6 +301,27 @@ class Pipeline:
 
     # --- Etapa 3: verificación y guion --------------------------------------
 
+    def _preverificar(self, elegidas: list[HistoriaElegida]) -> None:
+        """Consulta a la vez los libros candidatos de toda la mesa (2/11, a petición del usuario: agilizar). Las
+        reglas (novedad, castellano, repetidos entre propuestas) se aplican después, en orden, en _verificar_libros.
+        Cuatro a la vez, para no forzar los límites de Open Library ni de Google Books."""
+        if self.verificador is None:
+            self.verificador = Verificador(self.cfg)
+        candidatos = list(dict.fromkeys((c.titulo, c.autor) for e in elegidas for c in e.libros_candidatos))
+        por_clave = {(c.titulo, c.autor): c for e in elegidas for c in e.libros_candidatos}
+
+        def uno(clave):
+            try:
+                return clave, self.verificador.verificar(por_clave[clave])
+            except NoVerificado as exc:
+                return clave, exc
+            except Exception:                    # cualquier otro error: se reintenta en orden, como antes
+                return clave, None
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            for clave, r in pool.map(uno, candidatos):
+                if r is not None:
+                    self._preverificados[clave] = r
+
     def _verificar_libros(self, e: HistoriaElegida, ya_usados: set[str]) -> tuple[list[LibroVerificado], list[LibroDescartado]]:
         if self.verificador is None:
             self.verificador = Verificador(self.cfg)
@@ -307,7 +329,10 @@ class Pipeline:
         ok, descartes = [], []
         for c in e.libros_candidatos:
             try:
-                l = self.verificador.verificar(c)
+                previo = self._preverificados.get((c.titulo, c.autor))
+                if isinstance(previo, NoVerificado):
+                    raise previo
+                l = previo if previo is not None else self.verificador.verificar(c)
             except NoVerificado as exc:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=exc.motivo))
                 continue
@@ -452,6 +477,8 @@ class Pipeline:
             objetivo, cola = 1, [(sel.elegidas[self.solo_pieza - 1], False)]
         piezas: list[Pieza] = []
         reservados: set[str] = set()
+        progreso("Verificando los libros de la mesa")
+        self._preverificar([e for e, _ in cola])
         for i, (e, es_reserva) in enumerate(cola, 1):
             n = self.solo_pieza or i
             h = por_id[e.historia_id]
