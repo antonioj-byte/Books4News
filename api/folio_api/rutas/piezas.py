@@ -1,5 +1,6 @@
 """Una pieza: detalle, estado, HTML de sus diapositivas y evaluación."""
 
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,7 +8,7 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from folio import edicion
 from folio.almacen import Evaluacion, MensajeChat, escribir_evaluacion_md
-from folio.llm import LLM
+from folio.llm import LLM, ErrorLLM
 from folio.modelos import InformeDiario
 from folio_api.dependencias import Contexto, contexto
 from folio_api.ejecutor import EstadoEjecucion
@@ -17,6 +18,7 @@ from folio_api.rutas.dias import lomos
 from folio_api.servicio import hechos_ligados
 
 router = APIRouter()
+log = logging.getLogger(__name__)
 
 
 def _video(ctx: Contexto, fecha: str, pid: str):
@@ -153,7 +155,14 @@ def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(c
     if not p.guion:
         raise HTTPException(409, "Esta pieza no tiene guion")
     historial = [(x.rol, x.texto) for x in ctx.almacen.chat(eid, pid)]
-    respuesta, nueva, avisos = edicion.chat(ctx.llm or LLM(ctx.cfg), ctx.cfg, p, historial, m.mensaje.strip())
+    try:
+        respuesta, nueva, avisos = edicion.chat(ctx.llm or LLM(ctx.cfg), ctx.cfg, p, historial, m.mensaje.strip())
+    except ErrorLLM as exc:
+        raise HTTPException(502, f"El editor no ha podido responder: {exc}. Prueba otra vez o reformula la petición.")
+    except Exception as exc:
+        # El 2/11 un turno dio un 500 sin explicación: ahora queda el error completo en el registro y la web lo dice
+        log.exception("Chat de edición: %s/%s", eid, pid)
+        raise HTTPException(500, f"Error en el chat de edición ({type(exc).__name__}: {str(exc)[:200]}). Está en el registro de la api.")
     v = ctx.almacen.guardar_version(eid, pid, nueva, "chat", m.mensaje.strip()[:120]) if nueva else None
     ctx.almacen.anadir_mensaje(eid, pid, "usuario", m.mensaje.strip())
     ctx.almacen.anadir_mensaje(eid, pid, "editor", respuesta, v)

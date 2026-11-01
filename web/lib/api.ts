@@ -22,7 +22,10 @@ async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
   const r = await fetch(ruta, { cache: "no-store", ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
   if (!r.ok) {
     const cuerpo = await r.text();
-    throw new Error(`${r.status} ${ruta}: ${cuerpo.slice(0, 200)}`);
+    // La API explica el error en «detail»: es lo que se enseña, no el JSON entero
+    let detalle = cuerpo.slice(0, 300);
+    try { const d = JSON.parse(cuerpo).detail; if (typeof d === "string") detalle = d; } catch { /* no era JSON */ }
+    throw new Error(`${r.status} ${ruta}: ${detalle}`);
   }
   return r.json() as Promise<T>;
 }

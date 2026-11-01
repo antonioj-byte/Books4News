@@ -25,8 +25,9 @@ export function ChatEdicion({ eid, pid, onCambio }: { eid: number; pid: string; 
       setMensajes(await api.chat(eid, pid));
       if (r.version) onCambio();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo enviar");
+      setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo enviar");
       setTexto(m);
+      setMensajes((x) => x.slice(0, -1));      // el mensaje no llegó a guardarse
     } finally { setEnviando(false); }
   };
 

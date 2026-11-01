@@ -76,3 +76,19 @@ def test_ilustrar_con_escena_valida_y_tope_del_dia(cfg, monkeypatch):
     assert "máximo del día" in edicion.aplicar_imagen(None, cfg, _pieza(), _accion("ilustrar", escena=escena))[1]
     assert "graves" in edicion.aplicar_imagen(None, cfg, _pieza().model_copy(update={"arte": Arte(tono="grave", recurso="foto")}),
                                               _accion("ilustrar", escena=escena))[1]
+
+
+def test_buscar_otra_imagen_que_falla_no_deja_la_pieza_sin_imagen(cfg, monkeypatch):
+    _fijar(cfg, "2026-10-30-1")
+    def falla(llm, cfg, pieza, datos, propuesta, ar, usadas, d):
+        libres.olvidar(pieza.id, d)                 # como la de verdad, borra antes de elegir
+        raise RuntimeError("Europeana caída")
+    monkeypatch.setattr(direccion, "_imagen_de_archivo", falla)
+    nueva, nota = edicion._imagen_sin_romper(None, cfg, _pieza(registro="archivo"), _accion("buscar_archivo", consultas=["printing press"]))
+    assert nueva is None and "Europeana caída" in nota
+    assert (libres.dir_imagenes(cfg.dir_cache("2026-10-30")) / "2026-10-30-1.jpg").exists()
+    def no_encuentra(llm, cfg, pieza, datos, propuesta, ar, usadas, d):
+        libres.olvidar(pieza.id, d)
+    monkeypatch.setattr(direccion, "_imagen_de_archivo", no_encuentra)
+    nueva, nota = edicion.aplicar_imagen(None, cfg, _pieza(registro="archivo"), _accion("buscar_archivo", consultas=["printing press"]))
+    assert nueva is None and (libres.dir_imagenes(cfg.dir_cache("2026-10-30")) / "2026-10-30-1.jpg").exists()

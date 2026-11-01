@@ -77,3 +77,17 @@ def test_decidir_un_patron_desde_la_web(cfg):
     [p] = c.get("/api/memoria").json()
     assert p["estado"] == "aceptada" and p["nota"] == "sí, para el guionista"
     assert c.patch("/api/memoria/999", json={"estado": "rechazada"}).status_code == 404
+
+
+def test_un_fallo_del_editor_se_explica_en_vez_de_un_500_mudo(cfg, monkeypatch):
+    from folio.llm import ErrorLLM
+    a = _almacen_con_feedback(cfg)
+    (cfg.raiz / "diseno").symlink_to((type(cfg)(pipeline={}, fuentes=[]).raiz / "diseno").resolve())
+    eid = a.ultima_ejecucion("2026-11-01")
+    c = TestClient(crear_app(cfg, a), raise_server_exceptions=False)
+    monkeypatch.setattr(edicion, "chat", lambda *x, **k: (_ for _ in ()).throw(ErrorLLM("chat: respuesta cortada por max_tokens")))
+    r = c.post(f"/api/ejecuciones/{eid}/piezas/2026-11-01-1/chat", json={"mensaje": "acorta el titular"})
+    assert r.status_code == 502 and "max_tokens" in r.json()["detail"]
+    monkeypatch.setattr(edicion, "chat", lambda *x, **k: (_ for _ in ()).throw(KeyError("libros")))
+    r = c.post(f"/api/ejecuciones/{eid}/piezas/2026-11-01-1/chat", json={"mensaje": "acorta el titular"})
+    assert r.status_code == 500 and "KeyError" in r.json()["detail"]

@@ -73,6 +73,17 @@ def editar_diapositiva(cfg: Config, p: Pieza, n: int, texto: str, subtitulo: str
     return nueva, validar(cfg, nueva, nueva.guion)
 
 
+def _copiar_imagenes(dir_fecha, pid: str) -> dict:
+    from folio.imagenes import libres
+    carpeta = libres.dir_imagenes(dir_fecha)
+    return {f: f.read_bytes() for patron in (f"{pid}.*", f"{pid}-noticia.*") for f in carpeta.glob(patron)} if carpeta.exists() else {}
+
+
+def _restaurar_imagenes(dir_fecha, copia: dict) -> None:
+    for f, datos in copia.items():
+        f.write_bytes(datos)
+
+
 def _bloque_pieza(p: Pieza) -> str:
     libros = "\n".join(f"- {l.titulo_propuesto} ({', '.join(l.autores)}; edición española: {l.edicion_es})" for l in p.libros)
     citas = "\n".join(f"- «{c.texto}»" for c in p.citas) or "(ninguna)"
@@ -95,7 +106,7 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
         if r.guion is None:
             if r.imagen is None:
                 return r.respuesta, None, avisos
-            nueva, nota = aplicar_imagen(llm, cfg, p, r.imagen)
+            nueva, nota = _imagen_sin_romper(llm, cfg, p, r.imagen)
             return (f"{r.respuesta} {nota}".strip()), nueva, avisos
         guionista.corregir_mecanico(r.guion)
         errores = [e for e in validar(cfg, p, r.guion) if e not in previos]
@@ -107,7 +118,7 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
             if AVISO_CHAT not in nueva.revision_humana:
                 nueva.revision_humana.append(AVISO_CHAT)
             if r.imagen is not None:
-                con_imagen, nota = aplicar_imagen(llm, cfg, nueva, r.imagen)
+                con_imagen, nota = _imagen_sin_romper(llm, cfg, nueva, r.imagen)
                 return f"{r.respuesta} {nota}".strip(), con_imagen or nueva, avisos
             return r.respuesta, nueva, avisos
         avisos.append(f"Intento {intento + 1} rechazado: " + " | ".join(errores))
@@ -115,6 +126,14 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
                      {"role": "user", "content": "El guion no cumple estas condiciones:\n" + "\n".join(f"- {e}" for e in errores)
                       + "\nCorrígelo y devuelve el JSON completo."}]
     return ("No he podido hacer ese cambio sin romper las reglas de Folio: " + "; ".join(errores)), None, avisos
+
+
+def _imagen_sin_romper(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pieza | None, str]:
+    """El cambio de imagen, sin que un fallo de Europeana, Commons o Magnific tumbe el turno del chat."""
+    try:
+        return aplicar_imagen(llm, cfg, p, a)
+    except Exception as exc:
+        return None, f"(No se pudo cambiar la imagen: {type(exc).__name__}: {str(exc)[:160]}.)"
 
 
 def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pieza | None, str]:
@@ -168,8 +187,15 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
                                   sin_foto=SinFoto(recurso="golpe"), infografia=Infografia(tipo="ninguna"))
         antes = (ar.imagen, list(ar.avisos))
         usadas = {archivo.archivo} if archivo else set()
-        direccion._imagen_de_archivo(llm, cfg, nueva, direccion._bloque_pieza(nueva, None), propuesta, ar, usadas, dir_fecha)
+        # Copia de la imagen actual: la búsqueda la borra antes de elegir, y si no encuentra otra se devuelve
+        copia = _copiar_imagenes(dir_fecha, p.id)
+        try:
+            direccion._imagen_de_archivo(llm, cfg, nueva, direccion._bloque_pieza(nueva, None), propuesta, ar, usadas, dir_fecha)
+        except Exception:
+            _restaurar_imagenes(dir_fecha, copia)
+            raise
         if not ar.imagen or ar.imagen == antes[0]:
+            _restaurar_imagenes(dir_fecha, copia)
             return None, "(No he encontrado otra imagen libre a la altura con esas búsquedas.)"
         ar.registro, ar.recurso = "archivo", "foto"
         if ar.portada == "panorama":

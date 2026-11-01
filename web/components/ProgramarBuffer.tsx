@@ -47,8 +47,7 @@ export function ProgramarBuffer({ eid, pid }: { eid: number; pid: string }) {
       recargar();
     } catch (err) {
       const texto = err instanceof Error ? err.message : String(err);
-      const detalle = texto.match(/"detail":"([^"]+)"/)?.[1];
-      setError(detalle ?? "No se pudo programar. Prueba otra vez en un momento.");
+      setError(texto.replace(/^\d+ \S+: /, "") || "No se pudo programar. Prueba otra vez en un momento.");
     } finally {
       setEnviando(false);
       setConfirmando(false);
