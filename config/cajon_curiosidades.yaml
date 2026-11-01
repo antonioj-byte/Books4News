@@ -7,9 +7,11 @@
 # comprobación de hechos coteja contra ellos, como con una noticia.
 #
 # Cada fuente se ha descargado una vez para comprobar que da texto (las que respondían 403 se quitaron).
-# Para añadir una: id estable (minúsculas y guiones), titular neutro, resumen de dos frases y 1–3 fuentes.
+# Para añadir una: id estable (minúsculas y guiones), titular neutro, resumen de dos frases y 1–3 fuentes;
+# `protagonista`, la persona real de la historia si la hay: su retrato va en la portada (1/11).
 
 - id: biblioteca-del-futuro
+  protagonista: Katie Paterson
   titular: En un bosque de Oslo crecen los árboles que imprimirán en 2114 cien libros que hoy nadie puede leer
   resumen: La artista Katie Paterson plantó mil árboles en 2014 y cada año un escritor entrega un manuscrito que quedará sellado hasta 2114. Margaret Atwood fue la primera; los textos esperan en una sala de la biblioteca Deichman.
   fuentes:
@@ -24,12 +26,14 @@
     - {medio: EFE, url: "https://www.infobae.com/espana/agencias/2024/06/22/malditas-erratas-errores-minusculos-que-los-editores-asumen-como-grandes-culpas/", titulo: "Malditas erratas: errores minúsculos que los editores asumen como grandes culpas"}
 
 - id: el-secuestro-perec
+  protagonista: Georges Perec
   titular: Cómo se tradujo al español una novela escrita sin la letra «e»
   resumen: Georges Perec escribió La disparition sin usar la «e»; su versión española, El secuestro, renunció a la «a», la vocal más frecuente del castellano. Un caso extremo de lo que la traducción literaria puede y no puede conservar.
   fuentes:
     - {medio: TRANS. Revista de Traductología, url: "https://revistas.uma.es/index.php/trans/article/view/2363", titulo: "El derecho a ser intraducible: La disparition, de Georges Perec, en castellano"}
 
 - id: sylvia-beach-ulises
+  protagonista: Sylvia Beach
   titular: La librera que publicó el Ulises cuando ningún editor se atrevía
   resumen: En 1922 Sylvia Beach, dueña de la librería Shakespeare and Company de París, editó el Ulises de Joyce, rechazado y perseguido por obsceno en el mundo anglosajón. Su tienda fue biblioteca, oficina de correos y casa de la Generación Perdida.
   fuentes:
@@ -37,6 +41,7 @@
     - {medio: Ara, url: "https://es.ara.cat/cultura/volver-librerias-encanto-mundo_130_4386339.html", titulo: "Volver a una de las librerías con más encanto del mundo"}
 
 - id: zhivago-feltrinelli
+  protagonista: Giangiacomo Feltrinelli
   titular: El doctor Zhivago salió de la URSS en una maleta y la CIA lo devolvió impreso
   resumen: El editor italiano Giangiacomo Feltrinelli publicó en 1957 la novela de Pasternak, prohibida en la Unión Soviética, y la CIA imprimió ejemplares para hacerlos circular tras el telón de acero. Pasternak ganó el Nobel en 1958 y fue obligado a rechazarlo.
   fuentes:
@@ -44,6 +49,7 @@
     - {medio: History.com, url: "https://history.com/news/when-the-cia-used-dr-zhivago-as-a-cold-war-weapon", titulo: "When the CIA Used 'Dr. Zhivago' as a Cold War Weapon"}
 
 - id: penguin-exeter
+  protagonista: Allen Lane
   titular: El libro de bolsillo nació en un andén sin nada que leer
   resumen: Allen Lane volvía en 1934 de visitar a Agatha Christie y no encontró en la estación de Exeter nada decente que leer; en 1935 lanzó Penguin con diez títulos a seis peniques. Los vendió también Woolworths, y cambió quién podía tener libros en casa.
   fuentes:
@@ -51,6 +57,7 @@
     - {medio: MoneyWeek, url: "https://moneyweek.com/331639/30-july-1935-penguin-sparks-the-paperback-revolution", titulo: "30 July 1935: Penguin sparks the 'paperback revolution'"}
 
 - id: gide-rechazo-proust
+  protagonista: Marcel Proust
   titular: El día que André Gide rechazó a Proust (y lo lamentó toda la vida)
   resumen: En 1912 la Nouvelle Revue Française, con Gide como lector, rechazó Por el camino de Swann; Proust lo publicó en 1913 pagándolo de su bolsillo en Grasset. Gide pidió perdón por carta y Gallimard acabó publicando la obra.
   fuentes:
@@ -58,6 +65,7 @@
     - {medio: Hérodote, url: "https://www.herodote.net/Marcel_Proust_1871_1922_-evenement-19131114.php", titulo: "14 novembre 1913: Proust publie Du côté de chez Swann"}
 
 - id: carmen-balcells
+  protagonista: Carmen Balcells
   titular: La agente literaria que pagaba a García Márquez para que solo escribiera
   resumen: Carmen Balcells, desde Barcelona, representó a García Márquez, Vargas Llosa, Neruda o Cortázar y cambió los contratos de los autores en español. La llamaban Mamá Grande.
   fuentes:
@@ -86,6 +94,7 @@
     - {medio: Lecturalia, url: "https://www.lecturalia.com/blog/2017/06/23/cual-es-la-libreria-mas-antigua-del-mundo", titulo: "¿Cuál es la librería más antigua del mundo?"}
 
 - id: aldo-manuzio
+  protagonista: Aldo Manuzio
   titular: El impresor veneciano que inventó el libro para llevar en el bolsillo
   resumen: Aldo Manuzio fundó su imprenta en Venecia en la década de 1490 y editó clásicos en octavo, pequeños y baratos, con una letra nueva, la cursiva, grabada por Francesco Griffo. Es el antepasado del libro de bolsillo.
   fuentes:
@@ -93,6 +102,7 @@
     - {medio: Universitat de Barcelona, url: "https://www.ub.edu/artsgrafiques/node/400", titulo: "Aldo Manuzio"}
 
 - id: juicio-lady-chatterley
+  protagonista: D. H. Lawrence
   titular: «¿Querrían que su mujer o sus criados leyeran este libro?»
   resumen: En 1960 Penguin fue juzgada por publicar El amante de Lady Chatterley y el fiscal hizo al jurado una pregunta que lo hundió; Penguin ganó. Vendió millones de ejemplares en pocos meses.
   fuentes:
@@ -101,6 +111,7 @@
     - {medio: The Conversation, url: "https://theconversation.com/the-chatterley-trial-60-years-on-a-court-case-that-secured-free-expression-in-1960s-britain-149197", titulo: "The Chatterley trial 60 years on"}
 
 - id: kafka-brod
+  protagonista: Franz Kafka
   titular: Kafka pidió que quemaran todo y su mejor amigo no le hizo caso
   resumen: Max Brod desobedeció la última voluntad de Kafka, publicó El proceso y El castillo y en 1939 huyó a Palestina con los manuscritos en una maleta. Tras décadas de pleitos, los tribunales israelíes los dieron a la Biblioteca Nacional de Israel.
   fuentes:

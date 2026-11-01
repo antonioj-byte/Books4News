@@ -87,7 +87,7 @@ def test_seleccion_con_el_cajon(cfg):
             return SeleccionJefe(elegidas=[CURIOSIDAD, mezclada, *normales], reserva=[]), []
 
     sel, avisos = seleccion.seleccionar(LLMJefe(cfg), [h, hc], "2026-11-01")
-    assert "1 del cajón de curiosidades" in prompts[0] and "id: cajon-biblia-malvada" in prompts[0]
+    assert "1 de historia editorial (del cajón)" in prompts[0] and "id: cajon-biblia-malvada" in prompts[0]
     assert [e.formato for e in sel.elegidas][0] == "curiosidad" and len(sel.elegidas) == 7
     assert any("tiene que salir del cajón" in a for a in avisos)
     assert not any("libros candidatos" in a for a in avisos)          # la curiosidad puede ir sin candidatos
@@ -135,3 +135,42 @@ def test_render_de_una_curiosidad_sin_libro(cfg, tmp_path, monkeypatch):
         pytest.skip(f"Chromium no disponible: {exc}")
     assert [a.name for a in archivos][:4] == ["01-portada.png", "02-actualidad.png", "03-idea.png", "04-cierre.png"]
     shutil.copytree(tmp_path, cfg.raiz.parent / "render-curiosidad", dirs_exist_ok=True)
+
+
+def test_la_historia_sin_libro_busca_el_retrato_de_su_protagonista(cfg):
+    from folio import arte, infografia
+    from folio.modelos import Infografia
+    p = Pieza(id="2026-11-01-7", fecha="2026-11-01", estado="propuesta", historia_id="cajon-el-secuestro-perec",
+              eleccion=CURIOSIDAD.model_copy(update={"protagonista": "Georges Perec"}), n_medios=1, libros=[],
+              guion=guion_sin_libro(), fuentes=[FUENTE])
+    assert arte.autor_principal(p) == "Georges Perec"
+    assert arte.autor_principal(p.model_copy(update={"eleccion": CURIOSIDAD})) is None
+    # Sin libro, ni línea de tiempo ni mapa (el mapa acaba en el libro)
+    for tipo in ("linea", "mapa"):
+        info, avisos = infografia.validar(Infografia(tipo=tipo, titulo="La regla hace la obra", etiquetas=["errata", "Biblia"]),
+                                          p, ["linea", "mapa", "esquema"], True)
+        assert info is None and "necesita un libro" in avisos[0]
+
+
+def test_el_cajon_lleva_protagonistas():
+    perec = next(c for c in cajon.cargar(RAIZ) if c.id == "el-secuestro-perec")
+    assert perec.protagonista == "Georges Perec" and "(protagonista: Georges Perec)" in cajon.historia(perec).resumen_es
+
+
+def test_la_portada_sin_libro_lleva_la_cara_de_su_protagonista(cfg):
+    from PIL import Image
+    from folio.imagenes import libres
+    from folio.modelos import Arte
+    (cfg.raiz / "diseno").symlink_to(render.dir_diseno(type(cfg)(pipeline={}, fuentes=[])).resolve())
+    cache = cfg.dir_cache("2026-11-01")
+    libres.dir_imagenes(cache).mkdir(parents=True)
+    Image.new("RGB", (1200, 1500), (90, 90, 90)).save(libres.dir_imagenes(cache) / "2026-11-01-7-retrato.jpg")
+    def con(persona):
+        libres.guardar_metadatos(libres.ImagenLibre(archivo="commons:File:x.jpg", pagina="", url="", ancho=1200, alto=1500,
+                                 licencia="CC BY 4.0", licencia_url=None, autor="A", descripcion="", libre=True, motivo="",
+                                 local="2026-11-01-7-retrato.jpg", persona=persona), "2026-11-01-7-retrato", cache)
+        p = Pieza(id="2026-11-01-7", fecha="2026-11-01", estado="propuesta", historia_id="cajon-el-secuestro-perec",
+                  eleccion=CURIOSIDAD.model_copy(update={"protagonista": "Georges Perec"}), n_medios=1, libros=[],
+                  guion=guion_sin_libro(), fuentes=[FUENTE], arte=Arte(tono="sereno", recurso="foto", portada="sangre", registro="foto_autor"))
+        return render.Plantillas(cfg).html_diapositiva(p, 1)
+    assert "con-retrato" in con("Georges Perec") and "con-retrato" not in con("Italo Calvino")

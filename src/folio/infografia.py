@@ -65,6 +65,9 @@ def validar(info: Infografia | None, pieza: Pieza, permitidos: list[str], hay_im
         return None, []
     if info.tipo not in permitidos:
         return None, [f"Infografía: «{info.tipo}» no está permitida en la configuración"]
+    if info.tipo in ("linea", "mapa") and not libro_principal(pieza):
+        # La línea pone los años del libro y el mapa termina en el libro: sin libro no cuentan nada
+        return None, [f"Infografía: «{info.tipo}» necesita un libro y la pieza no lleva; sin infografía"]
     info = info.model_copy(deep=True)
     avisos = []
     titulo = _titulo(info.titulo)

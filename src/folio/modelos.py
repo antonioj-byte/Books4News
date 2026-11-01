@@ -92,6 +92,7 @@ class HistoriaElegida(BaseModel):
     cuestion_de_fondo: str = Field(description="La cuestión de fondo, en una frase")
     libros_candidatos: list[LibroCandidato] = Field(description="3–4 libros candidatos, por orden de preferencia (en una curiosidad, de 0 a 4)")
     gancho_libro: str = Field(default="", description="En una línea, cómo entra el libro desde la portada: qué vio, explicó o anticipó su autor")
+    protagonista: str = Field(default="", description="Solo en historia editorial y radar: nombre completo de la persona real que protagoniza la historia (un autor, un editor, una librera), para buscar su retrato; vacío si no hay una")
     por_que: str = Field(description="Por qué esta historia y no otra, en dos líneas")
 
 

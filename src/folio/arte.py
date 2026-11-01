@@ -370,7 +370,10 @@ def autor_principal(pieza: Pieza) -> str | None:
     from folio.guion import libro_verificado
     principal = (libro_verificado(pieza.guion.libros[0], pieza.libros) if pieza.guion and pieza.guion.libros else None) \
         or (pieza.libros[0] if pieza.libros else None)
-    return principal.autores[0] if principal and principal.autores else None
+    if principal:
+        return principal.autores[0] if principal.autores else None
+    # Sin libro (historia editorial, radar): la persona que protagoniza la historia (1/11, a petición del usuario)
+    return pieza.eleccion.protagonista.strip() or None
 
 
 AVISO_RETRATO_GENERADO = "Retrato generado con IA: comprueba el parecido con la foto original antes de publicar"
@@ -501,7 +504,7 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
                 cifra=propuesta.cifra, cifra_rotulo=propuesta.cifra_rotulo, por_que=propuesta.por_que,
                 avisos=validar_cifra(propuesta, pieza))
     del_dia = registros_del_dia or []
-    retrato = _retrato(cfg, pieza, arte, dir_fecha) if cfg.pipeline.arte.retratos and pieza.libros and pieza.libros[0].autores else None
+    retrato = _retrato(cfg, pieza, arte, dir_fecha) if cfg.pipeline.arte.retratos and autor_principal(pieza) else None
     quiere_ilustracion = propuesta.recurso == "ilustracion"
     arte.registro = elegir_registro(bool(retrato), quiere_ilustracion, del_dia)
     if arte.registro == "ilustracion" and not _ilustracion_editorial(llm, cfg, pieza, propuesta, arte, dir_fecha):

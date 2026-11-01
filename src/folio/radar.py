@@ -23,6 +23,7 @@ class TemaRadar(BaseModel):
     de_que_se_habla: str = Field(description="De qué se habla, en dos frases, solo con lo que dicen titulares y resúmenes")
     cuestion_de_fondo: str = Field(description="La cuestión de fondo, en una frase")
     por_que: str = Field(description="Por qué merece una pieza, en una línea")
+    protagonista: str = Field(description="Nombre completo de la persona real que protagoniza la historia, si la hay; si no, vacío")
 
 
 class RadarLLM(BaseModel):
@@ -50,5 +51,6 @@ def temas(llm: LLM, historias: list[Historia], sel: SeleccionJefe | None) -> tup
         vistos.add(t.historia_id)
         out.append(HistoriaElegida(formato="radar", historia_id=t.historia_id, titular=t.titular,
                                    de_que_se_habla=t.de_que_se_habla, cuestion_de_fondo=t.cuestion_de_fondo,
-                                   libros_candidatos=[], gancho_libro="", por_que=t.por_que))
+                                   libros_candidatos=[], gancho_libro="", por_que=t.por_que,
+                                   protagonista=t.protagonista.strip()))
     return out[: p.max_temas], avisos

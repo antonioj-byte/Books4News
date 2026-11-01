@@ -150,12 +150,14 @@ def test_radar(cfg):
 
         def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
             vistos.append(mensajes[0]["content"])
-            t = dict(titular="Un manuscrito de Poe sobrevive a dos incendios", de_que_se_habla="x", cuestion_de_fondo="y", por_que="z")
+            t = dict(titular="Un manuscrito de Poe sobrevive a dos incendios", de_que_se_habla="x", cuestion_de_fondo="y", por_que="z",
+                     protagonista="Edgar Allan Poe")
             return radar.RadarLLM(temas=[radar.TemaRadar(historia_id=i, **t) for i in ("e2", "e2", "a1", "inventada")]), []
 
     sel = SeleccionJefe(elegidas=[ELECCION.model_copy(update={"historia_id": "e0"})], reserva=[])
     temas, avisos = radar.temas(LLMRadar(cfg), hs, sel)
     assert [t.historia_id for t in temas] == ["e2"] and temas[0].formato == "radar" and temas[0].libros_candidatos == []
+    assert temas[0].protagonista == "Edgar Allan Poe"
     assert "id: e1" in vistos[0] and "id: e2" in vistos[0] and "id: e0" not in vistos[0] and "id: a1" not in vistos[0]
     assert len(avisos) == 3
     cfg.pipeline.radar.activo = False

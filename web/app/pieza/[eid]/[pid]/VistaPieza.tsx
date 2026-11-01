@@ -103,7 +103,7 @@ export function VistaPieza() {
             {d.pieza.eleccion.gancho_libro && (
               <p className="titular text-[20px] italic leading-snug text-tinta-suave" style={{ fontWeight: 400 }}>{d.pieza.eleccion.gancho_libro}</p>
             )}
-            {d.lomos.length === 0 && <p className="dato">{d.pieza.eleccion.formato === "radar" ? "Radar del libro" : "Curiosidad del cajón"} · sin libro</p>}
+            {d.lomos.length === 0 && <p className="dato">{d.pieza.eleccion.formato === "radar" ? "Radar del libro" : "Historia editorial"} · sin libro</p>}
             <div className="flex flex-wrap gap-4">
               {d.lomos.map((l) => (
                 <div key={l.titulo} className="flex items-center gap-3">

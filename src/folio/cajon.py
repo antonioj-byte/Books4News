@@ -28,6 +28,7 @@ class Curiosidad(BaseModel):
     id: str = Field(pattern=r"^[a-z0-9-]+$")
     titular: str
     resumen: str
+    protagonista: str = ""          # la persona real de la historia, si la hay (su retrato va en la portada)
     fuentes: list[FuenteCajon] = Field(min_length=1)
 
 
@@ -59,7 +60,7 @@ def historia(c: Curiosidad) -> Historia:
                  for i, f in enumerate(c.fuentes, 1)]
     medios = list(dict.fromkeys(f.medio for f in c.fuentes))
     return Historia(id=PREFIJO + c.id, articulos=articulos, medios=medios, n_medios=len(medios),
-                    titular_es=c.titular, resumen_es=c.resumen, seccion="cultura", sobre_libros=True, carril="cajon")
+                    titular_es=c.titular, resumen_es=c.resumen + (f" (protagonista: {c.protagonista})" if c.protagonista else ""), seccion="cultura", sobre_libros=True, carril="cajon")
 
 
 def disponibles(raiz: Path, usadas: set[str]) -> list[Historia]:

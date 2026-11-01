@@ -221,7 +221,8 @@ class Plantillas:
         retrato = self.medios.retrato(pieza)
         # La cara solo va con su libro: en la portada, si es el autor del libro principal; en una
         # diapositiva de libro, si es el autor de ese libro
-        if retrato and not misma_persona(retrato["persona"], (libro or (libros[:1] or [{}])[0]).get("autor")):
+        cara_de = (libro or (libros[:1] or [{}])[0]).get("autor") if libros else (pieza.eleccion.protagonista or None)
+        if retrato and not misma_persona(retrato["persona"], cara_de):
             retrato = None
         if d.tipo == "portada" and retrato and not (a and (a.portada == "panorama" or (a.registro == "archivo" and imagen))):
             imagen = retrato        # la cara del autor manda en la portada (salvo en la panorámica o si se eligió el archivo)

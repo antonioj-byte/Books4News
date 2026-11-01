@@ -47,7 +47,7 @@ Si no se encuentra imagen y no hay cifra, la diapositiva de actualidad sería un
 - `sello`: de 1 a 3 palabras del texto para el sello («sin capítulos»).
 
 La infografía de la idea (`infografia`):
-La diapositiva de la idea puede llevar encima una infografía en una tarjeta de papel, que en el vídeo se dibuja. Elige la que mejor explique la lectura lateral de esta pieza, o «ninguna» si ninguna aporta (mejor ninguna que una de relleno):
+La diapositiva de la idea puede llevar encima una infografía en una tarjeta de papel, que en el vídeo se dibuja. Elige una solo si cuenta algo que el texto de la diapositiva no cuenta ya, de un vistazo; si no, «ninguna». En la mayoría de las piezas lo correcto es «ninguna»: una infografía de relleno (tres círculos con palabras sueltas) estropea la diapositiva. Si la pieza no lleva libro, ni línea ni mapa:
 - «linea»: línea de tiempo con los años del libro (primera edición y, si es de otro año, la edición española) y el de la noticia. Los años los pone el código con los datos verificados: no los escribas. Para cuando importa que el libro se escribiera antes de que pasara lo de hoy.
 - «mapa»: tres círculos unidos, noticia → idea → libro, con dos rótulos en las uniones. Para cuando la idea es el puente entre dos cosas que no parecen tener que ver.
 - «esquema»: la imagen de la pieza convertida en un dibujo técnico, con tres rótulos que señalan partes. Para cuando la idea se explica como un mecanismo, un sistema o una estructura. Necesita imagen.

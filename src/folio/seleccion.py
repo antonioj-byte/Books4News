@@ -36,9 +36,9 @@ def anio_minimo(fecha: str, anios: int) -> int:
 
 
 NOMBRES_FORMATO = {"lateral": "lectura lateral", "dialogo": "diálogo con la actualidad", "edicion": "mundo del libro",
-                   "curiosidad": "curiosidad", "recomendado": "libro recomendado", "radar": "radar del libro"}
+                   "curiosidad": "historia editorial", "recomendado": "libro recomendado", "radar": "radar del libro"}
 _EN_EL_REPARTO = {"lateral": "de lectura lateral", "dialogo": "de diálogo con la actualidad", "edicion": "del mundo del libro",
-                  "curiosidad": "del cajón de curiosidades", "recomendado": "de libro recomendado"}
+                  "curiosidad": "de historia editorial (del cajón)", "recomendado": "de libro recomendado"}
 # El carril del que tiene que salir cada formato que no es de actualidad
 _CARRIL_DEL_FORMATO = {"curiosidad": "cajon", "recomendado": "catalogo"}
 

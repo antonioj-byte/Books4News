@@ -43,7 +43,7 @@ const FORMATOS: Record<string, { texto: string; clase: string }> = {
   lateral: { texto: "Lectura lateral", clase: "border border-tinta text-tinta" },
   dialogo: { texto: "Diálogo con la actualidad", clase: "bg-tinta text-papel" },
   edicion: { texto: "Mundo del libro", clase: "bg-carmesi text-papel" },
-  curiosidad: { texto: "Curiosidad", clase: "bg-subrayador text-tinta" },
+  curiosidad: { texto: "Historia editorial", clase: "bg-subrayador text-tinta" },
   recomendado: { texto: "Libro recomendado", clase: "bg-verde text-papel" },
   radar: { texto: "Radar del libro", clase: "border border-carmesi text-carmesi" },
 };
