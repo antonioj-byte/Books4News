@@ -66,6 +66,11 @@ def test_las_reglas_de_la_conversacion_se_cargan_una_vez_como_aplicadas(tmp_path
     assert sum(p.propuesta == "Regla reescrita para la prueba." for p in a.patrones()) == 1
     assert len(a.patrones()) == len(entradas)
     assert "conversación" in memoria.markdown(a)
+    # Una regla que sale del archivo (sustituida por otra) sale también de la memoria; las del feedback, no
+    a.guardar_patron("Un patrón del feedback", ["x"], "Una regla", "guionista")
+    quitada = entradas.pop()["clave"]
+    a.importar_conversacion(entradas)
+    assert quitada not in {p.clave for p in a.patrones()} and len(a.patrones()) == len(entradas) + 1
 
 
 def test_claves_repetidas_o_destino_desconocido_no_valen(tmp_path):

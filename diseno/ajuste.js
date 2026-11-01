@@ -26,6 +26,16 @@ document.fonts.ready.then(() => {
     }
     if (caja.scrollHeight > caja.clientHeight + 1) document.body.dataset.desborda = "1";
   }
+  // El colofón no tiene .texto: se encoge entero con su escala hasta que quepa en la ficha (2/11: con cinco
+  // noticias y los créditos de la ilustración, la última línea se salía por abajo)
+  for (const caja of document.querySelectorAll(".diapositiva--colofon .cuerpo")) {
+    let escala = 1;
+    while (caja.scrollHeight > caja.clientHeight + 1 && escala > 0.62) {
+      escala = Math.round((escala - 0.04) * 100) / 100;
+      caja.style.setProperty("--colofon-escala", escala);
+    }
+    if (caja.scrollHeight > caja.clientHeight + 1) document.body.dataset.desborda = "1";
+  }
   // [data-encajar]: una sola pieza (la cifra destacada) que se reduce hasta caber a lo ancho
   for (const el of document.querySelectorAll("[data-encajar]")) {
     let tam = parseFloat(getComputedStyle(el).fontSize);

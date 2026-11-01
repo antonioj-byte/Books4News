@@ -300,9 +300,14 @@ class Almacen:
 
     def importar_conversacion(self, entradas: list[dict]) -> int:
         """Lo decidido en las conversaciones de trabajo, como patrones «aplicada» (idempotente por clave: si el
-        texto cambia en el archivo se actualiza, el estado no se toca). Devuelve cuántas son nuevas."""
+        texto cambia en el archivo se actualiza, el estado no se toca). Las de conversación que ya no están en el
+        archivo se quitan: una regla sustituida no puede seguir en la memoria junto a la nueva (2/11, «ilustración
+        apagada» seguía al lado de «mejorarla»). Devuelve cuántas son nuevas."""
         nuevas = 0
         with self._transaccion() as db:
+            claves = [e["clave"] for e in entradas]
+            db.execute(f"DELETE FROM memoria WHERE origen = 'conversacion' AND clave NOT IN ({','.join('?' * len(claves))})"
+                       if claves else "DELETE FROM memoria WHERE origen = 'conversacion'", claves)
             for e in entradas:
                 evidencia = json.dumps(e["evidencia"], ensure_ascii=False)
                 f = db.execute("SELECT id FROM memoria WHERE clave = ?", (e["clave"],)).fetchone()

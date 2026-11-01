@@ -98,7 +98,7 @@ def guardar(cfg: Config, p: Pieza, nombre: str, datos: bytes, mime: str, credito
         raise NoValido(f"Esta pieza ya tiene {MAX_POR_PIEZA} materiales: borra alguno antes")
     mid = secrets.token_hex(4)
     m = Material(id=mid, nombre=nombre, tipo=tipo, credito=" ".join(credito.split())[:200], nota=" ".join(nota.split())[:500],
-                 subido_en=datetime.now(timezone.utc).isoformat(timespec="seconds"), bytes=len(datos))
+                 subido_en=datetime.now(timezone.utc).isoformat(timespec="microseconds"), bytes=len(datos))
     d = carpeta(cfg, p)
     d.mkdir(parents=True, exist_ok=True)
     if tipo == "imagen":
