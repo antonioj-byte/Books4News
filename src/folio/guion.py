@@ -522,7 +522,13 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     errores: list[str] = []
     avisos: list[str] = []
     citas: dict[str, CitaVerificada | None] = {}
-    for intento in range(cfg.pipeline.guion.reintentos + 1):
+    # El lector sin contexto (2/11): una vez, cuando el guion ya cumple las reglas. Si no entiende algo, el guionista
+    # reescribe esas frases en un turno más; si esa reescritura rompe alguna regla, vale la versión anterior.
+    claridad_pendiente = cfg.pipeline.guion.lector_sin_contexto
+    respaldo = None
+    reintentos = cfg.pipeline.guion.reintentos
+    intento = 0
+    while True:
         guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", mensajes, GuionLLM,
                                             etapa_modelo="guion")
         corregido = corregir_mecanico(guion)
@@ -533,17 +539,47 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
         criticas = citas_de_la_critica(guion, libros, textos)
         errores = validar(cfg, guion, libros, fuentes, citas_ok, frozenset(normalizar(c.texto) for c in criticas), eleccion.formato)
         if not errores:
-            if intento:
-                avisos.append(f"Guion aceptado en el intento {intento + 1}")
             textos_finales = " ".join(t for x in guion.diapositivas for t in (x.texto, x.subtitulo) if t) + guion.pie_instagram
-            return guion, avisos, [c for f, c in citas.items() if c and f in textos_finales] + criticas
+            aceptado = (guion, [c for f, c in citas.items() if c and f in textos_finales] + criticas)
+            problemas = []
+            if claridad_pendiente:
+                claridad_pendiente = False
+                try:
+                    from folio import claridad
+                    problemas = claridad.revisar(llm, cfg, pieza_id, guion)
+                except Exception as exc:          # el lector nunca para el guion
+                    avisos.append(f"Lector sin contexto: no se pudo ({type(exc).__name__})")
+            if not problemas:
+                if intento:
+                    avisos.append(f"Guion aceptado en el intento {intento + 1}")
+                return aceptado[0], avisos, aceptado[1]
+            respaldo = aceptado
+            avisos.append("Lector sin contexto: " + " | ".join(problemas))
+            mensajes += [
+                {"role": "assistant", "content": _contenido_para_reenviar(contenido)},
+                {"role": "user", "content": "Un lector que no conoce la obra ni la noticia no entiende esto:\n"
+                 + "\n".join(f"- {x}" for x in problemas)
+                 + "\nReescribe esas frases para que se entiendan sin saber nada: presenta en pocas palabras a cada persona, "
+                 "lugar o episodio que no sea de dominio común y cambia las alusiones por lo que significan, sin pasarte de las "
+                 "palabras por diapositiva y sin tocar lo demás. Devuelve el JSON completo."},
+            ]
+            intento += 1
+            continue
+        if respaldo:
+            # La reescritura para el lector sin contexto rompió alguna regla: vale la versión que las cumplía
+            avisos.append(f"Lector sin contexto: la reescritura no cumplía las reglas ({' | '.join(errores)}); "
+                          "se queda la versión anterior")
+            return respaldo[0], avisos, respaldo[1]
         # Se registra por qué se rechaza cada intento: es lo que permite saber qué reglas
         # provocan los reintentos y si conviene reforzarlas en el prompt.
         avisos.append(f"Rechazado en el intento {intento + 1}: " + " | ".join(errores))
+        if intento >= reintentos:
+            break
         mensajes += [
             {"role": "assistant", "content": _contenido_para_reenviar(contenido)},
             {"role": "user", "content": "El guion no cumple estas condiciones:\n"
              + "\n".join(f"- {e}" for e in errores)
              + "\nCorrígelo y devuelve el JSON completo."},
         ]
+        intento += 1
     raise ValueError("El guion no pasó la validación: " + " | ".join(errores))

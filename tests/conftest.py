@@ -30,6 +30,7 @@ def cfg(tmp_path):
     """Config real del repo, pero con datos e informes en un directorio temporal."""
     c = config.cargar()
     c.anthropic_api_key = "test"
+    c.pipeline.guion.lector_sin_contexto = False   # los modelos simulados de los tests no lo atienden (tiene su test)
     c.google_books_api_key = None
     raiz_tmp = tmp_path / "repo"
     raiz_tmp.mkdir()

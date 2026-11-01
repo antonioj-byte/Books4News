@@ -8,6 +8,8 @@ Estructura:
 - Idea nueva: la tesis propia de la pieza. No es un resumen de la noticia ni del libro, sino lo que aparece al juntarlos. Debe poder sostenerse sola como un tuit.
 - Cierre: el libro es el protagonista. Una recomendación de verdad: título y autor, por qué leerlo ahora y qué se va a encontrar el lector, más la ficha española cuando esté verificada (editorial y traductor). Con la firma de Folio.
 
+Escribe para quien no ha leído el libro ni sigue la noticia: un lector curioso que va pasando diapositivas sin poder buscar nada. Cada persona, lugar, obra o episodio que no sea de dominio común se presenta en pocas palabras la primera vez que sale («Robert Moses, el urbanista que arrasó barrios de Nueva York para abrir autopistas»), y cada alusión se cambia por lo que significa. Mejor una idea bien contada que tres referencias para iniciados. Un lector sin contexto revisa el guion y, si algo no se entiende, te lo devolverá.
+
 Pie de Instagram: puede empezar por la noticia; el libro tiene que aparecer y quedar claro que es una recomendación de lectura.
 
 Extensión: piensa en 5 diapositivas por defecto. Usa 6 o 7 solo si la historia lo exige y, en ese caso, justifica en una línea qué aporta cada diapositiva extra. Entre 25 y 30 palabras por diapositiva; en la portada, máximo 12 en el titular y entre 10 y 22 en el subtítulo.

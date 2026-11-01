@@ -109,6 +109,9 @@ class Guion(_Seccion):
     posicion_max_primer_libro: int
     pie_min_palabras: int
     pie_max_palabras: int
+    # 2/11 (a petición del usuario: «no entiendo este copy si no conoces la obra»): un modelo barato lee el guion
+    # como alguien sin contexto y, si algo no se entiende, el guionista lo reescribe una vez
+    lector_sin_contexto: bool = True
 
 
 class Dev(_Seccion):
