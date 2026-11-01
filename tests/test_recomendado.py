@@ -116,6 +116,7 @@ def test_citas_de_la_critica_solo_si_estan_letra_por_letra(cfg):
 
 
 def test_la_seleccion_con_catalogo(cfg):
+    cfg.pipeline.seleccion.elegidas, cfg.pipeline.seleccion.reparto = 8, {"lateral": 2, "dialogo": 2, "edicion": 2, "curiosidad": 1, "recomendado": 1}   # el mecanismo, con el reparto del 1/11
     h = Historia(id="h1", articulos=[], n_medios=1, medios=["El País"], titular_es="T", resumen_es="R")
     f = catalogo.leer_ficha((FIXTURES / "ttl_ficha.html").read_text(), URL_FICHA)
     hc = catalogo.historia(f)

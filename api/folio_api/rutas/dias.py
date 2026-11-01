@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from folio_api.dependencias import Contexto, contexto
-from folio_api.esquemas import Dia, DiaDetalle, Ejecucion, Lomo, PiezaResumen
+from folio_api.esquemas import Dia, DiaDetalle, Ejecucion, Enlace, Lomo, PiezaResumen
 from folio_api.servicio import marcas
 
 router = APIRouter()
@@ -42,6 +42,7 @@ def dia(fecha: str, ejecucion: int | None = None, ctx: Contexto = Depends(contex
         # En el lomo, el título que propuso el jefe: el de la ficha puede venir bilingüe («La Rusia de Putin/ Putin's Russia»)
         libros=lomos(ctx, p), formato=p.eleccion.formato, gancho=p.eleccion.gancho_libro,
         radar=p.radar, por_que=p.eleccion.por_que,
+        enlaces=[Enlace(medio=f.medio, url=f.url) for f in p.fuentes[:3] if f.url],
     ) for p, v in ctx.almacen.piezas(eid)]
     return DiaDetalle(fecha=fecha, ejecucion=next(e for e in ejecuciones if e.id == eid), ejecuciones=ejecuciones,
                       aviso_jefe=inf.seleccion.aviso if inf.seleccion else None, avisos=inf.avisos,

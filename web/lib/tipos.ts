@@ -727,6 +727,13 @@ export interface components {
             /** Piezas */
             piezas: number;
         };
+        /** Enlace */
+        Enlace: {
+            /** Medio */
+            medio: string;
+            /** Url */
+            url: string;
+        };
         /**
          * EstadoBuffer
          * @description Lo que la ficha de la pieza enseña junto al botón «Programar en Buffer».
@@ -1356,6 +1363,11 @@ export interface components {
              * @default
              */
             por_que: string;
+            /**
+             * Enlaces
+             * @default []
+             */
+            enlaces: components["schemas"]["Enlace"][];
         };
         /** ProgramadaBuffer */
         ProgramadaBuffer: {

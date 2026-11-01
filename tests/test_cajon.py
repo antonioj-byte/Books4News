@@ -70,6 +70,7 @@ def test_el_prompt_del_guionista_sin_libro(cfg):
 
 
 def test_seleccion_con_el_cajon(cfg):
+    cfg.pipeline.seleccion.elegidas, cfg.pipeline.seleccion.reparto = 8, {"lateral": 2, "dialogo": 2, "edicion": 2, "curiosidad": 1, "recomendado": 1}   # el mecanismo, con el reparto del 1/11
     h = Historia(id="h1", articulos=[], n_medios=1, medios=["El País"], titular_es="T", resumen_es="R")
     hc = cajon.historia(cajon.Curiosidad(id="biblia-malvada", titular="TC", resumen="RC",
                                          fuentes=[cajon.FuenteCajon(medio="BBC Mundo", url=URL_CAJON, titulo="x")]))

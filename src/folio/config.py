@@ -58,6 +58,7 @@ class Seleccion(_Seccion):
     # Novedad (31/10, a petición del usuario): solo libros publicados en los últimos N años (primera edición
     # o edición española); los anteriores se descartan al verificar
     antiguedad_libros: int = Field(default=2, ge=0)
+    solo_con_edicion_es: bool = True   # 2/11 (a petición del usuario): todos los libros, con edición en castellano verificada
     # Cajón de curiosidades (1/11, a petición del usuario): una historia del mundo del libro sin percha
     # (config/cajon_curiosidades.yaml) no vuelve a ofrecerse al jefe hasta pasados estos días
     dias_curiosidades: int = Field(default=90, ge=0)

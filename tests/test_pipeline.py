@@ -349,6 +349,7 @@ def test_proceder_con_guion_que_falla_deja_la_propuesta_fallida(cfg, monkeypatch
 
 
 def test_reparto_en_el_prompt_y_avisos_si_no_se_cumple(cfg):
+    cfg.pipeline.seleccion.elegidas, cfg.pipeline.seleccion.reparto = 8, {"lateral": 2, "dialogo": 2, "edicion": 2, "curiosidad": 1, "recomendado": 1}   # el mecanismo, con el reparto del 1/11
     from folio import seleccion
     assert seleccion.texto_reparto({"lateral": 2, "dialogo": 2, "edicion": 2}) == \
         "2 de lectura lateral, 2 de diálogo con la actualidad y 2 del mundo del libro"
@@ -372,6 +373,7 @@ def test_reparto_en_el_prompt_y_avisos_si_no_se_cumple(cfg):
 
 
 def test_si_falta_un_formato_el_jefe_completa_la_mesa(cfg):
+    cfg.pipeline.seleccion.elegidas, cfg.pipeline.seleccion.reparto = 8, {"lateral": 2, "dialogo": 2, "edicion": 2, "curiosidad": 1, "recomendado": 1}   # el mecanismo, con el reparto del 1/11
     from folio import seleccion
     from folio.modelos import Historia
     pasos = []
@@ -392,3 +394,25 @@ def test_si_falta_un_formato_el_jefe_completa_la_mesa(cfg):
     sel, avisos = seleccion.seleccionar(LLMJefe(cfg), [h], "2026-10-31")
     assert pasos == ["seleccion", "seleccion-completar"] and len(sel.elegidas) == 6
     assert "el jefe la ha completado" in avisos[0]
+
+
+def test_solo_libros_con_edicion_en_castellano(cfg):
+    """2/11 (a petición del usuario): un libro sin edición en castellano verificada se descarta, aunque sea novedad."""
+    from folio.modelos import HistoriaElegida, LibroCandidato
+    from folio.pipeline import Pipeline
+    from datos import LIBRO
+
+    class Verificador:
+        def verificar(self, c):
+            return LIBRO.model_copy(update={"titulo_propuesto": c.titulo, "edicion_es": "si" if "Traducido" in c.titulo else "no",
+                                            "anio_primera_edicion": 2026})
+    tuberia = Pipeline(cfg, "2026-11-02", verificador=Verificador())
+    e = HistoriaElegida(formato="lateral", historia_id="h1", titular="T", de_que_se_habla="D", cuestion_de_fondo="C",
+                        libros_candidatos=[LibroCandidato(titulo="Sin traducir", autor="Hannah Arendt"),
+                                           LibroCandidato(titulo="Traducido", autor="Hannah Arendt")], por_que="P")
+    ok, descartes = tuberia._verificar_libros(e, set())
+    assert [l.titulo_propuesto for l in ok] == ["Traducido"]
+    assert "sin edición en castellano" in descartes[0].motivo
+    cfg.pipeline.seleccion.solo_con_edicion_es = False
+    ok, _ = tuberia._verificar_libros(e, set())
+    assert len(ok) == 2

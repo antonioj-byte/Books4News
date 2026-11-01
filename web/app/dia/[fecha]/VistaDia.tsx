@@ -130,18 +130,25 @@ export function VistaDia() {
       {radar.length > 0 && (
         <section className="mt-12" aria-labelledby="h-radar">
           <div className="antetitulo">Radar del libro</div>
-          <h2 id="h-radar" className="titular mb-1 mt-2 text-[30px]">Temas del mundo del libro <em>para hoy</em></h2>
+          <h2 id="h-radar" className="titular mb-1 mt-2 text-[30px]">Breves del <em>mundo del libro</em></h2>
           <p className="mb-4 max-w-[62ch] text-[14px] text-tinta-suave">
-            Historias de los medios culturales y del sector que se sostienen solas. Sin escribir: «Desarrollar» hace la pieza (unos minutos).
+            Noticias con gancho que no necesitan una pieza propia: basta la noticia. Si alguna lo merece, «Escribir pieza» la desarrolla.
           </p>
           <ul className="panel divide-y divide-borde">
             {radar.map((p) => (
               <li key={p.pieza_id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <Link href={`/pieza/${p.ejecucion_id}/${p.pieza_id}`} className="titular text-[19px] leading-snug hover:text-carmesi">{p.titular}</Link>
+                  <p className="titular text-[19px] leading-snug">{p.titular}</p>
                   {p.por_que && <p className="mt-1 text-[14px] text-tinta-suave">{p.por_que}</p>}
+                  {p.enlaces.length > 0 && (
+                    <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[13px]">
+                      {p.enlaces.map((e) => (
+                        <a key={e.url} href={e.url} target="_blank" rel="noreferrer" className="underline decoration-borde underline-offset-2 hover:text-carmesi">Leer en {e.medio} ↗</a>
+                      ))}
+                    </p>
+                  )}
                 </div>
-                <div className="flex-none"><Proceder eid={p.ejecucion_id} pid={p.pieza_id} onHecho={recargarDia} texto="Desarrollar" /></div>
+                <div className="flex-none"><Proceder eid={p.ejecucion_id} pid={p.pieza_id} onHecho={recargarDia} texto="Escribir pieza" /></div>
               </li>
             ))}
           </ul>

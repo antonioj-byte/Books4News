@@ -311,6 +311,11 @@ class Pipeline:
             except NoVerificado as exc:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=exc.motivo))
                 continue
+            if self.cfg.pipeline.seleccion.solo_con_edicion_es and l.edicion_es != "si":
+                # 2/11, a petición del usuario: solo libros que se pueden leer en castellano (traducidos o escritos en él)
+                descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor,
+                                                 motivo=f"sin edición en castellano verificada (edición española: {l.edicion_es})"))
+                continue
             viejo = fuera_de_novedad(l, seleccion.anio_minimo(self.fecha, self.cfg.pipeline.seleccion.antiguedad_libros))
             if viejo:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=viejo))
@@ -462,8 +467,11 @@ class Pipeline:
             for j, e in enumerate(self.radar, len(cola) + 1):
                 h = por_id.get(e.historia_id)
                 if h:
+                    # Los breves del radar enseñan su noticia y su enlace sin escribir nada (2/11)
+                    fuentes = [FuenteNoticia(medio=a.medio, titulo=a.titulo, url=a.url, acceso=a.acceso, texto_completo=False)
+                               for a in h.articulos[:3]]
                     piezas.append(Pieza(id=f"{self.fecha}-{j}", fecha=self.fecha, estado="pendiente", radar=True,
-                                        historia_id=h.id, eleccion=e, n_medios=h.n_medios))
+                                        historia_id=h.id, eleccion=e, n_medios=h.n_medios, fuentes=fuentes))
         por_escribir = [p for p in piezas if p.estado == "pendiente" and not p.radar]
         while por_escribir and sum(p.estado == "propuesta" for p in piezas) < objetivo:
             faltan = objetivo - sum(p.estado == "propuesta" for p in piezas)

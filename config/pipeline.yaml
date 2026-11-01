@@ -60,13 +60,14 @@ seleccion:
   historias_editoriales: 16     # carril editorial: material para las propuestas del mundo del libro
   # Mesa del día (31/10): el jefe propone `elegidas` con este reparto por formato; se escriben solas las
   # `desarrollar_al_inicio` primeras y el resto espera a «Proceder» en la web. Sin reserva: las demás lo son.
-  elegidas: 8
+  elegidas: 6                    # 2/11 (a petición del usuario): seis propuestas, no ocho
   reserva: 0
   # curiosidad (1/11): una historia del cajón (config/cajon_curiosidades.yaml), sin percha y sin libro obligatorio
   # recomendado (1/11): una novedad de las editoriales independientes (catalogo, más abajo)
-  reparto: {lateral: 2, dialogo: 2, edicion: 2, curiosidad: 1, recomendado: 1}
-  desarrollar_al_inicio: 3       # 2/11 (a petición del usuario, «lo lento que es»): las 3 primeras se escriben de madrugada, en paralelo
+  reparto: {edicion: 2, dialogo: 1, lateral: 1, curiosidad: 1, recomendado: 1}   # 2/11: dos del mundo del libro, una de cada otro
+  desarrollar_al_inicio: 1       # 2/11 (a petición del usuario): solo se escribe de madrugada la primera, la que puede ser más viral
   antiguedad_libros: 2          # novedad: libros publicados en los últimos 2 años (primera edición o edición española)
+  solo_con_edicion_es: true      # 2/11 (a petición del usuario): «todos los libros tienen que tener radicalmente traducción al castellano»
   dias_curiosidades: 90         # una curiosidad del cajón no se repite en 90 días
   nevera_por_dia: 3             # historias editoriales nuevas que se buscan cada día para el cajón (2/11)
 

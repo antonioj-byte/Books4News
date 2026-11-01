@@ -272,3 +272,31 @@
   patron: "«Esta pieza no tiene sentido: el titular habla de que el más rápido tiene 41 años; el subtítulo (libro) explica el decaimiento del cuerpo. No veo el link»."
   propuesta: "Titular y subtítulo se leen como una sola idea: el subtítulo dice qué explica el libro de esta noticia en concreto; el lector sin contexto señala la portada si no se ve el puente."
   evidencia: ["Conversación, 2/11: portada de Fórmula 1 con Why We Die de Venki Ramakrishnan"]
+
+- clave: mesa-de-seis
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«Vamos a reducir el número de propuestas: mundo del libro, diálogo, lectura lateral, historia editorial, libro recomendado e historia de mundo del libro. Desarrolla solo un tema, el que pueda ser más viral»."
+  propuesta: "Seis propuestas (dos del mundo del libro y una de cada otro formato), ordenadas de más a menos conversacional e inspiradora; solo se escribe de madrugada la primera."
+  evidencia: ["Conversación, 2/11: petición del usuario"]
+
+- clave: breves-del-mundo-del-libro
+  fecha: "2026-11-02"
+  destino: formatos
+  patron: "«Propón otros temas del mundo del libro que puedan tener gancho, pero que no requieran desarrollo propio (simplemente, es una noticia)»."
+  propuesta: "El radar del libro es una lista de breves: noticias con gancho y su enlace, sin pieza propia salvo que la redacción la pida."
+  evidencia: ["Conversación, 2/11: petición del usuario"]
+
+- clave: cita-destacada
+  fecha: "2026-11-02"
+  destino: guionista
+  patron: "«Si vas a citar un libro, intenta meter una cita destacada y compatible»."
+  propuesta: "El guionista intenta que la pieza lleve una cita destacada del libro que sepa textual y que encaje con la idea; sigue verificándose y, si no aparece, parafrasea."
+  evidencia: ["Conversación, 2/11: petición del usuario"]
+
+- clave: solo-libros-en-castellano
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«Todos los libros que se propongan tienen que tener necesaria y radicalmente traducción al castellano»."
+  propuesta: "Solo libros con edición en castellano verificada (traducidos o escritos en castellano); el código descarta los demás al verificar."
+  evidencia: ["Conversación, 2/11: petición del usuario"]

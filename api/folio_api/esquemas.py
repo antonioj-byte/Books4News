@@ -37,6 +37,11 @@ class Lomo(BaseModel):
     cubierta: str | None = None           # URL de la cubierta, si la etapa de arte o la mesa la encontró
 
 
+class Enlace(BaseModel):
+    medio: str
+    url: str
+
+
 class PiezaResumen(BaseModel):
     ejecucion_id: int
     pieza_id: str
@@ -52,7 +57,8 @@ class PiezaResumen(BaseModel):
     formato: str = "lateral"              # lateral, dialogo, edicion, curiosidad, recomendado o radar
     gancho: str = ""                      # el gancho del libro que propuso el jefe (lo que se ve en la mesa)
     radar: bool = False                   # tema del radar del libro: lista aparte, a un clic
-    por_que: str = ""                     # por qué merece una pieza (lo que se ve en la lista del radar)
+    por_que: str = ""                     # por qué tiene gancho (lo que se ve en la lista de breves del radar)
+    enlaces: list[Enlace] = []            # las noticias de origen (medio y URL): en los breves del radar, para leerlas
 
 
 class DiaDetalle(BaseModel):

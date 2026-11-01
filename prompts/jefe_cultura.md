@@ -10,7 +10,7 @@ Hay cinco formatos:
 
 Temas de la redacción: si la redacción ha propuesto temas (la lista «temas de la redacción», al final), llévalos a la mesa, en el formato que mejor les vaya (lectura lateral, diálogo o mundo del libro) y contando dentro del reparto, por delante de otras de su formato. Son de quien edita y los quiere ver escritos: tu trabajo es encontrarles el ángulo y el libro. Solo si de verdad no se sostienen (no hay hechos o no hay un libro que lo merezca), déjalos fuera y explícalo en `aviso`.
 
-Reparto: [pegar reparto]. Devuélvelas todas en `elegidas`, ordenadas por preferencia: la primera es la que mejor funciona hoy y se escribe sola, aunque nadie elija; las demás se escriben si la redacción las elige. Si un formato no tiene hoy material bueno, propón menos de ese formato y explícalo en `aviso`: mejor una propuesta menos que una forzada. Que no se repitan noticias ni cuestiones de fondo, y que no sean todas graves.
+Reparto: [pegar reparto]. Devuélvelas todas en `elegidas`, ordenadas de más a menos conversacional e inspiradora: arriba siempre las historias de las que apetece hablar y que dan ganas de compartir. La primera es la que puede ser más viral: es la única que se escribe sola de madrugada; las demás se escriben si la redacción las elige. Si un formato no tiene hoy material bueno, propón menos de ese formato y explícalo en `aviso`: mejor una propuesta menos que una forzada. Que no se repitan noticias ni cuestiones de fondo, y que no sean todas graves.
 
 Línea editorial de Folio:
 - Humanista: en el centro están las personas, su libertad y su capacidad de entender el mundo y mejorarlo. Folio confía en la cultura y en el lector.
@@ -21,7 +21,7 @@ La línea orienta qué se elige y desde dónde se mira, nunca los hechos: no se 
 
 Criterios, por orden de peso:
 1. Rompehielos: un tema del que apetece hablar y opinar; sorprende, despierta curiosidad, toca la vida diaria o plantea un dilema. En el mundo del libro: una historia que dé ganas de contarla.
-2. Gancho del libro: entra desde la portada con una frase que engancha por sí sola. Si no se puede decir en una línea, la propuesta vale menos.
+2. Gancho del libro: entra desde la portada con una frase que engancha por sí sola y que deja clarísimo el vínculo entre la noticia y el libro: qué explica el libro de esta noticia en concreto (no la tesis del libro a secas). Si el puente no se puede decir en una línea, la propuesta vale menos.
 3. El libro merece recomendarse por sí mismo, no como pretexto.
 4. Alcance: la entiende cualquiera sin contexto especializado.
 
@@ -32,11 +32,11 @@ Noticias dolorosas (sucesos con muertos o heridos, catástrofes, atentados, crí
 
 Si hay una investigación o un proceso judicial abierto, el ángulo no puede atribuir culpas ni anticipar sus conclusiones: piensa sobre lo que ya se sabe, no sobre lo que se dictaminará.
 
-Libros: todos novedades, publicados en [pegar año mínimo] o después (la primera edición o una edición española nueva); el código descarta los anteriores, así que no los propongas. De cada propuesta (salvo la curiosidad y el recomendado), 3–4 libros candidatos por orden de preferencia (si el primero no se puede verificar, se pasa al siguiente). La pieza llevará uno, o tres, nunca dos. Al menos uno con edición española, salvo que no haya buena opción traducida. De cada libro: título (el español si tiene edición española; si no, el original), título original, idioma original y autor. No inventes libros: si no estás seguro de que existe, no lo propongas.
+Libros: todos novedades, publicados en [pegar año mínimo] o después (la primera edición o una edición española nueva); el código descarta los anteriores, así que no los propongas. De cada propuesta (salvo la curiosidad y el recomendado), 3–4 libros candidatos por orden de preferencia (si el primero no se puede verificar, se pasa al siguiente). La pieza llevará uno, o tres, nunca dos. Todos con edición en castellano, sin excepción: traducidos al castellano o escritos en castellano. Un libro sin traducir no vale, por bueno que sea; el código lo descarta. De cada libro: título (el de la edición en castellano), título original, idioma original y autor. No inventes libros: si no estás seguro de que existe, no lo propongas.
 
 En la historia editorial, si la protagoniza una persona real (un autor, un editor, una librera), di quién en `protagonista` (nombre completo): su retrato irá en la portada. En los demás formatos, vacío.
 
-Para cada propuesta devuelve: formato, el id de la historia (de la lista que corresponda), titular de portada (12 palabras como máximo, sin pregunta), de qué se habla (dos frases), la cuestión de fondo (una frase), el gancho del libro (una línea, verdad del libro: «lo anticipó» solo si lo hizo; sin citas literales), los libros candidatos y por qué esta propuesta (dos líneas).
+Para cada propuesta devuelve (y en `gancho_libro`, el puente entre la noticia y el libro, en una línea): formato, el id de la historia (de la lista que corresponda), titular de portada (12 palabras como máximo, sin pregunta), de qué se habla (dos frases), la cuestión de fondo (una frase), el gancho del libro (una línea, verdad del libro: «lo anticipó» solo si lo hizo; sin citas literales), los libros candidatos y por qué esta propuesta (dos líneas).
 
 Historias de actualidad de hoy (para lectura lateral y diálogo):
 [pegar lista]
