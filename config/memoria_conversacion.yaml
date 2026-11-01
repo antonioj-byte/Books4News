@@ -321,3 +321,10 @@
   patron: "«Aplica todo esto» (lo que más tiempo ganaría, de la página del proceso)."
   propuesta: "Embeddings de día, «Proceder» que enseña la pieza antes de los vídeos, verificación de libros e imágenes en paralelo, y nevera y Memoria fuera de la madrugada."
   evidencia: ["Conversación, 2/11: página «El proceso de Folio»"]
+
+- clave: conversacion-con-el-jefe
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«¿Quizá necesita preguntarme a mí? Añadimos la opción de la réplica». Y el perfil de Tavares por el Formentor se quedó sin libro."
+  propuesta: "El jefe puede preguntar antes de proponer y la redacción puede replicarle; en los temas de la redacción la novedad no es obligatoria (sí la edición en castellano) y, si ningún libro pasa, el jefe propone otros una vez."
+  evidencia: ["Conversación, 2/11: tema de Gonçalo M. Tavares y el Formentor"]

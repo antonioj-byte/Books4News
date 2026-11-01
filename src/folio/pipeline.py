@@ -82,6 +82,7 @@ class Pipeline:
         self.stats: dict = {}
         self.vectores_articulos: dict[str, np.ndarray] | None = None
         self.radar: list[HistoriaElegida] = []     # temas del radar del libro (folio.radar)
+        self.sin_novedad = False                     # temas de la redacción: un perfil necesita la obra, no solo novedades (2/11)
         self._preverificados: dict = {}             # (título, autor) → ficha o NoVerificado (folio.pipeline._preverificar)
         self._embedder: agrupacion.Embedder | None = None
 
@@ -341,7 +342,8 @@ class Pipeline:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor,
                                                  motivo=f"sin edición en castellano verificada (edición española: {l.edicion_es})"))
                 continue
-            viejo = fuera_de_novedad(l, seleccion.anio_minimo(self.fecha, self.cfg.pipeline.seleccion.antiguedad_libros))
+            viejo = None if self.sin_novedad else fuera_de_novedad(
+                l, seleccion.anio_minimo(self.fecha, self.cfg.pipeline.seleccion.antiguedad_libros))
             if viejo:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=viejo))
                 continue

@@ -142,6 +142,12 @@ _MIGRACIONES = [
         nota TEXT NOT NULL DEFAULT ''
     );
     """,
+    # 7: conversación con el jefe sobre un tema (2/11): sus preguntas y las réplicas de la redacción, y las noticias
+    # ya encontradas (para no volver a buscarlas en cada réplica)
+    """
+    ALTER TABLE temas ADD COLUMN conversacion TEXT NOT NULL DEFAULT '[]';
+    ALTER TABLE temas ADD COLUMN fuentes TEXT NOT NULL DEFAULT '[]';
+    """,
 ]
 
 
@@ -170,6 +176,7 @@ class Tema(BaseModel):
     fecha: str | None = None
     pieza_id: str | None = None
     nota: str = ""
+    conversacion: list[dict] = []        # [{"rol": "redaccion" | "jefe", "texto": ...}]
 
 
 class Gasto(BaseModel):
@@ -359,12 +366,18 @@ class Almacen:
     def temas(self, estado: str | None = None) -> list[Tema]:
         filas = self.db.execute("SELECT * FROM temas" + (" WHERE estado = ?" if estado else "") + " ORDER BY id DESC",
                                 (estado,) if estado else ()).fetchall()
-        return [Tema(**{**dict(f), "enlaces": json.loads(f["enlaces"])}) for f in filas]
+        return [Tema(**{**{k: f[k] for k in f.keys() if k != "fuentes"}, "enlaces": json.loads(f["enlaces"]),
+                         "conversacion": json.loads(f["conversacion"])}) for f in filas]
+
+    def fuentes_tema(self, tid: int) -> list[dict]:
+        f = self.db.execute("SELECT fuentes FROM temas WHERE id = ?", (tid,)).fetchone()
+        return json.loads(f["fuentes"]) if f else []
 
     def actualizar_tema(self, tid: int, **campos) -> None:
-        permitidos = {"estado", "fecha", "pieza_id", "nota"}
+        permitidos = {"estado", "fecha", "pieza_id", "nota", "conversacion", "fuentes"}
         if not campos or set(campos) - permitidos:
             raise ValueError(f"campos no válidos: {set(campos) - permitidos}")
+        campos = {k: json.dumps(v, ensure_ascii=False) if k in ("conversacion", "fuentes") else v for k, v in campos.items()}
         with self._transaccion() as db:
             db.execute(f"UPDATE temas SET {', '.join(f'{k} = ?' for k in campos)} WHERE id = ?", (*campos.values(), tid))
 

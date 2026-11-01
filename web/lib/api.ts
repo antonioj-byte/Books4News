@@ -63,6 +63,8 @@ export const api = {
   chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),
   temas: () => pedir<Tema[]>("/api/temas"),
   proponerTema: (t: TemaNuevo) => pedir<TemaCreado>("/api/temas", { method: "POST", body: JSON.stringify(t) }),
+  replicarTema: (id: number, r: { texto: string; ejecucion: number }) =>
+    pedir<TemaCreado>(`/api/temas/${id}/replica`, { method: "POST", body: JSON.stringify(r) }),
   descartarTema: (id: number) => pedir<Tema>(`/api/temas/${id}`, { method: "DELETE" }),
   materiales: (eid: number, pid: string) => pedir<Material[]>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales`),
   subirMaterial: (eid: number, pid: string, archivo: File, credito: string, nota: string) =>

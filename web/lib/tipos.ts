@@ -450,6 +450,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/temas/{tid}/replica": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Replicar
+         * @description La redacción contesta al jefe (a sus preguntas o a su propuesta): vuelve a pensar y propone, o pregunta otra vez.
+         *     Si la pieza del tema aún no está escrita, se rehace en el sitio.
+         */
+        post: operations["replicar_api_temas__tid__replica_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/temas/{tid}": {
         parameters: {
             query?: never;
@@ -975,6 +996,12 @@ export interface components {
              */
             protagonista: string;
             /**
+             * Potencial
+             * @description De 1 a 10, cuánto puede circular la propuesta (conversación, ganas de compartir); la mesa se ordena por este número
+             * @default 5
+             */
+            potencial: number;
+            /**
              * Por Que
              * @description Por qué esta historia y no otra, en dos líneas
              */
@@ -1400,6 +1427,13 @@ export interface components {
              */
             reemplazar: boolean;
         };
+        /** Replica */
+        Replica: {
+            /** Texto */
+            texto: string;
+            /** Ejecucion */
+            ejecucion: number;
+        };
         /** RespuestaChat */
         RespuestaChat: {
             /** Respuesta */
@@ -1520,6 +1554,13 @@ export interface components {
              * @default
              */
             nota: string;
+            /**
+             * Conversacion
+             * @default []
+             */
+            conversacion: {
+                [key: string]: unknown;
+            }[];
         };
         /** TemaCreado */
         TemaCreado: {
@@ -1533,6 +1574,16 @@ export interface components {
              * @default []
              */
             avisos: string[];
+            /**
+             * Preguntas
+             * @default []
+             */
+            preguntas: string[];
+            /**
+             * Respuesta
+             * @default
+             */
+            respuesta: string;
         };
         /** TemaNuevo */
         TemaNuevo: {
@@ -2416,6 +2467,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["TemaNuevo"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemaCreado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replicar_api_temas__tid__replica_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tid: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Replica"];
             };
         };
         responses: {
