@@ -6,11 +6,22 @@ from folio.modelos import Traza
 from datos import ELECCION, FUENTES, LIBRO, guion_valido
 
 
-def test_la_voz_sustituye_la_linea_de_tono(cfg):
+def test_la_voz_de_folio_va_en_produccion_y_se_cachea(cfg):
+    """Ronda 1 de la voz (2/11): guionista.md incluye voz_folio.md; la caché de prompts la cubre como parte fija."""
+    from folio.llm import con_cache
     normal = guion.construir_prompt(cfg, ELECCION, [(FUENTES[0], "Texto")], [LIBRO])
-    con = guion.construir_prompt(cfg, ELECCION, [(FUENTES[0], "Texto")], [LIBRO], voz=True)
-    assert guion.TONO in normal and guion.TONO not in con
-    assert "Voz de Folio" in con and "Carsonmanía" in con and "[pegar" not in con
+    assert "Voz de Folio" in normal and "Carsonmanía" in normal and "[incluir" not in normal and "[pegar" not in normal
+    assert guion.construir_prompt(cfg, ELECCION, [(FUENTES[0], "Texto")], [LIBRO], voz=True) == normal
+    bloques = con_cache(cfg, "guionista", normal)
+    assert isinstance(bloques, list) and "Carsonmanía" in bloques[0]["text"]
+
+
+def test_otra_version_de_la_voz_sustituye_a_la_de_produccion(cfg, tmp_path):
+    (cfg.dir_prompts / "voz_folio.md")   # existe
+    ruta = tmp_path / "voz_x.md"
+    ruta.write_text("VOZ DE PRUEBA")
+    con = guion.construir_prompt(cfg, ELECCION, [(FUENTES[0], "Texto")], [LIBRO], voz=str(ruta.with_suffix("")))
+    assert "VOZ DE PRUEBA" in con and "Carsonmanía" not in con
 
 
 class LLMEstilo:

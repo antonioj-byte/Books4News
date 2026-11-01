@@ -419,3 +419,10 @@
   patron: "«Vamos con la banda superior, me encanta. Usemos este recurso en casos como este» (una ilustración que atraviese las tres fichas de libro)."
   propuesta: "En «Tres libros», un friso: una ilustración en banda que cruza la parte de arriba de las tres fichas de libro, con un motivo de cada libro de izquierda a derecha, detrás de las cubiertas."
   evidencia: ["Conversación, 2/11: Artifact «Tríptico de las fichas», opción B, con la pieza de Gonçalo M. Tavares"]
+
+- clave: voz-folio-en-el-guionista
+  fecha: "2026-11-02"
+  destino: guionista
+  patron: "«Tengo la sensación de que escribe bastante mal»; la voz de referencia es la de la newsletter de Folio (folioeditorial.substack.com)."
+  propuesta: "El guionista escribe con la voz de Folio (prompts/voz_folio.md, incluida en guionista.md): escena de entrada, lo concreto primero, tesis con filo, titulares con invento y sin fórmulas de nota de prensa ni muletillas de IA. Ganó la ronda 1 de la voz (idea+voz 2,00 → 3,00; hechos no verificados 13 → 7)."
+  evidencia: ["Rondas de la voz, 2/11: docs/rondas-voz.md, ronda 1"]

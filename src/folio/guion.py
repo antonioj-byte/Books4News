@@ -115,19 +115,16 @@ def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[
         "[pegar]": noticia,
         "[pegar o «propón tú»]": libros_txt,
     })
-    return con_voz(cfg, prompt, voz if isinstance(voz, str) else "voz_folio") if voz else prompt
+    return con_voz(cfg, prompt, voz) if isinstance(voz, str) else prompt
 
 
-TONO = ("Tono: el de un buen columnista de cultura. Claro, con criterio, sin solemnidad ni frases de autoayuda. "
-        "Nada de «en un mundo donde…», preguntas retóricas en la portada ni moralejas.")
-
-
-def con_voz(cfg: Config, prompt: str, archivo: str = "voz_folio") -> str:
-    """El prompt con la voz de Folio (prompts/voz_folio.md) en lugar de la línea de tono (2/11, prueba A/B: «escribe
-    bastante mal»). Si gana la prueba, la voz pasa a guionista.md."""
-    if TONO not in prompt:
-        raise ValueError("prompts/guionista.md ha cambiado: no encuentro la línea de tono que sustituye la voz")
-    return prompt.replace(TONO, (cfg.dir_prompts / f"{archivo}.md").read_text(encoding="utf-8").strip())
+def con_voz(cfg: Config, prompt: str, archivo: str) -> str:
+    """El prompt con otra versión de la voz en lugar de prompts/voz_folio.md (pruebas A/B). Desde la ronda 1 de la voz
+    (2/11) guionista.md incluye voz_folio.md en producción («[incluir voz_folio]»)."""
+    actual = (cfg.dir_prompts / "voz_folio.md").read_text(encoding="utf-8").strip()
+    if actual not in prompt:
+        raise ValueError("prompts/guionista.md ya no incluye la voz de Folio ([incluir voz_folio])")
+    return prompt.replace(actual, (cfg.dir_prompts / f"{archivo}.md").read_text(encoding="utf-8").strip())
 
 
 def _menciona_libro(texto: str, libros: list[LibroVerificado]) -> bool:

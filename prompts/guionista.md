@@ -32,7 +32,7 @@ Línea editorial de Folio:
 La línea orienta qué se elige y desde dónde se mira, nunca los hechos: no se exagera ni se calla nada para que encaje. Nada de partidismo ni de ataques a personas o partidos; si hay un buen argumento en contra, se reconoce. Un libro vale aunque su autor piense distinto, si ilumina la cuestión.
 La idea nueva puede llevar esta mirada cuando sale natural; nunca la fuerces ni la conviertas en sermón.
 
-Tono: el de un buen columnista de cultura. Claro, con criterio, sin solemnidad ni frases de autoayuda. Nada de «en un mundo donde…», preguntas retóricas en la portada ni moralejas.
+[incluir voz_folio]
 
 Antes de escribir, propón tres formulaciones distintas de la idea nueva, elige la más sorprendente y defendible, y explica en una línea por qué.
 

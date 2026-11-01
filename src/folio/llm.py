@@ -34,9 +34,19 @@ class ErrorLLM(RuntimeError):
     pass
 
 
-def cargar_prompt(cfg: Config, nombre: str, reemplazos: dict[str, str]) -> str:
-    """Carga prompts/<nombre>.md y sustituye cada marcador exacto. Falla si falta alguno."""
+_INCLUIR = re.compile(r"\[incluir (\w+)\]")
+
+
+def plantilla(cfg: Config, nombre: str) -> str:
+    """prompts/<nombre>.md con cada «[incluir X]» sustituido por prompts/X.md (2/11: la voz de Folio vive en
+    voz_folio.md y la usan el guionista, el pase de estilo y el juez). Lo incluido es parte fija: se cachea."""
     texto = (cfg.dir_prompts / f"{nombre}.md").read_text(encoding="utf-8")
+    return _INCLUIR.sub(lambda m: (cfg.dir_prompts / f"{m.group(1)}.md").read_text(encoding="utf-8").strip(), texto)
+
+
+def cargar_prompt(cfg: Config, nombre: str, reemplazos: dict[str, str]) -> str:
+    """Carga prompts/<nombre>.md (con sus inclusiones) y sustituye cada marcador exacto. Falla si falta alguno."""
+    texto = plantilla(cfg, nombre)
     for marcador, valor in reemplazos.items():
         if marcador not in texto:
             raise ErrorLLM(f"El prompt {nombre}.md no contiene el marcador {marcador!r}")
@@ -57,9 +67,9 @@ def con_cache(cfg: Config, nombre: str, texto: str) -> str | list[dict]:
     Así las llamadas seguidas con el mismo prompt (los tres guiones, los resúmenes) leen las
     instrucciones de la caché. Si la parte fija es demasiado corta, se devuelve el texto tal cual.
     """
-    plantilla = (cfg.dir_prompts / f"{nombre}.md").read_text(encoding="utf-8")
-    m = _MARCADOR.search(plantilla)
-    fijo = plantilla[: m.start()] if m else plantilla
+    base = plantilla(cfg, nombre)
+    m = _MARCADOR.search(base)
+    fijo = base[: m.start()] if m else base
     if len(fijo) < _MIN_CACHE_CARACTERES or not texto.startswith(fijo) or len(texto) == len(fijo):
         return texto
     return [
