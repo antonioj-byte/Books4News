@@ -3,24 +3,39 @@
 import { useState } from "react";
 import { api, type Nota } from "@/lib/api";
 
-// Una nota sobre la diapositiva que se ve (2/11): para el director de arte o para el guionista. No cambia la pieza
-// (para eso, el chat): la lee la Memoria, que sabe qué recurso llevaba la diapositiva.
-export function NotasDiapositiva({ eid, pid, n, notas, onCambio }: {
-  eid: number; pid: string; n: number; notas: Nota[]; onCambio: () => void;
+// Una nota sobre la diapositiva que se ve (2/11): para el director de arte o para el guionista. Queda para la Memoria
+// (que sabe qué recurso llevaba la diapositiva) y, si se marca «Aplicar ahora» (2/11, a petición del usuario:
+// «necesito poder editar imagen si es necesario; que vaya a la memoria y se apliquen los cambios»), el editor del chat
+// la ejecuta en ese momento: texto, imagen, composición… Cada cambio es una versión nueva, como en el chat.
+export function NotasDiapositiva({ eid, pid, n, notas, onCambio, onAplicada }: {
+  eid: number; pid: string; n: number; notas: Nota[]; onCambio: () => void; onAplicada?: () => void;
 }) {
   const [abierto, setAbierto] = useState(false);
   const [texto, setTexto] = useState("");
   const [destino, setDestino] = useState<"director_arte" | "guionista">("director_arte");
-  const [enviando, setEnviando] = useState(false);
+  const [enviando, setEnviando] = useState<"" | "guardando" | "aplicando">("");
+  const [aplicar, setAplicar] = useState(true);
+  const [respuesta, setRespuesta] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const deEsta = notas.filter((x) => x.tipo === "diapositiva" && x.diapositiva === n);
 
   const guardar = async () => {
-    if (texto.trim().length < 2) return;
-    setEnviando(true); setError(null);
-    try { await api.anadirNota(eid, pid, destino, n, texto.trim()); setTexto(""); setAbierto(false); onCambio(); }
-    catch (e) { setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo guardar"); }
-    finally { setEnviando(false); }
+    const t = texto.trim();
+    if (t.length < 2) return;
+    setEnviando("guardando"); setError(null); setRespuesta(null);
+    try {
+      await api.anadirNota(eid, pid, destino, n, t);
+      onCambio();
+      if (aplicar) {
+        setEnviando("aplicando");
+        const r = await api.enviarChat(eid, pid, `Nota sobre la diapositiva ${n} (${destino === "guionista" ? "copy" : "arte"}): ${t}`);
+        setRespuesta(r.respuesta);
+        onAplicada?.();
+      }
+      setTexto(""); setAbierto(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo guardar");
+    } finally { setEnviando(""); }
   };
 
   return (
@@ -41,12 +56,19 @@ export function NotasDiapositiva({ eid, pid, n, notas, onCambio }: {
               <button key={v} aria-pressed={destino === v} onClick={() => setDestino(v)}
                       className={`rounded-full border px-3 py-1 ${destino === v ? "border-carmesi bg-carmesi text-papel" : "border-borde bg-papel hover:border-tinta"}`}>{t}</button>
             ))}
-            <span className="dato ml-auto">No cambia la pieza: es para la Memoria</span>
+            <label className="ml-auto flex items-center gap-1.5">
+              <input id={`aplicar-${pid}-${n}`} type="checkbox" checked={aplicar} onChange={(e) => setAplicar(e.target.checked)} />
+              Aplicar ahora
+            </label>
           </div>
           <div className="flex gap-2">
-            <button onClick={guardar} disabled={enviando || texto.trim().length < 2} className="boton">{enviando ? "Guardando…" : "Guardar nota"}</button>
-            <button onClick={() => setAbierto(false)} disabled={enviando} className="boton-suave">Cancelar</button>
+            <button onClick={guardar} disabled={!!enviando || texto.trim().length < 2} className="boton">
+              {enviando === "aplicando" ? "Aplicando…" : enviando ? "Guardando…" : aplicar ? "Guardar y aplicar" : "Guardar nota"}
+            </button>
+            <button onClick={() => setAbierto(false)} disabled={!!enviando} className="boton-suave">Cancelar</button>
           </div>
+          <span className="dato">{aplicar ? "Queda para la Memoria y el editor la aplica ahora (versión nueva)" : "Solo para la Memoria: no cambia la pieza"}</span>
+          {enviando === "aplicando" && <span className="dato">El editor está aplicando la nota · hasta un minuto</span>}
           {error && <p className="text-carmesi">{error}</p>}
         </div>
       ) : (
@@ -54,6 +76,7 @@ export function NotasDiapositiva({ eid, pid, n, notas, onCambio }: {
           + Comentar esta diapositiva (arte o copy)
         </button>
       )}
+      {respuesta && <p className="rounded-[10px] bg-papel-hondo px-3 py-2"><span className="dato">Editor · </span>{respuesta}</p>}
     </div>
   );
 }

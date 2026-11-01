@@ -86,7 +86,7 @@ export function VistaPieza() {
                         cargar();
                       }}
                       marcadas={[...new Set((notas ?? []).filter((x) => x.tipo === "diapositiva").map((x) => x.diapositiva ?? 0))]}
-                      extra={(n) => <NotasDiapositiva eid={eid} pid={pid} n={n} notas={notas ?? []} onCambio={recargarNotas} />} />
+                      extra={(n) => <NotasDiapositiva eid={eid} pid={pid} n={n} notas={notas ?? []} onCambio={recargarNotas} onAplicada={cargar} />} />
             <p className="mt-3 text-center">
               <a href={api.urlDescarga(eid, pid)} download className="boton-suave">Descargar el carrusel (.zip)</a>
               <span className="dato mt-2 block sm:ml-2 sm:mt-0 sm:inline">JPEG, vídeo de portada y pie · tarda hasta un minuto</span>
@@ -139,7 +139,7 @@ export function VistaPieza() {
       <aside className="order-2 border-t border-borde px-4 py-5 lg:order-none lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-6">
         <h3 className="antetitulo mb-1">Chat de edición</h3>
         <p className="titular mb-3 text-[22px]">Pídele un <em>cambio</em></p>
-        {g ? <ChatEdicion key={`chat:${eid}/${pid}`} eid={eid} pid={pid} onCambio={cargar} />
+        {g ? <ChatEdicion key={`chat:${eid}/${pid}/${d.version}`} eid={eid} pid={pid} onCambio={cargar} />
            : <p className="text-[13px] text-tinta-suave">Cuando la pieza esté escrita, podrás pedirle cambios aquí.</p>}
         <h3 className="antetitulo mb-2 mt-6 border-t border-borde pt-4">Evaluación</h3>
         <FormEvaluacion key={`${eid}/${pid}`} eid={eid} pid={pid} inicial={d.evaluacion ?? null} />
