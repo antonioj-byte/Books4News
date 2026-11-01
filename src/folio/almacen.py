@@ -112,6 +112,21 @@ _MIGRACIONES = [
         nota TEXT NOT NULL DEFAULT ''
     );
     """,
+    # 5: la memoria guarda también lo decidido en las conversaciones de trabajo (origen «conversacion», con su
+    # clave estable en config/memoria_conversacion.yaml) y cada análisis del feedback, para el análisis semanal (2/11)
+    """
+    ALTER TABLE memoria ADD COLUMN origen TEXT NOT NULL DEFAULT 'feedback';
+    ALTER TABLE memoria ADD COLUMN clave TEXT;
+    CREATE UNIQUE INDEX memoria_clave ON memoria (clave) WHERE clave IS NOT NULL;
+    CREATE TABLE memoria_analisis (
+        ts TEXT NOT NULL,
+        origen TEXT NOT NULL,              -- manual (botón o comando) | semanal
+        piezas INTEGER NOT NULL,
+        patrones INTEGER NOT NULL,
+        coste_usd REAL NOT NULL,
+        aviso TEXT NOT NULL DEFAULT ''
+    );
+    """,
 ]
 
 
@@ -126,6 +141,8 @@ class Patron(BaseModel):
     destino: str
     estado: str
     nota: str = ""
+    origen: str = "feedback"           # feedback (análisis de la web) | conversacion (decidido en una sesión)
+    clave: str | None = None
 
 
 class Gasto(BaseModel):
@@ -259,7 +276,7 @@ class Almacen:
     # --- Memoria del feedback ------------------------------------------------------------
 
     def patrones(self) -> list[Patron]:
-        filas = self.db.execute("SELECT * FROM memoria ORDER BY estado = 'propuesta' DESC, veces DESC, id DESC").fetchall()
+        filas = self.db.execute("SELECT * FROM memoria ORDER BY estado = 'propuesta' DESC, veces DESC, creado_en DESC, id DESC").fetchall()
         return [Patron(**{**dict(f), "evidencia": json.loads(f["evidencia"])}) for f in filas]
 
     def guardar_patron(self, patron: str, evidencia: list[str], propuesta: str, destino: str, existente: int | None = None) -> int:
@@ -280,6 +297,34 @@ class Almacen:
     def decidir_patron(self, pid: int, estado: str, nota: str = "") -> None:
         with self._transaccion() as db:
             db.execute("UPDATE memoria SET estado = ?, nota = ?, actualizado_en = ? WHERE id = ?", (estado, nota, _ahora(), pid))
+
+    def importar_conversacion(self, entradas: list[dict]) -> int:
+        """Lo decidido en las conversaciones de trabajo, como patrones «aplicada» (idempotente por clave: si el
+        texto cambia en el archivo se actualiza, el estado no se toca). Devuelve cuántas son nuevas."""
+        nuevas = 0
+        with self._transaccion() as db:
+            for e in entradas:
+                evidencia = json.dumps(e["evidencia"], ensure_ascii=False)
+                f = db.execute("SELECT id FROM memoria WHERE clave = ?", (e["clave"],)).fetchone()
+                if f:
+                    db.execute("UPDATE memoria SET patron = ?, propuesta = ?, destino = ?, evidencia = ? WHERE id = ?",
+                               (e["patron"], e["propuesta"], e["destino"], evidencia, f["id"]))
+                    continue
+                ts = f"{e['fecha']}T12:00:00+00:00"
+                db.execute("INSERT INTO memoria (creado_en, actualizado_en, patron, evidencia, propuesta, destino, estado, "
+                           "origen, clave) VALUES (?, ?, ?, ?, ?, ?, 'aplicada', 'conversacion', ?)",
+                           (ts, ts, e["patron"], evidencia, e["propuesta"], e["destino"], e["clave"]))
+                nuevas += 1
+        return nuevas
+
+    def registrar_analisis(self, origen: str, piezas: int, patrones: int, coste_usd: float, aviso: str = "") -> None:
+        with self._transaccion() as db:
+            db.execute("INSERT INTO memoria_analisis VALUES (?, ?, ?, ?, ?, ?)",
+                       (_ahora(), origen, piezas, patrones, round(coste_usd, 4), aviso))
+
+    def ultimo_analisis(self) -> dict | None:
+        f = self.db.execute("SELECT * FROM memoria_analisis ORDER BY ts DESC LIMIT 1").fetchone()
+        return dict(f) if f else None
 
     def feedback(self, desde: str) -> list[dict]:
         """Lo que ha dicho y hecho quien edita desde `desde` (AAAA-MM-DD), por pieza: evaluación, ediciones a mano

@@ -205,6 +205,13 @@ class ResultadoMemoria(BaseModel):
     aviso: str
 
 
+class EstadoMemoria(BaseModel):
+    ultimo: str | None                    # fecha y hora del último análisis (ISO), o None
+    ultimo_origen: str | None             # manual | semanal
+    proximo: str                          # día (AAAA-MM-DD) de la diaria en que toca el análisis semanal
+    de_conversacion: int                  # reglas cargadas de las conversaciones
+
+
 class DecisionPatron(BaseModel):
     estado: Literal["propuesta", "aceptada", "rechazada", "aplicada"]
     nota: str = ""

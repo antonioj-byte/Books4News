@@ -343,6 +343,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/memoria/estado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado */
+        get: operations["estado_api_memoria_estado_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/memoria/analizar": {
         parameters: {
             query?: never;
@@ -667,6 +684,17 @@ export interface components {
              * @default []
              */
             ultimas_lineas: string[];
+        };
+        /** EstadoMemoria */
+        EstadoMemoria: {
+            /** Ultimo */
+            ultimo: string | null;
+            /** Ultimo Origen */
+            ultimo_origen: string | null;
+            /** Proximo */
+            proximo: string;
+            /** De Conversacion */
+            de_conversacion: number;
         };
         /** EstadoProgramada */
         EstadoProgramada: {
@@ -1086,6 +1114,13 @@ export interface components {
              * @default
              */
             nota: string;
+            /**
+             * Origen
+             * @default feedback
+             */
+            origen: string;
+            /** Clave */
+            clave: string | null;
         };
         /** Pieza */
         Pieza: {
@@ -1997,6 +2032,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Patron"][];
+                };
+            };
+        };
+    };
+    estado_api_memoria_estado_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoMemoria"];
                 };
             };
         };

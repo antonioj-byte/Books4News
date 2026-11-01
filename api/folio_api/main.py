@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from folio import config as config_folio
+from folio import memoria as memoria_folio
 from folio.almacen import Almacen
 from folio.config import Config
 from folio.render import Plantillas, dir_diseno
@@ -26,6 +27,10 @@ def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importa
     if importar:
         almacen.importar_informes(cfg.dir_informes)
         almacen.importar_gastos_historicos()     # el gasto de las ejecuciones de antes del registro, una vez
+        try:                                    # lo decidido en las conversaciones, como reglas aplicadas (2/11)
+            almacen.importar_conversacion(memoria_folio.cargar_conversacion(cfg.raiz))
+        except Exception:                       # noqa: BLE001 — un archivo mal escrito no impide arrancar la web
+            logging.getLogger(__name__).exception("No se pudo cargar config/memoria_conversacion.yaml")
     app = FastAPI(title="Folio · web local", version="0.1.0")
     ejecutor = ejecutor or Ejecutor(cfg.dir_datos)
     if programador is None:                     # FOLIO_EJECUCION_DIARIA; sin ella, no se programa nada

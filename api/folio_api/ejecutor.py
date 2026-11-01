@@ -30,8 +30,10 @@ class Ejecutor:
         self.comando = comando or [sys.executable, "-m", "folio.cli", "run", "--quiet"]
         # La ejecución diaria programada: el pipeline y, si sale bien, PNG y vídeos
         # y, al final, la nevera del cajón: historias editoriales nuevas (2/11; nunca hace fallar la diaria)
+        # y, los lunes, el análisis semanal del feedback para la Memoria (2/11; tampoco falla nunca)
         self.diaria = [self.comando, [sys.executable, "-m", "folio.cli", "render", "--video"],
-                       [sys.executable, "-m", "folio.cli", "cajon", "buscar"]]
+                       [sys.executable, "-m", "folio.cli", "cajon", "buscar"],
+                       [sys.executable, "-m", "folio.cli", "memoria", "analizar", "--si-toca"]]
         self._proceso: subprocess.Popen | None = None
         self._inicio: str | None = None
         self._fin: str | None = None

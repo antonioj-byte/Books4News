@@ -7,7 +7,7 @@ from folio import memoria
 from folio.almacen import Patron
 from folio.llm import LLM
 from folio_api.dependencias import Contexto, contexto
-from folio_api.esquemas import DecisionPatron, ResultadoMemoria
+from folio_api.esquemas import DecisionPatron, EstadoMemoria, ResultadoMemoria
 
 router = APIRouter()
 
@@ -15,6 +15,14 @@ router = APIRouter()
 @router.get("/api/memoria", response_model=list[Patron])
 def patrones(ctx: Contexto = Depends(contexto)):
     return ctx.almacen.patrones()
+
+
+@router.get("/api/memoria/estado", response_model=EstadoMemoria)
+def estado(ctx: Contexto = Depends(contexto)):
+    u = ctx.almacen.ultimo_analisis()
+    return EstadoMemoria(ultimo=u["ts"] if u else None, ultimo_origen=u["origen"] if u else None,
+                         proximo=memoria.proximo_analisis(ctx.almacen).isoformat(),
+                         de_conversacion=sum(p.origen == "conversacion" for p in ctx.almacen.patrones()))
 
 
 @router.post("/api/memoria/analizar", response_model=ResultadoMemoria)

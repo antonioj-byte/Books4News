@@ -14,6 +14,7 @@ export type ResultadoEdicion = components["schemas"]["ResultadoEdicion"];
 export type MensajeChat = components["schemas"]["MensajeChat"];
 export type RespuestaChat = components["schemas"]["RespuestaChat"];
 export type PanelGasto = components["schemas"]["PanelGasto"];
+export type EstadoMemoria = components["schemas"]["EstadoMemoria"];
 export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" };
 export type ResultadoMemoria = components["schemas"]["ResultadoMemoria"];
 export type EstadoBuffer = components["schemas"]["EstadoBuffer"];
@@ -44,6 +45,7 @@ export const api = {
   resumen: () => pedir<ResumenDia[]>("/api/evaluaciones/resumen"),
   gastos: (dias: number) => pedir<PanelGasto>(`/api/gastos?dias=${dias}`),
   memoria: () => pedir<Patron[]>("/api/memoria"),
+  estadoMemoria: () => pedir<EstadoMemoria>("/api/memoria/estado"),
   analizarMemoria: (dias: number) => pedir<ResultadoMemoria>(`/api/memoria/analizar?dias=${dias}`, { method: "POST" }),
   decidirPatron: (id: number, estado: Patron["estado"], nota = "") =>
     pedir<unknown>(`/api/memoria/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado, nota }) }),

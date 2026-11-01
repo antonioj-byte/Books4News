@@ -1,0 +1,232 @@
+# Reglas que salieron de las conversaciones de trabajo con el usuario (2/11, a petición del usuario: «¿se está
+# recogiendo el feedback que voy dando?»). La API las carga al arrancar en la memoria como «aplicada», de origen
+# «conversación» (folio memoria importar hace lo mismo), para que la página «Memoria» tenga en un solo sitio todo lo
+# que ha cambiado y por qué. Cada vez que una petición del usuario acaba en una regla, se añade aquí una entrada.
+#
+# clave: id estable (minúsculas y guiones; no se cambia: es lo que evita duplicados)
+# destino: jefe_cultura | guionista | director_arte | formatos | codigo
+# patron: lo que pidió o señaló el usuario; propuesta: la regla en que quedó; evidencia: de dónde sale
+
+- clave: libros-uno-o-tres
+  fecha: "2026-10-31"
+  destino: guionista
+  patron: "Las piezas con dos libros quedaban flojas; el usuario pidió uno o tres."
+  propuesta: "Uno o tres libros por pieza, nunca dos; tres solo si los tres están verificados y aportan. La regla _uno_o_tres_libros rechaza el guion con dos."
+  evidencia: ["Conversación, 31/10: petición del usuario"]
+
+- clave: novedad-dos-anos
+  fecha: "2026-10-31"
+  destino: jefe_cultura
+  patron: "«Folio va de novedades»."
+  propuesta: "Solo libros de los últimos dos años (cuenta el año más reciente entre la primera edición y la edición española verificada); el código descarta los anteriores."
+  evidencia: ["Conversación, 31/10: petición del usuario"]
+
+- clave: sin-recursos-repetidos
+  fecha: "2026-10-31"
+  destino: guionista
+  patron: "El mismo libro salía en dos diapositivas con su cubierta, y la cubierta se repetía en el cierre."
+  propuesta: "Una sola diapositiva de libro por libro; la cubierta sale una vez en el carrusel (desde el 1/11, «solo una portada del libro»)."
+  evidencia: ["Conversación, 31/10 y 1/11: peticiones del usuario"]
+
+- clave: temas-rompehielos
+  fecha: "2026-10-31"
+  destino: jefe_cultura
+  patron: "Primero las noticias de las que apetece hablar; las dolorosas, no en caliente."
+  propuesta: "Prioridad a sorpresa, curiosidad, vida diaria y dilemas; sucesos con víctimas nunca con menos de 3 días, solo cuando el debate ha sustituido al dolor y como mucho uno al día."
+  evidencia: ["Conversación, 31/10: petición del usuario"]
+
+- clave: linea-editorial
+  fecha: "2026-10-31"
+  destino: jefe_cultura
+  patron: "Definir la línea editorial de Folio."
+  propuesta: "Humanista, tecnooptimista, progresista y favorable a la iniciativa privada; orienta la elección y el ángulo, nunca los hechos; sin partidismo y reconociendo el buen argumento contrario."
+  evidencia: ["Conversación, 31/10: petición del usuario"]
+
+- clave: mesa-del-dia
+  fecha: "2026-10-31"
+  destino: formatos
+  patron: "Una mesa diaria con varios formatos en lugar de una sola pieza."
+  propuesta: "Ocho propuestas por orden de preferencia (2 lectura lateral, 2 diálogo, 2 mundo del libro, 1 historia editorial, 1 libro recomendado); se escriben las tres primeras y el resto con «Proceder»."
+  evidencia: ["Conversación, 31/10, 1/11 y 2/11: peticiones del usuario"]
+
+- clave: ejecucion-diaria
+  fecha: "2026-10-31"
+  destino: codigo
+  patron: "La mesa del día tiene que estar lista a las 5:30."
+  propuesta: "Ejecución diaria automática a las 4:45 (FOLIO_EJECUCION_DIARIA) con el render y los vídeos."
+  evidencia: ["Conversación, 31/10: petición del usuario"]
+
+- clave: todo-sexi-y-divertido
+  fecha: "2026-10-31"
+  destino: director_arte
+  patron: "«Todo tiene que ser sexi y divertido»; la diapositiva de actualidad sin foto era un párrafo liso."
+  propuesta: "Sin imagen ni cifra, la noticia lleva un recurso (golpe, gigante, teletipo o collage) con datos que salen literalmente del texto."
+  evidencia: ["Conversación, 31/10: petición del usuario"]
+
+- clave: color-de-la-pieza
+  fecha: "2026-10-31"
+  destino: director_arte
+  patron: "Más Wired que el brandbook."
+  propuesta: "Un acento por pieza (pluma o marcador, alternando en el día) que tiñe la foto en «neon», llena la página de la idea y colorea antetítulo y cifra; las graves, sin acento."
+  evidencia: ["Conversación, 31/10: petición del usuario"]
+
+- clave: retrato-por-tono
+  fecha: "2026-10-31"
+  destino: director_arte
+  patron: "«Adecuar el tono de la noticia al tono de la animación»."
+  propuesta: "El estilo del retrato generado sale del tono (sereno y reflexivo, low-poly; irónico, render de los 2000; luminoso, vóxel; grave, la foto sin generar)."
+  evidencia: ["Conversación, 31/10: petición del usuario"]
+
+- clave: imagen-de-portada
+  fecha: "2026-10-31"
+  destino: director_arte
+  patron: "Orden para la imagen de portada."
+  propuesta: "Foto del autor si la hay; si no, ilustración editorial si el tema es conceptual; si no, archivo. Se baraja en el día y la foto real y el retrato generado se alternan."
+  evidencia: ["Conversación, 31/10: reglas del usuario"]
+
+- clave: fotos-de-prensa
+  fecha: "2026-10-31"
+  destino: director_arte
+  patron: "«Las editoriales normalmente ceden» las fotos de autor."
+  propuesta: "Sin retrato en Commons, la foto de prensa de la editorial con el crédito del fotógrafo; nunca se pasa a retrato generado."
+  evidencia: ["Conversación, 31/10: petición del usuario"]
+
+- clave: caras-desde-foto
+  fecha: "2026-10-31"
+  destino: director_arte
+  patron: "Imágenes de personas reales generadas con IA."
+  propuesta: "Siempre a partir de una foto con la licencia comprobada, nunca la cara desde cero; sin texto, logotipos ni nombres de artistas, juegos o marcas en el prompt."
+  evidencia: ["Conversación, 31/10: preferencia del usuario"]
+
+- clave: bloqueos-parar
+  fecha: "2026-10-30"
+  destino: codigo
+  patron: "Qué hacer cuando un servicio bloquea."
+  propuesta: "Ante 403 o 429, parar y avisar; no esquivar bloqueos ni límites. Los feeds que bloquean se pausan 7 días."
+  evidencia: ["Conversación, 30/10 y 2/11: preferencia del usuario"]
+
+- clave: pruebas-de-diseno
+  fecha: "2026-10-30"
+  destino: codigo
+  patron: "Cómo se deciden las pruebas de diseño."
+  propuesta: "Se preparan las opciones, se publican en una página para que el usuario elija y no se implementa nada hasta que elija; una imagen de prueba nunca pasa a diseno/ sin su elección."
+  evidencia: ["Conversación, 30/10 y 1/11: preferencia del usuario (lección de la ilustración de las tres salas)"]
+
+- clave: historia-editorial
+  fecha: "2026-11-01"
+  destino: formatos
+  patron: "Un formato de curiosidades del mundo del libro sin percha, «una moneda conversacional»; «Curiosidad» pasó a llamarse «Historia editorial»."
+  propuesta: "Formato «Historia editorial» que sale del cajón de curiosidades, sin libro obligatorio y con la cara de quien la protagoniza."
+  evidencia: ["Conversación, 1/11: peticiones del usuario"]
+
+- clave: nevera-del-cajon
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«Busca 3 nuevas al día para hacer nevera; solo la historia, luego desarrollamos»."
+  propuesta: "Cada madrugada se buscan 3 historias editoriales nuevas con fuentes comprobadas y se guardan en la nevera del cajón."
+  evidencia: ["Conversación, 2/11: petición del usuario"]
+
+- clave: radar-del-libro
+  fecha: "2026-11-01"
+  destino: formatos
+  patron: "«Una lista no desarrollada de posibles temas del mundo del libro que se puedan desarrollar con un clic»."
+  propuesta: "Radar del libro de hasta 8 temas bajo la mesa, cada uno con el botón «Desarrollar»."
+  evidencia: ["Conversación, 1/11: petición del usuario (el manuscrito de Poe en ActuaLitté)"]
+
+- clave: libro-recomendado
+  fecha: "2026-11-01"
+  destino: formatos
+  patron: "Recomendar novedades de editoriales independientes de prestigio: «mira en sus catálogos y selecciona cosas»."
+  propuesta: "Formato «Libro recomendado» con una novedad de los últimos 6 meses leída en los catálogos de todostuslibros; 106 editoriales de referencia, también de Argentina y México."
+  evidencia: ["Conversación, 1/11 y 2/11: peticiones del usuario (75 de referencia aprobadas; Latinoamérica)"]
+
+- clave: citas-de-la-critica
+  fecha: "2026-11-01"
+  destino: guionista
+  patron: "«Admite citas a la crítica»."
+  propuesta: "Hasta dos frases entre comillas de la crítica si aparecen letra por letra en un texto marcado como crítica."
+  evidencia: ["Conversación, 1/11: petición del usuario"]
+
+- clave: infografias-con-sentido
+  fecha: "2026-11-01"
+  destino: director_arte
+  patron: "«Está usando infografías de cualquier manera»."
+  propuesta: "La línea y el mapa necesitan un libro verificado y solo se piden si cuentan algo que el texto no cuenta; lo normal es ninguna."
+  evidencia: ["Conversación, 1/11: petición del usuario"]
+
+- clave: archivo-sin-repetir
+  fecha: "2026-11-01"
+  destino: director_arte
+  patron: "«No se puede repetir imagen de archivo: busca otra o créala»."
+  propuesta: "Si la imagen de archivo va en la portada, la noticia lleva otra distinta (se rechaza la misma obra en otra copia); sin segunda, cifra o recurso sin foto."
+  evidencia: ["Conversación, 1/11: regla del usuario"]
+
+- clave: nunca-dos-caras
+  fecha: "2026-11-01"
+  destino: director_arte
+  patron: "«Nunca dos caras: o retrato, o real»."
+  propuesta: "La cara sale en una sola versión, real o 3D; con cara en la pieza, la imagen de archivo no puede tener personas reconocibles."
+  evidencia: ["Conversación, 1/11: regla del usuario"]
+
+- clave: colofon-ficha
+  fecha: "2026-11-01"
+  destino: director_arte
+  patron: "Lo del pie también en las diapositivas, con textura; elegida la ficha de biblioteca «sin el comprobado»."
+  propuesta: "Colofón final como ficha de biblioteca pautada con las fuentes, la ficha verificada y el origen de las imágenes; sello de ficha verificada y medios en la noticia."
+  evidencia: ["Conversación, 1/11: elección del usuario entre cuatro texturas"]
+
+- clave: tiempos
+  fecha: "2026-11-01"
+  destino: codigo
+  patron: "«Me tiltea lo lento que es»."
+  propuesta: "Cada llamada guarda lo que tarda y cada etapa su duración (líneas TIEMPO:); se escriben las tres primeras propuestas de noche y se leen las noticias cada dos horas."
+  evidencia: ["Conversación, 1/11 y 2/11: peticiones del usuario"]
+
+- clave: memoria-del-feedback
+  fecha: "2026-11-01"
+  destino: codigo
+  patron: "Ver si el feedback acaba en reglas nuevas."
+  propuesta: "Página «Memoria» con los patrones del feedback y su regla propuesta; desde el 2/11, análisis semanal automático y las reglas de las conversaciones cargadas aquí."
+  evidencia: ["Conversación, 1/11 y 2/11: «¿se está recogiendo el feedback que voy dando?»"]
+
+- clave: panel-de-gasto
+  fecha: "2026-11-01"
+  destino: codigo
+  patron: "Ver cuánto se gasta."
+  propuesta: "Página «Gasto» con cada llamada a Anthropic y cada imagen de Magnific apuntadas."
+  evidencia: ["Conversación, 1/11: petición del usuario"]
+
+- clave: programar-buffer
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "Conectar con el Instagram de Folio de la forma más barata y programar desde la web."
+  propuesta: "Programación con Buffer (plan gratis) y botón «Programar en Instagram» en las piezas aprobadas, con confirmación."
+  evidencia: ["Conversación, 31/10 y 2/11: peticiones del usuario"]
+
+- clave: retratos-desde-el-chat
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "El editor del chat se negó a hacer «una ilustración de Perec»."
+  propuesta: "El chat busca la foto libre de una persona real y puede pasarla a un estilo de la casa; sin foto libre, lo dice."
+  evidencia: ["Conversación, 2/11: petición del usuario"]
+
+- clave: lector-sin-contexto
+  fecha: "2026-11-02"
+  destino: guionista
+  patron: "«No entiendo este copy si no conoces la obra; habría que verificarlo»."
+  propuesta: "El guionista presenta a cada persona, lugar o episodio que no sea de dominio común, y un lector sin contexto revisa el guion; si algo no se entiende, se reescribe una vez."
+  evidencia: ["Conversación, 2/11: diapositiva de Dunkelman («escarmentado por Robert Moses y el derribo de Penn Station»)"]
+
+- clave: subtitulos-claros
+  fecha: "2026-11-01"
+  destino: guionista
+  patron: "«Pero y este subtítulo? No se entiende un carajo»."
+  propuesta: "El subtítulo de portada trae el libro o al autor y lo que vio o explicó, en una frase que se entiende sin la noticia; la composición no lo puede cortar."
+  evidencia: ["Conversación, 1/11: captura de una portada en banda"]
+
+- clave: nombre-folio
+  fecha: "2026-10-30"
+  destino: codigo
+  patron: "El producto se llama Folio."
+  propuesta: "«Folio · Mesa de edición»; nunca «Tapablanda»."
+  evidencia: ["Conversación, 30/10: preferencia del usuario"]

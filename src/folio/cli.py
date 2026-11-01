@@ -464,19 +464,46 @@ app.add_typer(memoria_app, name="memoria")
 
 
 @memoria_app.command("analizar")
-def memoria_analizar(dias: int = typer.Option(14, help="Días de feedback que se leen")):
-    """Lee el feedback de los últimos días y guarda los patrones que se repiten (una llamada a Opus)."""
+def memoria_analizar(dias: int = typer.Option(14, help="Días de feedback que se leen"),
+                     si_toca: bool = typer.Option(False, "--si-toca", help="Solo si toca el análisis semanal (los lunes); "
+                                                  "nunca sale con error: es el último paso de la diaria")):
+    """Lee el feedback de los últimos días y guarda los patrones que se repiten (una llamada a Opus, ~0,03 $)."""
     from folio import memoria
     from folio.almacen import Almacen
     from folio.llm import LLM
 
     cfg = config.cargar()
+    almacen = Almacen(cfg.ruta_db)
+    if si_toca:
+        toca, motivo = memoria.toca_analisis(almacen)
+        if not toca:
+            typer.echo(f"Memoria: no toca el análisis semanal ({motivo})")
+            return
+        typer.echo(f"Memoria: análisis semanal ({motivo})")
     llm = LLM(cfg)
-    ids, aviso, n = memoria.analizar(llm, cfg, Almacen(cfg.ruta_db), dias)
+    try:
+        ids, aviso, n = memoria.analizar(llm, cfg, almacen, dias, origen="semanal" if si_toca else "manual")
+    except Exception as e:                      # noqa: BLE001 — el semanal nunca hace fallar la diaria
+        if not si_toca:
+            raise
+        typer.echo(f"Memoria: no se pudo analizar ({type(e).__name__}: {e})")
+        return
     typer.echo(f"{n} piezas con feedback; {len(ids)} patrones guardados o reforzados"
                f" · {round(sum(t.coste_usd for t in llm.trazas), 4)} $")
     if aviso:
         typer.echo(aviso)
+
+
+@memoria_app.command("importar")
+def memoria_importar():
+    """Carga en la memoria las reglas decididas en las conversaciones (config/memoria_conversacion.yaml) como
+    «aplicada». La API lo hace también al arrancar."""
+    from folio import memoria
+    from folio.almacen import Almacen
+    cfg = config.cargar()
+    entradas = memoria.cargar_conversacion(cfg.raiz)
+    nuevas = Almacen(cfg.ruta_db).importar_conversacion(entradas)
+    typer.echo(f"Memoria: {len(entradas)} reglas de las conversaciones; {nuevas} nuevas")
 
 
 @memoria_app.command("exportar")
