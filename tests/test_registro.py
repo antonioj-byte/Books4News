@@ -252,3 +252,17 @@ def test_las_variantes_con_letras_se_descartan_y_se_dibuja_otra(cfg, monkeypatch
     assert arte._ilustracion_editorial(LLM(), cfg, _pieza(), _propuesta(recurso="ilustracion"), a, cfg.dir_cache("2026-10-30"))
     assert len(dibujados) == 3 and not dibujados[0].exists() and not dibujados[1].exists()   # borradas de la caché
     assert a.escena == escenas[0] and any("descartadas 2 con letras" in x and "franja de arriba" in x for x in a.avisos)
+
+
+def test_el_buscador_es_opcional_y_como_mucho_uno_al_dia(cfg):
+    """2/11 («lo pondría como recurso opcional, no siempre; queda muy recargado»): solo si el director lo pide y con tope diario."""
+    p = _propuesta().model_copy(update={"pregunta": "por qué dejamos de repararnos con los años"})
+    a = Arte(tono="sereno", recurso="foto", portada="sangre")
+    arte._composicion(cfg, _pieza(), p, a, buscadores_del_dia=0)
+    assert a.pregunta == "por qué dejamos de repararnos con los años"
+    b = Arte(tono="sereno", recurso="foto", portada="sangre")
+    arte._composicion(cfg, _pieza(), p, b, buscadores_del_dia=1)          # ya hay uno hoy
+    assert b.pregunta is None
+    c = Arte(tono="sereno", recurso="foto", portada="sangre")
+    arte._composicion(cfg, _pieza(), p.model_copy(update={"pregunta": ""}), c)   # el director no lo pide
+    assert c.pregunta is None

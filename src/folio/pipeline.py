@@ -546,10 +546,13 @@ class Pipeline:
                 pieza.arte = arte.dirigir(self.llm, self.cfg, pieza, h.seccion if h else None, usadas,
                                           [f"{p.arte.portada} en {p.arte.acento or 'blanco y negro'}"
                                            + (f" (sin foto: {p.arte.sin_foto.recurso})" if p.arte.sin_foto else "")
+                                           + (" (con buscador)" if p.arte.pregunta else "")
                                            for p in con_guion if p.arte and p.id != pieza.id and (solo is not None or con_guion.index(p) < i)],
                                           self.cache / "prueba" if self.prueba else None,
                                           [p.arte.registro for p in con_guion
-                                           if p.arte and p.id != pieza.id and (solo is not None or con_guion.index(p) < i)])
+                                           if p.arte and p.id != pieza.id and (solo is not None or con_guion.index(p) < i)],
+                                          sum(bool(p.arte.pregunta) for p in con_guion
+                                              if p.arte and p.id != pieza.id and (solo is not None or con_guion.index(p) < i)))
             except Exception as exc:
                 pieza.arte = None
                 pieza.avisos.append(f"Director de arte: no se pudo ({type(exc).__name__}: {exc}); sale sin imagen")

@@ -393,7 +393,7 @@ def _ilustracion_editorial(llm: LLM, cfg: Config, pieza: Pieza, propuesta: Propu
     return False
 
 
-def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte) -> None:
+def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte, buscadores_del_dia: int = 0) -> None:
     """Composición, antetítulo, remate y color, ajustados a lo permitido y a lo que hay."""
     permitidas = cfg.pipeline.arte.portadas
     if arte.portada not in permitidas:
@@ -401,8 +401,11 @@ def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte
     # La ilustración editorial cruza la portada y la noticia como una panorámica (B6)
     if arte.recurso == "ilustracion" and arte.imagen:
         arte.portada = "panorama"
-    # El buscador responde con el libro: sin libro (curiosidad del cajón), no hay buscador
-    arte.pregunta = validar_pregunta(propuesta.pregunta) if cfg.pipeline.arte.buscador and pieza.guion.libros else None
+    # El buscador responde con el libro: sin libro (curiosidad del cajón), no hay buscador. Es un recurso opcional
+    # (2/11, «queda muy recargado»): solo si el director lo pide y como mucho `buscador_max_por_dia` al día
+    a = cfg.pipeline.arte
+    hay_sitio = buscadores_del_dia < a.buscador_max_por_dia
+    arte.pregunta = validar_pregunta(propuesta.pregunta) if a.buscador and hay_sitio and pieza.guion.libros else None
     arte.antetitulo = validar_antetitulo(propuesta.antetitulo)
     arte.remate = validar_remate(propuesta.remate, pieza.guion.diapositivas[0].texto)
     arte.acento = None if propuesta.suceso_con_victimas or propuesta.tono == "grave" else propuesta.acento
@@ -562,7 +565,7 @@ def _cubiertas(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
 
 def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: set[str] | None = None,
             portadas_del_dia: list[str] | None = None, dir_fecha: Path | None = None,
-            registros_del_dia: list[str] | None = None) -> Arte:
+            registros_del_dia: list[str] | None = None, buscadores_del_dia: int = 0) -> Arte:
     """Etapa de arte de una pieza: propuesta, imagen de archivo, composición, ilustración (si toca),
     retrato del autor y cubiertas. `usadas`: imágenes ya elegidas hoy (no se repiten; se añade la
     elegida). `portadas_del_dia`: composiciones y colores ya elegidos hoy, para variar.
@@ -590,7 +593,7 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
                 arte.avisos.append("Ilustración editorial: la pieza lleva la foto del autor; se busca una foto de archivo para la noticia")
             propuesta.recurso = arte.recurso = "foto"
         _imagen_de_archivo(llm, cfg, pieza, datos, propuesta, arte, usadas, dir_fecha)
-    _composicion(cfg, pieza, propuesta, arte)
+    _composicion(cfg, pieza, propuesta, arte, buscadores_del_dia)
     if arte.portada == "ilustracion":
         _ilustracion(llm, cfg, pieza, arte, dir_fecha)
     # El retrato generado (3D) se alterna con la foto real, nunca parte de una foto de prensa (la cesión

@@ -192,6 +192,7 @@ class Arte(_Seccion):
     # portada (B2) y el mapa de la idea dibujado como tres salas (B4)
     ilustracion_editorial: IlustracionEditorial = Field(default_factory=lambda: IlustracionEditorial())
     buscador: bool = True
+    buscador_max_por_dia: int = Field(default=1, ge=0)   # 2/11 (a petición del usuario): recurso opcional, «queda muy recargado»
     mapa_ilustrado: bool = False
     # Lo que va en el pie, también en las diapositivas (1/11): colofón final con fuentes, ficha y créditos (A),
     # sello de ficha verificada en la del libro (B) y los medios que cuentan la noticia (C)

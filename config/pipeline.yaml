@@ -147,6 +147,7 @@ arte:
   sello_verificacion: true     # «ficha verificada» en la diapositiva del libro
   medios_en_noticia: true      # «lo cuentan: DW · BBC · FT» en la diapositiva de la noticia
   buscador: true               # B2: el buscador de la portada escribe la pregunta y responde con el libro
+  buscador_max_por_dia: 1       # 2/11 (a petición del usuario: «lo pondría como recurso opcional, no siempre; queda muy recargado»): como mucho uno al día, y solo si el director lo pide
   mapa_ilustrado: false        # B4: el mapa sobre tres salas ilustradas. Apagado el 1/11: la imagen era una prueba (con la ilustración de referencia del usuario), no la definitiva; falta elegirla. Sin ella, el mapa de círculos dibujado por el código
   retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
   retratos_cc_by_sa: true      # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia

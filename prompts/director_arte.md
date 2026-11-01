@@ -31,7 +31,7 @@ La cifra destacada:
 - Si no hay una cifra clara, null. Mejor ninguna que una floja.
 
 El buscador de la portada (`pregunta`):
-En la portada, un buscador escribe la pregunta que la noticia deja en el aire y responde con el libro. Escribe esa pregunta como la teclearía un lector curioso: de 3 a 9 palabras, en minúsculas, sin signos de interrogación, sin cifras ni nombres propios («qué leer para entender el miedo», «por qué nos fascinan las ruinas»). Que la respuesta natural sea el libro de la pieza. Si no hay una pregunta buena, déjala vacía.
+Es un recurso opcional, no de todos los días (recarga la portada): pídelo solo cuando la pregunta engancha más que la portada sola, como mucho en una pieza al día (si otra pieza de hoy ya lo lleva, lo verás en la lista de portadas del día: deja `pregunta` vacía). Lo normal es dejarla vacía. Cuando lo uses: en la portada, un buscador escribe la pregunta que la noticia deja en el aire y responde con el libro. Escribe esa pregunta como la teclearía un lector curioso: de 3 a 9 palabras, en minúsculas, sin signos de interrogación, sin cifras ni nombres propios («qué leer para entender el miedo», «por qué nos fascinan las ruinas»). Que la respuesta natural sea el libro de la pieza. Si no hay una pregunta buena, déjala vacía.
 
 La diapositiva de actualidad sin foto (`sin_foto`):
 Si no se encuentra imagen y no hay cifra, la diapositiva de actualidad sería un párrafo liso sobre negro, y en el feed eso no para a nadie. Propón siempre su recurso gráfico, aunque haya imagen (todavía no se sabe si se encontrará). Todo lo que des se copia literalmente del texto de la diapositiva de actualidad: el código lo comprueba y descarta lo que no esté.
