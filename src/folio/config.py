@@ -117,6 +117,7 @@ class Guion(_Seccion):
     # 2/11 (a petición del usuario: «no entiendo este copy si no conoces la obra»): un modelo barato lee el guion
     # como alguien sin contexto y, si algo no se entiende, el guionista lo reescribe una vez
     lector_sin_contexto: bool = True
+    prensa_del_libro: int = Field(default=3, ge=0)   # 2/11: en mundo del libro y recomendado, hasta N artículos de prensa sobre el libro (0 = no se busca)
 
 
 class Dev(_Seccion):

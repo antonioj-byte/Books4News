@@ -114,6 +114,7 @@ guion:
   palabras_max_portada: 12
   palabras_max_subtitulo: 22      # subtítulo de la portada, que trae el libro o al autor
   max_citas: 1                    # citas literales del libro: solo si aparecen letra por letra en su texto (Google Books)
+  prensa_del_libro: 3             # 2/11 (a petición del usuario: «si es una novedad editorial, que busque varias fuentes; seguramente hay más de una entrevista»)
   palabras_cita: [4, 30]
   max_diapositivas_actualidad: 1   # la portada ya abre con la noticia
   posicion_max_primer_libro: 3     # el libro entra en la diapositiva 2 o 3

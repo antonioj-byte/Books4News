@@ -91,7 +91,7 @@ def instrucciones_formato(cfg: Config, formato: str) -> str:
 def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
                      libros: list[LibroVerificado]) -> str:
     fuentes = "\n".join(
-        f'<fuente medio="{f.medio}" url="{f.url}" acceso="{f.acceso}"{" critica=\"si\"" if f.critica else ""}>\n{t}\n</fuente>'
+        f'<fuente medio="{f.medio}" url="{f.url}" acceso="{f.acceso}"{" critica=\"si\"" if f.critica else ""}{" prensa_del_libro=\"si\"" if f.prensa else ""}>\n{t}\n</fuente>'
         for f, t in textos
     )
     noticia = (

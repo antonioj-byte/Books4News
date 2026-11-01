@@ -198,6 +198,7 @@ class FuenteNoticia(BaseModel):
     acceso: Acceso
     texto_completo: bool = False
     critica: bool = False                # texto de crítica: lo único que se puede citar entre comillas además del libro
+    prensa: bool = False                 # prensa sobre el libro buscada aparte (entrevistas, reseñas; 2/11)
 
 
 class Traza(BaseModel):

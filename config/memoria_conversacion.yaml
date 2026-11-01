@@ -335,3 +335,10 @@
   patron: "«Otro ejemplo de contenido muy pillado con pinzas» (el meme de Mbappé y Mao leído con un ensayo sobre Apple en China)."
   propuesta: "Un editor escéptico independiente puntúa de 1 a 5 el vínculo historia-libro de cada propuesta: fuera las de 1–2, y la que se escribe sola tiene que tener un 4 o un 5."
   evidencia: ["Conversación, 2/11: pie de Instagram de la pieza de Mbappé"]
+
+- clave: prensa-del-libro
+  fecha: "2026-11-02"
+  destino: guionista
+  patron: "«Si se trata de una novedad editorial, molaría que la herramienta buscara varias fuentes (seguramente hay más de una entrevista)»."
+  propuesta: "En mundo del libro y recomendado, el guionista recibe además hasta tres artículos de prensa sobre el libro (entrevistas, reseñas), buscados y comprobados."
+  evidencia: ["Conversación, 2/11: propuesta sobre Espiral, de Isaac Marcet"]

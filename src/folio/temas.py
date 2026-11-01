@@ -90,10 +90,12 @@ def descargar(url: str, cliente: httpx.Client) -> tuple[FuenteTema | None, str]:
     return FuenteTema(medio=medio.strip(), titulo=" ".join(titulo.split()), url=url, texto=texto), ""
 
 
-def buscar_fuentes(llm: LLM, cfg: Config, texto: str, cliente: httpx.Client) -> tuple[list[FuenteTema], list[str]]:
-    """Noticias que cuentan el tema, buscadas en la web (modelo `nevera`, Haiku con búsqueda; unos céntimos)."""
-    prompt = cargar_prompt(cfg, "tema_fuentes", {"[pegar tema]": texto})
-    respuesta, urls = llm.con_busqueda("tema-fuentes", prompt, etapa_modelo="nevera", max_busquedas=4)
+def buscar_fuentes(llm: LLM, cfg: Config, texto: str, cliente: httpx.Client, plantilla: str = "tema_fuentes",
+                   excluir: set[str] = frozenset()) -> tuple[list[FuenteTema], list[str]]:
+    """Noticias que cuentan el tema (o, con plantilla «prensa_libro», prensa sobre un libro), buscadas en la web
+    (modelo `nevera`, Haiku con búsqueda; unos céntimos). Solo valen URLs que salieron en la búsqueda y se descargan."""
+    prompt = cargar_prompt(cfg, plantilla, {"[pegar tema]": texto})
+    respuesta, urls = llm.con_busqueda(plantilla.replace("_", "-"), prompt, etapa_modelo="nevera", max_busquedas=4)
     if not respuesta:
         return [], ["La búsqueda de noticias no devolvió nada"]
     fichas, _ = llm.estructurado("tema-fuentes-fichas", [{"role": "user", "content":
@@ -103,6 +105,8 @@ def buscar_fuentes(llm: LLM, cfg: Config, texto: str, cliente: httpx.Client) -> 
     for f in fichas.fuentes[:6]:
         if len(fuentes) >= MAX_ENLACES:
             break
+        if f.url in excluir:
+            continue
         if f.url not in urls:
             avisos.append(f"{f.url} no salió en la búsqueda; se descarta (posible URL inventada)")
             continue

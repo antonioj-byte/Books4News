@@ -435,9 +435,46 @@ class Pipeline:
         """Los textos de los medios para el guion. En orden, no en paralelo: el modelo de embeddings,
         que se usa para elegirlos, no se comparte entre hilos."""
         textos_h = self.textos_de_historia(h, pieza.eleccion)
+        textos_h = self._prensa_del_libro(pieza, h, textos_h)
         pieza.fuentes = [f for f, _ in textos_h]
         if not any(f.texto_completo for f in pieza.fuentes):
             pieza.avisos.append("Ningún texto completo disponible: el guionista solo tuvo titulares y entradillas")
+        return textos_h
+
+    def _prensa_del_libro(self, pieza: Pieza, h: Historia, textos_h: list[tuple[FuenteNoticia, str]]) -> list[tuple[FuenteNoticia, str]]:
+        """En las piezas sobre una novedad editorial (mundo del libro y recomendado), la prensa que ha salido sobre el
+        libro: entrevistas, reseñas, reportajes (2/11, a petición del usuario: «seguramente hay más de una entrevista»).
+        Haiku con búsqueda (~0,04 $), solo URLs que salieron en la búsqueda y se descargan con texto. Se congela con los
+        demás textos de la historia, así que la comprobación de hechos la ve y relanzar no vuelve a buscar."""
+        n = self.cfg.pipeline.guion.prensa_del_libro
+        if (not n or self.dev or pieza.eleccion.formato not in ("edicion", "recomendado") or not pieza.libros
+                or any(f.prensa for f, _ in textos_h)):
+            return textos_h
+        libro = pieza.libros[0]
+        autor = libro.autores[0] if libro.autores else ""
+        ya = {f.url for f, _ in textos_h}
+        try:
+            with temas._cliente() as c:
+                encontradas, avisos = temas.buscar_fuentes(self.llm, self.cfg, f"«{libro.titulo_propuesto}», de {autor}", c,
+                                                           plantilla="prensa_libro", excluir=ya)
+        except Exception as exc:                 # nunca para la pieza: se escribe con lo que había
+            pieza.avisos.append(f"Prensa del libro: no se pudo buscar ({type(exc).__name__})")
+            return textos_h
+        # Solo los que hablan de verdad del libro o de su autor: la búsqueda también trae reportajes del tema en general
+        from folio.verificacion_texto import apellido, normalizar
+        marca = normalizar(apellido(autor) or autor) if autor else ""
+        fuera = [f for f in encontradas if marca and marca not in normalizar(f.texto)]
+        encontradas = [f for f in encontradas if f not in fuera]
+        if fuera:
+            avisos.append(f"descartados {len(fuera)} que no nombran a {autor} ({', '.join(f.medio for f in fuera)})")
+        maximo = self.cfg.pipeline.guion.max_caracteres_texto
+        extra = [(FuenteNoticia(medio=f.medio, titulo=f.titulo, url=f.url, acceso="abierto", texto_completo=True, prensa=True),
+                  f.texto[:maximo]) for f in encontradas[:n]]
+        pieza.avisos += [f"Prensa del libro: {a}" for a in avisos if "403" in a or "429" in a or a.startswith("descartados")]
+        if extra:
+            pieza.avisos.append(f"Prensa del libro: {len(extra)} artículos más ({', '.join(f.medio for f, _ in extra)})")
+            textos_h = textos_h + extra
+            self.etapas.guardar_textos(h.id, textos_h)
         return textos_h
 
     @property
