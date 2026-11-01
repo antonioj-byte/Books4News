@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 import numpy as np
 from folio import guion as guionista
-from folio import arte, cajon, catalogo, hechos, informe, radar, seleccion, temas, textos
+from folio import arte, cajon, catalogo, hechos, informe, puentes, radar, seleccion, temas, textos
 from folio.imagenes import cubiertas
 from folio.libros import citas
 from folio.etapas import ORDEN, Etapa, EtapasGuardadas
@@ -82,6 +82,7 @@ class Pipeline:
         self.stats: dict = {}
         self.vectores_articulos: dict[str, np.ndarray] | None = None
         self.radar: list[HistoriaElegida] = []     # temas del radar del libro (folio.radar)
+        self.puentes: dict[str, tuple[int, str]] = {}   # nota del evaluador de puentes por historia (folio.puentes)
         self.sin_novedad = False                     # temas de la redacción: un perfil necesita la obra, no solo novedades (2/11)
         self._preverificados: dict = {}             # (título, autor) → ficha o NoVerificado (folio.pipeline._preverificar)
         self._embedder: agrupacion.Embedder | None = None
@@ -272,6 +273,9 @@ class Pipeline:
 
     def seleccion(self, al_jefe: list[Historia]) -> SeleccionJefe:
         sel, avisos = seleccion.seleccionar(self.llm, al_jefe, self.fecha)
+        self.avisos += avisos
+        # Un editor escéptico puntúa el vínculo historia-libro de cada propuesta: las forzadas se quedan fuera (2/11)
+        sel, self.puentes, avisos = puentes.evaluar(self.llm, sel)
         self.avisos += avisos
         self._guardar_etapa(self.etapas.guardar_seleccion, sel)
         self._marcar_temas(sel, al_jefe)
@@ -486,6 +490,9 @@ class Pipeline:
             h = por_id[e.historia_id]
             pieza = Pieza(id=f"{self.fecha}-{n}", fecha=self.fecha, estado="fallida", reserva=es_reserva,
                           historia_id=h.id, eleccion=e, n_medios=h.n_medios)
+            if h.id in self.puentes:
+                puntos, motivo = self.puentes[h.id]
+                pieza.avisos.append(f"Puente {puntos}/5: {motivo}")
             piezas.append(pieza)
             progreso(f"Verificando los libros de la propuesta {i} de {len(cola)}")
             log.info("Propuesta %s (%s): %s", pieza.id, e.formato, e.titular)

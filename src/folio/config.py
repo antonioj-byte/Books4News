@@ -51,6 +51,8 @@ class Seleccion(_Seccion):
     historias_editoriales: int = 12     # contexto del mundo del libro para el jefe de cultura
     elegidas: int
     reserva: int
+    puente_minimo: int = Field(default=3, ge=1, le=5)   # 2/11: propuestas con un puente peor se quedan fuera (evaluador de puentes)
+    puente_para_escribir: int = Field(default=4, ge=1, le=5)  # la que se escribe sola tiene que llegar a esto
     # Mesa del día (31/10, a petición del usuario): propuestas por formato y cuántas se escriben solas
     # (las primeras por preferencia); el resto espera a que se pulse «Proceder» en la web
     reparto: dict[Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado"], int] = Field(

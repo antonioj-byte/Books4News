@@ -28,6 +28,9 @@ class LLMFalso(LLM):
         self.llamadas.append((paso, mensajes))
         if esquema is ResumenHistoria:
             return ResumenHistoria(titular_es="Titular", resumen_es="Resumen", seccion="sociedad", sobre_libros=False), []
+        from folio import puentes
+        if esquema is puentes.Notas:                         # el evaluador de puentes: todo sólido
+            return puentes.Notas(notas=[puentes.Nota(numero=i, puntuacion=5, por_que="Sólido") for i in range(1, 10)]), []
         if esquema is SeleccionJefe and paso.startswith("seleccion-libro"):
             return SeleccionJefe(elegidas=[], aviso="Hoy no hay nada del mundo del libro"), []
         if esquema is SeleccionJefe:

@@ -328,3 +328,10 @@
   patron: "«¿Quizá necesita preguntarme a mí? Añadimos la opción de la réplica». Y el perfil de Tavares por el Formentor se quedó sin libro."
   propuesta: "El jefe puede preguntar antes de proponer y la redacción puede replicarle; en los temas de la redacción la novedad no es obligatoria (sí la edición en castellano) y, si ningún libro pasa, el jefe propone otros una vez."
   evidencia: ["Conversación, 2/11: tema de Gonçalo M. Tavares y el Formentor"]
+
+- clave: evaluador-de-puentes
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«Otro ejemplo de contenido muy pillado con pinzas» (el meme de Mbappé y Mao leído con un ensayo sobre Apple en China)."
+  propuesta: "Un editor escéptico independiente puntúa de 1 a 5 el vínculo historia-libro de cada propuesta: fuera las de 1–2, y la que se escribe sola tiene que tener un 4 o un 5."
+  evidencia: ["Conversación, 2/11: pie de Instagram de la pieza de Mbappé"]

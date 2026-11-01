@@ -11,6 +11,7 @@ modelos:
   escena: claude-opus-5-5         # ilustrador: escenas de la ilustración editorial
   radar: claude-haiku-5-5         # radar del libro: temas del mundo del libro sin desarrollar
   nevera: claude-haiku-5-5        # nevera del cajón: busca historias editoriales nuevas en la web
+  puente: claude-haiku-5-5        # evaluador de puentes (2/11): puntúa el vínculo historia-libro de cada propuesta
   claridad: claude-haiku-5-5      # lector sin contexto: señala lo que no se entiende sin conocer la obra ni la noticia
 
 dev:                            # folio run --dev: todas las etapas con este modelo y esfuerzo bajo
@@ -30,6 +31,7 @@ esfuerzo:                       # output_config.effort
   radar: low
   nevera: medium
   claridad: medium
+  puente: medium
 
 # USD por millón de tokens (entrada, salida[, lectura de caché]). Solo para estimar el coste en el
 # informe. La escritura en caché cuesta 1,25 × entrada; sin tercer valor, la lectura es el 10 % de la entrada.
@@ -63,6 +65,8 @@ seleccion:
   # Mesa del día (31/10): el jefe propone `elegidas` con este reparto por formato; se escriben solas las
   # `desarrollar_al_inicio` primeras y el resto espera a «Proceder» en la web. Sin reserva: las demás lo son.
   elegidas: 6                    # 2/11 (a petición del usuario): seis propuestas, no ocho
+  puente_minimo: 3               # 2/11 (a petición del usuario: «contenido muy pillado con pinzas»): el evaluador de puentes deja fuera las de 1–2
+  puente_para_escribir: 4        # la que se escribe sola de madrugada tiene que tener un puente de 4 o 5
   reserva: 0
   # curiosidad (1/11): una historia del cajón (config/cajon_curiosidades.yaml), sin percha y sin libro obligatorio
   # recomendado (1/11): una novedad de las editoriales independientes (catalogo, más abajo)
