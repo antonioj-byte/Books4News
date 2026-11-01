@@ -181,3 +181,21 @@ def test_guardar_json_es_atomico(tmp_path):
     guardar_json(tmp_path / "a.json", {"x": 2})
     assert cargar_json(tmp_path / "a.json") == {"x": 2}
     assert [f.name for f in tmp_path.iterdir()] == ["a.json"]
+
+
+def test_embedder_suelta_el_modelo_si_se_pide(tmp_path):
+    """«Proceder» en paralelo (2/11): cada proceso suelta el modelo de embeddings en cuanto calcula lo suyo."""
+    import numpy as np
+    from folio.ingesta.agrupacion import Embedder
+
+    class Motor:
+        def embed(self, textos, batch_size=32):
+            return [np.ones(4) for _ in textos]
+
+    e = Embedder("intfloat/multilingual-e5-large", tmp_path)
+    e._cargar = lambda: setattr(e, "_motor", Motor()) or e._motor
+    e.liberar = True
+    assert set(e.vectores({"a": "uno", "b": "dos"})) == {"a", "b"}
+    assert e._motor is None
+    assert set(e.vectores({"a": "uno"})) == {"a"}                     # de la caché, sin modelo
+    assert not [f for f in tmp_path.iterdir() if f.name.endswith(".tmp.npz")]

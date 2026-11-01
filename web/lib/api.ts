@@ -54,9 +54,10 @@ export const api = {
   decidirPatron: (id: number, estado: Patron["estado"], nota = "") =>
     pedir<unknown>(`/api/memoria/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado, nota }) }),
   lanzarEjecucion: () => pedir<EstadoEjecucion>("/api/ejecuciones/lanzar", { method: "POST" }),
-  // «Proceder»: escribe una propuesta pendiente de la mesa (unos minutos; se sigue con ejecucionEnMarcha)
+  // «Proceder»: escribe una propuesta pendiente de la mesa (unos minutos; se sigue con `desarrollo`). Varias a la vez.
   desarrollar: (eid: number, pid: string) =>
     pedir<EstadoEjecucion>(`${pieza(eid, pid)}/desarrollar`, { method: "POST" }),
+  desarrollo: (eid: number, pid: string) => pedir<EstadoEjecucion>(`${pieza(eid, pid)}/desarrollo`),
   ejecucionEnMarcha: () => pedir<EstadoEjecucion>("/api/ejecuciones/en-marcha"),
   editarDiapositiva: (eid: number, pid: string, n: number, texto: string, subtitulo?: string | null) =>
     pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),

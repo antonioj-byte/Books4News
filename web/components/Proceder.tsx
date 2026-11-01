@@ -18,13 +18,14 @@ export function Proceder({ eid, pid, onHecho, texto = "Proceder" }: {
     try {
       await api.desarrollar(eid, pid);
     } catch (err) {
-      setError(err instanceof Error && err.message.includes("409") ? "Hay otra ejecución en marcha: prueba cuando termine." : "No se pudo lanzar.");
+      setError(err instanceof Error && err.message.startsWith("409") ? err.message.replace(/^\d+ \S+: /, "") + "." : "No se pudo lanzar.");
       return;
     }
     setEtapa("Empezando…");
     let avisada = false;
     const vigilar = async () => {
-      const estado = await api.ejecucionEnMarcha().catch(() => null);
+      // Cada pieza tiene su proceso (2/11): se sigue el suyo, no la ejecución del día
+      const estado = await api.desarrollo(eid, pid).catch(() => null);
       // En cuanto la pieza está en la mesa con sus PNG se enseña; los vídeos siguen pintándose detrás (2/11)
       if (estado?.en_marcha && estado.etapa?.startsWith("La pieza ya está en la mesa")) {
         if (!avisada) { avisada = true; setEtapa(null); onHecho(); }

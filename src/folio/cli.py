@@ -180,6 +180,7 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
     al_jefe, _, _ = EtapasGuardadas(cfg.dir_cache(fecha)).historias()
     otras = [x for x, _ in almacen.piezas(eid) if x.id != pieza]
     tuberia = Pipeline(cfg, fecha)
+    tuberia.embedder.liberar = True        # puede haber otros «Proceder» a la vez (2/11): el modelo, solo mientras se usa
     progreso(f"Desarrollando {pieza}")
     hecha = tuberia.desarrollar(p, al_jefe, otras)
     destino = cfg.dir_informes / fecha / "render"

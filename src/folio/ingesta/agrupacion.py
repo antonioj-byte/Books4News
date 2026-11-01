@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import fcntl
+import gc
 import hashlib
+import os
 import logging
 from pathlib import Path
 
@@ -21,6 +24,9 @@ class Embedder:
         self.modelo = modelo
         self.dir_cache = dir_cache
         self._motor = None
+        # «Proceder» (2/11): varias piezas se escriben a la vez en procesos aparte; cada una suelta el modelo
+        # (2 GB) en cuanto calcula lo suyo, y un cerrojo de archivo hace que solo uno lo tenga cargado a la vez
+        self.liberar = False
 
     def _cargar(self):
         if self._motor is None:
@@ -44,7 +50,7 @@ class Embedder:
 
     def _guardar(self, cache: dict[str, np.ndarray]) -> None:
         # Escritura atómica: la lectura periódica y la madrugada comparten esta caché (2/11)
-        tmp = self._ruta().with_suffix(".tmp.npz")
+        tmp = self._ruta().with_name(f".{self._ruta().stem}.{os.getpid()}.tmp.npz")
         np.savez(tmp, **cache)
         tmp.replace(self._ruta())
 
@@ -62,11 +68,19 @@ class Embedder:
         cache = self._leer()
         faltan = [i for i in textos if i not in cache]
         if faltan:
-            motor = self._cargar()
-            nuevos = list(motor.embed([self._prefijo(textos[i]) for i in faltan], batch_size=32))
-            for i, v in zip(faltan, nuevos):
-                cache[i] = np.asarray(v, dtype=np.float32)
-            self._guardar(cache)
+            with open(self.dir_cache / ".embeddings.lock", "w") as cerrojo:
+                fcntl.flock(cerrojo, fcntl.LOCK_EX)
+                cache = self._leer()                     # otro proceso puede haberla ampliado mientras esperaba
+                faltan = [i for i in textos if i not in cache]
+                if faltan:
+                    motor = self._cargar()
+                    nuevos = list(motor.embed([self._prefijo(textos[i]) for i in faltan], batch_size=32))
+                    for i, v in zip(faltan, nuevos):
+                        cache[i] = np.asarray(v, dtype=np.float32)
+                    self._guardar(cache)
+                if self.liberar and self._motor is not None:
+                    self._motor = None
+                    gc.collect()
         out = {}
         for i in textos:
             v = cache[i]

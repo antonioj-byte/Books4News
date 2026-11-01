@@ -236,14 +236,24 @@ def descargar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
 @router.post("/api/ejecuciones/{eid}/piezas/{pid}/desarrollar", response_model=EstadoEjecucion, status_code=202)
 def desarrollar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     """«Proceder»: escribe una propuesta pendiente de la mesa (`folio desarrollar`, en un proceso aparte;
-    unos minutos y unos 0,3 $). Comparte turno con la ejecución del día: una cosa a la vez."""
+    unos minutos y unos 0,3 $). Varias piezas a la vez (como mucho tres), pero no mientras se prepara la mesa."""
     import sys
     p, _ = ctx.pieza(eid, pid)
     if p.guion or p.estado not in ("pendiente", "fallida"):
         raise HTTPException(409, "Esta pieza ya está escrita")
-    if not ctx.ejecutor.lanzar([[sys.executable, "-m", "folio.cli", "desarrollar", pid, "--ejecucion", str(eid), "--quiet"]]):
-        raise HTTPException(409, "Hay otra ejecución en marcha; prueba cuando termine")
-    return ctx.ejecutor.estado()
+    motivo = ctx.ejecutor.desarrollar(pid, [[sys.executable, "-m", "folio.cli", "desarrollar", pid, "--ejecucion", str(eid), "--quiet"]])
+    if motivo:
+        raise HTTPException(409, motivo)
+    return ctx.ejecutor.estado_desarrollo(pid)
+
+
+@router.get("/api/ejecuciones/{eid}/piezas/{pid}/desarrollo", response_model=EstadoEjecucion)
+def estado_desarrollo(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
+    """Cómo va el «Proceder» de esta pieza (cada pieza tiene su proceso y su registro)."""
+    e = ctx.ejecutor.estado_desarrollo(pid)
+    if e is None:
+        raise HTTPException(404, "Esta pieza no se está escribiendo")
+    return e
 
 
 # --- Programar en Buffer (2/11, a petición del usuario: el botón en la web) -----------------------------

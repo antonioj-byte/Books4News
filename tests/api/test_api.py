@@ -222,9 +222,12 @@ def test_proceder_lanza_el_desarrollo_de_una_propuesta_pendiente(cfg, tmp_path):
             super().__init__(tmp_path)
             self.lanzadas = []
 
-        def lanzar(self, pasos=None):
+        def desarrollar(self, pid, pasos):
             self.lanzadas.append(pasos)
-            return True
+            return None
+
+        def estado_desarrollo(self, pid):
+            return self.estado()
 
     inf = InformeDiario(fecha="2026-10-30", generado_en=datetime(2026, 10, 30, 9, tzinfo=timezone.utc), stats={}, top_historias=[],
                         seleccion=SeleccionJefe(elegidas=[ELECCION], reserva=[]),
@@ -239,3 +242,29 @@ def test_proceder_lanza_el_desarrollo_de_una_propuesta_pendiente(cfg, tmp_path):
     r = c.post("/api/ejecuciones/1/piezas/2026-10-30-2/desarrollar")
     assert r.status_code == 202 and ej.lanzadas[-1][0][-5:] == ["desarrollar", "2026-10-30-2", "--ejecucion", "1", "--quiet"]
     assert "pendiente (sin desarrollar" in (cfg.dir_informes / "2026-10-30" / "informe.md").read_text()
+
+
+def test_varias_piezas_se_escriben_a_la_vez(tmp_path):
+    """2/11, a petición del usuario («¿no puede hacer dos cosas a la vez?»): «Proceder» de varias piezas en paralelo,
+    cada una con su registro; no la misma pieza dos veces, no más de tres y no mientras se prepara la mesa."""
+    import sys
+    import time
+
+    from folio_api.ejecutor import MAX_DESARROLLOS, Ejecutor
+    dormir = lambda txt: [[sys.executable, "-c", f"import time; print('ETAPA: {txt}', flush=True); time.sleep(1.2)"]]
+    e = Ejecutor(tmp_path, comando=[sys.executable, "-c", "import time; time.sleep(1.2)", "run"])
+    assert e.desarrollar("2026-11-02-2", dormir("dos")) is None
+    assert e.desarrollar("2026-11-02-3", dormir("tres")) is None
+    assert "ya se está escribiendo" in e.desarrollar("2026-11-02-2", dormir("dos"))
+    assert e.desarrollar("2026-11-02-4", dormir("cuatro")) is None
+    assert f"{MAX_DESARROLLOS} piezas" in e.desarrollar("2026-11-02-5", dormir("cinco"))
+    assert e.lanzar() is False                     # la mesa no se rehace con piezas escribiéndose
+    time.sleep(0.6)
+    assert e.estado_desarrollo("2026-11-02-3").etapa == "tres"
+    while e.desarrollando():
+        time.sleep(0.1)
+    assert e.estado_desarrollo("2026-11-02-2").codigo == 0
+    assert e.lanzar() is True                      # el pipeline del día
+    assert "mesa del día" in e.desarrollar("2026-11-02-5", dormir("cinco"))
+    while e.ocupado():
+        time.sleep(0.1)
