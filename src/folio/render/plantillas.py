@@ -205,8 +205,8 @@ class Plantillas:
         # diapositiva de libro, si es el autor de ese libro
         if retrato and not misma_persona(retrato["persona"], (libro or (libros[:1] or [{}])[0]).get("autor")):
             retrato = None
-        if d.tipo == "portada" and retrato and not (a and a.portada == "panorama"):
-            imagen = retrato        # la cara del autor manda en la portada (salvo en la panorámica, B6)
+        if d.tipo == "portada" and retrato and not (a and (a.portada == "panorama" or (a.registro == "archivo" and imagen))):
+            imagen = retrato        # la cara del autor manda en la portada (salvo en la panorámica o si se eligió el archivo)
         estilo, svg = self.medios.portada(pieza, imagen)
         if d.tipo == "portada" and imagen is retrato and retrato and retrato.get("pequena") and estilo != "panorama":
             estilo = "copia"        # foto pequeña (de prensa): una copia en papel sobre la mesa, no a sangre
