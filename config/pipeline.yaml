@@ -182,4 +182,5 @@ ab:
   # Rondas de la voz (2/11, docs/rondas-voz.md): el control y UNA variante con un solo cambio por ronda.
   variantes:
     opus-high: {modelo: claude-opus-5-5, esfuerzo: high}
-    # r1 (ganó): voz_folio.md en lugar de la línea de tono; ya es producción. La variante de la ronda siguiente, aquí.
+    # r1 (ganó): voz_folio.md en lugar de la línea de tono; ya es producción.
+    repaso-voz: {modelo: claude-opus-5-5, esfuerzo: high, prompts: {guionista: ab/guionista_r2}}   # r2: repaso de voz antes de devolver
