@@ -89,7 +89,7 @@ def instrucciones_formato(cfg: Config, formato: str) -> str:
 
 
 def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
-                     libros: list[LibroVerificado]) -> str:
+                     libros: list[LibroVerificado], voz: bool = False) -> str:
     fuentes = "\n".join(
         f'<fuente medio="{f.medio}" url="{f.url}" acceso="{f.acceso}"{" critica=\"si\"" if f.critica else ""}{" prensa_del_libro=\"si\"" if f.prensa else ""}>\n{t}\n</fuente>'
         for f, t in textos
@@ -110,11 +110,24 @@ def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[
         "ninguno. Esta pieza no lleva libro: no hay diapositiva de libro, la lista de libros va vacía y la portada, "
         "el cierre y el pie no recomiendan ninguno. Las reglas sobre el libro no se aplican; las demás, sí."
     )
-    return cargar_prompt(cfg, "guionista", {
+    prompt = cargar_prompt(cfg, "guionista", {
         "[pegar formato]": instrucciones_formato(cfg, eleccion.formato),
         "[pegar]": noticia,
         "[pegar o «propón tú»]": libros_txt,
     })
+    return con_voz(cfg, prompt) if voz else prompt
+
+
+TONO = ("Tono: el de un buen columnista de cultura. Claro, con criterio, sin solemnidad ni frases de autoayuda. "
+        "Nada de «en un mundo donde…», preguntas retóricas en la portada ni moralejas.")
+
+
+def con_voz(cfg: Config, prompt: str) -> str:
+    """El prompt con la voz de Folio (prompts/voz_folio.md) en lugar de la línea de tono (2/11, prueba A/B: «escribe
+    bastante mal»). Si gana la prueba, la voz pasa a guionista.md."""
+    if TONO not in prompt:
+        raise ValueError("prompts/guionista.md ha cambiado: no encuentro la línea de tono que sustituye la voz")
+    return prompt.replace(TONO, (cfg.dir_prompts / "voz_folio.md").read_text(encoding="utf-8").strip())
 
 
 def _menciona_libro(texto: str, libros: list[LibroVerificado]) -> bool:
@@ -506,7 +519,7 @@ def _verificar_citas(g: GuionLLM, libros: list[LibroVerificado], verificar_cita,
 
 
 def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
-             libros: list[LibroVerificado], verificar_cita=None) -> tuple[GuionLLM, list[str], list[CitaVerificada]]:
+             libros: list[LibroVerificado], verificar_cita=None, voz: bool = False) -> tuple[GuionLLM, list[str], list[CitaVerificada]]:
     """Devuelve (guion validado, avisos, citas verificadas). Lanza ValueError si no pasa la validación.
 
     `verificar_cita` (folio.libros.citas) busca cada cita literal en el texto del libro; sin él, ninguna
@@ -515,7 +528,7 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     """
     cfg = llm.cfg
     fuentes = [f for f, _ in textos]
-    prompt = construir_prompt(cfg, eleccion, textos, libros)
+    prompt = construir_prompt(cfg, eleccion, textos, libros, voz=voz)
     mensajes = [{"role": "user", "content": con_cache(cfg, "guionista", prompt)}]
     errores: list[str] = []
     avisos: list[str] = []

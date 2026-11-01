@@ -43,7 +43,7 @@ def test_pipeline_yaml_tipado(sin_claves):
     cfg = config.cargar(sin_claves)
     assert cfg.pipeline.guion.max_textos == 5 and cfg.pipeline["guion"]["max_textos"] == 5
     assert cfg.pipeline.seleccion_textos.bonus_acceso["abierto"] == 0.02
-    assert cfg.modelo("guion") == "claude-opus-5-5" and cfg.pipeline.ab.variantes["sonnet-high"].modelo == "claude-sonnet-5-5"
+    assert cfg.modelo("guion") == "claude-opus-5-5" and cfg.pipeline.ab.variantes["voz-estilo"].estilo
 
 
 def test_clave_mal_escrita_falla_al_cargar(sin_claves):

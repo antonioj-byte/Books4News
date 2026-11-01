@@ -39,7 +39,7 @@ def test_genera_versiones_a_ciegas_con_su_clave(con_piezas):
     ruta_md, ruta_clave = ab.generar(cfg, "2026-10-30", lambda hid: [(FUENTES[0], "Texto")])
     md, clave = ruta_md.read_text(), json.loads(ruta_clave.read_text())
     letras = clave["piezas"]["2026-10-30-1"]
-    assert sorted(v["variante"] for v in letras.values()) == ["opus-high", "opus-medium", "sonnet-high"]
+    assert sorted(v["variante"] for v in letras.values()) == ["opus-high", "voz", "voz-estilo"]
     # Ciego: el archivo de evaluación no nombra modelos ni variantes
     for palabra in ("opus", "sonnet", "medium", "haiku"):
         assert palabra not in md.lower()
@@ -55,20 +55,20 @@ def test_no_sobrescribe_evaluaciones_y_agrega_resultados(con_piezas):
     letras = json.loads(ruta_clave.read_text())["piezas"]["2026-10-30-1"]
     por_variante = {v["variante"]: l for l, v in letras.items()}
     md = ruta_md.read_text()
-    notas = {"opus-high": ("4", "4", "sí"), "sonnet-high": ("4", "4", "sí"), "opus-medium": ("2", "3", "no")}
+    notas = {"opus-high": ("4", "4", "sí"), "voz": ("4", "4", "sí"), "voz-estilo": ("2", "3", "no")}
     for variante, (idea, voz, pub) in notas.items():
         l = por_variante[variante]
         bloque = f"<!-- ab:2026-10-30-1:{l} -->\n- Libro (1–5): \n- Idea nueva (1–5): \n- Voz (1–5): \n- ¿La publicarías? (sí/no): "
         assert bloque in md
         md = md.replace(bloque, f"<!-- ab:2026-10-30-1:{l} -->\n- Libro (1–5): 4\n- Idea nueva (1–5): {idea}\n"
                                 f"- Voz (1–5): {voz}\n- ¿La publicarías? (sí/no): {pub}")
-    md = md.replace("- Preferida (letra): ", f"- Preferida (letra): {por_variante['sonnet-high']}")
+    md = md.replace("- Preferida (letra): ", f"- Preferida (letra): {por_variante["voz"]}")
     ruta_md.write_text(md)
 
     with pytest.raises(FileExistsError):
         ab.generar(cfg, "2026-10-30", lambda hid: [(FUENTES[0], "Texto")])
 
     res = ab.resultados(cfg)
-    assert "sonnet-high: cumple" in res and "opus-medium: no cumple" in res
-    fila_sonnet = next(l for l in res.splitlines() if l.startswith("| sonnet-high"))
+    assert "voz: cumple" in res and "voz-estilo: no cumple" in res
+    fila_sonnet = next(l for l in res.splitlines() if l.startswith("| voz "))
     assert "| 1 |" in fila_sonnet  # preferida una vez

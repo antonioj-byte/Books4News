@@ -14,6 +14,7 @@ modelos:
   nevera: claude-haiku-5-5        # nevera del cajón: busca historias editoriales nuevas en la web
   puente: claude-haiku-5-5        # evaluador de puentes (2/11): puntúa el vínculo historia-libro de cada propuesta
   claridad: claude-haiku-5-5      # lector sin contexto: señala lo que no se entiende sin conocer la obra ni la noticia
+  estilo: claude-opus-5-5         # editor de estilo (2/11, prueba A/B de la voz de Folio)
 
 dev:                            # folio run --dev: todas las etapas con este modelo y esfuerzo bajo
   modelo: claude-haiku-5-5
@@ -34,6 +35,7 @@ esfuerzo:                       # output_config.effort
   nevera: medium
   claridad: medium
   puente: medium
+  estilo: high
 
 # USD por millón de tokens (entrada, salida[, lectura de caché]). Solo para estimar el coste en el
 # informe. La escritura en caché cuesta 1,25 × entrada; sin tercer valor, la lectura es el 10 % de la entrada.
@@ -175,7 +177,7 @@ arte:
 ab:
   control: opus-high
   reutilizar_control: true
-  variantes:
+  variantes:   # 2/11 (a petición del usuario: «escribe bastante mal»): la voz de Folio, con y sin pase de estilo
     opus-high: {modelo: claude-opus-5-5, esfuerzo: high}
-    sonnet-high: {modelo: claude-sonnet-5-5, esfuerzo: high}
-    opus-medium: {modelo: claude-opus-5-5, esfuerzo: medium}
+    voz: {modelo: claude-opus-5-5, esfuerzo: high, voz: true}
+    voz-estilo: {modelo: claude-opus-5-5, esfuerzo: high, voz: true, estilo: true}
