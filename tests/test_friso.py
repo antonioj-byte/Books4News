@@ -99,7 +99,7 @@ def test_cada_ficha_ensena_su_tercio(cfg_diseno):
 
 def test_el_chat_quita_o_rehace_el_friso(cfg, monkeypatch):
     base = dict(enfoque_x=50, enfoque_y=50, composicion="", consultas=[], persona="", estilo="", material="", como="",
-                destacado="", antetitulo="", acento="", libro="", editorial="", isbn="")
+                destacado="", antetitulo="", acento="", libro="", autor="", editorial="", isbn="")
     p = _pieza(friso="A long night landscape.")
     nueva, nota = edicion.aplicar_imagen(None, cfg, p, edicion.AccionImagen(tipo="friso", escena="ninguno", **base))
     assert nueva and nueva.arte.friso is None and "Quitado" in nota

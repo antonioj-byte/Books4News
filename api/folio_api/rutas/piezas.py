@@ -164,6 +164,9 @@ def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(c
         log.exception("Chat de edición: %s/%s", eid, pid)
         raise HTTPException(500, f"Error en el chat de edición ({type(exc).__name__}: {str(exc)[:200]}). Está en el registro de la api.")
     v = ctx.almacen.guardar_version(eid, pid, nueva, "chat", m.mensaje.strip()[:120]) if nueva else None
+    if nueva and nueva.estado != p.estado:
+        # Cambiar el libro desde el chat (2/11) deja la pieza pendiente, para escribirla de nuevo con «Proceder»
+        ctx.almacen.cambiar_estado(eid, pid, nueva.estado)
     ctx.almacen.anadir_mensaje(eid, pid, "usuario", m.mensaje.strip())
     ctx.almacen.anadir_mensaje(eid, pid, "editor", respuesta, v)
     return RespuestaChat(respuesta=respuesta, version=v, avisos=avisos)

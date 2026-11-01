@@ -14,7 +14,7 @@ from datos import ELECCION, LIBRO, guion_valido
 
 
 def _accion(tipo, **k):
-    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", editorial="", isbn="")
+    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", editorial="", isbn="")
     return AccionImagen(**(datos | k))
 
 
@@ -201,3 +201,43 @@ def test_cubierta_de_otra_edicion_cambia_tambien_la_ficha(cfg, monkeypatch):
     assert nueva.guion.libros[0].editorial_espanola == "Mondadori"
     nada, nota = edicion.aplicar_imagen(None, cfg, _pieza(), _accion("cubierta", libro="Eichmann"))
     assert nada is None and "editorial o el ISBN" in nota
+
+
+def test_cambiar_el_libro_lo_verifica_y_deja_la_pieza_pendiente(cfg, monkeypatch):
+    """2/11: «te has confundido enteramente de libro; el bueno es Killer App, de Darren Loucaides; rehazlo de 0»."""
+    from folio import materiales
+    from folio.etapas import EtapasGuardadas
+    from folio.pipeline import Pipeline
+    p = _pieza()
+    materiales.guardar(cfg, p, "https://www.ft.com/content/abc", b"Killer App\n\nUna biografia de Durov.", "text/plain",
+                       credito="ft.com", nota=materiales.NOTA_ENLACE)
+
+    def verificar(self, pieza, reservados):
+        c = pieza.eleccion.libros_candidatos[0]
+        if c.titulo == "Inventado":
+            pieza.error = "Ningún libro candidato se pudo verificar"
+            return False
+        pieza.libros = [LIBRO.model_copy(update={"titulo": c.titulo, "titulo_propuesto": c.titulo, "autores": [c.autor]})]
+        return True
+    monkeypatch.setattr(Pipeline, "_verificar", verificar)
+    monkeypatch.setattr(Pipeline, "_cubiertas_de", lambda self, pieza: None)
+    nueva, nota = edicion.aplicar_imagen(None, cfg, p, _accion("cambiar_libro", libro="Killer App", autor="Darren Loucaides"))
+    assert nueva and nueva.estado == "pendiente" and nueva.guion is None and nueva.arte is None
+    assert nueva.libros[0].titulo_propuesto == "Killer App" and "Proceder" in nota
+    textos = EtapasGuardadas(cfg.dir_cache(p.fecha)).textos(p.historia_id)
+    assert any(f.url == "https://www.ft.com/content/abc" for f, _ in textos)
+    nada, nota = edicion.aplicar_imagen(None, cfg, _pieza(), _accion("cambiar_libro", libro="Inventado", autor="Nadie"))
+    assert nada is None and "Sin verificar" in nota
+
+
+def test_los_enlaces_del_chat_se_leen_y_se_guardan(cfg):
+    import httpx
+    from folio import materiales
+    html = "<html><head><title>Killer App</title></head><body><article>" + "<p>Pavel Durov y Telegram. " * 40 + "</p></article></body></html>"
+    def manejar(req):
+        return httpx.Response(403) if "bloquea" in req.url.host else httpx.Response(200, text=html)
+    cliente = httpx.Client(transport=httpx.MockTransport(manejar))
+    avisos = edicion.leer_enlaces(cfg, _pieza(), "Mira https://www.ft.com/content/abc?x=1 y https://bloquea.org/a.", cliente)
+    ms = materiales.lista(cfg, _pieza())
+    assert [m.nombre for m in ms] == ["https://www.ft.com/content/abc?x=1"] and ms[0].nota == materiales.NOTA_ENLACE
+    assert len(avisos) == 1 and "403" in avisos[0]

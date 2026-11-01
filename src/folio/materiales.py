@@ -33,6 +33,7 @@ MAX_POR_PIEZA = 8
 MAX_LADO = 2400                     # las fotos se guardan con el lado mayor de 2400 px como mucho
 MAX_TEXTO = 20000                   # caracteres de un texto que se pasan al editor
 PREFIJO = "material:"
+NOTA_ENLACE = "Enlace pegado en el chat"        # los enlaces que se pegan en el chat se guardan como material (2/11)
 TIPOS = {"image/jpeg": "imagen", "image/png": "imagen", "image/webp": "imagen", "application/pdf": "pdf",
          "text/plain": "texto", "text/markdown": "texto"}
 
@@ -84,7 +85,9 @@ def ruta(cfg: Config, p: Pieza, m: Material) -> Path:
 
 def guardar(cfg: Config, p: Pieza, nombre: str, datos: bytes, mime: str, credito: str = "", nota: str = "") -> Material:
     mime = (mime or "").split(";")[0].strip().lower()
-    nombre = " ".join(Path(nombre or "material").name.split())[:120] or "material"
+    # Un enlace pegado en el chat se guarda con su dirección como nombre (hace falta para citarlo como fuente)
+    nombre = (nombre.strip()[:300] if (nombre or "").startswith(("http://", "https://"))
+              else " ".join(Path(nombre or "material").name.split())[:120] or "material")
     if mime in ("", "application/octet-stream") and nombre.lower().endswith((".md", ".txt")):
         mime = "text/plain"
     tipo = TIPOS.get(mime)

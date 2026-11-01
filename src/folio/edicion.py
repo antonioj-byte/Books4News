@@ -38,7 +38,7 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato", "cubierta", "friso"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato", "cubierta", "friso", "cambiar_libro"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
@@ -47,7 +47,8 @@ class AccionImagen(BaseModel):
                     "usar_material: poner en la pieza una foto que ha subido quien edita; "
                     "formato: destacado del titular, antetítulo o color de la pieza; "
                     "cubierta: la cubierta (y la ficha) de otra edición en castellano de un libro, por su editorial o ISBN; "
-                    "friso: dibujar de nuevo (o quitar) la ilustración en banda que cruza las tres fichas de «Tres libros»")
+                    "friso: dibujar de nuevo (o quitar) la ilustración en banda que cruza las tres fichas de «Tres libros»; "
+                    "cambiar_libro: cambiar el libro de la pieza por otro (se verifica) y dejarla lista para reescribirla")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
@@ -60,7 +61,8 @@ class AccionImagen(BaseModel):
     destacado: str = Field(description="Solo formato: el trozo del titular de portada que va destacado (cursiva en el color de la casa, con marcador sobre foto), copiado letra por letra, de 1 a 6 palabras; «ninguno» lo quita; vacío, no se toca")
     antetitulo: str = Field(description="Solo formato: el antetítulo de la portada, de 1 a 3 palabras; «ninguno» lo quita; vacío, no se toca")
     acento: str = Field(description="Solo formato: el color de la pieza, «pluma» (rojo) o «marcador» (amarillo); «ninguno» lo quita; vacío, no se toca")
-    libro: str = Field(description="Solo cubierta: el título del libro de la pieza cuya cubierta se cambia; si no, vacío")
+    libro: str = Field(description="Solo cubierta: el título del libro de la pieza cuya cubierta se cambia; solo cambiar_libro: el título del libro nuevo, tal como lo da quien edita; si no, vacío")
+    autor: str = Field(description="Solo cambiar_libro: el autor del libro nuevo; si no, vacío")
     editorial: str = Field(description="Solo cubierta: la editorial de la edición en castellano que se quiere («Mondadori»); si no, vacío")
     isbn: str = Field(description="Solo cubierta: el ISBN de esa edición, si lo da quien edita; si no, vacío")
 
@@ -177,11 +179,12 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
     sistema = cargar_prompt(cfg, "chat_edicion", {"[pegar pieza]": _bloque_pieza(p)})
     mensajes = [{"role": "user" if rol == "usuario" else "assistant", "content": texto} for rol, texto in historial]
     from folio import materiales
+    avisos_enlaces = leer_enlaces(cfg, p, mensaje)   # los enlaces del mensaje, como material de texto (2/11)
     extra = materiales.bloques(cfg, p)          # lo que ha subido quien edita (2/11), como datos delimitados
     ultimo = [*extra, {"type": "text", "text": mensaje}] if extra else mensaje
     mensajes = [{"role": "user", "content": sistema}, {"role": "assistant", "content": "Entendido. ¿Qué cambiamos?"},
                 *mensajes, {"role": "user", "content": ultimo}]
-    avisos: list[str] = []
+    avisos: list[str] = list(avisos_enlaces)
     previos = set(validar(cfg, p, p.guion))
     for intento in range(cfg.pipeline.guion.reintentos + 1):
         r, contenido = llm.estructurado(f"chat:{p.id}:{intento + 1}", cache_al_final(mensajes), RespuestaChat, etapa_modelo="chat")
@@ -242,6 +245,76 @@ def _imagen_sin_romper(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tupl
         return aplicar_imagen(llm, cfg, p, a)
     except Exception as exc:
         return None, f"(No se pudo cambiar la imagen: {type(exc).__name__}: {str(exc)[:160]}.)"
+
+
+_URL = re.compile(r"https?://[^\s<>\"'«»]+")
+
+
+def leer_enlaces(cfg: Config, p: Pieza, mensaje: str, cliente=None) -> list[str]:
+    """Descarga los enlaces que se pegan en el chat y los guarda como material de texto de la pieza, para que el
+    editor los lea en este turno y en los siguientes (2/11: el editor no veía el artículo del FT que se le pegó).
+    Ante 403 o 429 no se reintenta: se dice. Devuelve los avisos."""
+    from folio import materiales, temas
+    urls = list(dict.fromkeys(u.rstrip(".,);") for u in _URL.findall(mensaje or "")))[:3]
+    if not urls:
+        return []
+    ya = {m.nombre for m in materiales.lista(cfg, p)}
+    avisos = []
+    with (cliente or temas._cliente()) as c:
+        for url in urls:
+            if url in ya:
+                continue
+            f, motivo = temas.descargar(url, c)
+            if not f:
+                avisos.append(f"Enlace sin leer ({url[:60]}…): {motivo}")
+                continue
+            try:
+                materiales.guardar(cfg, p, url, f"{f.titulo}\n\n{f.texto}".encode(), "text/plain", credito=f.medio,
+                                   nota=materiales.NOTA_ENLACE)
+            except materiales.NoValido as exc:
+                avisos.append(f"Enlace sin guardar: {exc}")
+    return avisos
+
+
+def _cambiar_libro(cfg: Config, llm: LLM, nueva: Pieza, a: AccionImagen) -> tuple[Pieza | None, str]:
+    """Cambia el libro de la pieza por el que dice quien edita y la deja pendiente para reescribirla con «Proceder»
+    (2/11, a petición del usuario: «te has confundido enteramente de libro; el bueno es Killer App, de Darren
+    Loucaides; rehazlo de 0»). El libro se verifica como siempre (catálogos, edición en castellano; la novedad no se
+    exige: lo elige la redacción); los enlaces que se pegaron en el chat pasan a las fuentes de la pieza para que el
+    guionista y la comprobación de hechos los vean. Sin verificar, no se cambia."""
+    from folio import materiales
+    from folio.etapas import EtapasGuardadas
+    from folio.modelos import FuenteNoticia, LibroCandidato
+    from folio.pipeline import Pipeline
+    if not (a.libro.strip() and a.autor.strip()):
+        return None, "(Para cambiar el libro necesito su título y su autor.)"
+    prueba = nueva.model_copy(deep=True)
+    prueba.eleccion.libros_candidatos = [LibroCandidato(titulo=a.libro.strip(), autor=a.autor.strip())]
+    prueba.libros, prueba.libros_descartados, prueba.error = [], [], None
+    tuberia = Pipeline(cfg, nueva.fecha, llm=llm)
+    tuberia.sin_novedad = True
+    if not tuberia._verificar(prueba, set()):
+        motivos = "; ".join(f"{d.titulo}: {d.motivo}" for d in prueba.libros_descartados) or prueba.error or "no aparece en los catálogos"
+        return None, f"(No puedo poner «{a.libro.strip()}»: {motivos}. Sin verificar no entra en una pieza.)"
+    tuberia._cubiertas_de(prueba)
+    # Los enlaces leídos en el chat, a las fuentes congeladas de la historia (los usarán el guionista y los hechos)
+    etapas = EtapasGuardadas(cfg.dir_cache(nueva.fecha))
+    textos = etapas.textos(nueva.historia_id) or []
+    vistos = {f.url for f, _ in textos}
+    for m in materiales.lista(cfg, nueva):
+        if m.tipo == "texto" and m.nota == materiales.NOTA_ENLACE and m.nombre not in vistos:
+            texto = materiales.ruta(cfg, nueva, m).read_text(encoding="utf-8")
+            textos.append((FuenteNoticia(medio=m.credito or m.nombre, titulo=m.nombre, url=m.nombre, acceso="abierto",
+                                         texto_completo=True), texto[:cfg.pipeline.guion.max_caracteres_texto]))
+    if textos:
+        etapas.guardar_textos(nueva.historia_id, textos)
+    nueva.eleccion = prueba.eleccion
+    nueva.libros, nueva.libros_descartados = prueba.libros, prueba.libros_descartados
+    nueva.guion, nueva.arte, nueva.hechos, nueva.citas, nueva.error = None, None, [], [], None
+    nueva.estado = "pendiente"
+    l = nueva.libros[0]
+    return nueva, (f"(Libro cambiado a «{l.titulo_propuesto}», de {', '.join(l.autores[:2])}, verificado. La pieza queda "
+                   "pendiente: pulsa «Proceder» para escribirla de nuevo con ese libro.)")
 
 
 def _friso(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
@@ -364,6 +437,8 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return _cubierta(cfg, nueva, a, dir_fecha)
     if a.tipo == "friso":
         return _friso(llm, cfg, nueva, ar, a, dir_fecha)
+    if a.tipo == "cambiar_libro":
+        return _cambiar_libro(cfg, llm, nueva, a)
     if a.tipo == "encuadre":
         usa_retrato = retrato and ar.registro in ("foto_autor", "retrato_ia", None) and ar.portada != "panorama"
         img, clave = (retrato, f"{p.id}-retrato") if usa_retrato else (archivo, p.id)

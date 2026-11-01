@@ -433,3 +433,10 @@
   patron: "«¿Tiene sentido plantear cambios/feedback (que luego puedan sumarse a la memoria) al jefe de cultura, al editor (guionista, el copy) y al director de arte?» Y, tras ver la maqueta: «adelante con todo»."
   propuesta: "Tres canales de feedback por agente: descartar con motivo (jefe de cultura), la evaluación en tres comentarios (selección, copy, arte) y notas por diapositiva (arte o copy, con el recurso que llevaba); la Memoria los recibe con su destino."
   evidencia: ["Conversación, 2/11: Artifact «Feedback por agente»"]
+
+- clave: chat-cambia-libro-y-lee-enlaces
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«Te has confundido enteramente de libro. El bueno es Killer App, de Darren Loucaides [enlace]. Rehazlo de 0, y mira el material que te pasé» (el editor contestó que no podía)."
+  propuesta: "El chat lee los enlaces que se le pegan (como material de la pieza) y puede cambiar el libro: lo verifica, pasa los enlaces a las fuentes y deja la pieza pendiente para reescribirla con «Proceder»."
+  evidencia: ["Conversación, 2/11: pieza 2026-11-01-8, Pavel Durov"]
