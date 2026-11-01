@@ -192,3 +192,22 @@ def test_publicar_solo_aprobadas_y_sin_confirmar_no_publica(cfg, monkeypatch, tm
     urls = [d.get("video_url") or d.get("image_url") for _, d in g.posts()[:2]]
     assert all(u.startswith("https://folio.example/api/publico/") for u in urls) and urls[0].endswith("/2026-10-30-1/01.mp4")
     assert TOKEN not in r.output
+
+
+def test_la_ruta_publica_responde_a_head_y_a_range(cfg):
+    """Buffer pregunta con HEAD antes de descargar el vídeo; con 405 rechazaba el borrador (2/11)."""
+    from fastapi.testclient import TestClient
+    from folio.almacen import Almacen
+    from folio_api.main import crear_app
+    cfg.clave_enlaces = "clave"
+    (cfg.raiz / "diseno").symlink_to((type(cfg)(pipeline={}, fuentes=[]).raiz / "diseno").resolve())
+    destino = cfg.dir_informes / "2026-10-30" / "publicar" / "2026-10-30-1"
+    destino.mkdir(parents=True)
+    (destino / "01.mp4").write_bytes(b"\x00" * 2048)
+    url = enlaces.firmar("http://testserver", "clave", "2026-10-30/2026-10-30-1/01.mp4")
+    c = TestClient(crear_app(cfg, Almacen(cfg.ruta_db)))
+    h = c.head(url)
+    assert h.status_code == 200 and h.headers["content-type"] == "video/mp4" and h.headers["content-length"] == "2048"
+    assert h.content == b""
+    assert c.get(url, headers={"Range": "bytes=0-99"}).status_code == 206
+    assert c.head(url.replace("/01.mp4", "/02.mp4")).status_code == 404

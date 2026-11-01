@@ -13,7 +13,9 @@ from folio_api.dependencias import Contexto, contexto
 router = APIRouter()
 
 
-@router.get("/api/publico/{caduca}/{firma}/{fecha}/{pieza}/{archivo}", include_in_schema=False)
+# GET y HEAD: Buffer pregunta con HEAD el tipo y el tamaño antes de descargar el vídeo; con solo GET respondía
+# 405 y Buffer rechazaba el borrador («Video could not be read from its URL», 2/11)
+@router.api_route("/api/publico/{caduca}/{firma}/{fecha}/{pieza}/{archivo}", methods=["GET", "HEAD"], include_in_schema=False)
 def publico(caduca: int, firma: str, fecha: str, pieza: str, archivo: str, ctx: Contexto = Depends(contexto)):
     ruta = f"{fecha}/{pieza}/{archivo}"
     if not enlaces.valida(ctx.cfg.clave_enlaces or "", caduca, firma, ruta):
