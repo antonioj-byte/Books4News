@@ -162,6 +162,9 @@ class IlustracionEditorial(_Seccion):
     max_por_dia: int = Field(default=3, ge=0)     # piezas ilustradas por día (cada variante, unos 25 créditos)
     variantes: int = Field(default=2, ge=1, le=4) # escenas que se dibujan por pieza; el director elige una
     espera_max_s: int = Field(default=240, gt=0)
+    # Modelo de Magnific (2/11, elegido por el usuario tras comparar: «usamos Flux 2 Pro»); Seedream 4.5, de reserva
+    modelo: Literal["flux_2_pro", "seedream_4_5"] = "flux_2_pro"
+    creditos_imagen: int = Field(default=25, ge=0)   # para el panel de gasto: la API no da el coste
 
 
 class Arte(_Seccion):

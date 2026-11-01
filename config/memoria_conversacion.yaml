@@ -251,3 +251,10 @@
   patron: "«Estaría bien que el sistema permitiera subir cosas (fotos, etc.) para materiales extra»."
   propuesta: "En el chat de edición se suben fotos, PDF o texto con crédito y nota; el editor los ve como datos y puede poner una foto con crédito en la portada o como retrato, sin transformarla con IA."
   evidencia: ["Conversación, 2/11: captura del chat de edición"]
+
+- clave: ilustracion-flux-2-pro
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "«Lo veo muy IA aún: usa el mejor modelo disponible, no escatimes; tiene que parecer Wired, The Atlantic, The New Yorker»."
+  propuesta: "La ilustración se dibuja con Flux 2 Pro y un estilo de gouache sobre papel con trazo imperfecto y grano de serigrafía, sin nombrar revistas en el prompt."
+  evidencia: ["Conversación, 2/11: comparación de Flux 2 Pro, Mystic, RunWay y Seedream con las mismas escenas; elegido Flux 2 Pro"]

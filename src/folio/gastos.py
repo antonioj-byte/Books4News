@@ -46,8 +46,10 @@ def apuntar(cfg: Config, servicio: str, concepto: str, coste: float, moneda: str
         log.warning("No se pudo apuntar el gasto (%s: %s)", type(exc).__name__, exc)
 
 
-def imagen_magnific(cfg: Config, concepto: str, detalle: str | None = None) -> None:
+def imagen_magnific(cfg: Config, concepto: str, detalle: str | None = None, creditos: int | None = None,
+                    modelo: str = "Seedream 4.5") -> None:
     """Una imagen nueva de Magnific (retrato, ilustración o esquema)."""
     g = cfg.pipeline.gasto
-    apuntar(cfg, "magnific", concepto, g.magnific_creditos_imagen * g.magnific_euros_credito, "EUR",
-            unidades=g.magnific_creditos_imagen, modelo="Seedream 4.5", detalle=detalle)
+    creditos = g.magnific_creditos_imagen if creditos is None else creditos
+    apuntar(cfg, "magnific", concepto, creditos * g.magnific_euros_credito, "EUR",
+            unidades=creditos, modelo=modelo, detalle=detalle)

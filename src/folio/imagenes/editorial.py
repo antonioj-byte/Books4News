@@ -1,5 +1,5 @@
 """Ilustración editorial de la pieza (31/10, B1 del catálogo): una metáfora visual dibujada por Magnific
-(Seedream 4.5, desde texto) con el estilo de la casa (prompts/ilustracion_editorial.md), en 16:9 para que
+(Flux 2 Pro desde el 2/11, antes Seedream 4.5, desde texto) con el estilo de la casa (prompts/ilustracion_editorial.md), en 16:9 para que
 cruce la portada y la noticia como una panorámica (B6).
 
 La escena la propone el director de arte, en inglés; aquí se comprueba que no trae nombres propios (ni
@@ -33,8 +33,12 @@ from folio import gastos
 from folio.config import Config
 from folio.imagenes import libres, retrato_generado as rg
 
-RUTA = "/v1/ai/text-to-image/seedream-v4-5"
-ASPECTO = "widescreen_16_9"
+# Modelos de Magnific para la ilustración (2/11: Flux 2 Pro, elegido por el usuario tras compararlo con Mystic,
+# RunWay y Seedream; Seedream 4.5 queda de reserva): ruta, cuerpo de la petición y nombre para el panel de gasto
+MODELOS = {
+    "flux_2_pro": ("/v1/ai/text-to-image/flux-2-pro", lambda p: {"prompt": p, "width": 1440, "height": 810}, "Flux 2 Pro"),
+    "seedream_4_5": ("/v1/ai/text-to-image/seedream-v4-5", lambda p: {"prompt": p, "aspect_ratio": "widescreen_16_9"}, "Seedream 4.5"),
+}
 CLAVE = "magnific:ilustracion"
 
 
@@ -83,16 +87,17 @@ def validar_escena(escena: str | None, prohibidos: set[str] = frozenset()) -> tu
     return e, None
 
 
-def _pedir(texto: str, clave: str, espera_max_s: float, cliente: httpx.Client | None) -> bytes:
+def _pedir(texto: str, clave: str, espera_max_s: float, cliente: httpx.Client | None, modelo: str = "flux_2_pro") -> bytes:
+    ruta, cuerpo, _ = MODELOS[modelo]
     with cliente or httpx.Client(timeout=60) as c:
         t0 = time.monotonic()
-        tarea = rg._api(c, clave, "POST", RUTA, json={"prompt": texto, "aspect_ratio": ASPECTO})
+        tarea = rg._api(c, clave, "POST", ruta, json=cuerpo(texto))
         tid = tarea["task_id"]
         while tarea.get("status") not in ("COMPLETED", "FAILED"):
             if time.monotonic() - t0 > espera_max_s:
                 raise rg.ErrorMagnific(f"La tarea {tid} no terminó en {espera_max_s:.0f} s")
             time.sleep(rg.ESPERA_S)
-            tarea = rg._api(c, clave, "GET", f"{RUTA}/{tid}")
+            tarea = rg._api(c, clave, "GET", f"{ruta}/{tid}")
         if tarea["status"] == "FAILED" or not tarea.get("generated"):
             raise rg.ErrorMagnific(f"La tarea {tid} falló")
         r = c.get(tarea["generated"][0])
@@ -116,12 +121,14 @@ def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | Non
         raise rg.ErrorMagnific(f"Magnific bloqueado en esta ejecución: {rg.bloqueado()}", bloqueo=True)
     if not cfg.magnific_api_key:
         raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
+    ie = cfg.pipeline.arte.ilustracion_editorial
     texto = f"{escena} {estilo(cfg)}"
-    cache = cfg.dir_cache("x").parent / "ilustraciones" / f"{hashlib.sha256(texto.encode()).hexdigest()[:20]}.jpg"
+    huella = hashlib.sha256(f"{ie.modelo}\n{texto}".encode()).hexdigest()[:20]
+    cache = cfg.dir_cache("x").parent / "ilustraciones" / f"{huella}.jpg"
     if not cache.exists():
         try:
-            datos = _pedir(texto, cfg.magnific_api_key, cfg.pipeline.arte.ilustracion_editorial.espera_max_s, cliente)
-            gastos.imagen_magnific(cfg, "ilustración", pieza_id)
+            datos = _pedir(texto, cfg.magnific_api_key, ie.espera_max_s, cliente, ie.modelo)
+            gastos.imagen_magnific(cfg, "ilustración", pieza_id, ie.creditos_imagen, MODELOS[ie.modelo][2])
         except rg.ErrorMagnific as e:
             if e.bloqueo:
                 rg._bloqueo = str(e)
