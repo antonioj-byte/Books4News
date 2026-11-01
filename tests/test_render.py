@@ -243,3 +243,19 @@ def test_el_colofon_lleva_impulsado_por_alighieria_sobre_la_mesa(cfg_diseno, pie
     cfg_diseno.pipeline.arte.impulsado_por = False
     assert "impulso" not in render.Plantillas(cfg_diseno).html_diapositiva(pieza, n)
     assert "impulso" not in p.html_diapositiva(pieza, 1)
+
+
+def test_cierre_de_tres_libros_con_cubiertas(cfg_diseno, pieza):
+    """2/11, a petición del usuario («fatal maquetado, y faltan las portadas»): con tres libros, tres tarjetas con su
+    cubierta y sin la cara del autor; y «Recomienda Folio.» se va entero."""
+    from folio.modelos import LibroGuion
+    titulos = ["Jerusalén", "Aprender a rezar en la era de la técnica", "Un viaje a la India"]
+    libros = [LIBRO.model_copy(update={"titulo": t, "titulo_propuesto": t, "olid": f"OLX{i}W"}) for i, t in enumerate(titulos)]
+    g = pieza.guion.model_copy(deep=True)
+    base = g.libros[0].model_dump()
+    g.libros = [LibroGuion(**{**base, "titulo": t}) for t in titulos]
+    g.diapositivas[-1].texto = "Empieza por *Jerusalén*. Recomienda Folio."
+    p = pieza.model_copy(update={"libros": libros, "guion": g})
+    cierre = render.Plantillas(cfg_diseno).html_diapositiva(p, 5).split("<body>")[1]
+    assert cierre.count("tarjeta--tres") == 3 and cierre.count('class="cubierta cubierta--') == 3 and "tarjeta__cara" not in cierre
+    assert "Recomienda" not in cierre

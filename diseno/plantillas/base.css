@@ -143,6 +143,14 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .tarjeta__ficha b { font-family: var(--fuentes-titular); font-size: 40px; line-height: 1.05; font-weight: 600; letter-spacing: -0.03em; }
 .tarjeta__ficha i { font-family: var(--fuentes-remate); font-size: 34px; }
 .tarjeta__ficha span { font-size: 22px; color: var(--colores-tinta-60); }
+/* Cierre de «Tres libros» (2/11): tres tarjetas iguales con la cubierta pequeña y la ficha debajo */
+.estante--tres { gap: 22px; }
+.tarjeta--tres { padding: 22px; gap: 16px; align-items: flex-start; }
+.tarjeta--tres .cubierta { height: 250px; width: auto; max-width: 100%; }
+.tarjeta--tres .cubierta--dibujada { width: 166px; }
+.tarjeta--tres .cubierta__titulo { font-size: 24px; }
+.tarjeta--tres .tarjeta__ficha b { font-size: 28px; line-height: 1.08; overflow-wrap: normal; hyphens: auto; }
+.tarjeta--tres .tarjeta__ficha span { font-size: 18px; }
 
 /* La noticia sin foto ni cifra (31/10): golpe, palabra gigante, teletipo o collage. Todo lo que se pinta
    sale literalmente del texto (folio.sin_foto). El subrayado de marcador, como en el remate de portada. */

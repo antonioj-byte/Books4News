@@ -16,7 +16,8 @@ _MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agost
           "octubre", "noviembre", "diciembre")
 _CURSIVA = re.compile(r"\*([^*\n]+)\*")
 # En la imagen no se repite la firma del texto del cierre («— Folio»).
-FIRMA_FINAL = re.compile(r"\s*(?:[—–-]\s*)?Folio\.?\s*$")
+# «Recomienda Folio.» al final del cierre: se va entero, no solo «Folio» (2/11: quedaba «… (Seix Barral). Recomienda»)
+FIRMA_FINAL = re.compile(r"\s*(?:[—–-]\s*)?(?:(?:[Ll][oa]s? )?(?:[Rr]ecomienda|[Ff]irma)\s+)?Folio\.?\s*$")
 
 
 def texto_html(texto: str) -> Markup:
@@ -71,9 +72,13 @@ def libro_de_diapositiva(libros: list[dict], pieza: Pieza, texto: str) -> dict |
 def titular_con_remate(texto: str, remate: str | None) -> Markup:
     """El titular con su remate (el final, en cursiva) si el remate es literalmente el final del titular."""
     if remate:
-        corte = texto.rstrip().rstrip(".").rfind(remate.rstrip().rstrip("."))
-        if corte > 0 and texto[:corte].strip():
-            return Markup(f'{texto_html(texto[:corte])}<span class="remate">{texto_html(texto[corte:])}</span>')
+        r = remate.rstrip().rstrip(".")
+        corte = texto.rstrip().rstrip(".").rfind(r)
+        if corte >= 0 and r != texto.strip().rstrip("."):
+            # Al final, el remate se lleva el punto; en medio (destacado desde el chat, 2/11), solo el trozo
+            fin = len(texto) if not texto[corte + len(r):].strip(" .") else corte + len(r)
+            return Markup(f'{texto_html(texto[:corte])}<span class="remate">{texto_html(texto[corte:fin])}</span>'
+                          f'{texto_html(texto[fin:])}')
     return texto_html(texto)
 
 

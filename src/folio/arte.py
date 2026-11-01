@@ -106,12 +106,15 @@ def validar_pregunta(texto: str | None) -> str | None:
     return t
 
 
-def validar_remate(remate: str | None, titular: str) -> str | None:
-    """El remate tiene que ser literalmente el final del titular, de 2 a 6 palabras, y no todo él."""
+def validar_remate(remate: str | None, titular: str, en_cualquier_sitio: bool = False) -> str | None:
+    """El remate tiene que ser literalmente el final del titular, de 2 a 6 palabras, y no todo él. Desde el chat
+    (2/11, a petición del usuario: «usa destacados en los titulares; ¿Premio Formentor destacado en rojo?») puede
+    ser cualquier trozo literal del titular (`en_cualquier_sitio`), con las mismas medidas."""
     if not remate:
         return None
-    r, t = remate.strip().rstrip("."), titular.strip().rstrip(".")
-    if not t.endswith(r) or t == r or not 2 <= len(r.split()) <= 6:
+    r, t = remate.strip().rstrip(".:,;"), titular.strip().rstrip(".")
+    esta = r in t if en_cualquier_sitio else t.endswith(r)
+    if not r or not esta or t == r or not 1 <= len(r.split()) <= 6 or (not en_cualquier_sitio and len(r.split()) < 2):
         return None
     return r
 

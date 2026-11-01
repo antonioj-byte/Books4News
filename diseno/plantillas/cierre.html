@@ -6,6 +6,18 @@
     <p class="texto texto--final">{{ texto }}</p>
     {% else %}
     <p class="texto">{{ texto }}</p>
+    {% if libros|length >= 3 %}
+    {# Tres libros (2/11, a petición del usuario: «fatal maquetado, y faltan las portadas»): tres tarjetas iguales,
+       cada una con su cubierta pequeña encima de la ficha, sin la cara del autor (apretaba la primera) #}
+    <div class="estante estante--tres">
+      {% for l in libros %}
+      <div class="tarjeta tarjeta--tres">
+        {% include "_cubierta.html" %}
+        <div class="tarjeta__ficha"><b>{{ l.titulo }}</b>{% if l.datos %}<span>{{ l.datos }}</span>{% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
     <div class="estante">
       {% for l in libros %}
       {# La cubierta sale una sola vez en el carrusel, en la diapositiva del libro (1/11, a petición del usuario):
@@ -16,5 +28,6 @@
       </div>
       {% endfor %}
     </div>
+    {% endif %}
     {% endif %}
 {% endblock %}

@@ -38,13 +38,14 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado", "usar_material"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
                     "buscar_retrato: buscar la foto libre de una persona real (autor o protagonista) para la portada; "
                     "retrato_ilustrado: pasar esa foto a ilustración en un estilo de la casa; "
-                    "usar_material: poner en la pieza una foto que ha subido quien edita")
+                    "usar_material: poner en la pieza una foto que ha subido quien edita; "
+                    "formato: destacado del titular, antetítulo o color de la pieza")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
@@ -54,6 +55,9 @@ class AccionImagen(BaseModel):
     estilo: str = Field(description="Solo retrato_ilustrado: low_poly, voxel, render_2000 o dithering (vacío: el que va con el tono); si no, vacío")
     material: str = Field(description="Solo usar_material: el id del material (la foto subida); si no, vacío")
     como: str = Field(description="Solo usar_material: «portada» (la imagen de la portada) o «retrato» (la foto del autor o protagonista); si no, vacío")
+    destacado: str = Field(description="Solo formato: el trozo del titular de portada que va destacado (cursiva en el color de la casa, con marcador sobre foto), copiado letra por letra, de 1 a 6 palabras; «ninguno» lo quita; vacío, no se toca")
+    antetitulo: str = Field(description="Solo formato: el antetítulo de la portada, de 1 a 3 palabras; «ninguno» lo quita; vacío, no se toca")
+    acento: str = Field(description="Solo formato: el color de la pieza, «pluma» (rojo) o «marcador» (amarillo); «ninguno» lo quita; vacío, no se toca")
 
 
 class RespuestaChat(BaseModel):
@@ -209,12 +213,22 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
     return ("No he podido hacer ese cambio sin romper las reglas de Folio: " + "; ".join(errores)), None, avisos
 
 
-_CAMBIO_DE_TEXTO = re.compile(r"\b(he|hemos)\s+(reescrito|cambiado|quitado|eliminado|añadido|ajustado|acortado|"
-                              r"sustituido|rehecho|corregido|reformulado|recortado|movido)\b|\bdiapositivas?\s+\d", re.I)
+# Un verbo de cambio en pasado o en presente («he acortado», «acorto», «amplío»); un número de diapositiva suelto no
+# basta (2/11: «siguen pendientes las diapositivas 2 a 5» hacía pedir el guion entero)
+_CAMBIO_DE_TEXTO = re.compile(r"\b(he|hemos)\s+(reescrito|cambiado|quitado|eliminado|añadido|ajustado|acortado|ampliado|"
+                              r"sustituido|rehecho|corregido|reformulado|recortado|movido)\b|"
+                              r"\b(reescribo|quito|elimino|añado|acorto|amplío|sustituyo|rehago|corrijo|reformulo|recorto)\b", re.I)
+
+
+# Frases sobre el formato o la imagen («he cambiado el color», «he destacado…»): no son cambios de texto (2/11: un
+# destacado pedido por el chat hacía pedir el guion entero y el editor reescribía diapositivas que nadie había pedido)
+_DE_FORMATO = re.compile(r"destacad|color|rojo|amarill|pluma|marcador|antet[ií]tulo|cursiva|imagen|foto|retrato|"
+                         r"encuadre|composici[oó]n|portada en|ilustraci", re.I)
 
 
 def _dice_que_cambio_el_texto(respuesta: str) -> bool:
-    return bool(_CAMBIO_DE_TEXTO.search(respuesta or ""))
+    frases = re.split(r"(?<=[.!?;])\s+", respuesta or "")
+    return any(_CAMBIO_DE_TEXTO.search(f) and not _DE_FORMATO.search(f) for f in frases)
 
 
 def _imagen_sin_romper(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pieza | None, str]:
@@ -223,6 +237,50 @@ def _imagen_sin_romper(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tupl
         return aplicar_imagen(llm, cfg, p, a)
     except Exception as exc:
         return None, f"(No se pudo cambiar la imagen: {type(exc).__name__}: {str(exc)[:160]}.)"
+
+
+def _formato(nueva: Pieza, ar, a: AccionImagen) -> tuple[Pieza | None, str]:
+    """Destacado del titular, antetítulo y color de la pieza (2/11, a petición del usuario: «si pido edits de formato,
+    no me deja»). Lo que no casa (un destacado que no está en el titular) no se aplica y se dice."""
+    from folio import arte as direccion
+    notas, cambios = [], 0
+    titular = nueva.guion.diapositivas[0].texto if nueva.guion and nueva.guion.diapositivas else ""
+    quitar = lambda v: v.strip().lower() in ("ninguno", "ninguna", "quitar", "sin")
+    if a.destacado.strip():
+        if quitar(a.destacado):
+            ar.remate, cambios = None, cambios + 1
+            notas.append("sin destacado en el titular")
+        else:
+            r = direccion.validar_remate(a.destacado, titular, en_cualquier_sitio=True)
+            if r:
+                ar.remate, cambios = r, cambios + 1
+                notas.append(f"«{r}» destacado en el titular")
+            else:
+                notas.append(f"«{a.destacado.strip()}» no está tal cual en el titular (o es todo él): no lo destaco")
+    if a.antetitulo.strip():
+        nuevo = None if quitar(a.antetitulo) else direccion.validar_antetitulo(a.antetitulo)
+        if nuevo or quitar(a.antetitulo):
+            ar.antetitulo, cambios = nuevo, cambios + 1
+            notas.append(f"antetítulo «{nuevo}»" if nuevo else "sin antetítulo")
+        else:
+            notas.append("el antetítulo tiene que tener de 1 a 3 palabras")
+    if a.acento.strip():
+        v = a.acento.strip().lower()
+        if quitar(v):
+            ar.acento, cambios = None, cambios + 1
+            if ar.portada == "neon":
+                ar.portada = "sangre"
+            notas.append("sin color de pieza")
+        elif v in ("pluma", "marcador"):
+            if ar.tono == "grave":
+                notas.append("una pieza grave va sin color")
+            else:
+                ar.acento, cambios = v, cambios + 1
+                notas.append(f"color de la pieza: {'rojo (pluma)' if v == 'pluma' else 'amarillo (marcador)'}")
+        else:
+            notas.append("el color de la pieza es pluma (rojo) o marcador (amarillo)")
+    texto = "(" + "; ".join(notas or ["no hay ningún cambio de formato que aplicar"]) + ".)"
+    return (nueva if cambios else None), texto
 
 
 def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pieza | None, str]:
@@ -236,6 +294,8 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
     nueva.arte = ar
     retrato = libres.de_pieza(f"{p.id}-retrato", dir_fecha)
     archivo = libres.de_pieza(p.id, dir_fecha)
+    if a.tipo == "formato":
+        return _formato(nueva, ar, a)
     if a.tipo == "encuadre":
         usa_retrato = retrato and ar.registro in ("foto_autor", "retrato_ia", None) and ar.portada != "panorama"
         img, clave = (retrato, f"{p.id}-retrato") if usa_retrato else (archivo, p.id)

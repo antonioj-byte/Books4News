@@ -14,7 +14,7 @@ from datos import ELECCION, LIBRO, guion_valido
 
 
 def _accion(tipo, **k):
-    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="")
+    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="", destacado="", antetitulo="", acento="")
     return AccionImagen(**(datos | k))
 
 
@@ -158,3 +158,24 @@ def test_si_dice_que_cambio_el_texto_tiene_que_traer_el_guion(cfg):
     assert len(llamadas) == 2 and "`guion` va a null" in llamadas[1]
     assert nueva is not None and "nunca se pregunte" in nueva.guion.diapositivas[3].texto
     assert any("sin devolver el guion" in a for a in avisos)
+
+
+def test_formato_destacado_antetitulo_y_color(cfg):
+    """2/11, a petición del usuario («si pido edits de formato, no me deja»): el chat destaca un trozo del titular en
+    cualquier sitio, cambia el antetítulo y el color; lo que no casa no se aplica y se dice."""
+    from folio.render.textos import titular_con_remate
+    p = _pieza(remate="también se elige", acento="marcador")          # titular: «La obediencia también se elige»
+    nueva, nota = edicion.aplicar_imagen(None, cfg, p, _accion("formato", destacado="La obediencia", antetitulo="pensamiento",
+                                                               acento="pluma"))
+    assert nueva and nueva.arte.remate == "La obediencia" and nueva.arte.antetitulo == "PENSAMIENTO"
+    assert nueva.arte.acento == "pluma" and "destacado" in nota
+    html = str(titular_con_remate("La obediencia también se elige", nueva.arte.remate))
+    assert html == '<span class="remate">La obediencia</span> también se elige'
+    assert str(titular_con_remate("La obediencia también se elige.", "también se elige")).endswith('<span class="remate">también se elige.</span>')
+    nada, nota = edicion.aplicar_imagen(None, cfg, p, _accion("formato", destacado="Premio Formentor"))
+    assert nada is None and "no está tal cual" in nota
+    sin, _ = edicion.aplicar_imagen(None, cfg, p, _accion("formato", destacado="ninguno"))
+    assert sin.arte.remate is None
+    grave, nota = edicion.aplicar_imagen(None, cfg, _pieza(tono="grave") if False else p.model_copy(update={"arte": p.arte.model_copy(update={"tono": "grave"})}),
+                                         _accion("formato", acento="pluma"))
+    assert grave is None and "grave" in nota

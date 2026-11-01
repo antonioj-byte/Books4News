@@ -377,3 +377,17 @@
   patron: "«Está bien, pero editorialmente no impulsamos mensajes anti-IA. ¡Somos pro-IA!» (la noticia de Tavares rematada con «delegar el pensamiento en la IA puede atrofiarlo»)."
   propuesta: "Folio es pro-IA: una crítica a la IA de la noticia se cuenta atribuida, pero nunca como titular, remate, frase destacada ni moraleja; se busca el ángulo que la mira con criterio o se elige otro aspecto."
   evidencia: ["Conversación, 2/11: pieza de Gonçalo M. Tavares, diapositiva de actualidad"]
+
+- clave: formato-desde-el-chat
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«Si pido edits de formato, no me deja» (pidió «Premio Formentor» destacado en rojo y el editor dijo que no podía)."
+  propuesta: "El chat tiene una acción de formato: destacar cualquier trozo literal del titular (como el remate), cambiar el antetítulo y el color de la pieza."
+  evidencia: ["Conversación, 2/11: pieza de Gonçalo M. Tavares, portada"]
+
+- clave: cierre-tres-libros-con-cubiertas
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "«Fatal maquetado, y faltan las portadas» (cierre de «Tres libros» con las tarjetas apretadas por la cara del autor)."
+  propuesta: "En el cierre de tres libros, tres tarjetas iguales con su cubierta pequeña y la ficha, sin la cara del autor."
+  evidencia: ["Conversación, 2/11: pieza de Gonçalo M. Tavares, diapositiva de cierre"]
