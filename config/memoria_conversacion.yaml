@@ -447,3 +447,10 @@
   patron: "«Pon como regla que yo pueda dar instrucciones a títulos extranjeros, excepcionalmente»."
   propuesta: "Un libro sin edición en castellano entra solo si la redacción lo pide expresamente (en el chat o en un tema); ningún agente lo hace por su cuenta."
   evidencia: ["Conversación, 2/11: Killer App, de Darren Loucaides, para la pieza de Pavel Durov"]
+
+- clave: un-libro-sin-relleno
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«No entiendo por qué salen estos libros que no vienen al caso» (Nexus y Tecnofeudalismo junto a Killer App, en la pieza de Pavel Durov)."
+  propuesta: "Fuera de «Tres libros», la pieza lleva el primer candidato que se verifica; los demás son reserva. Si la noticia trata de un libro concreto, ese va primero y sin éxitos genéricos de relleno."
+  evidencia: ["Conversación, 2/11: pieza de Pavel Durov"]

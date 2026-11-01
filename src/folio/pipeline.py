@@ -62,6 +62,11 @@ def fuera_de_novedad(l: LibroVerificado, desde: int) -> str | None:
         return "sin año de publicación verificado: no se puede comprobar que sea novedad"
     return None if anio >= desde else f"publicado en {anio}: Folio va de novedades (desde {desde})"
 
+def libros_del_formato(formato: str | None) -> int:
+    """Cuántos libros verificados lleva una pieza: tres en «Tres libros», uno en los demás (2/11)."""
+    return 3 if formato == "balda" else 1
+
+
 class Pipeline:
     def __init__(self, cfg: Config, fecha: str, llm: LLM | None = None,
                  verificador: Verificador | None = None, historial: Historial | None = None,
@@ -342,7 +347,12 @@ class Pipeline:
             self.verificador = Verificador(self.cfg)
         dias = self.cfg.pipeline.exclusion.dias_libros
         ok, descartes = [], []
+        cupo = libros_del_formato(e.formato)
         for c in e.libros_candidatos:
+            if len(ok) >= cupo:
+                # 2/11, a petición del usuario («no entiendo por qué salen estos libros que no vienen al caso»): fuera de
+                # «Tres libros», el primer candidato que pasa es el libro; los demás solo son reserva si ese falla
+                break
             try:
                 previo = self._preverificados.get((c.titulo, c.autor))
                 if isinstance(previo, NoVerificado):
@@ -578,6 +588,8 @@ class Pipeline:
         composición). Si el guion falla, la pieza vuelve como «fallida» con el error."""
         h = {x.id: x for x in al_jefe}[pieza.historia_id]
         pieza.error = None
+        # Las propuestas verificadas antes del 2/11 traían todos los candidatos: el guionista solo recibe el principal
+        pieza.libros = pieza.libros[:libros_del_formato(pieza.eleccion.formato)]
         self._escribir(pieza, self._textos(pieza, h))
         if pieza.estado != "propuesta":
             pieza.estado = "fallida"

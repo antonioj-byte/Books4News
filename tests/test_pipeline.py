@@ -99,9 +99,9 @@ def test_pipeline_completo(cfg, monkeypatch):
     assert len(inf.piezas) == 1
     pieza = inf.piezas[0]
     assert pieza.estado == "propuesta"
-    # El libro inventado se descarta; el real se verifica
+    # El real se verifica y es el libro; el inventado, de reserva, ni se consulta (2/11: uno por pieza fuera de «Tres libros»)
     assert [l.olid for l in pieza.libros] == ["OL1386647W"]
-    assert pieza.libros_descartados[0].titulo == "El jardín de las máquinas tristes"
+    assert pieza.libros_descartados == []
     # Primer guion con cita → reintento con los errores; el segundo pasa
     assert "Guion aceptado en el intento 2" in pieza.avisos
     reintento = next(m for paso, m in reversed(llm.llamadas) if paso.startswith("guion:"))[-1]["content"]
@@ -431,7 +431,12 @@ def test_solo_libros_con_edicion_en_castellano(cfg):
     assert "sin edición en castellano" in descartes[0].motivo
     cfg.pipeline.seleccion.solo_con_edicion_es = False
     ok, _ = tuberia._verificar_libros(e, set())
-    assert len(ok) == 2
+    assert [l.titulo_propuesto for l in ok] == ["Sin traducir"]       # fuera de «Tres libros», solo el primero que pasa
+    # En «Tres libros», hasta tres
+    e3 = e.model_copy(update={"formato": "balda", "libros_candidatos": [*e.libros_candidatos,
+                      *[LibroCandidato(titulo=f"Otro {i}", autor="Hannah Arendt") for i in range(3)]]})
+    ok, _ = tuberia._verificar_libros(e3, set())
+    assert len(ok) == 3
 
 
 def test_proceder_comprueba_hechos_a_la_vez_que_el_arte(cfg, monkeypatch):
