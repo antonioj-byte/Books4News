@@ -204,3 +204,10 @@ def test_el_video_borra_los_de_una_version_anterior(cfg_diseno, pieza, tmp_path,
     except Exception as exc:  # sin navegador en este entorno
         pytest.skip(f"Chromium no disponible: {exc}")
     assert archivos == [] and not viejo.exists()          # esta pieza no tiene nada animado
+
+
+def test_la_hoja_de_estilos_lleva_su_version(cfg_diseno, pieza):
+    """El navegador no puede usar una base.css vieja con plantillas nuevas (1/11: retrato gigante en el cierre)."""
+    html = render.Plantillas(cfg_diseno).html_diapositiva(pieza, 1)
+    v = render.Plantillas(cfg_diseno).version_diseno
+    assert f'plantillas/base.css?v={v}"' in html and f'ajuste.js?v={v}"' in html and len(v) == 10

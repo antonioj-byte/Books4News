@@ -9,6 +9,10 @@ vista previa de la web: solo cambian `base_url` (de dónde salen fuentes y estil
 
 from __future__ import annotations
 
+import hashlib
+
+import functools
+
 import unicodedata
 
 from dataclasses import dataclass
@@ -100,7 +104,19 @@ class Plantillas:
             "tokens": self.tokens, "css_tokens": Markup(css_tokens(self.tokens)),
             "logotipo": Markup(logo),
             "logotipo_grande": Markup(logo.replace('class="logotipo"', 'class="logotipo logotipo--grande"', 1)),
+            "version_diseno": self.version_diseno,
         }
+
+    @functools.cached_property
+    def version_diseno(self) -> str:
+        """Huella de base.css y ajuste.js: va en sus direcciones para que el navegador no use una versión vieja
+        (el 1/11 la web enseñaba plantillas nuevas con la hoja de estilos de antes: retrato gigante en el cierre)."""
+        d = dir_diseno(self.cfg, self.direccion)
+        h = hashlib.sha1()
+        for ruta in (d / "plantillas" / "base.css", d / "ajuste.js", dir_diseno(self.cfg) / "ajuste.js"):
+            if ruta.exists():
+                h.update(ruta.read_bytes())
+        return h.hexdigest()[:10]
 
     def _texto(self, pieza: Pieza, d: Diapositiva, n: int) -> dict:
         portada = pieza.guion.diapositivas[0]

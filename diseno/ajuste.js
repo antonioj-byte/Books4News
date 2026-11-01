@@ -14,7 +14,7 @@ document.fonts.ready.then(() => {
     const textos = [...caja.querySelectorAll(".texto, .titular")];
     if (!textos.length) continue;
     let paso = 0;
-    while (caja.scrollHeight > caja.clientHeight + 8 && paso < 40) {
+    while (caja.scrollHeight > caja.clientHeight + 1 && paso < 40) {
       paso++;
       let algo = false;
       for (const t of textos) {
@@ -24,7 +24,7 @@ document.fonts.ready.then(() => {
       if (!algo) break;
       igualarCapas();
     }
-    if (caja.scrollHeight > caja.clientHeight + 8) document.body.dataset.desborda = "1";
+    if (caja.scrollHeight > caja.clientHeight + 1) document.body.dataset.desborda = "1";
   }
   // [data-encajar]: una sola pieza (la cifra destacada) que se reduce hasta caber a lo ancho
   for (const el of document.querySelectorAll("[data-encajar]")) {
