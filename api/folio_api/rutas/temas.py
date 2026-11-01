@@ -1,6 +1,7 @@
 """Temas que propone la redacción al jefe de cultura (2/11): ahora (una pieza pendiente en la mesa, uno o dos minutos y
 unos céntimos) o para la selección de la madrugada siguiente (folio.temas)."""
 
+import threading
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,6 +13,8 @@ from folio.llm import ErrorLLM
 from folio_api.dependencias import Contexto, contexto
 
 router = APIRouter()
+# Un tema a la vez: dos a la vez podrían llevarse el mismo número de pieza o pisarse las historias del día
+_un_tema = threading.Lock()
 
 
 class TemaNuevo(BaseModel):
@@ -36,6 +39,8 @@ class Replica(BaseModel):
 
 
 def _resultado(ctx: Contexto, eid: int, tid: int, replica: str | None = None) -> TemaCreado:
+    if not _un_tema.acquire(blocking=False):
+        raise HTTPException(409, "El jefe ya está con otro tema; espera a que responda")
     try:
         r = temas.crear_pieza(ctx.cfg, ctx.almacen, eid, tid, ctx.llm, replica=replica)
     except temas.SinFuentes as exc:
@@ -44,6 +49,8 @@ def _resultado(ctx: Contexto, eid: int, tid: int, replica: str | None = None) ->
         raise HTTPException(502, f"El jefe de cultura no ha podido responder: {exc}")
     except temas.NoSePuede as exc:
         raise HTTPException(409, str(exc))
+    finally:
+        _un_tema.release()
     tema = next(x for x in ctx.almacen.temas() if x.id == tid)
     p = r.pieza
     return TemaCreado(tema=tema, pieza_id=p.id if p else None, estado_pieza=p.estado if p else None,
@@ -62,8 +69,8 @@ def proponer(t: TemaNuevo, ctx: Contexto = Depends(contexto)):
     enlaces = [u.strip() for u in t.enlaces if u.strip()]
     if t.cuando == "ahora" and not t.ejecucion:
         raise HTTPException(422, "Para proponerlo ahora hace falta la mesa del día: lanza antes la ejecución")
-    if t.cuando == "ahora" and ctx.ejecutor.ocupado():
-        raise HTTPException(409, "Hay una ejecución en marcha; prueba cuando termine o guárdalo para mañana")
+    if t.cuando == "ahora" and ctx.ejecutor.con_pipeline():
+        raise HTTPException(409, "Se está preparando la mesa del día; prueba cuando termine o guárdalo para mañana")
     tid = ctx.almacen.guardar_tema(texto, enlaces, t.cuando)
     if t.cuando == "manana":
         return TemaCreado(tema=next(x for x in ctx.almacen.temas() if x.id == tid))
@@ -74,8 +81,8 @@ def proponer(t: TemaNuevo, ctx: Contexto = Depends(contexto)):
 def replicar(tid: int, r: Replica, ctx: Contexto = Depends(contexto)):
     """La redacción contesta al jefe (a sus preguntas o a su propuesta): vuelve a pensar y propone, o pregunta otra vez.
     Si la pieza del tema aún no está escrita, se rehace en el sitio."""
-    if ctx.ejecutor.ocupado():
-        raise HTTPException(409, "Hay una ejecución en marcha; prueba cuando termine")
+    if ctx.ejecutor.con_pipeline():
+        raise HTTPException(409, "Se está preparando la mesa del día; prueba cuando termine")
     if not any(x.id == tid for x in ctx.almacen.temas()):
         raise HTTPException(404, "No existe ese tema")
     return _resultado(ctx, r.ejecucion, tid, replica=r.texto)

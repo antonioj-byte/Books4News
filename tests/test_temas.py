@@ -154,3 +154,30 @@ def test_si_ningun_libro_pasa_el_jefe_propone_otros_una_vez(cfg, monkeypatch):
     assert vistos == [True, True] and r.pieza.estado == "pendiente"
     assert "Verificación de libros: Ninguno de tus libros pasó" in llm.prompts[-1] and "El Reino" in llm.prompts[-1]
     assert [x["rol"] for x in a.temas()[0].conversacion] == ["jefe", "verificacion", "jefe"]
+
+
+def test_un_tema_solo_espera_al_pipeline_del_dia(tmp_path):
+    """2/11: «Proponer ahora» no choca con «Proceder», el render ni la nevera; solo con `folio run`."""
+    import sys
+    import time
+    from folio_api.ejecutor import Ejecutor
+    dormir = [sys.executable, "-c", "import time; time.sleep(1.5)"]
+    e = Ejecutor(tmp_path, comando=dormir)
+    assert e.lanzar([dormir])
+    assert e.ocupado() and not e.con_pipeline()
+    while e.ocupado():
+        time.sleep(0.1)
+    e2 = Ejecutor(tmp_path, comando=[*dormir, "run"])
+    assert e2.lanzar()
+    assert e2.con_pipeline()
+    while e2.ocupado():
+        time.sleep(0.1)
+    assert not e2.con_pipeline()
+
+
+def test_guardar_json_es_atomico(tmp_path):
+    from folio.etapas import cargar_json, guardar_json
+    guardar_json(tmp_path / "a.json", {"x": 1})
+    guardar_json(tmp_path / "a.json", {"x": 2})
+    assert cargar_json(tmp_path / "a.json") == {"x": 2}
+    assert [f.name for f in tmp_path.iterdir()] == ["a.json"]

@@ -54,6 +54,11 @@ class Ejecutor:
             threading.Thread(target=self._esperar, args=(salida,), daemon=True).start()
             return True
 
+    def con_pipeline(self) -> bool:
+        """Si lo que corre ahora es el pipeline del día (`folio run`), que reescribe las historias del día. Proceder,
+        el render, la nevera y la Memoria no chocan con un tema de la redacción (2/11)."""
+        return self.ocupado() and bool(self._proceso) and "run" in list(getattr(self._proceso, "args", []) or [])
+
     def ocupado(self) -> bool:
         return bool(self._proceso and (self._proceso.poll() is None or self._fin is None))
 

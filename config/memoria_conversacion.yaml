@@ -349,3 +349,10 @@
   patron: "«Busca qué libros pueden estar en la misma balda temática… busca un quote ilustrativo y compartible… opción dos: busca 3 libros que expliquen un tema». Y en Tavares: «no tiene sentido que hables solo de un libro; es un premio a la obra»."
   propuesta: "Los libros de las propuestas de actualidad se eligen entre los reales de la misma balda, buscados en la web; la frase destacada puede salir de entrevistas y reseñas, comprobada; y existe el formato «Tres libros» (tres miradas o, en un perfil, los tres libros más sonados del autor)."
   evidencia: ["Conversación, 2/11: caso Mbappé y perfil de Gonçalo M. Tavares"]
+
+- clave: temas-a-la-vez
+  fecha: "2026-11-02"
+  destino: programa
+  patron: "«¿No puede hacer dos cosas a la vez? Debería, ¿no?» (Proponer un tema bloqueado por una ejecución en marcha)."
+  propuesta: "«Proponer ahora» y las réplicas solo esperan al pipeline del día; con «Proceder», el render, la nevera o la Memoria en marcha se pueden usar."
+  evidencia: ["Conversación, 2/11: el tema de Tavares rechazado con «Hay una ejecución en marcha»"]

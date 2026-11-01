@@ -8,6 +8,8 @@ llamadas ya hechas. Los textos de cada historia se congelan aquí la primera vez
 from __future__ import annotations
 
 import json
+import os
+import threading
 from pathlib import Path
 from typing import Literal
 
@@ -22,7 +24,10 @@ VERSION_TEXTOS = 2  # 2: artículos elegidos por cercanía al hecho principal
 
 def guardar_json(ruta: Path, datos) -> None:
     ruta.parent.mkdir(parents=True, exist_ok=True)
-    ruta.write_text(json.dumps(datos, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    # Escritura atómica: un tema de la redacción puede escribir mientras «Proceder» lee en otro proceso (2/11)
+    tmp = ruta.with_name(f".{ruta.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    tmp.write_text(json.dumps(datos, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    os.replace(tmp, ruta)
 
 
 def cargar_json(ruta: Path):
