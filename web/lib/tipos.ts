@@ -240,7 +240,7 @@ export interface paths {
         /**
          * Lanzar
          * @description Lanza la ejecución del día, igual que la diaria: `folio run` (~1 $) y después el render (PNG y
-         *     portada en vídeo). La ejecución aparece en la portada del día en cuanto termina el pipeline (la
+         *     vídeos de las diapositivas animadas). La ejecución aparece en la portada del día en cuanto termina el pipeline (la
          *     guarda en la base de datos); el vídeo, cuando termina el render.
          */
         post: operations["lanzar_api_ejecuciones_lanzar_post"];
@@ -287,10 +287,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gastos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Panel */
+        get: operations["panel_api_gastos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ApunteGasto */
+        ApunteGasto: {
+            /** Ts */
+            ts: string;
+            /** Fecha */
+            fecha: string;
+            /** Servicio */
+            servicio: string;
+            /** Concepto */
+            concepto: string;
+            /** Modelo */
+            modelo: string | null;
+            /** Unidades */
+            unidades: number;
+            /** Coste */
+            coste: number;
+            /** Moneda */
+            moneda: string;
+            /** Detalle */
+            detalle: string | null;
+        };
         /**
          * Arte
          * @description Lo que decidió la etapa de arte para una pieza (trazabilidad; la imagen vive en data/cache).
@@ -368,6 +406,19 @@ export interface components {
             /** Fragmento */
             fragmento: string;
         };
+        /** ConceptoGasto */
+        ConceptoGasto: {
+            /** Servicio */
+            servicio: string;
+            /** Concepto */
+            concepto: string;
+            /** Moneda */
+            moneda: string;
+            /** Coste */
+            coste: number;
+            /** N */
+            n: number;
+        };
         /** Dia */
         Dia: {
             /** Fecha */
@@ -390,6 +441,17 @@ export interface components {
             coste_usd: number;
             /** Piezas */
             piezas: components["schemas"]["PiezaResumen"][];
+        };
+        /** DiaGasto */
+        DiaGasto: {
+            /** Fecha */
+            fecha: string;
+            /** Anthropic Usd */
+            anthropic_usd: number;
+            /** Magnific Eur */
+            magnific_eur: number;
+            /** Magnific Imagenes */
+            magnific_imagenes: number;
         };
         /** Diapositiva */
         Diapositiva: {
@@ -830,6 +892,33 @@ export interface components {
         MensajeNuevo: {
             /** Mensaje */
             mensaje: string;
+        };
+        /** PanelGasto */
+        PanelGasto: {
+            /** Hoy */
+            hoy: string;
+            /** Mes */
+            mes: string;
+            /** Registro Desde */
+            registro_desde: string;
+            /** Anthropic Hoy Usd */
+            anthropic_hoy_usd: number;
+            /** Anthropic Mes Usd */
+            anthropic_mes_usd: number;
+            /** Magnific Hoy Eur */
+            magnific_hoy_eur: number;
+            /** Magnific Mes Eur */
+            magnific_mes_eur: number;
+            /** Magnific Mes Creditos */
+            magnific_mes_creditos: number;
+            /** Magnific Mes Imagenes */
+            magnific_mes_imagenes: number;
+            /** Dias */
+            dias: components["schemas"]["DiaGasto"][];
+            /** Conceptos */
+            conceptos: components["schemas"]["ConceptoGasto"][];
+            /** Ultimos */
+            ultimos: components["schemas"]["ApunteGasto"][];
         };
         /** Pieza */
         Pieza: {
@@ -1562,6 +1651,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstadoProgramada"];
+                };
+            };
+        };
+    };
+    panel_api_gastos_get: {
+        parameters: {
+            query?: {
+                dias?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PanelGasto"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

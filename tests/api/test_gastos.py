@@ -28,6 +28,7 @@ def test_apuntes_de_anthropic_y_magnific_en_el_panel(cfg, monkeypatch):
                                                      "magnific_eur": 0.05, "magnific_imagenes": 2}
     assert d["conceptos"][0] == {"servicio": "anthropic", "concepto": "guion", "moneda": "USD", "coste": 0.3, "n": 1}
     assert d["ultimos"][0]["concepto"] == "retrato"
+    assert [a["concepto"] for a in d["ultimos"]] == ["retrato", "ilustración", "guion", "seleccion"]
 
 
 def test_el_registro_nunca_para_el_pipeline(cfg, monkeypatch):
@@ -49,3 +50,11 @@ def test_el_gasto_de_ejecuciones_anteriores_se_carga_una_vez(cfg):
     assert a.importar_gastos_historicos() == 2 and a.importar_gastos_historicos() == 0
     apuntes = a.gastos("2026-10-01")
     assert [(g.concepto, g.coste) for g in apuntes] == [("seleccion", 0.2), ("guion", 0.3)]
+
+
+def test_los_apuntes_seguidos_de_la_misma_etapa_se_agrupan():
+    from folio.almacen import Gasto
+    from folio_api.rutas.gastos import _agrupados
+    g = lambda c, coste: Gasto(ts="t", fecha="2026-11-01", servicio="anthropic", concepto=c, unidades=1, coste=coste, moneda="USD")
+    out = _agrupados([g("resumen", 0.0002), g("resumen", 0.0003), g("guion", 0.3), g("resumen", 0.0001)])
+    assert [(a.concepto, a.coste, a.detalle) for a in out] == [("resumen", 0.0005, "2 llamadas"), ("guion", 0.3, None), ("resumen", 0.0001, None)]

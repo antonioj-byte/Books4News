@@ -48,5 +48,23 @@ def panel(dias: int = Query(30, ge=7, le=366), ctx: Contexto = Depends(contexto)
         dias=[DiaGasto(**{k: round(v, 4) if isinstance(v, float) else v for k, v in d.items()}) for d in por_dia.values()],
         conceptos=sorted((ConceptoGasto(servicio=k[0], concepto=k[1], moneda=k[2], coste=round(v["coste"], 4), n=v["n"])
                           for k, v in conceptos.items()), key=lambda c: (c.servicio, -c.coste)),
-        ultimos=[ApunteGasto(**a.model_dump()) for a in reversed(apuntes[-40:])],
+        ultimos=_agrupados(list(reversed(apuntes)))[:25],
     )
+
+
+def _agrupados(apuntes) -> list[ApunteGasto]:
+    """Los apuntes del más reciente al más antiguo, con las llamadas seguidas de la misma etapa juntas
+    («Resúmenes de la ingesta · 38 llamadas»): una ejecución hace decenas de resúmenes."""
+    out: list[ApunteGasto] = []
+    n = 0
+    for a in apuntes:
+        ultimo = out[-1] if out else None
+        if ultimo and (ultimo.servicio, ultimo.concepto, ultimo.fecha, ultimo.moneda) == (a.servicio, a.concepto, a.fecha, a.moneda):
+            n += 1
+            ultimo.coste = round(ultimo.coste + a.coste, 6)
+            ultimo.unidades += a.unidades
+            ultimo.detalle = f"{n} {'imágenes' if a.servicio == 'magnific' else 'llamadas'}"
+            continue
+        out.append(ApunteGasto(**a.model_dump()))
+        n = 1
+    return out

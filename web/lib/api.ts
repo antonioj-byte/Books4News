@@ -13,6 +13,7 @@ export type EstadoEjecucion = components["schemas"]["EstadoEjecucion"];
 export type ResultadoEdicion = components["schemas"]["ResultadoEdicion"];
 export type MensajeChat = components["schemas"]["MensajeChat"];
 export type RespuestaChat = components["schemas"]["RespuestaChat"];
+export type PanelGasto = components["schemas"]["PanelGasto"];
 
 async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
   const r = await fetch(ruta, { cache: "no-store", ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
@@ -35,6 +36,7 @@ export const api = {
   guardarEvaluacion: (eid: number, pid: string, ev: Evaluacion) =>
     pedir<Evaluacion>(`${pieza(eid, pid)}/evaluacion`, { method: "PUT", body: JSON.stringify(ev) }),
   resumen: () => pedir<ResumenDia[]>("/api/evaluaciones/resumen"),
+  gastos: (dias: number) => pedir<PanelGasto>(`/api/gastos?dias=${dias}`),
   lanzarEjecucion: () => pedir<EstadoEjecucion>("/api/ejecuciones/lanzar", { method: "POST" }),
   // «Proceder»: escribe una propuesta pendiente de la mesa (unos minutos; se sigue con ejecucionEnMarcha)
   desarrollar: (eid: number, pid: string) =>

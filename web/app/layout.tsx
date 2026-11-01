@@ -26,6 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <nav className="flex gap-1 text-sm">
             <Link href="/" className="rounded-full px-3 py-1.5 hover:bg-papel-hondo">Portada del día</Link>
             <Link href="/evaluacion" className="rounded-full px-3 py-1.5 hover:bg-papel-hondo">Evaluación</Link>
+            <Link href="/gasto" className="rounded-full px-3 py-1.5 hover:bg-papel-hondo">Gasto</Link>
           </nav>
         </header>
         <main className="flex-1">{children}</main>
