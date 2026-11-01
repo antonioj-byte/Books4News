@@ -368,3 +368,27 @@ def test_reparto_en_el_prompt_y_avisos_si_no_se_cumple(cfg):
     h = Historia(id="h1", articulos=_articulos()[:1], n_medios=1, medios=["El País"], titular_es="T", resumen_es="R")
     sel, avisos = seleccion.seleccionar(LLMJefe(cfg), [h], "2026-10-31")
     assert len(sel.elegidas) == 5 and "Propuestas del mundo del libro: 1 (se pedían 2)" in avisos
+    assert any("no pudo completar" in a for a in avisos)
+
+
+def test_si_falta_un_formato_el_jefe_completa_la_mesa(cfg):
+    from folio import seleccion
+    from folio.modelos import Historia
+    pasos = []
+
+    class LLMJefe:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
+            pasos.append(paso)
+            e = ELECCION.model_copy(update={"historia_id": "h1", "libros_candidatos": ELECCION.libros_candidatos * 2})
+            formatos = ("lateral", "lateral", "dialogo", "dialogo", "edicion") + (("edicion",) if paso == "seleccion-completar" else ())
+            if paso == "seleccion-completar":
+                assert "1 del mundo del libro" in mensajes[-1]["content"] and mensajes[1]["role"] == "assistant"
+            return SeleccionJefe(elegidas=[e.model_copy(update={"formato": f}) for f in formatos], reserva=[]), [{"type": "text", "text": "x"}]
+
+    h = Historia(id="h1", articulos=_articulos()[:1], n_medios=1, medios=["El País"], titular_es="T", resumen_es="R")
+    sel, avisos = seleccion.seleccionar(LLMJefe(cfg), [h], "2026-10-31")
+    assert pasos == ["seleccion", "seleccion-completar"] and len(sel.elegidas) == 6
+    assert "el jefe la ha completado" in avisos[0]

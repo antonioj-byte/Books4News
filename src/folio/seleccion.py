@@ -48,20 +48,10 @@ def texto_reparto(reparto: dict[str, int]) -> str:
     return ", ".join(partes[:-1]) + (" y " if len(partes) > 1 else "") + partes[-1]
 
 
-def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[SeleccionJefe, list[str]]:
-    """Devuelve las propuestas del día y avisos de validación (ids desconocidos, recuentos, reparto)."""
-    cfg = llm.cfg.pipeline.seleccion
-    prompt = cargar_prompt(llm.cfg, "jefe_cultura", {
-        "[pegar reparto]": texto_reparto(cfg.reparto),
-        "[pegar año mínimo]": str(anio_minimo(fecha, cfg.antiguedad_libros)),
-        "[pegar lista]": bloque_historias([h for h in historias if h.carril == "actualidad"]),
-        "[pegar lista editorial]": bloque_historias([h for h in historias if h.carril == "editorial"], "mundo_del_libro"),
-    })
-    sel, _ = llm.estructurado("seleccion", [{"role": "user", "content": prompt}], SeleccionJefe,
-                              etapa_modelo="seleccion", max_tokens=MAX_TOKENS_SELECCION)
-
+def _validar(sel: SeleccionJefe, ids: set[str], cfg) -> tuple[list[str], dict[str, int]]:
+    """Quita las propuestas con ids inexistentes y recorta lo que sobra. Devuelve los avisos y lo que
+    falta de cada formato del reparto."""
     avisos: list[str] = []
-    ids = {h.id for h in historias}
     for grupo in ("elegidas", "reserva"):
         validas = []
         for e in getattr(sel, grupo):
@@ -72,15 +62,55 @@ def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[Selecc
                 avisos.append(f"«{e.titular}»: {len(e.libros_candidatos)} libros candidatos (se pedían 3–4)")
             validas.append(e)
         setattr(sel, grupo, validas)
+    faltan = {}
     for formato, n in cfg.reparto.items():
         hay = sum(e.formato == formato for e in sel.elegidas)
         if hay != n:
             avisos.append(f"Propuestas {_EN_EL_REPARTO[formato]}: {hay} (se pedían {n})")
+        if hay < n:
+            faltan[formato] = n - hay
     if len(sel.elegidas) > cfg["elegidas"]:
         avisos.append(f"Se recibieron {len(sel.elegidas)} elegidas; se usan las {cfg['elegidas']} primeras")
         sel.elegidas = sel.elegidas[: cfg["elegidas"]]
     if len(sel.reserva) > cfg["reserva"]:
         sel.reserva = sel.reserva[: cfg["reserva"]]
+    return avisos, faltan
+
+
+def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[SeleccionJefe, list[str]]:
+    """Devuelve las propuestas del día y avisos de validación (ids desconocidos, recuentos, reparto).
+    Si falta algún formato del reparto (el 1/11 salieron 5 de 6), se le pide al jefe una vez, en la misma
+    conversación, que complete la mesa; si tampoco puede, se sigue con lo que hay y queda el aviso."""
+    cfg = llm.cfg.pipeline.seleccion
+    prompt = cargar_prompt(llm.cfg, "jefe_cultura", {
+        "[pegar reparto]": texto_reparto(cfg.reparto),
+        "[pegar año mínimo]": str(anio_minimo(fecha, cfg.antiguedad_libros)),
+        "[pegar lista]": bloque_historias([h for h in historias if h.carril == "actualidad"]),
+        "[pegar lista editorial]": bloque_historias([h for h in historias if h.carril == "editorial"], "mundo_del_libro"),
+    })
+    mensajes = [{"role": "user", "content": prompt}]
+    sel, contenido = llm.estructurado("seleccion", mensajes, SeleccionJefe,
+                                      etapa_modelo="seleccion", max_tokens=MAX_TOKENS_SELECCION)
+    ids = {h.id for h in historias}
+    avisos, faltan = _validar(sel, ids, cfg)
+    if faltan and sel.elegidas:
+        pedido = texto_reparto(faltan)
+        mensajes += [{"role": "assistant", "content": contenido},
+                     {"role": "user", "content": f"Falta completar el reparto: {pedido}. Devuelve la mesa entera, con las "
+                      "propuestas que ya diste (en el mismo orden) y las que faltan, eligiendo historias de las listas. "
+                      "Si de verdad no hay ninguna buena para ese formato, dilo en «aviso»."}]
+        try:
+            otra, _ = llm.estructurado("seleccion-completar", mensajes, SeleccionJefe,
+                                       etapa_modelo="seleccion", max_tokens=MAX_TOKENS_SELECCION)
+        except ErrorLLM as exc:
+            avisos.append(f"No se pudo completar la mesa ({exc}); se sigue con {len(sel.elegidas)} propuestas")
+        else:
+            avisos2, faltan2 = _validar(otra, ids, cfg)
+            if len(otra.elegidas) > len(sel.elegidas):
+                sel = otra
+                avisos = [f"La primera mesa traía {texto_reparto(faltan)} de menos; el jefe la ha completado"] + avisos2
+            else:
+                avisos.append("El jefe no pudo completar la mesa" + (f": {otra.aviso}" if otra.aviso else ""))
     if not sel.elegidas and not sel.reserva:
         if sel.aviso:
             return sel, avisos
