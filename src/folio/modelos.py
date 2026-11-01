@@ -28,7 +28,9 @@ Seccion = Literal[
 ]
 # «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
 EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
-Formato = Literal["lateral", "dialogo", "edicion"]
+Formato = Literal["lateral", "dialogo", "edicion", "curiosidad"]
+# «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml)
+Carril = Literal["actualidad", "editorial", "cajon"]
 TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre"]
 
 
@@ -43,7 +45,7 @@ class Articulo(BaseModel):
     publicado_en: datetime | None = None
     idioma: str
     acceso: Acceso
-    carril: Literal["actualidad", "editorial"] = "actualidad"
+    carril: Carril = "actualidad"
     tier: int | None = None
 
 
@@ -58,7 +60,7 @@ class Historia(BaseModel):
     resumen_es: str | None = None
     seccion: Seccion | None = None
     sobre_libros: bool | None = None
-    carril: Literal["actualidad", "editorial"] = "actualidad"
+    carril: Carril = "actualidad"
 
 
 class ResumenHistoria(BaseModel):
@@ -79,12 +81,12 @@ class LibroCandidato(BaseModel):
 
 
 class HistoriaElegida(BaseModel):
-    formato: Formato = Field(default="lateral", description="lateral (lectura lateral), dialogo (diálogo con la actualidad) o edicion (mundo del libro)")
+    formato: Formato = Field(default="lateral", description="lateral (lectura lateral), dialogo (diálogo con la actualidad), edicion (mundo del libro) o curiosidad (del cajón de curiosidades)")
     historia_id: str = Field(description="Identificador de la historia tal como aparece en la lista")
     titular: str = Field(description="Titular en una línea")
     de_que_se_habla: str = Field(description="De qué se está hablando, en dos frases")
     cuestion_de_fondo: str = Field(description="La cuestión de fondo, en una frase")
-    libros_candidatos: list[LibroCandidato] = Field(description="3–4 libros candidatos, por orden de preferencia")
+    libros_candidatos: list[LibroCandidato] = Field(description="3–4 libros candidatos, por orden de preferencia (en una curiosidad, de 0 a 4)")
     gancho_libro: str = Field(default="", description="En una línea, cómo entra el libro desde la portada: qué vio, explicó o anticipó su autor")
     por_que: str = Field(description="Por qué esta historia y no otra, en dos líneas")
 
@@ -377,7 +379,7 @@ class HistoriaResumida(BaseModel):
     n_medios: int
     medios: list[str]
     excluida: str | None = None          # motivo si no pasó al jefe de cultura
-    carril: Literal["actualidad", "editorial"] = "actualidad"
+    carril: Carril = "actualidad"
 
 
 class InformeDiario(BaseModel):

@@ -107,6 +107,7 @@ class Plantillas:
         remate = pieza.arte.remate if pieza.arte else None
         return {
             "tipo": d.tipo, "rotulo": self.tokens["rotulos"].get(d.tipo, ""),
+            "formato": pieza.eleccion.formato,
             "texto": texto_html(FIRMA_FINAL.sub("", d.texto) if d.tipo == "cierre" else d.texto),
             "n": n, "total": len(pieza.guion.diapositivas), "pieza_id": pieza.id,
             "fecha_larga": fecha_larga(pieza.fecha), "anio_hoy": int(pieza.fecha[:4]),
@@ -147,7 +148,8 @@ class Plantillas:
             libros.append({"titulo": texto_html("*" + sin_subtitulo(v.titulo_propuesto).strip() + "*"), "autor": ", ".join(v.autores[:2]),
                            "primera": primera, "espanola": espanola,
                            "verificado": " y ".join(fuentes_v.get(f, f) for f in v.fuentes_verificacion)})
-        return {"fuentes": fuentes, "libros": libros, "imagenes": creditos_pie(pieza.arte) if pieza.arte else []}
+        return {"fuentes": fuentes, "libros": libros, "imagenes": creditos_pie(pieza.arte) if pieza.arte else [],
+                "curiosidad": pieza.eleccion.formato == "curiosidad"}
 
     def _infografia(self, pieza: Pieza, d: Diapositiva, n: int) -> dict | None:
         """La infografía de la (primera) diapositiva de la idea, comprobada otra vez contra el guion actual.

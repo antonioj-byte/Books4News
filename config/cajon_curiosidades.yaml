@@ -1,0 +1,108 @@
+# Cajón de curiosidades: historias del mundo del libro sin percha de actualidad (formato «curiosidad»).
+#
+# Lo que se encontraría en la balda de historia del libro de una buena librería: editores, librerías
+# míticas, erratas, manuscritos perdidos, juicios, tiradas. Una moneda conversacional para quien vive
+# entre libros. El jefe de cultura elige una al día de las que no se han usado en los últimos
+# `seleccion.dias_curiosidades` días; el guionista escribe con los textos de sus fuentes y la
+# comprobación de hechos coteja contra ellos, como con una noticia.
+#
+# Cada fuente se ha descargado una vez para comprobar que da texto (las que respondían 403 se quitaron).
+# Para añadir una: id estable (minúsculas y guiones), titular neutro, resumen de dos frases y 1–3 fuentes.
+
+- id: biblioteca-del-futuro
+  titular: En un bosque de Oslo crecen los árboles que imprimirán en 2114 cien libros que hoy nadie puede leer
+  resumen: La artista Katie Paterson plantó mil árboles en 2014 y cada año un escritor entrega un manuscrito que quedará sellado hasta 2114. Margaret Atwood fue la primera; los textos esperan en una sala de la biblioteca Deichman.
+  fuentes:
+    - {medio: Xataka, url: "https://www.xataka.com/literatura-comics-y-juegos/hay-escritores-escribiendo-libros-que-no-se-leeran-dentro-90-anos-visitamos-biblioteca-futuro-oslo", titulo: "Hay escritores escribiendo libros que no se leerán dentro de 90 años: visitamos la Biblioteca del Futuro de Oslo"}
+    - {medio: Arquitectura Viva, url: "https://arquitecturaviva.com/articles/la-biblioteca-del-futuro-textos-ineditos-que-no-se-podran-leer-hasta-dentro-de-un-siglo", titulo: "La Biblioteca del Futuro: textos inéditos que no se podrán leer hasta dentro de un siglo"}
+
+- id: biblia-malvada
+  titular: La Biblia de 1631 que olvidó un «no» y mandó cometer adulterio
+  resumen: Una edición inglesa de la Biblia de 1631 imprimió el séptimo mandamiento sin la negación y pasó a la historia como la Biblia malvada; los impresores fueron multados. Es la reina de una larga tradición de erratas que los editores todavía cargan como culpas.
+  fuentes:
+    - {medio: BBC Mundo, url: "https://www.elobservador.com.uy/bbc-news-mundo/como-un-error-tipografico-convirtio-una-edicion-la-biblia-1631-la-biblia-malvada-y-otras-erratas-consideradas-infames-n6029222", titulo: "Cómo un error tipográfico convirtió a una edición de la Biblia de 1631 en «la Biblia malvada»"}
+    - {medio: EFE, url: "https://www.infobae.com/espana/agencias/2024/06/22/malditas-erratas-errores-minusculos-que-los-editores-asumen-como-grandes-culpas/", titulo: "Malditas erratas: errores minúsculos que los editores asumen como grandes culpas"}
+
+- id: el-secuestro-perec
+  titular: Cómo se tradujo al español una novela escrita sin la letra «e»
+  resumen: Georges Perec escribió La disparition sin usar la «e»; su versión española, El secuestro, renunció a la «a», la vocal más frecuente del castellano. Un caso extremo de lo que la traducción literaria puede y no puede conservar.
+  fuentes:
+    - {medio: TRANS. Revista de Traductología, url: "https://revistas.uma.es/index.php/trans/article/view/2363", titulo: "El derecho a ser intraducible: La disparition, de Georges Perec, en castellano"}
+
+- id: sylvia-beach-ulises
+  titular: La librera que publicó el Ulises cuando ningún editor se atrevía
+  resumen: En 1922 Sylvia Beach, dueña de la librería Shakespeare and Company de París, editó el Ulises de Joyce, rechazado y perseguido por obsceno en el mundo anglosajón. Su tienda fue biblioteca, oficina de correos y casa de la Generación Perdida.
+  fuentes:
+    - {medio: Forbes España, url: "https://forbes.es/lifestyle/154916/sylvia-beach-la-editora-sin-la-que-no-existiria-el-ulises-de-james-joyce/", titulo: "Sylvia Beach, la editora sin la que no existiría el Ulises de James Joyce"}
+    - {medio: Ara, url: "https://es.ara.cat/cultura/volver-librerias-encanto-mundo_130_4386339.html", titulo: "Volver a una de las librerías con más encanto del mundo"}
+
+- id: zhivago-feltrinelli
+  titular: El doctor Zhivago salió de la URSS en una maleta y la CIA lo devolvió impreso
+  resumen: El editor italiano Giangiacomo Feltrinelli publicó en 1957 la novela de Pasternak, prohibida en la Unión Soviética, y la CIA imprimió ejemplares para hacerlos circular tras el telón de acero. Pasternak ganó el Nobel en 1958 y fue obligado a rechazarlo.
+  fuentes:
+    - {medio: La Tercera, url: "https://www.latercera.com/culto/noticia/feltrinelli-la-herencia-intelectual-de-un-editor-revolucionario-desembarca-en-espanol/", titulo: "Feltrinelli: la herencia intelectual de un editor revolucionario desembarca en español"}
+    - {medio: History.com, url: "https://history.com/news/when-the-cia-used-dr-zhivago-as-a-cold-war-weapon", titulo: "When the CIA Used 'Dr. Zhivago' as a Cold War Weapon"}
+
+- id: penguin-exeter
+  titular: El libro de bolsillo nació en un andén sin nada que leer
+  resumen: Allen Lane volvía en 1934 de visitar a Agatha Christie y no encontró en la estación de Exeter nada decente que leer; en 1935 lanzó Penguin con diez títulos a seis peniques. Los vendió también Woolworths, y cambió quién podía tener libros en casa.
+  fuentes:
+    - {medio: National Library of Scotland, url: "https://www.nls.uk/collections/stories/printing-and-publishing/penguin-books/", titulo: "Penguin books: The paperback revolution that changed publishing"}
+    - {medio: MoneyWeek, url: "https://moneyweek.com/331639/30-july-1935-penguin-sparks-the-paperback-revolution", titulo: "30 July 1935: Penguin sparks the 'paperback revolution'"}
+
+- id: gide-rechazo-proust
+  titular: El día que André Gide rechazó a Proust (y lo lamentó toda la vida)
+  resumen: En 1912 la Nouvelle Revue Française, con Gide como lector, rechazó Por el camino de Swann; Proust lo publicó en 1913 pagándolo de su bolsillo en Grasset. Gide pidió perdón por carta y Gallimard acabó publicando la obra.
+  fuentes:
+    - {medio: Escritores.org, url: "https://www.escritores.org/recursos-para-escritores/recursos-1/colaboraciones/4336-gallimard-cumple-un-siglo-de-edicion", titulo: "Gallimard cumple un siglo de edición"}
+    - {medio: Hérodote, url: "https://www.herodote.net/Marcel_Proust_1871_1922_-evenement-19131114.php", titulo: "14 novembre 1913: Proust publie Du côté de chez Swann"}
+
+- id: carmen-balcells
+  titular: La agente literaria que pagaba a García Márquez para que solo escribiera
+  resumen: Carmen Balcells, desde Barcelona, representó a García Márquez, Vargas Llosa, Neruda o Cortázar y cambió los contratos de los autores en español. La llamaban Mamá Grande.
+  fuentes:
+    - {medio: Expansión, url: "https://expansion.mx/lifestyle/2015/09/21/carmen-balcells-la-impulsora-del-boom-latinoamericano", titulo: "Carmen Balcells, la impulsora del boom latinoamericano"}
+    - {medio: Infobae, url: "https://www.infobae.com/2015/09/21/1756904-murio-carmen-balcells-editora-vargas-llosa-garcia-marquez-neruda-y-el-boom-latinoamericano/", titulo: "Murió Carmen Balcells, la editora de Vargas Llosa, García Márquez, Neruda y el boom latinoamericano"}
+
+- id: harry-potter-primera-tirada
+  titular: Quinientos ejemplares, la mayoría para bibliotecas, y ahora valen una casa
+  resumen: La primera edición de Harry Potter y la piedra filosofal (Bloomsbury, 1997) fue de quinientos ejemplares en tapa dura, muchos para bibliotecas. Hoy los que conservan sus erratas se subastan por cientos de miles.
+  fuentes:
+    - {medio: Finestre sull'Arte, url: "https://www.finestresullarte.info/es/mercado/harry-potter-bate-records-se-subasta-por-400-000-dolares-un-ejemplar-muy-raro", titulo: "Harry Potter bate récords: se subasta por 400.000 dólares un ejemplar muy raro"}
+    - {medio: The Bookseller, url: "https://www.thebookseller.com/news/rare-bookseller-puts-harry-potter-first-editions-sale-over-4000-564291", titulo: "Rare bookseller puts Harry Potter first editions on sale"}
+
+- id: biblioteca-sarajevo
+  titular: La biblioteca de Sarajevo ardió en 1992 y los vecinos sacaron libros entre las llamas
+  resumen: En agosto de 1992 la artillería incendió la Vijećnica, la Biblioteca Nacional de Bosnia, y se perdió la mayor parte de sus fondos pese a los vecinos que hicieron cadenas para salvarlos. El edificio reabrió restaurado en 2014.
+  fuentes:
+    - {medio: Valencia Plaza, url: "https://valenciaplaza.com/vijecnica-la-memoria-de-sarajevo", titulo: "Vijećnica, la memoria de Sarajevo"}
+
+- id: libreria-bertrand
+  titular: La librería más antigua del mundo sobrevivió a un terremoto y a una dictadura
+  resumen: La Bertrand de Lisboa abrió en 1732, sobrevivió al terremoto de 1755 y reunió a escritores opositores a Salazar; Guinness la reconoció en 2011 como la más antigua en funcionamiento. El título se discute por sus cierres.
+  fuentes:
+    - {medio: La Capital, url: "https://www.lacapitalmdp.com/bertrand-la-libreria-mas-resistente-del-mundo-lisboa/", titulo: "Bertrand, la librería más resistente del mundo"}
+    - {medio: Lisboa Secreta, url: "https://lisboasecreta.co/es/tiendas-historicas-lisboa-libreria-bertrand-chiado/", titulo: "Librería Bertrand, la más antigua del mundo"}
+    - {medio: Lecturalia, url: "https://www.lecturalia.com/blog/2017/06/23/cual-es-la-libreria-mas-antigua-del-mundo", titulo: "¿Cuál es la librería más antigua del mundo?"}
+
+- id: aldo-manuzio
+  titular: El impresor veneciano que inventó el libro para llevar en el bolsillo
+  resumen: Aldo Manuzio fundó su imprenta en Venecia en la década de 1490 y editó clásicos en octavo, pequeños y baratos, con una letra nueva, la cursiva, grabada por Francesco Griffo. Es el antepasado del libro de bolsillo.
+  fuentes:
+    - {medio: Revista Pesquisa FAPESP, url: "https://revistapesquisa.fapesp.br/es/tecnologia-y-arte/", titulo: "Tecnología y arte"}
+    - {medio: Universitat de Barcelona, url: "https://www.ub.edu/artsgrafiques/node/400", titulo: "Aldo Manuzio"}
+
+- id: juicio-lady-chatterley
+  titular: «¿Querrían que su mujer o sus criados leyeran este libro?»
+  resumen: En 1960 Penguin fue juzgada por publicar El amante de Lady Chatterley y el fiscal hizo al jurado una pregunta que lo hundió; Penguin ganó. Vendió millones de ejemplares en pocos meses.
+  fuentes:
+    - {medio: BBC Mundo, url: "https://www.elobservador.com.uy/el-obsceno-libro-que-se-convirtio-un-exito-ventas-luego-que-las-autoridades-intentaran-prohibirlo-n5970555", titulo: "El obsceno libro que se convirtió en un éxito de ventas luego de que las autoridades intentaran prohibirlo"}
+    - {medio: Público, url: "https://www.publico.es/culturas/ultima-derrota-moral-victoriana.html", titulo: "La última derrota de la moral victoriana"}
+    - {medio: The Conversation, url: "https://theconversation.com/the-chatterley-trial-60-years-on-a-court-case-that-secured-free-expression-in-1960s-britain-149197", titulo: "The Chatterley trial 60 years on"}
+
+- id: kafka-brod
+  titular: Kafka pidió que quemaran todo y su mejor amigo no le hizo caso
+  resumen: Max Brod desobedeció la última voluntad de Kafka, publicó El proceso y El castillo y en 1939 huyó a Palestina con los manuscritos en una maleta. Tras décadas de pleitos, los tribunales israelíes los dieron a la Biblioteca Nacional de Israel.
+  fuentes:
+    - {medio: Vanguardia, url: "https://vanguardia.com.mx/articulo/manuscritos-de-kafka-se-quedaran-en-la-biblioteca-nacional-de-israel", titulo: "Manuscritos de Kafka se quedarán en la Biblioteca Nacional de Israel"}
+    - {medio: Cooperativa, url: "https://cooperativa.cl/noticias/cultura/literatura/polemica-en-israel-por-destino-del-legado-de-franz-ka/2012-10-15/010259.html", titulo: "Polémica en Israel por destino del legado de Franz Kafka"}

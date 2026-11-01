@@ -171,7 +171,7 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
     if p.estado not in ("pendiente", "fallida") or p.guion:
         typer.echo(f"La pieza está «{p.estado}» y ya tiene guion: no hay nada que desarrollar", err=True)
         raise typer.Exit(1)
-    if not p.libros:
+    if not p.libros and p.eleccion.formato != "curiosidad":
         typer.echo("La propuesta no tiene ningún libro verificado", err=True)
         raise typer.Exit(1)
     al_jefe, _, _ = EtapasGuardadas(cfg.dir_cache(fecha)).historias()
@@ -185,6 +185,9 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
         renderizar(cfg, [hecha], destino)
         renderizar_video(cfg, [hecha], destino)
         tuberia.historial.anadir_libros(fecha, [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for l in hecha.libros])
+        from folio import cajon
+        if cajon.es_del_cajon(hecha.historia_id):
+            tuberia.historial.anadir_curiosidad(fecha, hecha.historia_id.removeprefix(cajon.PREFIJO))
     coste = round(sum(t.coste_usd for t in tuberia.llm.trazas), 4)
     v = almacen.guardar_version(eid, pieza, hecha, "pipeline", f"Desarrollada desde la mesa ({coste} $)")
     if hecha.estado == "propuesta":

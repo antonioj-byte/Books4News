@@ -52,12 +52,15 @@ class Seleccion(_Seccion):
     reserva: int
     # Mesa del día (31/10, a petición del usuario): propuestas por formato y cuántas se escriben solas
     # (las primeras por preferencia); el resto espera a que se pulse «Proceder» en la web
-    reparto: dict[Literal["lateral", "dialogo", "edicion"], int] = Field(
+    reparto: dict[Literal["lateral", "dialogo", "edicion", "curiosidad"], int] = Field(
         default_factory=lambda: {"lateral": 2, "dialogo": 2, "edicion": 2})
     desarrollar_al_inicio: int = Field(default=1, ge=0)
     # Novedad (31/10, a petición del usuario): solo libros publicados en los últimos N años (primera edición
     # o edición española); los anteriores se descartan al verificar
     antiguedad_libros: int = Field(default=2, ge=0)
+    # Cajón de curiosidades (1/11, a petición del usuario): una historia del mundo del libro sin percha
+    # (config/cajon_curiosidades.yaml) no vuelve a ofrecerse al jefe hasta pasados estos días
+    dias_curiosidades: int = Field(default=90, ge=0)
 
 
 class Exclusion(_Seccion):
@@ -219,19 +222,19 @@ class Config:
     pipeline: ConfigPipeline
     fuentes: list[Fuente]
     raiz: Path = RAIZ
-    anthropic_api_key: str | None = None
-    google_books_api_key: str | None = None
+    anthropic_api_key: str | None = field(default=None, repr=False)   # secreto: fuera del repr (salidas de pytest, registros)
+    google_books_api_key: str | None = field(default=None, repr=False)   # secreto: fuera del repr (salidas de pytest, registros)
     openlibrary_contact: str | None = None
-    magnific_api_key: str | None = None
+    magnific_api_key: str | None = field(default=None, repr=False)   # secreto: fuera del repr (salidas de pytest, registros)
     # Publicación en Instagram (folio.publicacion): token de la cuenta de Folio, su id (opcional: se pide a
     # la API), la URL pública de la web y la clave con que se firman los enlaces de los archivos
-    instagram_token: str | None = None
+    instagram_token: str | None = field(default=None, repr=False)   # secreto: fuera del repr (salidas de pytest, registros)
     instagram_usuario: str | None = None
     url_publica: str | None = None
-    clave_enlaces: str | None = None
+    clave_enlaces: str | None = field(default=None, repr=False)   # secreto: fuera del repr (salidas de pytest, registros)
     # Programación en Buffer (folio.publicacion.buffer): clave de la API y, si hay más de un canal de
     # Instagram en la cuenta, el id del de Folio
-    buffer_clave: str | None = None
+    buffer_clave: str | None = field(default=None, repr=False)   # secreto: fuera del repr (salidas de pytest, registros)
     buffer_canal: str | None = None
     extra: dict = field(default_factory=dict)
 

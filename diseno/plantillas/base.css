@@ -124,6 +124,10 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
    libro principal, la cara de su autor */
 .diapositiva--cierre .cuerpo { justify-content: flex-start; }
 .diapositiva--cierre .texto { font-size: 44px; }
+/* Sin libro (curiosidad del cajón): la frase final abajo, a tamaño de titular */
+.diapositiva--cierre .texto--final { margin-top: auto; font-family: var(--fuentes-titular); font-size: 92px; line-height: 1.02; font-weight: 700; letter-spacing: -0.05em; text-wrap: balance; }
+.antetitulo--cajon { align-self: flex-start; }
+.diapositiva--cierre .texto--final em { font-family: var(--fuentes-remate); font-weight: 400; color: var(--colores-pluma); }
 .estante { margin-top: auto; display: flex; gap: 28px; align-items: stretch; }
 .tarjeta { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 22px; background: var(--colores-papel-rosa); border: 1px solid var(--colores-tinta-8); border-radius: var(--margenes-radio); padding: 32px; box-shadow: 0 20px 60px -24px rgba(28, 22, 24, 0.3); }
 .tarjeta .cubierta { height: 330px; flex: none; align-self: flex-start; }

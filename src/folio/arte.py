@@ -40,7 +40,7 @@ _CELDA = 360
 def _bloque_pieza(pieza: Pieza, seccion: str | None) -> str:
     g = pieza.guion
     diapositivas = "\n".join(f"diapositiva {d.n} ({d.tipo}): {d.texto}" for d in g.diapositivas)
-    libros = "\n".join(f"- {l.titulo}, {l.autor}" for l in g.libros)
+    libros = "\n".join(f"- {l.titulo}, {l.autor}" for l in g.libros) or "(ninguno: curiosidad del mundo del libro sin libro)"
     return (f"<pieza>\nsección de la noticia: {seccion or 'desconocida'}\n"
             f"titular de la historia: {pieza.eleccion.titular}\nidea: {g.idea_elegida}\n"
             f"{diapositivas}\nlibros:\n{libros}\n</pieza>")
@@ -327,7 +327,8 @@ def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte
     # La ilustración editorial cruza la portada y la noticia como una panorámica (B6)
     if arte.recurso == "ilustracion" and arte.imagen:
         arte.portada = "panorama"
-    arte.pregunta = validar_pregunta(propuesta.pregunta) if cfg.pipeline.arte.buscador else None
+    # El buscador responde con el libro: sin libro (curiosidad del cajón), no hay buscador
+    arte.pregunta = validar_pregunta(propuesta.pregunta) if cfg.pipeline.arte.buscador and pieza.guion.libros else None
     arte.antetitulo = validar_antetitulo(propuesta.antetitulo)
     arte.remate = validar_remate(propuesta.remate, pieza.guion.diapositivas[0].texto)
     arte.acento = None if propuesta.suceso_con_victimas or propuesta.tono == "grave" else propuesta.acento

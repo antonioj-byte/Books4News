@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 import numpy as np
 from folio import guion as guionista
-from folio import arte, hechos, informe, seleccion, textos
+from folio import arte, cajon, hechos, informe, seleccion, textos
 from folio.imagenes import cubiertas
 from folio.libros import citas
 from folio.etapas import ORDEN, Etapa, EtapasGuardadas
@@ -143,6 +143,18 @@ class Pipeline:
             del_libro = [h for h in del_libro if h.sobre_libros is not False]
         return del_libro[:maximo]
 
+    def _del_cajon(self) -> list[Historia]:
+        """Cajón de curiosidades: las historias sin percha que no se han usado en los últimos días
+        (`seleccion.dias_curiosidades`). Nada si el reparto no pide ninguna."""
+        p = self.cfg.pipeline.seleccion
+        if not p.reparto.get("curiosidad"):
+            return []
+        try:
+            return cajon.disponibles(self.cfg.raiz, self.historial.curiosidades_recientes(self.fecha, p.dias_curiosidades))
+        except Exception as exc:
+            self.avisos.append(f"No se pudo leer el cajón de curiosidades: {exc}")
+            return []
+
     def historias(self, articulos: list[Articulo], vectores, con_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
         """Agrupa, excluye las ya usadas y resume las que pasan al jefe de cultura.
 
@@ -163,6 +175,8 @@ class Pipeline:
         del_libro = self._del_libro(editoriales, vectores, usadas, excluidas, con_llm)
         candidatas += del_libro
         al_jefe += del_libro
+        del_cajon = self._del_cajon()
+        al_jefe += del_cajon
         ids_jefe = {h.id for h in al_jefe}
         mostradas = [h for h in candidatas if h.id in ids_jefe or h.id in excluidas]
         resumidas = [HistoriaResumida(
@@ -174,9 +188,10 @@ class Pipeline:
             "medios": len({a.medio for a in articulos}),
             "historias": len(todas),
             "historias_multimedio": len(candidatas),
-            "historias_al_jefe": len(al_jefe) - len(del_libro),
+            "historias_al_jefe": len(al_jefe) - len(del_libro) - len(del_cajon),
             "articulos_editoriales": len(editoriales),
             "historias_editoriales_al_jefe": len(del_libro),
+            "curiosidades_al_jefe": len(del_cajon),
         }
         self._guardar_etapa(self.etapas.guardar_historias, al_jefe, resumidas, self.stats)
         return al_jefe, resumidas
@@ -253,6 +268,11 @@ class Pipeline:
         e = pieza.eleccion
         libros, descartes = self._verificar_libros(e, reservados)
         pieza.libros, pieza.libros_descartados = libros, descartes
+        if not libros and e.formato == "curiosidad":
+            # Una curiosidad del cajón no necesita libro (decisión del usuario, 1/11)
+            if e.libros_candidatos:
+                pieza.avisos.append("Ningún libro candidato se pudo verificar: la curiosidad sale sin libro")
+            return True
         if not libros:
             pieza.error = "Ningún libro candidato se pudo verificar"
             return False
@@ -491,10 +511,12 @@ class Pipeline:
     def _registrar_historial(self, buenas: list[Pieza], al_jefe: list[Historia], vectores) -> None:
         """Historias y libros usados hoy, para no repetirlos en los próximos días."""
         por_id = {h.id: h for h in al_jefe}
+        noticias = [p for p in buenas if not cajon.es_del_cajon(p.historia_id)]
         self.historial.registrar_dia(
             self.fecha,
-            [(p.historia_id, p.eleccion.titular, agrupacion.centroide(por_id[p.historia_id], vectores)) for p in buenas],
+            [(p.historia_id, p.eleccion.titular, agrupacion.centroide(por_id[p.historia_id], vectores)) for p in noticias],
             [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for p in buenas for l in p.libros],
+            [p.historia_id.removeprefix(cajon.PREFIJO) for p in buenas if cajon.es_del_cajon(p.historia_id)],
         )
 
     def _avisos_de_prueba(self) -> None:

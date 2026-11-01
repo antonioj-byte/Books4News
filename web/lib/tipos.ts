@@ -768,11 +768,11 @@ export interface components {
         HistoriaElegida: {
             /**
              * Formato
-             * @description lateral (lectura lateral), dialogo (diálogo con la actualidad) o edicion (mundo del libro)
+             * @description lateral (lectura lateral), dialogo (diálogo con la actualidad), edicion (mundo del libro) o curiosidad (del cajón de curiosidades)
              * @default lateral
              * @enum {string}
              */
-            formato: "lateral" | "dialogo" | "edicion";
+            formato: "lateral" | "dialogo" | "edicion" | "curiosidad";
             /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista
@@ -795,7 +795,7 @@ export interface components {
             cuestion_de_fondo: string;
             /**
              * Libros Candidatos
-             * @description 3–4 libros candidatos, por orden de preferencia
+             * @description 3–4 libros candidatos, por orden de preferencia (en una curiosidad, de 0 a 4)
              */
             libros_candidatos: components["schemas"]["LibroCandidato"][];
             /**

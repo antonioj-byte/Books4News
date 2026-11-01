@@ -96,13 +96,14 @@ export function VistaPieza() {
               <p className="mt-2 text-[13px] text-tinta-suave">{g.por_que}</p>
             </div>
           </>
-        ) : d.pieza.libros.length > 0 ? (
+        ) : d.pieza.libros.length > 0 || d.pieza.eleccion.formato === "curiosidad" ? (
           // Propuesta de la mesa sin escribir (o cuyo guion falló): se ve la propuesta y se puede proceder
           <div className="mx-auto flex max-w-[560px] flex-col gap-4">
             <h2 className="titular text-[28px] leading-tight sm:text-[34px]">{d.pieza.eleccion.titular}</h2>
             {d.pieza.eleccion.gancho_libro && (
               <p className="titular text-[20px] italic leading-snug text-tinta-suave" style={{ fontWeight: 400 }}>{d.pieza.eleccion.gancho_libro}</p>
             )}
+            {d.lomos.length === 0 && <p className="dato">Curiosidad del cajón · sin libro</p>}
             <div className="flex flex-wrap gap-4">
               {d.lomos.map((l) => (
                 <div key={l.titulo} className="flex items-center gap-3">

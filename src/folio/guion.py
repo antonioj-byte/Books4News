@@ -105,6 +105,9 @@ def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[
     libros_txt = (
         "\n<libros_verificados>\n" + "\n".join(_linea_libro(l) for l in libros) + "\n</libros_verificados>\n"
         "Usa solo estos libros, que se han verificado en catálogos bibliográficos."
+    ) if libros else (
+        "ninguno. Esta pieza no lleva libro: no hay diapositiva de libro, la lista de libros va vacía y la portada, "
+        "el cierre y el pie no recomiendan ninguno. Las reglas sobre el libro no se aplican; las demás, sí."
     )
     return cargar_prompt(cfg, "guionista", {
         "[pegar formato]": instrucciones_formato(cfg, eleccion.formato),
@@ -162,6 +165,12 @@ class _Guion:
     citas_ok: frozenset[str] = frozenset()   # citas encontradas en el texto del libro (normalizadas)
 
     @property
+    def sin_libro(self) -> bool:
+        """Pieza sin libro verificado: solo pasa en una curiosidad del cajón (el pipeline descarta las demás).
+        Entonces no se aplican las reglas del libro."""
+        return not self.libros
+
+    @property
     def d(self) -> list:
         return self.g.diapositivas
 
@@ -196,8 +205,8 @@ def _ultima_es_cierre(c: _Guion) -> list[str]:
 
 
 def _tipos_obligatorios(c: _Guion) -> list[str]:
-    return [f"Falta una diapositiva de tipo «{tipo}»." for tipo in ("actualidad", "libro", "idea")
-            if not any(x.tipo == tipo for x in c.d)]
+    tipos = ("actualidad", "idea") if c.sin_libro else ("actualidad", "libro", "idea")
+    return [f"Falta una diapositiva de tipo «{tipo}»." for tipo in tipos if not any(x.tipo == tipo for x in c.d)]
 
 
 def _palabras_por_diapositiva(c: _Guion) -> list[str]:
@@ -215,7 +224,7 @@ def _palabras_por_diapositiva(c: _Guion) -> list[str]:
 
 # El libro está desde la portada (titular o subtítulo), entra pronto y protagoniza el cierre.
 def _portada_con_libro(c: _Guion) -> list[str]:
-    if not c.d or c.d[0].tipo != "portada":
+    if c.sin_libro or not c.d or c.d[0].tipo != "portada":
         return []
     portada = c.d[0]
     if not portada.subtitulo:
@@ -227,7 +236,7 @@ def _portada_con_libro(c: _Guion) -> list[str]:
 
 
 def _cierre_nombra_libro(c: _Guion) -> list[str]:
-    if c.d and c.d[-1].tipo == "cierre" and not _menciona_libro(c.d[-1].texto, c.libros):
+    if not c.sin_libro and c.d and c.d[-1].tipo == "cierre" and not _menciona_libro(c.d[-1].texto, c.libros):
         return ["El cierre es la recomendación: nombra el libro (título en cursiva) y a su autor."]
     return []
 
@@ -249,7 +258,9 @@ def _libro_pronto(c: _Guion) -> list[str]:
 
 
 def _pie_nombra_libro(c: _Guion) -> list[str]:
-    return [] if _menciona_libro(c.g.pie_instagram, c.libros) else ["El pie debe nombrar el libro que recomienda la pieza."]
+    if c.sin_libro or _menciona_libro(c.g.pie_instagram, c.libros):
+        return []
+    return ["El pie debe nombrar el libro que recomienda la pieza."]
 
 
 def _portada_no_pregunta(c: _Guion) -> list[str]:
@@ -308,7 +319,7 @@ def _pie_cita_medio(c: _Guion) -> list[str]:
 
 
 def _libros_verificados(c: _Guion) -> list[str]:
-    errores = [] if c.g.libros else ["Falta la lista de libros."]
+    errores = [] if c.g.libros or c.sin_libro else ["Falta la lista de libros."]
     return errores + [f"El libro «{lg.titulo}» de {lg.autor} no está entre los verificados."
                       for lg in c.g.libros if libro_verificado(lg, c.libros) is None]
 

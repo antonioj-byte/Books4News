@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS historias_usadas (
     fecha TEXT NOT NULL, historia_id TEXT NOT NULL, titular TEXT, centroide BLOB NOT NULL,
     PRIMARY KEY (fecha, historia_id)
 );
+CREATE TABLE IF NOT EXISTS curiosidades_usadas (
+    fecha TEXT NOT NULL, curiosidad TEXT NOT NULL, PRIMARY KEY (fecha, curiosidad)
+);
 CREATE TABLE IF NOT EXISTS libros_usados (
     fecha TEXT NOT NULL, clave TEXT NOT NULL, titulo TEXT, autor TEXT, olid TEXT,
     PRIMARY KEY (fecha, clave)
@@ -51,6 +54,17 @@ class Historial:
         ).fetchone()
         return fila[0] if fila else None
 
+    def curiosidades_recientes(self, fecha: str, dias: int) -> set[str]:
+        """Ids del cajón de curiosidades usados en los `dias` anteriores a `fecha`."""
+        filas = self.db.execute("SELECT curiosidad FROM curiosidades_usadas WHERE fecha >= ? AND fecha < ?",
+                                (self._desde(fecha, dias), fecha)).fetchall()
+        return {f[0] for f in filas}
+
+    def anadir_curiosidad(self, fecha: str, curiosidad: str) -> None:
+        """Una curiosidad desarrollada más tarde («Proceder»), sin tocar lo ya registrado del día."""
+        with self.db:
+            self.db.execute("INSERT OR REPLACE INTO curiosidades_usadas VALUES (?, ?)", (fecha, curiosidad))
+
     def anadir_libros(self, fecha: str, libros: list[tuple[str, str, str | None]]) -> None:
         """Añade libros usados el día `fecha` sin tocar lo ya registrado (una pieza desarrollada más tarde)."""
         with self.db:
@@ -59,10 +73,13 @@ class Historial:
                 [(fecha, clave_libro(t, a), t, a, olid) for t, a, olid in libros],
             )
 
-    def registrar_dia(self, fecha: str, historias: list[tuple[str, str, np.ndarray]], libros: list[tuple[str, str, str | None]]):
+    def registrar_dia(self, fecha: str, historias: list[tuple[str, str, np.ndarray]], libros: list[tuple[str, str, str | None]],
+                      curiosidades: list[str] = ()):
         """Sustituye lo registrado para `fecha` (una nueva ejecución del día reemplaza la anterior)."""
         with self.db:
             self.db.execute("DELETE FROM historias_usadas WHERE fecha = ?", (fecha,))
+            self.db.execute("DELETE FROM curiosidades_usadas WHERE fecha = ?", (fecha,))
+            self.db.executemany("INSERT OR REPLACE INTO curiosidades_usadas VALUES (?, ?)", [(fecha, c) for c in curiosidades])
             self.db.execute("DELETE FROM libros_usados WHERE fecha = ?", (fecha,))
             self.db.executemany(
                 "INSERT OR REPLACE INTO historias_usadas VALUES (?, ?, ?, ?)",
