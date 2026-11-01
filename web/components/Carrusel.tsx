@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Diapositiva, VideoPortada } from "./Diapositiva";
 import { EditorDiapositiva } from "./EditorDiapositiva";
 
 // Carrusel de la pieza: diapositiva grande, flechas (también con el teclado) y miniaturas. Si hay
 // vídeo de portada, la diapositiva 1 grande es el vídeo (la miniatura sigue siendo la imagen). Con
 // `onEditar`, el texto de la diapositiva grande se puede editar en el sitio.
-export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, editables, onEditar }: {
+export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, editables, onEditar, extra, marcadas = [] }: {
   total: number; url: (n: number) => string; ancho: number; inicial?: number; video?: string | null;
   videos?: Record<number, string>; editables?: number;
   onEditar?: (n: number, texto: string, subtitulo: string | null) => Promise<void>;
+  extra?: (n: number) => ReactNode;   // bajo la diapositiva grande: las notas de esa diapositiva (2/11)
+  marcadas?: number[];                      // miniaturas con notas
 }) {
   const [n, setN] = useState(inicial);
   const [editando, setEditando] = useState(false);
@@ -59,11 +61,13 @@ export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, e
       {onEditar && !editando && actual <= (editables ?? total) && (
         <button onClick={() => setEditando(true)} className="boton-suave">Editar el texto de esta diapositiva</button>
       )}
+      {!editando && extra?.(actual)}
       <div className="mt-2 flex max-w-full gap-2.5 overflow-x-auto px-1 pb-2">
         {Array.from({ length: total }, (_, i) => i + 1).map((k) => (
           <button key={k} onClick={() => setN(k)} disabled={editando} aria-label={`Ir a la diapositiva ${k}`}
-                  className={`shrink-0 rounded-[6px] outline-offset-2 ${k === actual ? "outline-2 outline-carmesi" : "opacity-60 hover:opacity-100"}`}>
+                  className={`relative shrink-0 rounded-[6px] outline-offset-2 ${k === actual ? "outline-2 outline-carmesi" : "opacity-60 hover:opacity-100"}`}>
             <Diapositiva src={url(k)} ancho={64} titulo={`Miniatura ${k}`} />
+            {marcadas.includes(k) && <span aria-label="Tiene notas" className="absolute -right-1.5 -top-1.5 h-3.5 w-3.5 rounded-full bg-carmesi" />}
           </button>
         ))}
       </div>

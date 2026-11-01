@@ -7,6 +7,7 @@ import { Diapositiva } from "@/components/Diapositiva";
 import { Estanteria } from "@/components/Estanteria";
 import { LanzarEjecucion } from "@/components/LanzarEjecucion";
 import { EstadoChip, FormatoChip, Marcas } from "@/components/Marcas";
+import { Descartar } from "@/components/Descartar";
 import { Proceder } from "@/components/Proceder";
 import { ProponerTema } from "@/components/ProponerTema";
 import { api } from "@/lib/api";
@@ -95,7 +96,10 @@ export function VistaDia() {
                 <div className="text-[14px]"><b>{p.libros[0].titulo}</b><br /><span className="text-tinta-suave">{p.libros[0].autor}</span></div>
               </div>
             )}
-            <div className="mt-auto pt-1"><Proceder eid={p.ejecucion_id} pid={p.pieza_id} onHecho={recargarDia} /></div>
+            <div className="mt-auto flex flex-col gap-2 pt-1">
+              <Proceder eid={p.ejecucion_id} pid={p.pieza_id} onHecho={recargarDia} />
+              <Descartar eid={p.ejecucion_id} pid={p.pieza_id} onHecho={recargarDia} compacto />
+            </div>
           </div>
         ) : (
           <Link key={p.pieza_id} href={`/pieza/${p.ejecucion_id}/${p.pieza_id}`}

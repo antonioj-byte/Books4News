@@ -200,9 +200,29 @@ export interface paths {
         /**
          * Desarrollar
          * @description «Proceder»: escribe una propuesta pendiente de la mesa (`folio desarrollar`, en un proceso aparte;
-         *     unos minutos y unos 0,3 $). Comparte turno con la ejecución del día: una cosa a la vez.
+         *     unos minutos y unos 0,3 $). Varias piezas a la vez (como mucho tres), pero no mientras se prepara la mesa.
          */
         post: operations["desarrollar_api_ejecuciones__eid__piezas__pid__desarrollar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ejecuciones/{eid}/piezas/{pid}/desarrollo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estado Desarrollo
+         * @description Cómo va el «Proceder» de esta pieza (cada pieza tiene su proceso y su registro).
+         */
+        get: operations["estado_desarrollo_api_ejecuciones__eid__piezas__pid__desarrollo_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -432,6 +452,78 @@ export interface paths {
         patch: operations["decidir_api_memoria__pid__patch"];
         trace?: never;
     };
+    "/api/ejecuciones/{eid}/piezas/{pid}/notas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista */
+        get: operations["lista_api_ejecuciones__eid__piezas__pid__notas_get"];
+        put?: never;
+        /** Anadir */
+        post: operations["anadir_api_ejecuciones__eid__piezas__pid__notas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ejecuciones/{eid}/piezas/{pid}/notas/{nid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Borrar */
+        delete: operations["borrar_api_ejecuciones__eid__piezas__pid__notas__nid__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/motivos-descarte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Motivos */
+        get: operations["motivos_api_motivos_descarte_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ejecuciones/{eid}/piezas/{pid}/descartar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Descartar
+         * @description Descarta la pieza y, si se dice por qué, deja el motivo para el jefe de cultura.
+         */
+        post: operations["descartar_api_ejecuciones__eid__piezas__pid__descartar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/temas": {
         parameters: {
             query?: never;
@@ -558,6 +650,10 @@ export interface components {
             escena: string | null;
             /** Escena Idea */
             escena_idea: string | null;
+            /** Friso */
+            friso: string | null;
+            /** Friso Idea */
+            friso_idea: string | null;
             /** Pregunta */
             pregunta: string | null;
             /** Registro */
@@ -604,7 +700,7 @@ export interface components {
              * @default libro
              * @enum {string}
              */
-            tipo: "libro" | "critica";
+            tipo: "libro" | "critica" | "prensa";
             /** Fuente */
             fuente: string | null;
         };
@@ -646,6 +742,16 @@ export interface components {
              * @default
              */
             nota: string;
+        };
+        /** Descarte */
+        Descarte: {
+            /** Etiquetas */
+            etiquetas?: string[];
+            /**
+             * Texto
+             * @default
+             */
+            texto: string;
         };
         /** Dia */
         Dia: {
@@ -827,6 +933,21 @@ export interface components {
              * @default
              */
             comentario: string;
+            /**
+             * Comentario Seleccion
+             * @default
+             */
+            comentario_seleccion: string;
+            /**
+             * Comentario Copy
+             * @default
+             */
+            comentario_copy: string;
+            /**
+             * Comentario Arte
+             * @default
+             */
+            comentario_arte: string;
         };
         /** Evaluacion */
         "Evaluacion-Output": {
@@ -845,6 +966,21 @@ export interface components {
              * @default
              */
             comentario: string;
+            /**
+             * Comentario Seleccion
+             * @default
+             */
+            comentario_seleccion: string;
+            /**
+             * Comentario Copy
+             * @default
+             */
+            comentario_copy: string;
+            /**
+             * Comentario Arte
+             * @default
+             */
+            comentario_arte: string;
         };
         /** FuenteNoticia */
         FuenteNoticia: {
@@ -869,6 +1005,11 @@ export interface components {
              * @default false
              */
             critica: boolean;
+            /**
+             * Prensa
+             * @default false
+             */
+            prensa: boolean;
         };
         /** GuionLLM */
         GuionLLM: {
@@ -953,11 +1094,11 @@ export interface components {
         HistoriaElegida: {
             /**
              * Formato
-             * @description lateral (lectura lateral), dialogo (diálogo con la actualidad), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes)
+             * @description lateral (lectura lateral), dialogo (diálogo con la actualidad), balda (tres libros para entender algo, en lugar del diálogo), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes)
              * @default lateral
              * @enum {string}
              */
-            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar";
+            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda";
             /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista
@@ -1195,6 +1336,48 @@ export interface components {
         MensajeNuevo: {
             /** Mensaje */
             mensaje: string;
+        };
+        /** Nota */
+        Nota: {
+            /** Id */
+            id: number;
+            /** Creada En */
+            creada_en: string;
+            /** Destino */
+            destino: string;
+            /** Tipo */
+            tipo: string;
+            /** Diapositiva */
+            diapositiva: number | null;
+            /**
+             * Recurso
+             * @default
+             */
+            recurso: string;
+            /**
+             * Etiquetas
+             * @default []
+             */
+            etiquetas: string[];
+            /**
+             * Texto
+             * @default
+             */
+            texto: string;
+            /** Version N */
+            version_n: number | null;
+        };
+        /** NotaNueva */
+        NotaNueva: {
+            /**
+             * Destino
+             * @enum {string}
+             */
+            destino: "director_arte" | "guionista";
+            /** Diapositiva */
+            diapositiva: number;
+            /** Texto */
+            texto: string;
         };
         /** PanelGasto */
         PanelGasto: {
@@ -2101,6 +2284,38 @@ export interface operations {
             };
         };
     };
+    estado_desarrollo_api_ejecuciones__eid__piezas__pid__desarrollo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     estado_buffer_api_ejecuciones__eid__piezas__pid__buffer_get: {
         parameters: {
             query?: never;
@@ -2424,6 +2639,163 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecisionPatron-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lista_api_ejecuciones__eid__piezas__pid__notas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Nota"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    anadir_api_ejecuciones__eid__piezas__pid__notas_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotaNueva"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Nota"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    borrar_api_ejecuciones__eid__piezas__pid__notas__nid__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+                nid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    motivos_api_motivos_descarte_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
+    descartar_api_ejecuciones__eid__piezas__pid__descartar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Descarte"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Nota"] | null;
                 };
             };
             /** @description Validation Error */

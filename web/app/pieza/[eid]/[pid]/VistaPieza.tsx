@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Carrusel } from "@/components/Carrusel";
+import { Descartar } from "@/components/Descartar";
+import { NotasDiapositiva } from "@/components/NotasDiapositiva";
 import { ChatEdicion } from "@/components/ChatEdicion";
 import { FormEvaluacion } from "@/components/FormEvaluacion";
 import { EstadoChip, FormatoChip } from "@/components/Marcas";
@@ -22,6 +24,7 @@ export function VistaPieza() {
   const eid = Number(eidTexto);
   const { datos: d, error, recargar: cargar } = useDatos(`pieza:${eid}:${pid}`, () => api.pieza(eid, pid));
   const [avisosEdicion, setAvisosEdicion] = useState<string[]>([]);
+  const { datos: notas, recargar: recargarNotas } = useDatos(`notas:${eid}:${pid}`, () => api.notas(eid, pid));
 
   if (error) return <p className="p-6 text-carmesi">{error}</p>;
   if (!d) return <p className="dato p-6">Cargando la pieza…</p>;
@@ -47,7 +50,10 @@ export function VistaPieza() {
             )}
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {ESTADOS.map((e) => (
+            {ESTADOS.map((e) => e.valor === "descartada" && d.pieza.estado !== "descartada" ? (
+              // Descartar pregunta por qué (2/11): el motivo va al jefe de cultura
+              <Descartar key={e.valor} eid={eid} pid={pid} onHecho={() => { cargar(); recargarNotas(); }} />
+            ) : (
               <button key={e.valor} onClick={() => api.estado(eid, pid, e.valor).then(cargar)}
                       aria-pressed={d.pieza.estado === e.valor} className="boton-suave">
                 {e.texto}
@@ -78,7 +84,9 @@ export function VistaPieza() {
                         const r = await api.editarDiapositiva(eid, pid, n, texto, subtitulo);
                         setAvisosEdicion(r.avisos);
                         cargar();
-                      }} />
+                      }}
+                      marcadas={[...new Set((notas ?? []).filter((x) => x.tipo === "diapositiva").map((x) => x.diapositiva ?? 0))]}
+                      extra={(n) => <NotasDiapositiva eid={eid} pid={pid} n={n} notas={notas ?? []} onCambio={recargarNotas} />} />
             <p className="mt-3 text-center">
               <a href={api.urlDescarga(eid, pid)} download className="boton-suave">Descargar el carrusel (.zip)</a>
               <span className="dato mt-2 block sm:ml-2 sm:mt-0 sm:inline">JPEG, vídeo de portada y pie · tarda hasta un minuto</span>

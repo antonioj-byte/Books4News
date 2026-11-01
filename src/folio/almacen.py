@@ -148,7 +148,47 @@ _MIGRACIONES = [
     ALTER TABLE temas ADD COLUMN conversacion TEXT NOT NULL DEFAULT '[]';
     ALTER TABLE temas ADD COLUMN fuentes TEXT NOT NULL DEFAULT '[]';
     """,
+    # 8: feedback por agente (2/11, a petición del usuario: «plantear cambios/feedback que luego puedan sumarse a la
+    # memoria al jefe de cultura, al editor (guionista) y al director de arte»): la evaluación con tres comentarios,
+    # uno por agente, y las notas sueltas (el motivo de un descarte, una nota sobre una diapositiva)
+    """
+    ALTER TABLE evaluaciones ADD COLUMN comentario_seleccion TEXT NOT NULL DEFAULT '';
+    ALTER TABLE evaluaciones ADD COLUMN comentario_copy TEXT NOT NULL DEFAULT '';
+    ALTER TABLE evaluaciones ADD COLUMN comentario_arte TEXT NOT NULL DEFAULT '';
+    CREATE TABLE notas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ejecucion_id INTEGER NOT NULL,
+        pieza_id TEXT NOT NULL,
+        creada_en TEXT NOT NULL,
+        destino TEXT NOT NULL,             -- jefe_cultura | guionista | director_arte
+        tipo TEXT NOT NULL,                -- descarte | diapositiva
+        diapositiva INTEGER,               -- en las notas de una diapositiva, su número
+        recurso TEXT NOT NULL DEFAULT '',  -- qué llevaba (tipo de diapositiva, composición, recurso): para reglas de arte
+        etiquetas TEXT NOT NULL DEFAULT '[]',
+        texto TEXT NOT NULL DEFAULT '',
+        version_n INTEGER
+    );
+    CREATE INDEX notas_pieza ON notas (ejecucion_id, pieza_id);
+    """,
 ]
+
+
+DESTINOS_NOTA = ("jefe_cultura", "guionista", "director_arte")
+# Motivos de un descarte que se marcan de un toque en la mesa (el jefe de cultura los ve en la Memoria)
+MOTIVOS_DESCARTE = ("Puente forzado", "Noticia sin interés", "Libro flojo", "Ya lo hemos contado", "Tema doloroso",
+                    "Sin libro en castellano")
+
+
+class Nota(BaseModel):
+    id: int
+    creada_en: str
+    destino: str
+    tipo: str
+    diapositiva: int | None = None
+    recurso: str = ""
+    etiquetas: list[str] = []
+    texto: str = ""
+    version_n: int | None = None
 
 
 class Patron(BaseModel):
@@ -198,6 +238,10 @@ class Evaluacion(BaseModel):
     voz: int | None = Field(default=None, ge=1, le=5)
     publicaria: bool | None = None
     comentario: str = ""
+    # Un comentario por agente (2/11): selección (jefe de cultura), copy (guionista) y arte (director de arte)
+    comentario_seleccion: str = ""
+    comentario_copy: str = ""
+    comentario_arte: str = ""
 
 
 class MensajeChat(BaseModel):
@@ -425,13 +469,16 @@ class Almacen:
                 for da, db_ in zip(a.guion.diapositivas if a.guion else [], b.guion.diapositivas if b.guion else []):
                     if (da.texto, da.subtitulo) != (db_.texto, db_.subtitulo):
                         ediciones.append({"diapositiva": f"{db_.n} ({db_.tipo})", "antes": da.texto, "despues": db_.texto})
-            if not (ev or pedidos or ediciones or f["estado"] == "descartada"):
+            notas = [n.model_dump(exclude={"id", "version_n"}) for n in self.notas(eid, pid)]
+            if not (ev or pedidos or ediciones or notas or f["estado"] == "descartada"):
                 continue
             ultima = Pieza.model_validate_json(versiones[-1]["datos"]) if versiones else None
             out.append({"pieza": pid, "fecha": f["fecha"], "estado": f["estado"],
                         "formato": ultima.eleccion.formato if ultima else None,
                         "titular": ultima.guion.diapositivas[0].texto if ultima and ultima.guion else (ultima.eleccion.titular if ultima else ""),
-                        "evaluacion": ev[0].model_dump() if ev else None, "pedidos_chat": pedidos, "ediciones": ediciones})
+                        "evaluacion": ev[0].model_dump() if ev else None, "pedidos_chat": pedidos, "ediciones": ediciones,
+                        # Lo que se dijo a cada agente (2/11): el motivo de un descarte, notas sobre una diapositiva
+                        "notas": notas})
         return out
 
     # --- Gasto -----------------------------------------------------------------------
@@ -562,17 +609,45 @@ class Almacen:
             return None
         pub = None if f["publicaria"] is None else bool(f["publicaria"])
         return Evaluacion(seleccion=f["seleccion"], libro=f["libro"], idea=f["idea"], voz=f["voz"],
-                          publicaria=pub, comentario=f["comentario"]), f["version_n"]
+                          publicaria=pub, comentario=f["comentario"], comentario_seleccion=f["comentario_seleccion"],
+                          comentario_copy=f["comentario_copy"], comentario_arte=f["comentario_arte"]), f["version_n"]
 
     def guardar_evaluacion(self, eid: int, pid: str, ev: Evaluacion, version_n: int) -> None:
         pub = None if ev.publicaria is None else int(ev.publicaria)
         with self._transaccion() as db:
             db.execute(
-                "INSERT INTO evaluaciones VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                "INSERT INTO evaluaciones (ejecucion_id, pieza_id, version_n, seleccion, libro, idea, voz, publicaria, "
+                "comentario, actualizada, comentario_seleccion, comentario_copy, comentario_arte) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
                 "ON CONFLICT (ejecucion_id, pieza_id) DO UPDATE SET version_n = excluded.version_n, "
                 "seleccion = excluded.seleccion, libro = excluded.libro, idea = excluded.idea, voz = excluded.voz, "
-                "publicaria = excluded.publicaria, comentario = excluded.comentario, actualizada = excluded.actualizada",
-                (eid, pid, version_n, ev.seleccion, ev.libro, ev.idea, ev.voz, pub, ev.comentario, _ahora()))
+                "publicaria = excluded.publicaria, comentario = excluded.comentario, actualizada = excluded.actualizada, "
+                "comentario_seleccion = excluded.comentario_seleccion, comentario_copy = excluded.comentario_copy, "
+                "comentario_arte = excluded.comentario_arte",
+                (eid, pid, version_n, ev.seleccion, ev.libro, ev.idea, ev.voz, pub, ev.comentario, _ahora(),
+                 ev.comentario_seleccion, ev.comentario_copy, ev.comentario_arte))
+
+    # --- Notas por agente (2/11) ---------------------------------------------
+
+    def anadir_nota(self, eid: int, pid: str, destino: str, tipo: str, texto: str = "", etiquetas: list[str] | None = None,
+                    diapositiva: int | None = None, recurso: str = "", version_n: int | None = None) -> int:
+        if destino not in DESTINOS_NOTA:
+            raise ValueError(f"Destino desconocido: {destino}")
+        with self._transaccion() as db:
+            cur = db.execute("INSERT INTO notas (ejecucion_id, pieza_id, creada_en, destino, tipo, diapositiva, recurso, "
+                             "etiquetas, texto, version_n) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                             (eid, pid, _ahora(), destino, tipo, diapositiva, recurso, json.dumps(etiquetas or [], ensure_ascii=False),
+                              " ".join(texto.split()), version_n))
+            return cur.lastrowid
+
+    def notas(self, eid: int, pid: str) -> list[Nota]:
+        return [Nota(**{**dict(f), "etiquetas": json.loads(f["etiquetas"])}) for f in self.db.execute(
+            "SELECT id, creada_en, destino, tipo, diapositiva, recurso, etiquetas, texto, version_n FROM notas "
+            "WHERE ejecucion_id = ? AND pieza_id = ? ORDER BY id", (eid, pid))]
+
+    def borrar_nota(self, eid: int, pid: str, nid: int) -> bool:
+        with self._transaccion() as db:
+            return db.execute("DELETE FROM notas WHERE id = ? AND ejecucion_id = ? AND pieza_id = ?", (nid, eid, pid)).rowcount > 0
 
     def resumen_evaluaciones(self) -> list[dict]:
         """Medias por criterio y día, y porcentaje de piezas que se publicarían."""
@@ -590,7 +665,9 @@ def escribir_evaluacion_md(ruta_md: Path, pid: str, ev: Evaluacion) -> bool:
     if not ruta_md.exists():
         return False
     pub = "" if ev.publicaria is None else ("sí" if ev.publicaria else "no")
-    valores = [ev.seleccion, ev.libro, ev.idea, ev.voz, pub, ev.comentario.replace("\n", " ")]
+    partes = [ev.comentario] + [f"{t}: {c}" for t, c in (("Selección", ev.comentario_seleccion), ("Copy", ev.comentario_copy),
+                                                          ("Arte", ev.comentario_arte)) if c.strip()]
+    valores = [ev.seleccion, ev.libro, ev.idea, ev.voz, pub, " · ".join(x for x in partes if x.strip()).replace("\n", " ")]
     md = evaluacion_md.rellenar(ruta_md.read_text(encoding="utf-8"), f"evaluacion:{pid}",
                                 dict(zip(evaluacion_md.CAMPOS_PIEZA, valores)))
     if md is None:

@@ -426,3 +426,10 @@
   patron: "«Tengo la sensación de que escribe bastante mal»; la voz de referencia es la de la newsletter de Folio (folioeditorial.substack.com)."
   propuesta: "El guionista escribe con la voz de Folio (prompts/voz_folio.md, incluida en guionista.md): escena de entrada, lo concreto primero, tesis con filo, titulares con invento y sin fórmulas de nota de prensa ni muletillas de IA. Ganó la ronda 1 de la voz (idea+voz 2,00 → 3,00; hechos no verificados 13 → 7)."
   evidencia: ["Rondas de la voz, 2/11: docs/rondas-voz.md, ronda 1"]
+
+- clave: feedback-por-agente
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«¿Tiene sentido plantear cambios/feedback (que luego puedan sumarse a la memoria) al jefe de cultura, al editor (guionista, el copy) y al director de arte?» Y, tras ver la maqueta: «adelante con todo»."
+  propuesta: "Tres canales de feedback por agente: descartar con motivo (jefe de cultura), la evaluación en tres comentarios (selección, copy, arte) y notas por diapositiva (arte o copy, con el recurso que llevaba); la Memoria los recibe con su destino."
+  evidencia: ["Conversación, 2/11: Artifact «Feedback por agente»"]

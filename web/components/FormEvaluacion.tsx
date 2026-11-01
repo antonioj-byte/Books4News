@@ -10,7 +10,15 @@ const CRITERIOS: { clave: "seleccion" | "libro" | "idea" | "voz"; texto: string;
   { clave: "voz", texto: "Voz", ayuda: "¿Suena a Folio?" },
 ];
 
-const VACIA: Evaluacion = { seleccion: null, libro: null, idea: null, voz: null, publicaria: null, comentario: "" };
+const VACIA: Evaluacion = { seleccion: null, libro: null, idea: null, voz: null, publicaria: null, comentario: "",
+  comentario_seleccion: "", comentario_copy: "", comentario_arte: "" };
+
+// Un comentario por agente (2/11): cada caja va a quien lo provocó y la Memoria lo recibe con su destino
+const CAJAS: { clave: "comentario_seleccion" | "comentario_copy" | "comentario_arte"; texto: string; agente: string; ejemplo: string }[] = [
+  { clave: "comentario_seleccion", texto: "Selección", agente: "jefe de cultura", ejemplo: "¿Era la historia? ¿El libro y el puente?" },
+  { clave: "comentario_copy", texto: "Copy", agente: "guionista", ejemplo: "Lo que chirría o gusta del texto" },
+  { clave: "comentario_arte", texto: "Arte", agente: "director de arte", ejemplo: "Imagen, color, composición…" },
+];
 
 // Formulario de evaluación: se guarda en la base de datos y en el bloque de informe.md.
 // Quien lo usa le da una `key` por pieza, para que cambiar de pieza lo reinicie.
@@ -56,9 +64,17 @@ export function FormEvaluacion({ eid, pid, inicial, onGuardada }: {
           ))}
         </div>
       </div>
-      <textarea value={ev.comentario} onChange={(e) => cambiar({ comentario: e.target.value })} rows={2}
-                aria-label="Comentario" placeholder="Comentario: lo que chirría, lo que gusta…"
-                className="resize-none rounded-[12px] border border-borde bg-panel p-2.5 text-[13px] outline-none focus:border-tinta" />
+      {ev.comentario && (
+        <p className="rounded-[10px] bg-papel-hondo px-2.5 py-1.5 text-[12.5px] text-tinta-suave">Comentario anterior: {ev.comentario}</p>
+      )}
+      {CAJAS.map((c) => (
+        <label key={c.clave} className="flex flex-col gap-1">
+          <span className="flex justify-between gap-2 font-semibold">{c.texto}<span className="dato font-normal">{c.agente}</span></span>
+          <textarea id={`ev-${c.clave}-${pid}`} value={ev[c.clave] ?? ""} onChange={(e) => cambiar({ [c.clave]: e.target.value })} rows={2}
+                    placeholder={c.ejemplo}
+                    className="resize-none rounded-[12px] border border-borde bg-panel p-2.5 text-[13px] outline-none focus:border-tinta" />
+        </label>
+      ))}
       <button onClick={guardar} disabled={estado === "guardando"} className="boton justify-center py-1.5">
         {estado === "guardando" ? "Guardando…" : estado === "guardada" ? "Guardada ✓" : "Guardar evaluación →"}
       </button>

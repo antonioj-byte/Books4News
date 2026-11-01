@@ -18,6 +18,7 @@ export type Tema = components["schemas"]["Tema"];
 export type TemaNuevo = components["schemas"]["TemaNuevo"];
 export type TemaCreado = components["schemas"]["TemaCreado"];
 export type Material = components["schemas"]["Material"];
+export type Nota = components["schemas"]["Nota"];
 export type EstadoMemoria = components["schemas"]["EstadoMemoria"];
 export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" };
 export type ResultadoMemoria = components["schemas"]["ResultadoMemoria"];
@@ -67,6 +68,15 @@ export const api = {
   replicarTema: (id: number, r: { texto: string; ejecucion: number }) =>
     pedir<TemaCreado>(`/api/temas/${id}/replica`, { method: "POST", body: JSON.stringify(r) }),
   descartarTema: (id: number) => pedir<Tema>(`/api/temas/${id}`, { method: "DELETE" }),
+  // Feedback por agente (2/11): notas de diapositiva (arte o copy) y el motivo de un descarte (jefe de cultura)
+  notas: (eid: number, pid: string) => pedir<Nota[]>(`${pieza(eid, pid)}/notas`),
+  anadirNota: (eid: number, pid: string, destino: "director_arte" | "guionista", diapositiva: number, texto: string) =>
+    pedir<Nota>(`${pieza(eid, pid)}/notas`, { method: "POST", body: JSON.stringify({ destino, diapositiva, texto }) }),
+  borrarNota: (eid: number, pid: string, nid: number) =>
+    pedir<{ borrada: number }>(`${pieza(eid, pid)}/notas/${nid}`, { method: "DELETE" }),
+  motivosDescarte: () => pedir<string[]>("/api/motivos-descarte"),
+  descartar: (eid: number, pid: string, etiquetas: string[], texto: string) =>
+    pedir<Nota | null>(`${pieza(eid, pid)}/descartar`, { method: "POST", body: JSON.stringify({ etiquetas, texto }) }),
   materiales: (eid: number, pid: string) => pedir<Material[]>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales`),
   subirMaterial: (eid: number, pid: string, archivo: File, credito: string, nota: string) =>
     pedir<Material>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales?${new URLSearchParams({ nombre: archivo.name, credito, nota })}`,
