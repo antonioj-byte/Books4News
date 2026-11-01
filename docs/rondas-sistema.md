@@ -11,8 +11,9 @@ las opciones en un Artifact para que el usuario elija.
 | 2 | (b) coste | Caché de la conversación en las correcciones del guionista y en el chat | interna, hecha | sí (tests + llamadas reales a Opus y Haiku) | ~0,08 $ |
 | 3 | (c) fiabilidad | La lectura periódica y la ejecución del día ya no se pisan; `lecturas.json` atómico | interna, hecha | sí (tests + lectura real de los RSS + carrera medida) | 0 $ |
 | 4 | (d) seguridad | Las descargas de URLs de fuera no pueden llegar a la API interna ni a la red privada | interna, hecha | sí (tests + servidor interno real; la redirección por internet, no: 403 del entorno) | 0 $ |
+| 5 | (e) arte y render | El cierre se queda corto: tres opciones para elegir | visible: **opciones en un Artifact, sin implementar** | sí (pintadas con las plantillas reales) | 0 $ |
 
-Gasto acumulado del bucle: **~0,08 $** (tope: 3 $).
+Gasto acumulado del bucle: **~0,08 $** (tope: 3 $). **Bucle cerrado tras 5 rondas.** Pendiente de elegir: el cierre del carrusel (ronda 5, https://claude.ai/artifact/JTGN7MfBwCURAU2jAwQUer).
 
 ---
 
@@ -255,3 +256,51 @@ reintentó ni se probó otro servicio.
 Europeana/Commons, catálogo de todostuslibros, webs de prensa de las editoriales, RSS) no se han pasado a
 `cliente_externo`; se puede hacer si se quiere el mismo criterio en todo. Comprobar en Railway que los temas y la
 prensa del libro siguen descargando con normalidad tras el merge.
+
+---
+
+## Ronda 5 · (e) Dirección de arte y render
+
+**Cómo se miró**: sin días reales en este entorno, pinté con `render.renderizar` (Playwright, plantillas y tokens de
+`diseno/`) cuatro piezas de muestra: la ficha de los tests y otra con todo al máximo (titular de 12 palabras,
+subtítulo de 22, 30 palabras por diapositiva, cinco medios con titulares largos en el colofón), cada una sin
+dirección de arte y con una típica (sereno, acento pluma, portada «sangre», recurso «golpe» en la noticia). Sin red:
+cubiertas tipográficas y sin fotos.
+
+**Qué encontré**
+
+- Nada se desborda: ningún aviso de `data-desborda` en las 24 diapositivas. «Lo cuentan» enseña como mucho 4 medios
+  a propósito (`plantillas.py:279`) y hace salto de línea; el colofón con cinco noticias largas cabe (su escala baja).
+- Portada, noticia con «golpe», libro, idea en el color de la pieza y colofón tienen fuerza.
+- **El cierre es la diapositiva floja en las cuatro**: la recomendación va a cuerpo de texto (44 px,
+  `base.css:137`) arriba, la tarjeta del libro pequeña abajo, y en medio queda más de media página vacía
+  (`05-cierre.png` a tamaño real). El color de la pieza no aparece. Las piezas sin libro ya ponen esa frase a tamaño
+  de titular (`texto--final`); las que tienen libro, no.
+
+**Clasificación**: cambio visible de diseño → **no implementado**. Opciones pintadas con el CSS real (solo cambian unas
+reglas del cierre), con texto corto y al máximo, en el Artifact «El cierre del carrusel»
+(https://claude.ai/artifact/JTGN7MfBwCURAU2jAwQUer):
+
+- **A** · la frase a tamaño de titular (lo que ya hace el cierre sin libro; una regla de CSS).
+- **B** · la tarjeta crece y se centra (el libro pasa a ser lo grande del cierre).
+- **C** · A más un remate final en EB Garamond cursiva en el color de la pieza, como la portada (necesita que el
+  director proponga el remate y el código lo valide como literal).
+
+Ninguna se desborda. No se ha probado con cubierta real, retrato, «Tres libros» ni piezas graves.
+
+**Coste**: 0 $. **Pendiente**: que el usuario elija; entonces, plantilla, mapa de dirección de arte y CLAUDE.md.
+
+---
+
+## Resumen del bucle
+
+| Ronda | Área | Mejora | Probado | Coste |
+|---|---|---|---|---|
+| 1 | Velocidad | Hechos y arte a la vez en «Proceder» (~12 s menos por pieza) | sí, pero sin medir en Railway | 0,0016 $ |
+| 2 | Coste | Caché de la conversación en correcciones del guion y chat (−0,037 $ por corrección) | sí | ~0,08 $ |
+| 3 | Fiabilidad | Lectura periódica y diaria ya no se pisan; `lecturas.json` atómico | sí | 0 $ |
+| 4 | Seguridad | Descargas de fuera sin acceso a la API interna ni a la red privada | sí (la parte por internet, no: 403) | 0 $ |
+| 5 | Arte y render | Cierre del carrusel: opciones A/B/C | pintado; sin implementar | 0 $ |
+
+Avisos del bucle: 403/429 de La Stampa Cultura y The Believer en la lectura de la ronda 3, y 403 de httpbin y El País en
+la ronda 4 (desde este entorno; parado sin reintentar). Ningún despliegue; nada tocado en `main` ni `fase-3-web`.
