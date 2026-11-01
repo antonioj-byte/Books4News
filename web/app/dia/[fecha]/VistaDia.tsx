@@ -110,7 +110,10 @@ export function VistaDia() {
               {p.portada ? (
                 <Diapositiva src={api.urlDiapositiva(p.ejecucion_id, p.pieza_id, 1, p.version)} ancho={260} titulo={p.titular} />
               ) : (
-                <div className="flex h-[325px] w-[260px] items-center justify-center rounded-[6px] bg-papel-hondo text-tinta-suave">Sin guion</div>
+                <div className="flex h-[325px] w-[260px] flex-col items-center justify-center gap-2 overflow-hidden rounded-[6px] bg-papel-hondo p-4 text-center text-tinta-suave">
+                  <span>Sin guion</span>
+                  {p.marcas.error && <span className="line-clamp-6 text-[12.5px] leading-snug text-carmesi">{p.marcas.error}</span>}
+                </div>
               )}
             </div>
             <h2 className="titular text-[21px] leading-snug group-hover:text-carmesi">{p.titular}</h2>
