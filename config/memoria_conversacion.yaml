@@ -461,3 +461,10 @@
   patron: "«Ojo, necesito poder editar imagen si es necesario. Que vaya a la memoria, y se apliquen los cambios» (las notas por diapositiva solo iban a la Memoria)."
   propuesta: "Las notas por diapositiva quedan para la Memoria y, con «Aplicar ahora» (por defecto), el editor del chat las aplica a esa diapositiva: texto, imagen o formato."
   evidencia: ["Conversación, 2/11: pieza de Pavel Durov, nota de arte"]
+
+- clave: entender-a-la-primera
+  fecha: "2026-11-02"
+  destino: guionista
+  patron: "«Esto está fatal escrito, bro» (diapositivas con metáfora que hay que traducir, incisos, orden al revés y arranques sin verbo con dos puntos)."
+  propuesta: "Que se entienda a la primera: una idea por frase en orden natural, sin incisos ni redundancias, sin titulares sin verbo con dos puntos; metáfora solo si se entiende sin explicarla. El lector sin contexto marca las frases que hay que leer dos veces."
+  evidencia: ["Conversación, 2/11: pieza de Pavel Durov, diapositivas 4 y 5"]
