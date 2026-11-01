@@ -72,3 +72,45 @@ discusión familiar») y ninguna pieza que publicaría tal cual.
 **Decisión**: gana (+1,00 en idea y voz; hechos no verificados 13 → 7; publicables iguales). Pasa a producción:
 `guionista.md` incluye `voz_folio.md` (`[incluir voz_folio]`). Los guiones de la variante son el nuevo control del
 banco (el anterior queda en `informes/2026-11-02/ab-r1/piezas_control_antes.json`).
+
+### Ronda 2 · repaso de voz antes de devolver el guion — PIERDE
+
+**Diagnóstico** (control: los guiones ganadores de la ronda 1):
+1. «El francés más traducido en treinta años pasó por el festival Ja! de Bilbao» (perfil): sigue entrando por el dato
+   de agencia.
+2. «Tesis: el sexo libre funciona como el mercado…» y «Tres novelas, un solo movimiento: …» (perfil): rótulos de
+   reseña escolar.
+3. «Léela antes de tu próxima discusión familiar» (cierre del recomendado): remate de autoayuda.
+
+**Hipótesis**: el guionista tiene la voz, pero su repaso final solo mira reglas mecánicas. Un cambio en
+`guionista.md`: un repaso de voz antes de devolver el JSON (primera frase de cada diapositiva con algo que se ve, nada
+de nota de prensa, solapa ni autoayuda, sin rótulos de reseña, una frase que se recuerde). `prompts/ab/guionista_r2.md`.
+
+**Prueba**: primero el perfil solo (formato correcto, mismos hechos no verificados que el control: 3), luego el banco.
+
+| Variante | Idea | Voz | Media | Publicables | Hechos no verif. | Intentos | Coste escritura |
+|---|---|---|---|---|---|---|---|
+| control (r1) | 3,33 | 2,67 | 3,00 | 1/3 | 9 | — | — |
+| repaso-voz | 3,33 | 3,33 | 3,33 | 1/3 | 17 | 9 | 1,09 $ |
+
+El juez volvió a dar al control la misma media que en la ronda 1 (3,00): la vara es estable.
+
+**Antes → después**:
+- «El francés más traducido en treinta años pasó por el festival Ja! de Bilbao» → «Basta encender un cigarro para que
+  te llamen nihilista, recordó Michel Houellebecq en el festival Ja! de Bilbao» (en la prueba de una pieza).
+- «Tres novelas, un solo movimiento: el mercado ocupa lo que creíamos a salvo» → «Houellebecq lleva treinta años de
+  contable del progreso: apunta quién pierde con cada libertad ganada» (perfil publicable, 4/4).
+- «Karl Bushby salió andando de Punta Arenas…» → «Karl Bushby empuja su carrito por el puente del Humber, entre la
+  niebla».
+
+**Notas del juez**: la voz sube en la lateral y el perfil (escena de entrada, una figura acuñada), pero el recomendado
+baja (de 4/4 a 3/3: «la diapositiva de actualidad es un desfile de citas de prensa») y la lateral inventa un cierre que
+contradice la noticia («Un hombre llega andando a casa de su madre»).
+
+**Coste de la ronda**: 1,83 $ (guiones 1,72; hechos 0,05; juez 0,06; claridad 0,01).
+
+**Decisión**: pierde. Sube la media 0,33, pero los hechos no verificados casi se duplican (9 → 17; en el perfil, de 3
+a 10). Por qué: pedir que cada diapositiva empiece por «algo que se ve» empuja a fabricar escenas que los textos no
+traen. Lección para la próxima: la escena tiene que salir de los textos recibidos; si no la hay, mejor el dato bien
+contado que una escena inventada.
+
