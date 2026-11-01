@@ -137,3 +137,24 @@ def test_el_retrato_del_autor_casa_por_apellido(cfg, monkeypatch):
     assert pedidos == ["Arendt"] and "otra persona" not in nota
     nota = edicion.aplicar_imagen(None, cfg, p, _accion("buscar_retrato", persona="Simone Weil"))[1]
     assert "otra persona" in nota and autor in nota
+
+
+def test_si_dice_que_cambio_el_texto_tiene_que_traer_el_guion(cfg):
+    """2/11: el editor describió cambios en el texto, devolvió solo la imagen y la «versión nueva» no los tenía."""
+    from datos import guion_valido
+    llamadas = []
+
+    class LLM:
+        def estructurado(self, paso, mensajes, esquema, **k):
+            llamadas.append(mensajes[-1]["content"])
+            if len(llamadas) == 1:
+                return esquema(respuesta="He reescrito la diapositiva 3 y quitado la gráfica.", guion=None,
+                               imagen=_accion("composicion", composicion="sangre")), []
+            g = guion_valido()
+            g.diapositivas[3].texto = "El mal administrativo necesita gente que nunca se pregunte nada."
+            return esquema(respuesta="Aquí va entero.", guion=g, imagen=None), []
+
+    respuesta, nueva, avisos = edicion.chat(LLM(), cfg, _pieza(), [], "quita la gráfica")
+    assert len(llamadas) == 2 and "`guion` va a null" in llamadas[1]
+    assert nueva is not None and "nunca se pregunte" in nueva.guion.diapositivas[3].texto
+    assert any("sin devolver el guion" in a for a in avisos)

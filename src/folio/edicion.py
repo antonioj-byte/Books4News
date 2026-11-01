@@ -20,6 +20,7 @@ Lo aplica el código (aplicar_imagen), con las mismas comprobaciones que la etap
 from __future__ import annotations
 
 import json
+import re
 
 from typing import Literal
 
@@ -175,6 +176,14 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
     previos = set(validar(cfg, p, p.guion))
     for intento in range(cfg.pipeline.guion.reintentos + 1):
         r, contenido = llm.estructurado(f"chat:{p.id}:{intento + 1}", mensajes, RespuestaChat, etapa_modelo="chat")
+        if r.guion is None and _dice_que_cambio_el_texto(r.respuesta) and intento < cfg.pipeline.guion.reintentos:
+            # 2/11: el editor describió cambios en el texto, devolvió solo un cambio de imagen y la «versión nueva» no
+            # tenía el texto nuevo. Si dice que ha cambiado el texto, tiene que traer el guion
+            avisos.append("El editor describió cambios en el texto sin devolver el guion; se le pide entero")
+            mensajes += [{"role": "assistant", "content": json.dumps(r.model_dump(mode="json"), ensure_ascii=False)},
+                         {"role": "user", "content": "Dices que has cambiado el texto, pero `guion` va a null y el cambio no se "
+                          "guardaría. Devuelve el JSON con el guion completo revisado (y la imagen, si la cambias)."}]
+            continue
         if r.guion is None:
             if r.imagen is None:
                 return r.respuesta, None, avisos
@@ -198,6 +207,14 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
                      {"role": "user", "content": "El guion no cumple estas condiciones:\n" + "\n".join(f"- {e}" for e in errores)
                       + "\nCorrígelo y devuelve el JSON completo."}]
     return ("No he podido hacer ese cambio sin romper las reglas de Folio: " + "; ".join(errores)), None, avisos
+
+
+_CAMBIO_DE_TEXTO = re.compile(r"\b(he|hemos)\s+(reescrito|cambiado|quitado|eliminado|añadido|ajustado|acortado|"
+                              r"sustituido|rehecho|corregido|reformulado|recortado|movido)\b|\bdiapositivas?\s+\d", re.I)
+
+
+def _dice_que_cambio_el_texto(respuesta: str) -> bool:
+    return bool(_CAMBIO_DE_TEXTO.search(respuesta or ""))
 
 
 def _imagen_sin_romper(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pieza | None, str]:

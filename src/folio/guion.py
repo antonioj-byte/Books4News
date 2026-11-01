@@ -530,8 +530,10 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     reintentos = cfg.pipeline.guion.reintentos
     intento = 0
     while True:
+        # El primer guion, con el esfuerzo del guionista; los reintentos y la reescritura para el lector sin contexto
+        # son correcciones sobre un guion hecho: mismo modelo, esfuerzo medio (2/11, a petición del usuario, por el gasto)
         guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", mensajes, GuionLLM,
-                                            etapa_modelo="guion")
+                                            etapa_modelo="guion" if intento == 0 else "guion_correccion")
         corregido = corregir_mecanico(guion)
         if corregido:
             avisos.append(f"Corregido en código en el intento {intento + 1}: {', '.join(corregido)}")

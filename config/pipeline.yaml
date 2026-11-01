@@ -3,6 +3,7 @@ modelos:
   seleccion: claude-opus-5-5    # jefe de cultura: lectura lateral y diálogo con la actualidad
   seleccion_libro: claude-haiku-5-5   # editor del libro (2/11): mundo del libro, historia editorial y libro recomendado
   guion: claude-opus-5-5        # guionista
+  guion_correccion: claude-opus-5-5   # reintentos y reescritura del lector sin contexto: el mismo modelo (2/11)
   comprobacion: claude-haiku-5-5  # comprobación de hechos del guion contra las fuentes
   arte: claude-haiku-5-5          # director de arte: tono, búsqueda y elección de la imagen
   ilustracion: claude-opus-5-5    # ilustrador: ilustración vectorial de portada (prototipo)
@@ -22,6 +23,7 @@ esfuerzo:                       # output_config.effort
   seleccion: high
   seleccion_libro: medium
   guion: high
+  guion_correccion: medium        # 2/11 (a petición del usuario, por el gasto): las correcciones, con esfuerzo medio
   comprobacion: medium
   arte: medium
   ilustracion: medium
