@@ -128,7 +128,7 @@ class Dev(_Seccion):
 class VarianteAB(_Seccion):
     modelo: str
     esfuerzo: Esfuerzo
-    voz: bool = False         # el guionista con la voz de Folio (prompts/voz_folio.md, 2/11)
+    voz: bool | str = False   # el guionista con la voz de Folio (True: prompts/voz_folio.md; o el nombre de otra versión)
     estilo: bool = False      # y, después, el pase de estilo (folio.estilo)
 
 

@@ -19,10 +19,11 @@ def _cifras(g: GuionLLM) -> set[str]:
 
 
 def pulir(llm: LLM, cfg: Config, pieza_id: str, g: GuionLLM, libros: list[LibroVerificado],
-          fuentes: list[FuenteNoticia], citas: list[CitaVerificada], formato: str) -> tuple[GuionLLM, list[str]]:
+          fuentes: list[FuenteNoticia], citas: list[CitaVerificada], formato: str,
+          archivo_voz: str = "voz_folio") -> tuple[GuionLLM, list[str]]:
     """Devuelve (guion pulido o el de antes, avisos)."""
     from folio import guion as guionista
-    voz = (cfg.dir_prompts / "voz_folio.md").read_text(encoding="utf-8").strip()
+    voz = (cfg.dir_prompts / f"{archivo_voz}.md").read_text(encoding="utf-8").strip()
     prompt = cargar_prompt(cfg, "editor_estilo", {"[pegar voz]": voz,
                                                   "[pegar guion]": json.dumps(g.model_dump(mode="json"), ensure_ascii=False, indent=1)})
     try:

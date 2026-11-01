@@ -61,7 +61,8 @@ def _escribir(cfg: Config, nombre: str, v: VarianteAB, pieza: Pieza, textos: lis
         return Version(nombre, None, sum(t.coste_usd for t in llm.trazas), len(llm.trazas), error=str(exc))
     if v.estilo:
         from folio import estilo
-        g, mas = estilo.pulir(llm, cfg, f"{pieza.id}:{nombre}", g, pieza.libros, [f for f, _ in textos], citas, pieza.eleccion.formato)
+        g, mas = estilo.pulir(llm, cfg, f"{pieza.id}:{nombre}", g, pieza.libros, [f for f, _ in textos], citas, pieza.eleccion.formato,
+                              v.voz if isinstance(v.voz, str) else "voz_folio")
         avisos += mas
     guionista.ajustar_libros(g, pieza.libros)
     return Version(nombre, g, sum(t.coste_usd for t in llm.trazas), len(llm.trazas), avisos=avisos)
