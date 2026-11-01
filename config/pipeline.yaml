@@ -152,7 +152,7 @@ arte:
   ilustracion_editorial: {activo: true, max_por_dia: 10, variantes: 2, modelo: flux_2_pro, creditos_imagen: 25}   # 10 al día (31/10, a petición del usuario); sin letras (revisor, 2/11)
   colofon: true                # diapositiva final con las fuentes, la ficha verificada y los créditos de las imágenes
   impulsado_por: true          # «Impulsado por Alighieria», pequeño, sobre la mesa bajo la ficha del colofón (2/11, opción B elegida por el usuario)
-  sello_verificacion: true     # «ficha verificada» en la diapositiva del libro
+  sello_verificacion: false    # «ficha verificada» en la diapositiva del libro (apagado el 2/11, a petición del usuario)
   medios_en_noticia: true      # «lo cuentan: DW · BBC · FT» en la diapositiva de la noticia
   buscador: true               # B2: el buscador de la portada escribe la pregunta y responde con el libro
   buscador_max_por_dia: 1       # 2/11 (a petición del usuario: «lo pondría como recurso opcional, no siempre; queda muy recargado»): como mucho uno al día, y solo si el director lo pide

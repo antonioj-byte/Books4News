@@ -203,7 +203,7 @@ class Arte(_Seccion):
     # sello de ficha verificada en la del libro (B) y los medios que cuentan la noticia (C)
     colofon: bool = True
     impulsado_por: bool = True        # «Impulsado por» con el logo de Alighieria bajo la ficha del colofón (2/11)
-    sello_verificacion: bool = True
+    sello_verificacion: bool = False
     medios_en_noticia: bool = True   # hasta que haya una ilustración de las salas elegida por el usuario
     # Tonos en los que la portada en vídeo lleva la interferencia (M10)
     interferencia: list[Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]] = Field(default_factory=lambda: ["ironico"])

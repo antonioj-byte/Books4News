@@ -398,3 +398,10 @@
   patron: "«Pon la edición de la portada de Random House/Mondadori, en lugar de la extranjera» (salía la cubierta inglesa de un libro con edición española)."
   propuesta: "Con edición española, la cubierta sale solo de ediciones en castellano (si no hay, la tipográfica), y el chat puede poner la de otra edición en castellano por su editorial o ISBN, con la ficha de esa edición."
   evidencia: ["Conversación, 2/11: pieza de Gonçalo M. Tavares, «Aprender a rezar en la era de la técnica»"]
+
+- clave: sin-sello-ficha-verificada
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "«Quiero eliminar lo de ficha verificada»."
+  propuesta: "La diapositiva del libro va sin el sello «✓ Ficha verificada» (arte.sello_verificacion: false); la verificación sigue en el colofón."
+  evidencia: ["Conversación, 2/11: pieza de Gonçalo M. Tavares, diapositivas de libro"]
