@@ -14,6 +14,7 @@ export type ResultadoEdicion = components["schemas"]["ResultadoEdicion"];
 export type MensajeChat = components["schemas"]["MensajeChat"];
 export type RespuestaChat = components["schemas"]["RespuestaChat"];
 export type PanelGasto = components["schemas"]["PanelGasto"];
+export type Material = components["schemas"]["Material"];
 export type EstadoMemoria = components["schemas"]["EstadoMemoria"];
 export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" };
 export type ResultadoMemoria = components["schemas"]["ResultadoMemoria"];
@@ -57,6 +58,13 @@ export const api = {
   editarDiapositiva: (eid: number, pid: string, n: number, texto: string, subtitulo?: string | null) =>
     pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),
   chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),
+  materiales: (eid: number, pid: string) => pedir<Material[]>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales`),
+  subirMaterial: (eid: number, pid: string, archivo: File, credito: string, nota: string) =>
+    pedir<Material>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales?${new URLSearchParams({ nombre: archivo.name, credito, nota })}`,
+      { method: "POST", body: archivo, headers: { "Content-Type": archivo.type || "application/octet-stream" } }),
+  borrarMaterial: (eid: number, pid: string, mid: string) =>
+    pedir<unknown>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales/${mid}`, { method: "DELETE" }),
+  urlMaterial: (eid: number, pid: string, mid: string) => `/api/ejecuciones/${eid}/piezas/${pid}/materiales/${mid}`,
   enviarChat: (eid: number, pid: string, mensaje: string) =>
     pedir<RespuestaChat>(`${pieza(eid, pid)}/chat`, { method: "POST", body: JSON.stringify({ mensaje }) }),
   // Programar en Buffer la pieza aprobada (a una hora, a la cola o como borrador)

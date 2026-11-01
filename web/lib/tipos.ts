@@ -150,6 +150,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ejecuciones/{eid}/piezas/{pid}/materiales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leer Materiales */
+        get: operations["leer_materiales_api_ejecuciones__eid__piezas__pid__materiales_get"];
+        put?: never;
+        /**
+         * Subir Material
+         * @description El archivo va en el cuerpo, tal cual, con su Content-Type (sin multipart). Como mucho 8 MB.
+         */
+        post: operations["subir_material_api_ejecuciones__eid__piezas__pid__materiales_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ejecuciones/{eid}/piezas/{pid}/materiales/{mid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Borrar Material */
+        delete: operations["borrar_material_api_ejecuciones__eid__piezas__pid__materiales__mid__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ejecuciones/{eid}/piezas/{pid}/desarrollar": {
         parameters: {
             query?: never;
@@ -1044,6 +1082,33 @@ export interface components {
             /** Error */
             error: string | null;
         };
+        /** Material */
+        Material: {
+            /** Id */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Tipo */
+            tipo: string;
+            /**
+             * Credito
+             * @default
+             */
+            credito: string;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
+            /** Subido En */
+            subido_en: string;
+            /** Bytes */
+            bytes: number;
+            /** Ancho */
+            ancho?: number | null;
+            /** Alto */
+            alto?: number | null;
+        };
         /** MensajeChat */
         MensajeChat: {
             /** N */
@@ -1741,6 +1806,107 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RespuestaChat"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leer_materiales_api_ejecuciones__eid__piezas__pid__materiales_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Material"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    subir_material_api_ejecuciones__eid__piezas__pid__materiales_post: {
+        parameters: {
+            query: {
+                nombre: string;
+                credito?: string;
+                nota?: string;
+            };
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Material"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    borrar_material_api_ejecuciones__eid__piezas__pid__materiales__mid__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+                mid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

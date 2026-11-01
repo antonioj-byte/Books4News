@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { api, type MensajeChat } from "@/lib/api";
+import { MaterialesChat } from "@/components/MaterialesChat";
 
 // Chat de edición: se pide un cambio con palabras y el editor (Opus) devuelve la pieza revisada, que
 // tiene que pasar las reglas del guion. Cada cambio es una versión nueva; `onCambio` recarga la pieza.
@@ -62,6 +63,7 @@ export function ChatEdicion({ eid, pid, onCambio }: { eid: number; pid: string; 
         <button onClick={enviar} disabled={enviando || !texto.trim()} className="boton self-end">→</button>
       </div>
       {error && <p className="text-carmesi">{error}</p>}
+      <MaterialesChat eid={eid} pid={pid} />
     </div>
   );
 }

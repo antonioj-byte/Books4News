@@ -37,12 +37,13 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "usar_material"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
                     "buscar_retrato: buscar la foto libre de una persona real (autor o protagonista) para la portada; "
-                    "retrato_ilustrado: pasar esa foto a ilustración en un estilo de la casa")
+                    "retrato_ilustrado: pasar esa foto a ilustración en un estilo de la casa; "
+                    "usar_material: poner en la pieza una foto que ha subido quien edita")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
@@ -50,6 +51,8 @@ class AccionImagen(BaseModel):
     escena: str = Field(description="Solo ilustrar: la metáfora visual en inglés, de 12 a 70 palabras, sin nombres propios, cifras ni comillas; si no, vacío")
     persona: str = Field(description="Solo buscar_retrato: nombre completo de la persona real (el autor del libro o quien protagoniza la historia); si no, vacío")
     estilo: str = Field(description="Solo retrato_ilustrado: low_poly, voxel, render_2000 o dithering (vacío: el que va con el tono); si no, vacío")
+    material: str = Field(description="Solo usar_material: el id del material (la foto subida); si no, vacío")
+    como: str = Field(description="Solo usar_material: «portada» (la imagen de la portada) o «retrato» (la foto del autor o protagonista); si no, vacío")
 
 
 class RespuestaChat(BaseModel):
@@ -117,6 +120,9 @@ def _retrato_ilustrado(cfg: Config, nueva: Pieza, ar, a: AccionImagen, retrato, 
         return None, "(Primero hace falta una foto libre de la persona: pide que busque su retrato.)"
     if prensa.es_de_prensa(retrato):
         return None, "(Es una foto de prensa de la editorial: se puede publicar tal cual, pero no transformarla.)"
+    from folio import materiales
+    if materiales.es_material(retrato):
+        return None, "(Es una foto subida por quien edita: se puede publicar tal cual, pero no transformarla con IA.)"
     if ar.tono == "grave":
         return None, "(En piezas graves el retrato va en foto, sin ilustrar.)"
     estilos = ["low_poly", "voxel", "render_2000", "dithering"]
@@ -157,8 +163,11 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
     pieza nueva o None si no hay cambios, avisos)."""
     sistema = cargar_prompt(cfg, "chat_edicion", {"[pegar pieza]": _bloque_pieza(p)})
     mensajes = [{"role": "user" if rol == "usuario" else "assistant", "content": texto} for rol, texto in historial]
+    from folio import materiales
+    extra = materiales.bloques(cfg, p)          # lo que ha subido quien edita (2/11), como datos delimitados
+    ultimo = [*extra, {"type": "text", "text": mensaje}] if extra else mensaje
     mensajes = [{"role": "user", "content": sistema}, {"role": "assistant", "content": "Entendido. ¿Qué cambiamos?"},
-                *mensajes, {"role": "user", "content": mensaje}]
+                *mensajes, {"role": "user", "content": ultimo}]
     avisos: list[str] = []
     previos = set(validar(cfg, p, p.guion))
     for intento in range(cfg.pipeline.guion.reintentos + 1):
@@ -265,6 +274,9 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return _buscar_retrato(cfg, p, nueva, ar, a, dir_fecha)
     if a.tipo == "retrato_ilustrado":
         return _retrato_ilustrado(cfg, nueva, ar, a, retrato, dir_fecha)
+    if a.tipo == "usar_material":
+        from folio import materiales
+        return materiales.usar(cfg, p, nueva, ar, a.material, a.como)
     if a.tipo == "ilustrar":
         escena, motivo = editorial.validar_escena(a.escena, editorial.nombres_de_pieza(p))
         ie = cfg.pipeline.arte.ilustracion_editorial

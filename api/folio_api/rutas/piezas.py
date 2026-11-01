@@ -3,10 +3,10 @@
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
-from folio import edicion
+from folio import edicion, materiales
 from folio.almacen import Evaluacion, MensajeChat, escribir_evaluacion_md
 from folio.llm import LLM, ErrorLLM
 from folio.modelos import InformeDiario
@@ -167,6 +167,44 @@ def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(c
     ctx.almacen.anadir_mensaje(eid, pid, "usuario", m.mensaje.strip())
     ctx.almacen.anadir_mensaje(eid, pid, "editor", respuesta, v)
     return RespuestaChat(respuesta=respuesta, version=v, avisos=avisos)
+
+
+# --- Materiales extra (2/11): fotos, PDF o texto que sube quien edita para el chat ---------------------------
+
+@router.get("/api/ejecuciones/{eid}/piezas/{pid}/materiales", response_model=list[materiales.Material])
+def leer_materiales(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
+    p, _ = ctx.pieza(eid, pid)
+    return materiales.lista(ctx.cfg, p)
+
+
+@router.post("/api/ejecuciones/{eid}/piezas/{pid}/materiales", response_model=materiales.Material)
+async def subir_material(eid: int, pid: str, request: Request, nombre: str = Query(...), credito: str = Query(""),
+                         nota: str = Query(""), ctx: Contexto = Depends(contexto)):
+    """El archivo va en el cuerpo, tal cual, con su Content-Type (sin multipart). Como mucho 8 MB."""
+    p, _ = ctx.pieza(eid, pid)
+    datos = await request.body()
+    try:
+        return materiales.guardar(ctx.cfg, p, nombre, datos, request.headers.get("content-type", ""), credito, nota)
+    except materiales.NoValido as exc:
+        raise HTTPException(422, str(exc))
+
+
+@router.get("/api/ejecuciones/{eid}/piezas/{pid}/materiales/{mid}", include_in_schema=False)
+def ver_material(eid: int, pid: str, mid: str, ctx: Contexto = Depends(contexto)):
+    p, _ = ctx.pieza(eid, pid)
+    m = materiales.buscar(ctx.cfg, p, mid)
+    if not m or not materiales.ruta(ctx.cfg, p, m).exists():
+        raise HTTPException(404, "No existe ese material")
+    tipo = {"imagen": "image/jpeg", "pdf": "application/pdf", "texto": "text/plain; charset=utf-8"}[m.tipo]
+    return FileResponse(materiales.ruta(ctx.cfg, p, m), media_type=tipo)
+
+
+@router.delete("/api/ejecuciones/{eid}/piezas/{pid}/materiales/{mid}")
+def borrar_material(eid: int, pid: str, mid: str, ctx: Contexto = Depends(contexto)):
+    p, _ = ctx.pieza(eid, pid)
+    if not materiales.borrar(ctx.cfg, p, mid):
+        raise HTTPException(404, "No existe ese material")
+    return {"borrado": mid}
 
 
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}/descarga.zip", include_in_schema=False)

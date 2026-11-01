@@ -244,3 +244,10 @@
   patron: "«En el colofón, en pequeñito, molaría poner un Impulsado por (logo Alighieria), para aprovechar y hacer publi»."
   propuesta: "El colofón lleva «Impulsado por» con el logo de Alighieria, pequeño, fuera de la ficha y centrado sobre la mesa oscura (opción B)."
   evidencia: ["Conversación, 2/11: elección entre tres opciones (pie de ficha, sobre la mesa, sello)"]
+
+- clave: materiales-extra
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«Estaría bien que el sistema permitiera subir cosas (fotos, etc.) para materiales extra»."
+  propuesta: "En el chat de edición se suben fotos, PDF o texto con crédito y nota; el editor los ve como datos y puede poner una foto con crédito en la portada o como retrato, sin transformarla con IA."
+  evidencia: ["Conversación, 2/11: captura del chat de edición"]
