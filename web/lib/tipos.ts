@@ -993,6 +993,11 @@ export interface components {
              */
             videos: components["schemas"]["VideoDiapositiva"][];
             /**
+             * Total Diapositivas
+             * @default 0
+             */
+            total_diapositivas: number;
+            /**
              * Lomos
              * @default []
              */

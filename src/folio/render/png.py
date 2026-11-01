@@ -41,14 +41,15 @@ def renderizar(cfg: Config, piezas: list[Pieza], destino: Path,
             carpeta.mkdir(parents=True, exist_ok=True)
             for viejo in carpeta.glob("[0-9][0-9]-*.png"):        # si el guion tenía más diapositivas
                 viejo.unlink()
-            for n, d in enumerate(pieza.guion.diapositivas, 1):
+            tipos = [d.tipo for d in pieza.guion.diapositivas] + (["colofon"] if plantillas.con_colofon(pieza) else [])
+            for n, tipo in enumerate(tipos, 1):
                 html_path = Path(tmp) / f"{pieza.id}-{n}.html"
                 html_path.write_text(plantillas.html_diapositiva(pieza, n), encoding="utf-8")
                 pagina.goto(html_path.as_uri())
                 pagina.wait_for_selector("body[data-listo='1']", timeout=15000)
                 if pagina.evaluate("document.body.dataset.desborda === '1'"):
                     avisos.append(f"{pieza.id}, diapositiva {n}: el texto no cabe ni al tamaño mínimo")
-                ruta = carpeta / f"{n:02d}-{d.tipo}.png"
+                ruta = carpeta / f"{n:02d}-{tipo}.png"
                 pagina.screenshot(path=str(ruta), clip={"x": 0, "y": 0, "width": ancho, "height": alto})
                 archivos.append(ruta)
         navegador.close()

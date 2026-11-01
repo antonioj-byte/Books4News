@@ -357,6 +357,30 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 @keyframes posar { from { transform: translate(40px, -60px) rotate(9deg); opacity: 0; } 55% { opacity: 1; } to { transform: rotate(2.5deg); opacity: 1; } }
 .en-video .copia { animation: posar 1.1s cubic-bezier(.2, .7, .3, 1) 0.2s both; }
 
+/* Lo del pie, en las diapositivas (1/11): el colofón final (fuentes, ficha verificada, imágenes), el sello de
+   ficha verificada en la diapositiva del libro y los medios que cuentan la noticia */
+.diapositiva--colofon { background: var(--colores-papel); color: var(--colores-tinta); }
+.colofon { display: flex; flex-direction: column; gap: 34px; min-height: 0; }
+.colofon .antetitulo { align-self: flex-start; margin-bottom: 0; }
+.colofon__titulo { font-family: var(--fuentes-titular); font-size: 76px; line-height: 1; font-weight: 700; letter-spacing: -0.05em; }
+.colofon__titulo em { font-family: var(--fuentes-remate); font-weight: 400; color: var(--colores-pluma); letter-spacing: -0.02em; }
+.colofon__bloque { border-top: 2px solid var(--colores-tinta); padding-top: 18px; }
+.colofon__bloque h2 { font-family: var(--fuentes-titular); font-weight: 500; font-size: 20px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--colores-pluma); margin-bottom: 14px; }
+.colofon__bloque ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.colofon__bloque li { font-size: 25px; line-height: 1.35; }
+.colofon__bloque li b { font-weight: 700; }
+.colofon__bloque li em { font-family: var(--fuentes-remate); font-size: 1.1em; }
+.colofon__bloque li span { color: var(--colores-tinta-60); font-size: 22px; }
+.colofon__bloque li .colofon__ok { color: var(--colores-tinta); }
+.colofon__pie { margin-top: auto; font-family: var(--fuentes-remate); font-style: italic; font-size: 30px; }
+.sello-verificado {
+  align-self: flex-start; margin-top: 18px; font-family: var(--fuentes-titular); font-weight: 500; font-size: 18px; letter-spacing: 0.16em;
+  text-transform: uppercase; padding: 9px 16px 8px; border-radius: 999px; border: 2px solid currentColor; color: var(--colores-papel-64);
+}
+.medios { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 30px; }
+.medios__rotulo { font-family: var(--fuentes-titular); font-weight: 500; font-size: 18px; letter-spacing: 0.2em; text-transform: uppercase; margin-right: 4px; }
+.medio { font-family: var(--fuentes-texto); font-weight: 600; font-size: 20px; padding: 7px 14px 6px; border-radius: 999px; background: var(--colores-papel); color: var(--colores-tinta-honda); }
+
 /* Noticias graves: sin marcador; el remate, en cursiva sin subrayar */
 .grave .remate { background: none !important; color: inherit !important; padding: 0; }
 .grave .cifra__numero { color: var(--colores-papel); }

@@ -68,6 +68,7 @@ def pieza(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
                         versiones=ctx.almacen.versiones(eid, pid),
                         video_portada=f"/api/ejecuciones/{eid}/piezas/{pid}/video.mp4" if hay_video else None,
                         videos=[VideoDiapositiva(n=n, url=f"/api/ejecuciones/{eid}/piezas/{pid}/videos/{n}.mp4") for n in videos],
+                        total_diapositivas=ctx.plantillas.total(p),
                         lomos=lomos(ctx, p))
 
 
@@ -103,7 +104,7 @@ def diapositiva(eid: int, pid: str, n: int, version: int | None = None, ctx: Con
     p, _ = ctx.pieza(eid, pid)
     if version:
         p = ctx.almacen.version(eid, pid, version) or p
-    if not p.guion or not 1 <= n <= len(p.guion.diapositivas):
+    if not p.guion or not 1 <= n <= ctx.plantillas.total(p):          # la última puede ser el colofón
         raise HTTPException(404, "Diapositiva no encontrada")
     return ctx.plantillas.html_diapositiva(p, n, base_url="/diseno/")
 

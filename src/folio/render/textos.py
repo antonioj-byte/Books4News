@@ -49,7 +49,8 @@ def ficha_libros(pieza: Pieza, cubierta: Callable[[LibroVerificado], str | None]
                     "anio": v.anio_primera_edicion if v else None,
                     "editorial": lg.editorial_espanola if v and v.edicion_es == "si" else None,
                     "edicion_es": v.edicion_es if v else "desconocido",
-                    "cubierta": cubierta(v) if cubierta and v else None})
+                    "cubierta": cubierta(v) if cubierta and v else None,
+                    "verificado": bool(v and v.fuentes_verificacion)})
     return out
 
 

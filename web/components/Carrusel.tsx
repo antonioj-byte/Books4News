@@ -7,9 +7,9 @@ import { EditorDiapositiva } from "./EditorDiapositiva";
 // Carrusel de la pieza: diapositiva grande, flechas (también con el teclado) y miniaturas. Si hay
 // vídeo de portada, la diapositiva 1 grande es el vídeo (la miniatura sigue siendo la imagen). Con
 // `onEditar`, el texto de la diapositiva grande se puede editar en el sitio.
-export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, onEditar }: {
+export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, editables, onEditar }: {
   total: number; url: (n: number) => string; ancho: number; inicial?: number; video?: string | null;
-  videos?: Record<number, string>;
+  videos?: Record<number, string>; editables?: number;
   onEditar?: (n: number, texto: string, subtitulo: string | null) => Promise<void>;
 }) {
   const [n, setN] = useState(inicial);
@@ -56,7 +56,7 @@ export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, o
           {anterior}<span className="dato">{actual} / {total}</span>{siguiente}
         </div>
       )}
-      {onEditar && !editando && (
+      {onEditar && !editando && actual <= (editables ?? total) && (
         <button onClick={() => setEditando(true)} className="boton-suave">Editar el texto de esta diapositiva</button>
       )}
       <div className="mt-2 flex max-w-full gap-2.5 overflow-x-auto px-1 pb-2">

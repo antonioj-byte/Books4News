@@ -88,6 +88,8 @@ class PiezaDetalle(BaseModel):
     video_portada: str | None = None
     # Todas las diapositivas en vídeo (portada, noticia, idea), con la misma condición
     videos: list[VideoDiapositiva] = []
+    # Las del guion y, al final, el colofón (no se edita: lo pinta el código con datos comprobados)
+    total_diapositivas: int = 0
     lomos: list[Lomo] = []                # los libros con su cubierta (la propuesta pendiente los enseña)
 
 

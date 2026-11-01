@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block cuerpo %}
+    <div class="colofon">
+      <div class="antetitulo">Colofón</div>
+      <h1 class="colofon__titulo">De dónde sale <em>esta pieza</em></h1>
+      {% if colofon.fuentes %}
+      <section class="colofon__bloque"><h2>La noticia</h2>
+        <ul>{% for f in colofon.fuentes %}<li><b>{{ f.medio }}</b> {{ f.titulo }}{% if f.acceso %} <span>· {{ f.acceso }}</span>{% endif %}</li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+      {% if colofon.libros %}
+      <section class="colofon__bloque"><h2>{{ "El libro" if colofon.libros|length == 1 else "Los libros" }} · ficha verificada</h2>
+        <ul>{% for l in colofon.libros %}<li><b>{{ l.titulo }}</b>, {{ l.autor }}{% if l.primera %}<br><span>Primera edición: {{ l.primera }}</span>{% endif %}{% if l.espanola %}<br><span>En español: {{ l.espanola }}</span>{% endif %}{% if l.verificado %}<br><span class="colofon__ok">✓ Comprobado en {{ l.verificado }}</span>{% endif %}</li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+      {% if colofon.imagenes %}
+      <section class="colofon__bloque"><h2>Las imágenes</h2>
+        <ul>{% for c in colofon.imagenes %}<li>{{ c }}</li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+      <p class="colofon__pie">Folio lee la actualidad a través de los libros.</p>
+    </div>
+{% endblock %}

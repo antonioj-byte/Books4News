@@ -76,8 +76,19 @@ class Plantillas:
                                autoescape=select_autoescape(["html"]))
         self.medios = Medios(self.cfg, self.url_medio, self.buscar_cubiertas)
 
+    def con_colofon(self, pieza: Pieza) -> bool:
+        return bool(self.cfg.pipeline.arte.colofon and pieza.guion)
+
+    def total(self, pieza: Pieza) -> int:
+        """Diapositivas del carrusel: las del guion y, al final, el colofón."""
+        return len(pieza.guion.diapositivas) + (1 if self.con_colofon(pieza) else 0) if pieza.guion else 0
+
     def html_diapositiva(self, pieza: Pieza, n: int, base_url: str | None = None) -> str:
-        """HTML completo de la diapositiva n (1, 2, …) de la pieza."""
+        """HTML completo de la diapositiva n (1, 2, …) de la pieza; la última, si está activo, es el colofón."""
+        if n == len(pieza.guion.diapositivas) + 1 and self.con_colofon(pieza):
+            return self.env.get_template("colofon.html").render(
+                **self._base(base_url), tipo="colofon", n=n, total=self.total(pieza), pieza_id=pieza.id,
+                colofon=self._colofon(pieza))
         d = pieza.guion.diapositivas[n - 1]
         return self.env.get_template(f"{d.tipo}.html").render(
             **self._base(base_url), **self._texto(pieza, d, n), **self._medios_y_arte(pieza, d, n))
@@ -112,6 +123,31 @@ class Plantillas:
         libro = de(pieza.guion.diapositivas[n - 1])
         antes = [de(x) for x in pieza.guion.diapositivas[:n - 1] if x.tipo == "libro"]
         return None if libro and any(a and a["titulo"] == libro["titulo"] for a in antes) else libro
+
+    def _colofon(self, pieza: Pieza) -> dict:
+        """Lo que va en el pie, en una diapositiva: las noticias de origen, la ficha verificada de cada libro y
+        el origen de las imágenes. Todo sale de datos guardados y comprobados, nada del modelo."""
+        from folio.guion import libro_verificado
+        from folio.informe import creditos_pie
+        fuentes = [{"medio": f.medio, "titulo": f.titulo, "acceso": {"abierto": "", "parcial": "acceso parcial", "muro": "con muro"}.get(f.acceso, "")}
+                   for f in pieza.fuentes[:5]]
+        libros = []
+        for lg in pieza.guion.libros:
+            v = libro_verificado(lg, pieza.libros)
+            if not v:
+                continue
+            primera = " · ".join(str(x) for x in (v.idioma_original, v.editorial_original, v.anio_primera_edicion) if x)
+            es = v.edicion_es_detalle
+            if v.edicion_es == "si" and es:
+                espanola = " · ".join(str(x) for x in (es.editorial, es.anio, f"ISBN {es.isbn}" if es.isbn else None,
+                                                        f"traducción de {es.traductor}" if es.traductor else None) if x)
+            else:
+                espanola = "sin edición en español" if v.edicion_es == "no" else ""
+            fuentes_v = {"openlibrary": "Open Library", "googlebooks": "Google Books"}
+            libros.append({"titulo": texto_html("*" + sin_subtitulo(v.titulo_propuesto).strip() + "*"), "autor": ", ".join(v.autores[:2]),
+                           "primera": primera, "espanola": espanola,
+                           "verificado": " y ".join(fuentes_v.get(f, f) for f in v.fuentes_verificacion)})
+        return {"fuentes": fuentes, "libros": libros, "imagenes": creditos_pie(pieza.arte) if pieza.arte else []}
 
     def _infografia(self, pieza: Pieza, d: Diapositiva, n: int) -> dict | None:
         """La infografía de la (primera) diapositiva de la idea, comprobada otra vez contra el guion actual.
@@ -203,6 +239,11 @@ class Plantillas:
             # Las diapositivas que también salen en vídeo (folio.render.video): la portada con imagen o con
             # interferencia, la noticia con cifra que cuenta o con palabra gigante, la idea con infografía
             "panorama": panorama, "buscador": buscador,
+            # Lo del pie en las diapositivas: el sello de ficha verificada y los medios que cuentan la noticia
+            "sello": bool(self.cfg.pipeline.arte.sello_verificacion and libro and libro.get("verificado")),
+            "medios": (list(dict.fromkeys(f.medio for f in pieza.fuentes))[:4]
+                       if d.tipo == "actualidad" and self.cfg.pipeline.arte.medios_en_noticia
+                       and not (sin_foto and sin_foto["recurso"] == "teletipo") else []),
             "video": (d.tipo == "portada" and ((bool(imagen) and estilo != "panorama") or interferencia or bool(buscador)))
                      or (d.tipo == "actualidad" and (contar or bool(sin_foto and sin_foto["recurso"] == "gigante")))
                      or bool(info),

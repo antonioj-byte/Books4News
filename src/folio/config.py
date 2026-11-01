@@ -160,7 +160,12 @@ class Arte(_Seccion):
     # portada (B2) y el mapa de la idea dibujado como tres salas (B4)
     ilustracion_editorial: IlustracionEditorial = Field(default_factory=lambda: IlustracionEditorial())
     buscador: bool = True
-    mapa_ilustrado: bool = False   # hasta que haya una ilustración de las salas elegida por el usuario
+    mapa_ilustrado: bool = False
+    # Lo que va en el pie, también en las diapositivas (1/11): colofón final con fuentes, ficha y créditos (A),
+    # sello de ficha verificada en la del libro (B) y los medios que cuentan la noticia (C)
+    colofon: bool = True
+    sello_verificacion: bool = True
+    medios_en_noticia: bool = True   # hasta que haya una ilustración de las salas elegida por el usuario
     # Tonos en los que la portada en vídeo lleva la interferencia (M10)
     interferencia: list[Literal["grave", "sereno", "reflexivo", "ironico", "luminoso"]] = Field(default_factory=lambda: ["ironico"])
 

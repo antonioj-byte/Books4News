@@ -62,7 +62,8 @@ export function VistaPieza() {
         )}
         {g ? (
           <>
-            <Carrusel total={g.diapositivas.length} ancho={440} video={d.video_portada}
+            <Carrusel total={d.total_diapositivas || g.diapositivas.length} editables={g.diapositivas.length}
+                      ancho={440} video={d.video_portada}
                       videos={Object.fromEntries((d.videos ?? []).map((v) => [v.n, v.url]))}
                       url={(n) => api.urlDiapositiva(eid, pid, n, d.version)}
                       onEditar={async (n, texto, subtitulo) => {

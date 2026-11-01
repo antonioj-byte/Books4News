@@ -90,7 +90,7 @@ def test_render_png_de_1080x1350(cfg_diseno, pieza, tmp_path, monkeypatch):
         archivos, avisos = render.renderizar(cfg_diseno, [pieza], tmp_path)
     except Exception as exc:  # sin navegador en este entorno
         pytest.skip(f"Chromium no disponible: {exc}")
-    assert [a.name for a in archivos] == ["01-portada.png", "02-actualidad.png", "03-libro.png", "04-idea.png", "05-cierre.png"]
+    assert [a.name for a in archivos] == ["01-portada.png", "02-actualidad.png", "03-libro.png", "04-idea.png", "05-cierre.png", "06-colofon.png"]
     assert all(Image.open(a).size == (1080, 1350) for a in archivos) and avisos == []
 
 
