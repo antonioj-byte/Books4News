@@ -12,7 +12,7 @@ Elige el formato que mejor le va:
 1. **Lectura lateral** (`lateral`): la noticia leída de lado a través de un libro que no trata de ella pero la ilumina. La gracia es la asociación inesperada.
 2. **Diálogo con la actualidad** (`dialogo`): el tema enfocado de frente desde un ensayo reciente que piensa justo esa cuestión: «el libro para entender esto».
 3. **Mundo del libro** (`edicion`): si el tema es una historia de la edición (una editorial, un editor, una librería, un traductor, un autor), con un libro de quien la protagoniza.
-4. **Tres libros** (`balda`): tres libros para entender el tema, o, si el tema es un perfil o un premio a toda una obra, los tres libros más sonados del autor (no hables de uno solo cuando el premio es a la obra). 4–6 libros candidatos, para que se verifiquen tres.
+4. **Tres libros** (`balda`): tres libros para entender el tema, o, si el tema es un perfil o un premio a toda una obra, los tres libros más sonados del autor (no hables de uno solo cuando el premio es a la obra). En un perfil, el titular es de perfil: el nombre y lo que lo hace único en una aposición («Gonçalo M. Tavares, el escritor que…»), con un rasgo concreto de su obra, no un adjetivo de solapa ni «tres libros para…». 4–6 libros candidatos, para que se verifiquen tres.
 
 Libros en los temas de la redacción: la edición en castellano es obligatoria, como siempre, pero la novedad no: si el tema es un perfil, un premio a toda una obra o un aniversario, propón las obras que mejor lo cuenten aunque no sean recientes (si hay una novedad que encaje, mejor). Da el título exacto de cada libro en castellano, nunca el nombre de una serie o trilogía.
 

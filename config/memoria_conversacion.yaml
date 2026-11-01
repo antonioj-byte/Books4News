@@ -363,3 +363,10 @@
   patron: "«Si pincho en mandar a Buffer no funciona el botón» (la pieza ya estaba como borrador en Buffer)."
   propuesta: "Una pieza guardada como borrador en Buffer se puede programar sin borrarlo antes; se avisa de que el borrador sigue allí. El botón desactivado se ve apagado y dice por qué."
   evidencia: ["Conversación, 2/11: pieza en borrador, versión 2"]
+
+- clave: perfil-con-tres-libros
+  fecha: "2026-11-02"
+  destino: formatos
+  patron: "«Mola que el perfil sea algo así como Gonçalo Tavares, el escritor que lo que sea: un titular de perfil y un contenido de perfil más libros para descubrir al autor»."
+  propuesta: "En «Tres libros», si es un perfil: titular de perfil (el nombre y lo que lo hace único en una aposición, con un rasgo concreto de su obra), la actualidad cuenta quién es, cada libro es una puerta a su mundo, la idea es la obsesión que atraviesa su obra y el cierre dice por cuál empezar."
+  evidencia: ["Conversación, 2/11: «Gonçalo M. Tavares, Premio Formentor: tres libros para entrar en su Reino»"]
