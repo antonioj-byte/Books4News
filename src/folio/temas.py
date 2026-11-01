@@ -61,7 +61,9 @@ def es_tema(historia_id: str) -> bool:
 
 
 def _cliente() -> httpx.Client:
-    return httpx.Client(timeout=20, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; FolioLateral/0.1)"})
+    # Solo direcciones públicas, también en las redirecciones (ronda 4: los enlaces son de fuera; folio.red)
+    from folio.red import cliente_externo
+    return cliente_externo(timeout=20, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; FolioLateral/0.1)"})
 
 
 def _medio(url: str) -> str:

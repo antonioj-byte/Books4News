@@ -10,6 +10,7 @@ las opciones en un Artifact para que el usuario elija.
 | 1 | (a) velocidad | Hechos y arte a la vez en «Proceder» | interna, hecha | sí (test + llamada real a Haiku) | 0,0016 $ |
 | 2 | (b) coste | Caché de la conversación en las correcciones del guionista y en el chat | interna, hecha | sí (tests + llamadas reales a Opus y Haiku) | ~0,08 $ |
 | 3 | (c) fiabilidad | La lectura periódica y la ejecución del día ya no se pisan; `lecturas.json` atómico | interna, hecha | sí (tests + lectura real de los RSS + carrera medida) | 0 $ |
+| 4 | (d) seguridad | Las descargas de URLs de fuera no pueden llegar a la API interna ni a la red privada | interna, hecha | sí (tests + servidor interno real; la redirección por internet, no: 403 del entorno) | 0 $ |
 
 Gasto acumulado del bucle: **~0,08 $** (tope: 3 $).
 
@@ -191,3 +192,66 @@ archivo íntegro. La carrera, medida antes y después con esos datos.
 
 **Pendiente**: no se ha probado en Railway con la API de verdad (hilo del lector y programada a la vez); lo cubren los
 tests con el ejecutor real. Valorar `Embedder.podar` bajo el cerrojo en otra ronda de fiabilidad.
+
+---
+
+## Ronda 4 · (d) Seguridad
+
+**Qué revisé y estaba bien** (sin cambios)
+
+- Secretos: la clave de Google Books va en la URL, pero los errores se limpian (`fuentes.sin_clave`,
+  `GoogleBooks._get`) y las cubiertas solo guardan el tipo de error; httpx está en WARNING en la CLI (no registra
+  las URLs); Instagram, Buffer y Magnific limpian su token de los mensajes; el 500 de la API pasa por `sin_clave`;
+  `Config` saca las claves del `repr`.
+- Ruta sin contraseña: `/api/publico/…` exige HMAC-SHA256 con `compare_digest`, caducidad y una ruta que case con
+  `enlaces.ARCHIVO`; el resto de la web pide contraseña en `web/proxy.ts` (comparación de tiempo constante).
+- Materiales subidos: el nombre en disco es un id generado; las fotos se recodifican.
+- Dependencias: `pip-audit` sobre las 259 de Python, **sin vulnerabilidades conocidas**; `npm audit --omit=dev` en
+  `web/`, **0**.
+
+**Qué encontré**
+
+- La API descarga URLs que no controla: los enlaces de «Proponer un tema» (`temas.descargar`), las URLs que trae la
+  búsqueda web (prensa del libro, fuentes de los temas, nevera) y las páginas de las noticias (`textos.textos_historia`),
+  todas con `follow_redirects=True` y sin mirar adónde van (`temas.py:64`, `textos.py:72`, `nevera.py:132`).
+- Esas descargas corren en el servicio «api», que escucha sin contraseña en `::`, en su contenedor y en la red privada
+  de Railway (la contraseña la pone la web). Una página cualquiera que salga en una búsqueda puede responder con una
+  redirección a `http://localhost:8000/api/…` y lo que devuelva la API (piezas sin publicar, conversaciones del chat)
+  entraría como «fuente» en el guion, o a la comprobación de hechos.
+- Probado con un servidor «interno» real en `127.0.0.1:8000`: con el cliente de antes, `temas.descargar` leyó su
+  contenido («SECRETO INTERNO de la API…»).
+
+**Por qué esta**: es lo único abierto que encontré en el área; el arreglo no cambia nada para las direcciones públicas
+(todas las fuentes de Folio lo son) y el fallo se trata como una descarga fallida más.
+
+**Qué se hizo** (arreglo interno)
+
+- `src/folio/red.py`: `cliente_externo(**kw)` es un `httpx.Client` con un gancho de petición (`solo_publicas`) que se
+  ejecuta antes de cada petición, **también en cada redirección**, y la corta con `DestinoNoPermitido` (un
+  `httpx.RequestError`, así que todos los `except httpx.HTTPError` existentes lo tratan como un fallo de descarga) si
+  el destino no es una dirección pública: localhost, redes privadas (también la IPv6 privada de Railway), link-local
+  (169.254.169.254), `*.internal`, `*.local`, `0.0.0.0`. Resuelve el nombre y exige que todas sus IP sean públicas.
+- Lo usan `temas._cliente` (enlaces de los temas y prensa del libro), `textos.textos_historia` y la nevera.
+
+**Antes / después**
+
+- Servidor interno real en `127.0.0.1:8000`, pedido con `temas.descargar`: **antes**, devuelve su contenido;
+  **después**, `DestinoNoPermitido` y la petición no llega a salir.
+- Redirección de una IP pública a `127.0.0.1:8000` (test con transporte simulado): se pide la primera URL y la
+  interna nunca se pide; una URL pública normal se sigue descargando igual.
+
+**Cómo se probó**: `tests/test_red.py` (direcciones internas de nueve tipos, una pública, la redirección cortada antes
+de pedirse, el error como fallo normal); `uv run pytest`: 371 en verde y el rojo de la otra sesión. La prueba con el
+servidor interno real.
+
+**Lo que no se pudo probar desde aquí**: la redirección de verdad por internet. Pedí una URL de httpbin que redirige
+a `127.0.0.1:8000` y, de control, la portada de El País: **las tres peticiones respondieron 403** (con el cliente de
+antes y con el nuevo; seguramente el proxy de salida de este entorno). Por la regla del 403/429 se paró ahí: no se
+reintentó ni se probó otro servicio.
+
+**Coste**: 0 $.
+
+**Pendiente**: otras descargas que siguen redirecciones pero con orígenes de confianza (APIs bibliográficas,
+Europeana/Commons, catálogo de todostuslibros, webs de prensa de las editoriales, RSS) no se han pasado a
+`cliente_externo`; se puede hacer si se quiere el mismo criterio en todo. Comprobar en Railway que los temas y la
+prensa del libro siguen descargando con normalidad tras el merge.

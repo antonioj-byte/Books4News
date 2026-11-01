@@ -69,7 +69,8 @@ def textos_historia(cfg: Config, historia: Historia, puntuaciones: dict[str, flo
     max_car = cfg.pipeline.guion.max_caracteres_texto
     elegidos = elegir_articulos(cfg, historia, puntuaciones)
 
-    with httpx.Client(
+    from folio.red import cliente_externo
+    with cliente_externo(                    # solo direcciones públicas, también al redirigir (ronda 4, folio.red)
         timeout=20, follow_redirects=True,
         headers={"User-Agent": "Mozilla/5.0 (compatible; FolioLateral/0.1)"},
     ) as cliente, ThreadPoolExecutor(max_workers=5) as pool:

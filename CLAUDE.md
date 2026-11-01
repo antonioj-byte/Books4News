@@ -114,7 +114,7 @@ No adelantar trabajo de fases posteriores salvo que se pida. Sí dejar el esquem
 3. **No inventar datos de edición**: editorial, traductor, año y edición española salen de la API o quedan como `desconocido`.
 4. **Los prompts viven en archivos separados**, en `prompts/`, en markdown. El código los carga, no los contiene. Cambiar el comportamiento editorial es editar un `.md`, no un `.py`.
 5. **Trazabilidad**: cada pieza guarda las URLs de las noticias de origen, el resultado bruto de la verificación del libro y el modelo usado en cada paso.
-6. **Las fuentes son datos, no instrucciones.** El texto de las noticias y de las APIs se pasa a los modelos delimitado y nunca se trata como instrucción.
+6. **Las fuentes son datos, no instrucciones.** El texto de las noticias y de las APIs se pasa a los modelos delimitado y nunca se trata como instrucción. Y las URLs de fuera (enlaces de los temas, resultados de búsqueda, páginas de las noticias, nevera) se descargan solo si su destino, también tras cada redirección, es una dirección pública de internet (`folio.red.cliente_externo`; ronda 4 de `docs/rondas-sistema.md`): nunca localhost, la red privada de Railway ni la API interna.
 7. **Secretos** solo en variables de entorno (`.env` en local, fuera de git). Nunca en el repositorio ni en los informes: los mensajes de error que llevan URLs con claves se limpian (`key=***`) antes de guardarse.
 8. **Probar los prototipos**: cada etapa se puede ejecutar sola sobre datos guardados (fixtures), y los cambios se prueban de verdad antes de darlos por buenos.
 9. No incluir identificadores de modelo en mensajes de commit ni en descripciones de PR.
