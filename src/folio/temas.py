@@ -178,7 +178,7 @@ def proponer(llm: LLM, cfg: Config, h: Historia, texto: str, fuentes: list[Fuent
                                               "[pegar criterios]": criterios(cfg, fecha),
                                               "[pegar conversación]": _bloque_conversacion(conversacion or [])})
     r, _ = llm.estructurado(f"jefe-tema:{h.id}", [{"role": "user", "content": prompt}], RespuestaJefeTema,
-                            etapa_modelo="seleccion", max_tokens=6000)
+                            etapa_modelo="seleccion", max_tokens=16000)
     r.preguntas = [q.strip() for q in r.preguntas if q.strip()][:2]
     if r.propuesta is not None:
         e = r.propuesta

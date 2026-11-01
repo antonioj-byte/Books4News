@@ -130,6 +130,9 @@ class VarianteAB(_Seccion):
     esfuerzo: Esfuerzo
     voz: bool | str = False   # el guionista con la voz de Folio (True: prompts/voz_folio.md; o el nombre de otra versión)
     estilo: bool = False      # y, después, el pase de estilo (folio.estilo)
+    # Rondas de la voz (2/11): prompts que la variante cambia, {nombre: archivo en prompts/ sin .md}, p. ej.
+    # {guionista: ab/guionista_r1}. Los demás, los de producción.
+    prompts: dict[str, str] = Field(default_factory=dict)
 
 
 class AB(_Seccion):
@@ -285,10 +288,11 @@ class Config:
     buffer_clave: str | None = field(default=None, repr=False)   # secreto: fuera del repr (salidas de pytest, registros)
     buffer_canal: str | None = None
     extra: dict = field(default_factory=dict)
+    prompts_ab: Path | None = None   # prueba A/B: carpeta con los prompts de una variante (folio.ab._cfg_variante)
 
     @property
     def dir_prompts(self) -> Path:
-        return self.raiz / "prompts"
+        return self.prompts_ab or self.raiz / "prompts"
 
     @property
     def dir_persistente(self) -> Path:

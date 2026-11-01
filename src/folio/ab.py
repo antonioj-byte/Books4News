@@ -16,9 +16,11 @@ escribe, no qué libro se elige.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import random
 import re
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -45,10 +47,34 @@ class Version:
     avisos: list[str] = field(default_factory=list)
 
 
+def dir_prompts_variante(cfg: Config, v: VarianteAB) -> Path | None:
+    """Rondas de la voz (2/11): los prompts de producción con los que cambia la variante encima, en una carpeta de la
+    caché (data/cache/ab-prompts/<huella>/). None si la variante no cambia ninguno."""
+    if not v.prompts:
+        return None
+    base = cfg.raiz / "prompts"
+    cambios = {}
+    for nombre, archivo in sorted(v.prompts.items()):
+        if not (base / f"{nombre}.md").exists():
+            raise ValueError(f"La variante cambia prompts/{nombre}.md, que no existe")
+        cambios[nombre] = (base / f"{archivo}.md").read_text(encoding="utf-8")
+    huella = hashlib.sha256(json.dumps(cambios, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
+    destino = cfg.dir_datos / "cache" / "ab-prompts" / huella
+    if not destino.exists():
+        tmp = destino.with_name(huella + ".tmp")
+        shutil.rmtree(tmp, ignore_errors=True)
+        shutil.copytree(base, tmp)
+        for nombre, texto in cambios.items():
+            (tmp / f"{nombre}.md").write_text(texto, encoding="utf-8")
+        tmp.rename(destino)
+    return destino
+
+
 def _cfg_variante(cfg: Config, v: VarianteAB) -> Config:
     c = copy.deepcopy(cfg)
     c.pipeline.modelos["guion"] = v.modelo
     c.pipeline.esfuerzo["guion"] = v.esfuerzo
+    c.prompts_ab = dir_prompts_variante(cfg, v)
     return c
 
 
@@ -61,7 +87,7 @@ def _escribir(cfg: Config, nombre: str, v: VarianteAB, pieza: Pieza, textos: lis
         return Version(nombre, None, sum(t.coste_usd for t in llm.trazas), len(llm.trazas), error=str(exc))
     if v.estilo:
         from folio import estilo
-        g, mas = estilo.pulir(llm, cfg, f"{pieza.id}:{nombre}", g, pieza.libros, [f for f, _ in textos], citas, pieza.eleccion.formato,
+        g, mas = estilo.pulir(llm, llm.cfg, f"{pieza.id}:{nombre}", g, pieza.libros, [f for f, _ in textos], citas, pieza.eleccion.formato,
                               v.voz if isinstance(v.voz, str) else "voz_folio")
         avisos += mas
     guionista.ajustar_libros(g, pieza.libros)
@@ -90,8 +116,11 @@ def _md_version(pieza_id: str, letra: str, g: GuionLLM | None) -> list[str]:
     return l
 
 
-def generar(cfg: Config, fecha: str, textos_de, reutilizar: bool = False) -> tuple[Path, Path]:
-    """`textos_de(historia_id)` devuelve los textos congelados de la historia."""
+def generar(cfg: Config, fecha: str, textos_de, reutilizar: bool = False, ronda: str | None = None,
+            solo: str | None = None) -> tuple[Path, Path]:
+    """`textos_de(historia_id)` devuelve los textos congelados de la historia. Con `ronda` (rondas de la voz), la
+    prueba va a informes/<fecha>/ab-<ronda>/; con `solo`, solo esa pieza (la prueba de formato antes de la ronda
+    completa, en ab-<ronda>-prueba/). Los guiones de cada variante quedan además en ab_guiones.json."""
     ab = cfg.pipeline.ab
     if ab is None:
         raise ValueError("Falta la sección «ab» en config/pipeline.yaml")
@@ -99,8 +128,11 @@ def generar(cfg: Config, fecha: str, textos_de, reutilizar: bool = False) -> tup
     if not ruta_piezas.exists():
         raise FileNotFoundError(f"No existe {ruta_piezas}: ejecuta antes el pipeline del día")
     piezas = [p for p in TypeAdapter(list[Pieza]).validate_python(json.loads(ruta_piezas.read_text(encoding="utf-8")))
-              if p.estado == "propuesta" and p.guion]
-    directorio = cfg.dir_informes / fecha / "ab"
+              if p.estado == "propuesta" and p.guion and (solo is None or p.id == solo)]
+    if not piezas:
+        raise ValueError(f"No hay piezas escritas{f' con id {solo}' if solo else ''} en {ruta_piezas}")
+    nombre_dir = "ab" + (f"-{ronda}" if ronda else "") + ("-prueba" if solo else "")
+    directorio = cfg.dir_informes / fecha / nombre_dir
     ruta_md, ruta_clave = directorio / "ab.md", directorio / "ab_clave.json"
     if ruta_md.exists() and evaluaciones(ruta_md.read_text(encoding="utf-8")):
         raise FileExistsError(f"{ruta_md} ya tiene evaluaciones: no se sobrescribe")
@@ -111,6 +143,7 @@ def generar(cfg: Config, fecha: str, textos_de, reutilizar: bool = False) -> tup
           "No se dice qué modelo escribió cada una: evalúalas antes de abrir `ab_clave.json`.", ""]
     clave: dict = {"fecha": fecha, "control": ab.control,
                    "variantes": {k: v.model_dump() for k, v in ab.variantes.items()}, "piezas": {}}
+    guiones: dict = {}
     for pieza in piezas:
         textos = textos_de(pieza.historia_id)
         versiones = []
@@ -127,6 +160,7 @@ def generar(cfg: Config, fecha: str, textos_de, reutilizar: bool = False) -> tup
         md += [f"## {pieza.id} · {pieza.eleccion.titular}", "",
                f"Libros: {'; '.join(f'*{guionista.titulo_para_pieza(l)}*, {l.autores[0] if l.autores else ''}' for l in pieza.libros)}", ""]
         clave["piezas"][pieza.id] = {}
+        guiones[pieza.id] = {ver.variante: ver.guion.model_dump(mode="json") if ver.guion else None for ver in versiones}
         for letra, i in zip(LETRAS, orden):
             ver = versiones[i]
             md += _md_version(pieza.id, letra, ver.guion)
@@ -141,6 +175,7 @@ def generar(cfg: Config, fecha: str, textos_de, reutilizar: bool = False) -> tup
         md += evaluacion_md.bloque(f"ab:{pieza.id}:preferida", ("Preferida (letra)",))
     ruta_md.write_text("\n".join(md) + "\n", encoding="utf-8")
     ruta_clave.write_text(json.dumps(clave, ensure_ascii=False, indent=2), encoding="utf-8")
+    (directorio / "ab_guiones.json").write_text(json.dumps(guiones, ensure_ascii=False, indent=1), encoding="utf-8")
     return ruta_md, ruta_clave
 
 
@@ -158,7 +193,7 @@ def resultados(cfg: Config) -> str:
     """Agrega todas las pruebas A/B evaluadas y compara cada variante con el control."""
     filas: dict[str, dict] = {}
     control = cfg.pipeline.ab.control if cfg.pipeline.ab else None
-    for ruta_clave in sorted(cfg.dir_informes.glob("*/ab/ab_clave.json")):
+    for ruta_clave in sorted(cfg.dir_informes.glob("*/ab/ab_clave.json")):   # las rondas de la voz se deciden con folio.juez
         clave = json.loads(ruta_clave.read_text(encoding="utf-8"))
         evals = evaluaciones((ruta_clave.parent / "ab.md").read_text(encoding="utf-8"))
         for pieza, letras in clave["piezas"].items():

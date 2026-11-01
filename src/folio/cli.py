@@ -579,6 +579,8 @@ def memoria_exportar():
 def ab(
     fecha: str = typer.Option(None, help="Fecha (AAAA-MM-DD). Por defecto, la última con selección guardada"),
     reutilizar_llm: bool = typer.Option(False, "--reutilizar-llm", help="Sirve de data/cache/llm/ las peticiones ya hechas"),
+    ronda: str = typer.Option(None, help="Rondas de la voz: la prueba va a informes/<fecha>/ab-<ronda>/"),
+    pieza: str = typer.Option(None, help="Solo esta pieza (prueba de formato antes de la ronda completa)"),
 ):
     """Prueba A/B del guion: reescribe las piezas del día con cada variante de config `ab`."""
     _logging(True)
@@ -592,8 +594,42 @@ def ab(
     from pydantic import TypeAdapter
     historias = {h.id: h for h in TypeAdapter(list[Historia]).validate_python(
         json.loads((cfg.dir_cache(fecha) / "historias.json").read_text(encoding="utf-8"))["al_jefe"])}
-    ruta_md, ruta_clave = generar(cfg, fecha, lambda hid: pipeline.textos_de_historia(historias[hid]), reutilizar=reutilizar_llm)
+    ruta_md, ruta_clave = generar(cfg, fecha, lambda hid: pipeline.textos_de_historia(historias[hid]), reutilizar=reutilizar_llm,
+                               ronda=ronda, solo=pieza)
     typer.echo(f"Para evaluar (a ciegas): {ruta_md}\nClave y métricas (abrir después): {ruta_clave}")
+
+
+@app.command()
+def banco(
+    archivo: str = typer.Option("config/banco_voz.yaml", help="Temas del banco (fecha y piezas)"),
+):
+    """Banco de pruebas de la voz: monta (o completa) las piezas reales sobre las que `folio ab` compara variantes."""
+    _logging(True)
+    import yaml
+    from folio.banco import TemaBanco, montar
+
+    cfg = config.cargar()
+    datos = yaml.safe_load((cfg.raiz / archivo).read_text(encoding="utf-8"))
+    piezas = montar(cfg, str(datos["fecha"]), [TemaBanco(**t) for t in datos["piezas"]])
+    for p in piezas:
+        typer.echo(f"{p.id} · {p.eleccion.formato} · {p.estado} · {p.eleccion.titular}" + (f" · {p.error}" if p.error else ""))
+
+
+@app.command("ab-juez")
+def ab_juez(
+    carpeta: str = typer.Argument(..., help="Carpeta de la ronda (informes/<fecha>/ab-<ronda>)"),
+    solo_decidir: bool = typer.Option(False, "--solo-decidir", help="No llama al juez: decide con el juez.json que hay"),
+):
+    """Rondas de la voz: juez a ciegas (otro modelo que el que escribe) y decisión con la regla de las rondas."""
+    _logging(True)
+    from folio import juez
+    cfg = config.cargar()
+    directorio = Path(carpeta)
+    if not solo_decidir:
+        salida = juez.juzgar(cfg, directorio)
+        typer.echo(f"Juez: {salida['modelo']}, {salida['coste_usd']:.4f} $")
+    tabla, _ = juez.decidir(directorio)
+    typer.echo(tabla)
 
 
 @app.command("ab-resultados")

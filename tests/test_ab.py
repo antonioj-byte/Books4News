@@ -25,7 +25,13 @@ class LLMFalso:
 
 @pytest.fixture
 def con_piezas(cfg, monkeypatch):
+    from folio.config import AB, VarianteAB
     monkeypatch.setattr(ab, "LLM", LLMFalso)
+    # Variantes fijas: las de config/pipeline.yaml cambian en cada ronda de la voz
+    cfg.pipeline.ab = AB(control="opus-high", variantes={
+        "opus-high": VarianteAB(modelo="claude-opus-5-5", esfuerzo="high"),
+        "voz": VarianteAB(modelo="claude-opus-5-5", esfuerzo="high", voz=True),
+        "voz-estilo": VarianteAB(modelo="claude-opus-5-5", esfuerzo="high", voz=True, estilo=True)})
     pieza = Pieza(id="2026-10-30-1", fecha="2026-10-30", estado="propuesta", historia_id="h1",
                   eleccion=ELECCION, n_medios=3, libros=[LIBRO], guion=guion_valido())
     ruta = cfg.dir_cache("2026-10-30") / "piezas.json"
@@ -72,3 +78,26 @@ def test_no_sobrescribe_evaluaciones_y_agrega_resultados(con_piezas):
     assert "voz: cumple" in res and "voz-estilo: no cumple" in res
     fila_sonnet = next(l for l in res.splitlines() if l.startswith("| voz "))
     assert "| 1 |" in fila_sonnet  # preferida una vez
+
+
+def test_variante_con_prompts_propios_y_ronda_de_una_pieza(con_piezas):
+    from folio.config import AB, VarianteAB
+    cfg = con_piezas
+    (cfg.raiz / "variantes").mkdir()
+    base = (cfg.dir_prompts / "guionista.md").read_text()
+    (cfg.raiz / "variantes" / "guionista_x.md").write_text(base + "\nMARCA DE LA VARIANTE\n")
+    # En el repo la variante apunta a prompts/ab/…; aquí, a un archivo temporal (ruta absoluta, sin .md)
+    v = VarianteAB(modelo="claude-opus-5-5", esfuerzo="high", prompts={"guionista": str(cfg.raiz / "variantes" / "guionista_x")})
+    d = ab.dir_prompts_variante(cfg, v)
+    assert "MARCA DE LA VARIANTE" in (d / "guionista.md").read_text()
+    assert (d / "formatos.md").read_text() == (cfg.dir_prompts / "formatos.md").read_text()
+    assert ab._cfg_variante(cfg, v).dir_prompts == d and cfg.dir_prompts != d
+    assert ab.dir_prompts_variante(cfg, VarianteAB(modelo="m", esfuerzo="high")) is None
+
+    cfg.pipeline.ab = AB(control="opus-high", variantes={"opus-high": VarianteAB(modelo="claude-opus-5-5", esfuerzo="high"), "x": v})
+    ruta_md, ruta_clave = ab.generar(cfg, "2026-10-30", lambda hid: [(FUENTES[0], "Texto")], ronda="r1", solo="2026-10-30-1")
+    assert ruta_md.parent.name == "ab-r1-prueba"
+    guiones = json.loads((ruta_md.parent / "ab_guiones.json").read_text())
+    assert set(guiones["2026-10-30-1"]) == {"opus-high", "x"}
+    with pytest.raises(ValueError):
+        ab.generar(cfg, "2026-10-30", lambda hid: [], ronda="r1", solo="no-existe")

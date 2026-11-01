@@ -1,0 +1,20 @@
+# Banco de pruebas de la voz (folio banco): las piezas sobre las que `folio ab` compara variantes del guionista.
+# Temas reales del día con sus enlaces (los textos se congelan la primera vez). Orden = número de pieza.
+fecha: "2026-11-02"
+piezas:
+  - clave: bushby
+    formato: lateral
+    texto: >-
+      Lectura lateral. Karl Bushby, el exparacaidista británico que salió a pie de Punta Arenas en 1998 para volver
+      andando a su casa de Hull, cruza el puente del Humber tras 28 años de caminata alrededor del mundo.
+    enlaces:
+      - https://www.bbc.co.uk/news/articles/c9146yve236lo
+  - clave: houellebecq
+    formato: balda
+    texto: >-
+      Tres libros, perfil. Michel Houellebecq en una entrevista en El País: «Es agotador que te llamen escritor facha,
+      pero uno termina por resignarse». Un perfil del autor con sus tres libros más sonados en castellano.
+    enlaces:
+      - https://elpais.com/cultura/2026-10-31/michel-houellebecq-escritor-es-agotador-que-te-llamen-escritor-facha-pero-uno-termina-por-resignarse.html
+  - clave: recomendado
+    formato: recomendado
