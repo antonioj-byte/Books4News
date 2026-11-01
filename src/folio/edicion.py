@@ -277,9 +277,11 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         if direccion._del_dia(editorial.del_dia, cfg, p, dir_fecha) >= ie.max_por_dia:
             return None, f"(Ya hay {ie.max_por_dia} ilustraciones hoy, el máximo del día.)"
         try:
-            img = editorial.generar(cfg, p.id, dir_fecha, escena)
+            img, descartes = editorial.generar_limpia(llm, cfg, p.id, dir_fecha, escena)
         except Exception as exc:
             return None, f"(No se pudo dibujar: {exc}.)"
+        if not img:
+            return None, f"(Las {len(descartes)} que dibujó Magnific salieron con letras o manchas: {'; '.join(descartes)}. Prueba otra escena.)"
         ar.imagen, ar.credito, ar.escena = img.archivo, img.credito, escena
         ar.recurso, ar.portada, ar.registro = "ilustracion", "panorama", "ilustracion"
         return nueva, "(Nueva ilustración editorial, en panorámica entre la portada y la noticia.)"

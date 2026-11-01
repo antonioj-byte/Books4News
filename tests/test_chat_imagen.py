@@ -64,15 +64,16 @@ def test_buscar_otra_imagen_de_archivo(cfg, monkeypatch):
 
 
 def test_ilustrar_con_escena_valida_y_tope_del_dia(cfg, monkeypatch):
-    cfg.pipeline.arte.ilustracion_editorial.activo = True   # apagada en producción desde el 2/11
     assert "nombres propios" in edicion.aplicar_imagen(None, cfg, _pieza(), _accion("ilustrar", escena="Madrid at night " * 5))[1]
     llamadas = []
-    monkeypatch.setattr(editorial, "generar", lambda cfg, pid, d, escena: llamadas.append(escena) or libres.ImagenLibre(
+    monkeypatch.setattr(editorial, "generar_limpia", lambda llm, cfg, pid, d, escena: (llamadas.append(escena) or libres.ImagenLibre(
         archivo=editorial.CLAVE, pagina="", url="", ancho=1, alto=1, licencia="ilustración generada con IA (Magnific)",
-        licencia_url=None, autor="Folio", descripcion=escena, libre=True, motivo="", fuente=""))
+        licencia_url=None, autor="Folio", descripcion=escena, libre=True, motivo="", fuente=""), []))
     escena = "a vast quiet suburban block at dusk where every house is a hollow stage set propped up by wooden beams"
     nueva, _ = edicion.aplicar_imagen(None, cfg, _pieza(), _accion("ilustrar", escena=escena))
     assert nueva.arte.portada == "panorama" and nueva.arte.registro == "ilustracion" and llamadas
+    monkeypatch.setattr(editorial, "generar_limpia", lambda *a: (None, ["letras (arriba)", "letras (esquina)"]))
+    assert "salieron con letras" in edicion.aplicar_imagen(None, cfg, _pieza(), _accion("ilustrar", escena=escena))[1]
     cfg.pipeline.arte.ilustracion_editorial.max_por_dia = 0
     assert "máximo del día" in edicion.aplicar_imagen(None, cfg, _pieza(), _accion("ilustrar", escena=escena))[1]
     assert "graves" in edicion.aplicar_imagen(None, cfg, _pieza().model_copy(update={"arte": Arte(tono="grave", recurso="foto")}),

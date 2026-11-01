@@ -3,7 +3,13 @@
 El estilo de la casa para la ilustración editorial (31/10, B1 y B6 del catálogo): el lenguaje de las
 revistas de ideas, una metáfora visual con un concepto fuerte, no la ilustración del suceso. El director
 de arte escribe la escena (`escena`, en inglés); el código (`folio.imagenes.editorial`) le añade lo que hay
-bajo `## estilo` y lo envía. Lo que hay antes del primer `##` no se envía.
+bajo la sección de estilo y lo envía. Lo que hay antes de esa sección no se envía.
+
+Letras (2/11, a petición del usuario: «evitar esas letras de IA»): Seedream pintaba una cabecera de revista
+inventada encima de la imagen y cuadros de color sueltos. El estilo ya no nombra revistas, páginas ni nada
+editorial (eso lo llevaba a maquetar), describe la imagen como una pintura sin palabras con todas las
+superficies lisas y pone el color de acento en objetos de la escena, nunca como formas sueltas. Además,
+`folio.imagenes.editorial.revisar` descarta las variantes que aún salgan con letras o manchas.
 
 Reglas: sin nombres de artistas, revistas ni marcas; sin texto, letras ni números en la imagen (los textos
 los pone el código); sin personas reales ni caras reconocibles (como mucho, figuras diminutas y anónimas);
@@ -12,4 +18,4 @@ exacto (es el corte entre las dos).
 
 ## estilo
 
-Conceptual editorial magazine illustration, a single strong visual metaphor, wide panoramic composition meant to be split into two halves (left and right), with important elements in both halves and nothing essential in the exact centre. Isometric or flat graphic perspective, clean bold shapes, matte paper texture with subtle grain, a limited palette of warm cream, deep warm black, muted dark teal, with deep magenta and a small touch of fluorescent yellow as accents. Calm, intelligent, slightly surreal. No text, no letters, no numbers, no captions, no page layout elements or magazine furniture, no logos, no signatures, no real or recognisable people; any human figures are tiny and anonymous. A single full-bleed illustration edge to edge.
+A wordless conceptual illustration built on a single strong visual metaphor, painted as one continuous picture from edge to edge. Wide panoramic composition meant to be split into two halves (left and right), with important elements in both halves and nothing essential in the exact centre; the lower left area calm and uncluttered. Flat graphic or isometric perspective, clean bold shapes, matte paper texture with subtle grain. Limited palette of warm cream, deep warm black and muted dark teal, with deep magenta and fluorescent yellow used only as the colour of one or two objects inside the scene, never as loose shapes. Calm, intelligent, slightly surreal. Every surface is plain: blank walls, blank sky, blank paper, book spines without titles, screens showing only light or colour, signs and posters left empty. The picture contains no writing of any kind and no lettering, no masthead, no captions, no frames or borders, no logos, no signatures. No real or recognisable people; any human figures are anonymous silhouettes.

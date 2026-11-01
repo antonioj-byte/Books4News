@@ -158,4 +158,5 @@ def test_el_estilo_de_la_ilustracion_editorial_se_carga_del_prompt(cfg):
     """dibujar() lo necesita y los tests lo simulan: que exista y se lea (se perdió una vez al reorganizar)."""
     from folio.imagenes import editorial
     texto = editorial.estilo(type(cfg)(pipeline={}, fuentes=[]))
-    assert "editorial" in texto.lower() and "no text" in texto.lower()
+    assert "wordless" in texto.lower() and "no writing" in texto.lower()
+    assert "magazine" not in texto.lower() and "editorial" not in texto.lower()   # llevaban a Seedream a maquetar (2/11)

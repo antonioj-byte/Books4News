@@ -323,6 +323,25 @@ def _elegir_ilustracion(llm: LLM, cfg: Config, pieza: Pieza, dibujos: list[tuple
     return r.elegida - 1 if 1 <= r.elegida <= len(dibujos) else None
 
 
+def _sin_letras(llm: LLM, cfg: Config, pieza: Pieza, dibujos: list[tuple[str, str, Path]],
+                fallos: list[str]) -> tuple[list[tuple[str, str, Path]], list[str]]:
+    """Quita las variantes con letras o manchas sueltas (2/11). Si no queda ninguna, vuelve a dibujar una vez la
+    primera escena (la descartada se borró de la caché, así que sale otra)."""
+    limpios, descartes = [], []
+    for escena, idea, dibujo in dibujos:
+        motivo = editorial.revisar(llm, cfg, pieza.id, dibujo)
+        (descartes.append(motivo) if motivo else limpios.append((escena, idea, dibujo)))
+    if dibujos and not limpios and not retrato_generado.bloqueado():
+        escena, idea, _ = dibujos[0]
+        try:
+            dibujo = editorial.dibujar(cfg, pieza.id, escena)
+            motivo = editorial.revisar(llm, cfg, pieza.id, dibujo)
+            (descartes.append(motivo) if motivo else limpios.append((escena, idea, dibujo)))
+        except Exception as exc:
+            fallos.append(str(exc))
+    return limpios, descartes
+
+
 def _ilustracion_editorial(llm: LLM, cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte, dir_fecha: Path) -> bool:
     """La ilustración editorial de la pieza (B1): el ilustrador (Opus) escribe escenas distintas, Magnific dibuja
     `variantes` y el director de arte elige una viendo la hoja de contactos. Si no se puede (desactivada, máximo
@@ -346,8 +365,13 @@ def _ilustracion_editorial(llm: LLM, cfg: Config, pieza: Pieza, propuesta: Propu
                 fallos.append(str(exc))
                 if retrato_generado.bloqueado():
                     break
+        dibujos, descartes = _sin_letras(llm, cfg, pieza, dibujos, fallos)
+        if descartes:
+            arte.avisos.append(f"Ilustración editorial: descartadas {len(descartes)} con letras o manchas ({'; '.join(descartes)[:240]})")
         if not dibujos:
-            motivo = "sin escena válida" if not escenas else f"no se pudo dibujar ({'; '.join(fallos)[:200]})"
+            motivo = ("sin escena válida" if not escenas else
+                      "todas salieron con letras o manchas" if descartes and not fallos else
+                      f"no se pudo dibujar ({'; '.join(fallos)[:200]})")
         else:
             try:
                 i = _elegir_ilustracion(llm, cfg, pieza, dibujos) if len(dibujos) > 1 else 0

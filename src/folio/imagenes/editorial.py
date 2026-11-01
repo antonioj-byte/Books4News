@@ -8,6 +8,11 @@ como la imagen de la pieza (<pieza>.jpg, con sus metadatos), así que el render 
 cualquier otra; su crédito dice que es una ilustración generada con IA para Folio. Caché por prompt en
 data/cache/ilustraciones/: relanzar no vuelve a pagar. Comparte con los retratos el cliente y el bloqueo
 ante 401, 403 o 429 (folio.imagenes.retrato_generado).
+
+Letras (2/11, a petición del usuario: «evitar esas letras de IA»): Seedream a veces pinta una cabecera de revista
+inventada o rótulos ilegibles aunque el prompt lo prohíba. `revisar` enseña cada variante a un modelo barato
+(prompts/revisor_letras.md) antes de que el director elija; la que tenga letras o manchas sueltas se descarta y se
+borra de la caché (si se vuelve a pedir, se paga y sale otra).
 """
 
 from __future__ import annotations
@@ -18,8 +23,11 @@ import time
 from io import BytesIO
 from pathlib import Path
 
+import base64
+
 import httpx
 from PIL import Image
+from pydantic import BaseModel, Field
 
 from folio import gastos
 from folio.config import Config
@@ -138,6 +146,53 @@ def fijar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, dibujo: Path
     return img
 
 
+class RevisionLetras(BaseModel):
+    letras: bool = Field(description="True si hay letras, pseudotexto, números, logotipos o firmas")
+    manchas: bool = Field(description="True si hay manchas o recuadros sueltos que no pertenecen a la escena")
+    donde: str = Field(description="Dónde están, en pocas palabras; vacío si no hay nada")
+
+
+def _prompt_revisor(cfg: Config) -> str:
+    texto = (cfg.dir_prompts / "revisor_letras.md").read_text(encoding="utf-8")
+    return texto.split("\n---\n", 1)[1].strip()
+
+
+def revisar(llm, cfg: Config, pieza_id: str, dibujo: Path) -> str | None:
+    """None si la ilustración está limpia; si tiene letras o manchas sueltas, el motivo (y se borra de la caché
+    para que otra petición dibuje otra). Si el revisor falla, la imagen pasa (lo mira después el director)."""
+    from folio.llm import ErrorLLM
+    with Image.open(dibujo) as im:
+        im = im.convert("RGB")
+        im.thumbnail((1568, 1568))
+        buf = BytesIO()
+        im.save(buf, "JPEG", quality=88)
+    try:
+        r, _ = llm.estructurado(f"letras:{pieza_id}", [{"role": "user", "content": [
+            {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(buf.getvalue()).decode()}},
+            {"type": "text", "text": _prompt_revisor(cfg)}]}], RevisionLetras, etapa_modelo="arte", max_tokens=500)
+    except (ErrorLLM, ValueError):
+        return None
+    if not (r.letras or r.manchas):
+        return None
+    dibujo.unlink(missing_ok=True)
+    que = " y ".join(x for x, si in (("letras", r.letras), ("manchas sueltas", r.manchas)) if si)
+    return f"{que}{f' ({r.donde.strip()})' if r.donde.strip() else ''}"
+
+
 def generar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, cliente: httpx.Client | None = None) -> libres.ImagenLibre:
     """Dibuja la escena y la fija como imagen de la pieza (una sola variante). ErrorMagnific si no se puede."""
     return fijar(cfg, pieza_id, dir_fecha, escena, dibujar(cfg, pieza_id, escena, cliente))
+
+
+def generar_limpia(llm, cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, intentos: int = 2,
+                   cliente: httpx.Client | None = None) -> tuple[libres.ImagenLibre | None, list[str]]:
+    """Como `generar`, pero revisando las letras: si sale con letras, se dibuja otra (hasta `intentos`).
+    Devuelve (imagen o None, motivos de los descartes)."""
+    descartes = []
+    for _ in range(intentos):
+        dibujo = dibujar(cfg, pieza_id, escena, cliente)
+        motivo = revisar(llm, cfg, pieza_id, dibujo)
+        if not motivo:
+            return fijar(cfg, pieza_id, dir_fecha, escena, dibujo), descartes
+        descartes.append(motivo)
+    return None, descartes

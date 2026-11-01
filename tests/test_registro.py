@@ -169,7 +169,6 @@ def test_topes_diarios_cuentan_las_piezas_de_verdad_en_las_pruebas(cfg):
 
 def test_la_ilustracion_se_elige_entre_variantes(cfg, monkeypatch, tmp_path):
     """El ilustrador propone escenas, se dibujan las variantes y el director elige una (31/10, ilustraciones)."""
-    cfg.pipeline.arte.ilustracion_editorial.activo = True   # apagada en producción desde el 2/11
     from PIL import Image
     from folio.imagenes import editorial
     from folio.modelos import EscenasLLM
@@ -181,6 +180,8 @@ def test_la_ilustracion_se_elige_entre_variantes(cfg, monkeypatch, tmp_path):
         cfg = None
 
         def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
+            if esquema is editorial.RevisionLetras:                 # las dos salen limpias
+                return esquema(letras=False, manchas=False, donde=""), []
             assert esquema is EscenasLLM and etapa_modelo == "escena"
             return esquema(escenas=[{"escena": e, "idea": f"idea {i}"} for i, e in enumerate(escenas)]), []
 
@@ -213,6 +214,41 @@ def test_con_la_ilustracion_apagada_la_foto_del_autor_no_cede_su_sitio(cfg, monk
     monkeypatch.setattr(arte, "_propuesta", lambda *a, **k: _propuesta().model_copy(update={"recurso": "ilustracion"}))
     from folio.imagenes import cubiertas
     monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)
-    assert cfg.pipeline.arte.ilustracion_editorial.activo is False
+    cfg.pipeline.arte.ilustracion_editorial.activo = False
     a = arte.dirigir(None, cfg, _pieza(), None, registros_del_dia=["foto_autor"])
     assert a.registro == "foto_autor"
+
+
+def test_las_variantes_con_letras_se_descartan_y_se_dibuja_otra(cfg, monkeypatch, tmp_path):
+    """2/11 («evitar esas letras de IA»): el revisor descarta la variante con letras y la borra de la caché; si no
+    queda ninguna, se vuelve a dibujar una vez la primera escena."""
+    from PIL import Image
+    from folio.imagenes import editorial
+    from folio.modelos import EscenasLLM
+    escenas = ["a vast quiet suburban block at dusk where every house is a hollow stage set propped up by wooden beams",
+               "a long corridor of empty shelves where a single lamp lights an open book on the floor at night"]
+    revisiones = iter([True, True, False])        # las dos primeras con letras; la tercera, limpia
+
+    class LLM:
+        cfg = None
+
+        def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
+            if esquema is editorial.RevisionLetras:
+                assert mensajes[0]["content"][0]["type"] == "image" and etapa_modelo == "arte"
+                letras = next(revisiones)
+                return esquema(letras=letras, manchas=False, donde="franja de arriba" if letras else ""), []
+            assert esquema is EscenasLLM
+            return esquema(escenas=[{"escena": e, "idea": ""} for e in escenas]), []
+
+    dibujados = []
+    def dibujar(cfg, pid, escena):
+        ruta = tmp_path / f"{len(dibujados)}.jpg"
+        Image.new("RGB", (160, 90)).save(ruta)
+        dibujados.append(ruta)
+        return ruta
+    monkeypatch.setattr(editorial, "dibujar", dibujar)
+    cfg.magnific_api_key = "x"
+    a = Arte(tono="sereno", recurso="ilustracion")
+    assert arte._ilustracion_editorial(LLM(), cfg, _pieza(), _propuesta(recurso="ilustracion"), a, cfg.dir_cache("2026-10-30"))
+    assert len(dibujados) == 3 and not dibujados[0].exists() and not dibujados[1].exists()   # borradas de la caché
+    assert a.escena == escenas[0] and any("descartadas 2 con letras" in x and "franja de arriba" in x for x in a.avisos)
