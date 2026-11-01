@@ -179,7 +179,7 @@ arte:
 ab:
   control: opus-high
   reutilizar_control: true
-  variantes:   # 2/11 (a petición del usuario: «escribe bastante mal»): la voz de Folio, con y sin pase de estilo
+  # Rondas de la voz (2/11, docs/rondas-voz.md): el control y UNA variante con un solo cambio por ronda.
+  variantes:
     opus-high: {modelo: claude-opus-5-5, esfuerzo: high}
-    voz: {modelo: claude-opus-5-5, esfuerzo: high, voz: true}
-    voz-estilo: {modelo: claude-opus-5-5, esfuerzo: high, voz: true, estilo: true}
+    voz: {modelo: claude-opus-5-5, esfuerzo: high, voz: true}   # r1: voz_folio.md en lugar de la línea de tono
