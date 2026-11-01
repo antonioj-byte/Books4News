@@ -304,6 +304,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/memoria": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Patrones */
+        get: operations["patrones_api_memoria_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/memoria/analizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Analizar */
+        post: operations["analizar_api_memoria_analizar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/memoria/{pid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Decidir */
+        patch: operations["decidir_api_memoria__pid__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -418,6 +469,32 @@ export interface components {
             coste: number;
             /** N */
             n: number;
+        };
+        /** DecisionPatron */
+        "DecisionPatron-Input": {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "propuesta" | "aceptada" | "rechazada" | "aplicada";
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
+        };
+        /** DecisionPatron */
+        "DecisionPatron-Output": {
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "propuesta" | "aceptada" | "rechazada" | "aplicada";
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
         };
         /** Dia */
         Dia: {
@@ -920,6 +997,32 @@ export interface components {
             /** Ultimos */
             ultimos: components["schemas"]["ApunteGasto"][];
         };
+        /** Patron */
+        Patron: {
+            /** Id */
+            id: number;
+            /** Creado En */
+            creado_en: string;
+            /** Actualizado En */
+            actualizado_en: string;
+            /** Patron */
+            patron: string;
+            /** Evidencia */
+            evidencia: string[];
+            /** Veces */
+            veces: number;
+            /** Propuesta */
+            propuesta: string;
+            /** Destino */
+            destino: string;
+            /** Estado */
+            estado: string;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
+        };
         /** Pieza */
         Pieza: {
             /** Id */
@@ -1055,6 +1158,15 @@ export interface components {
             version: number;
             /** Avisos */
             avisos: string[];
+        };
+        /** ResultadoMemoria */
+        ResultadoMemoria: {
+            /** Piezas */
+            piezas: number;
+            /** Patrones */
+            patrones: number;
+            /** Aviso */
+            aviso: string;
         };
         /** ResumenDia */
         ResumenDia: {
@@ -1678,6 +1790,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PanelGasto"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patrones_api_memoria_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Patron"][];
+                };
+            };
+        };
+    };
+    analizar_api_memoria_analizar_post: {
+        parameters: {
+            query?: {
+                dias?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoMemoria"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decidir_api_memoria__pid__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pid: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionPatron-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionPatron-Output"];
                 };
             };
             /** @description Validation Error */

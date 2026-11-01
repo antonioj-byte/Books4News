@@ -444,6 +444,34 @@ def buffer_programar(pieza: str,
                f"descargará están en {estable}: no los borres hasta que salga.")
 
 
+memoria_app = typer.Typer(help="Memoria del feedback: patrones de las evaluaciones y ediciones, con propuestas de regla")
+app.add_typer(memoria_app, name="memoria")
+
+
+@memoria_app.command("analizar")
+def memoria_analizar(dias: int = typer.Option(14, help="Días de feedback que se leen")):
+    """Lee el feedback de los últimos días y guarda los patrones que se repiten (una llamada a Opus)."""
+    from folio import memoria
+    from folio.almacen import Almacen
+    from folio.llm import LLM
+
+    cfg = config.cargar()
+    llm = LLM(cfg)
+    ids, aviso, n = memoria.analizar(llm, cfg, Almacen(cfg.ruta_db), dias)
+    typer.echo(f"{n} piezas con feedback; {len(ids)} patrones guardados o reforzados"
+               f" · {round(sum(t.coste_usd for t in llm.trazas), 4)} $")
+    if aviso:
+        typer.echo(aviso)
+
+
+@memoria_app.command("exportar")
+def memoria_exportar():
+    """La memoria en markdown (para pasar las propuestas aceptadas a los prompts y a CLAUDE.md)."""
+    from folio import memoria
+    from folio.almacen import Almacen
+    typer.echo(memoria.markdown(Almacen(config.cargar().ruta_db)))
+
+
 @app.command()
 def ab(
     fecha: str = typer.Option(None, help="Fecha (AAAA-MM-DD). Por defecto, la última con selección guardada"),

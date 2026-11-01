@@ -6,6 +6,7 @@ modelos:
   arte: claude-haiku-5-5          # director de arte: tono, búsqueda y elección de la imagen
   ilustracion: claude-opus-5-5    # ilustrador: ilustración vectorial de portada (prototipo)
   chat: claude-opus-5-5           # chat de edición de la web
+  memoria: claude-opus-5-5        # memoria del feedback: patrones y propuestas de regla
 
 dev:                            # folio run --dev: todas las etapas con este modelo y esfuerzo bajo
   modelo: claude-haiku-5-5
@@ -18,6 +19,7 @@ esfuerzo:                       # output_config.effort
   arte: medium
   ilustracion: medium
   chat: medium
+  memoria: high
 
 # USD por millón de tokens (entrada, salida[, lectura de caché]). Solo para estimar el coste en el
 # informe. La escritura en caché cuesta 1,25 × entrada; sin tercer valor, la lectura es el 10 % de la entrada.

@@ -15,7 +15,7 @@ from folio.render import Plantillas, dir_diseno
 from folio_api.dependencias import Contexto
 from folio_api.ejecutor import Ejecutor
 from folio_api.programador import Programador, hora_de_entorno
-from folio_api.rutas import dias, diseno, ejecuciones, evaluaciones, gastos, piezas, publico
+from folio_api.rutas import dias, diseno, ejecuciones, evaluaciones, gastos, memoria, piezas, publico
 from folio_api.servicio import hechos_ligados  # noqa: F401  (se importa desde aquí en los tests)
 
 
@@ -43,7 +43,7 @@ def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importa
         logging.getLogger("folio_api").exception("Error en %s", request.url.path)
         return JSONResponse(status_code=500, content={"detail": sin_clave(f"{type(exc).__name__}: {exc}")[:600]})
 
-    for modulo in (dias, piezas, diseno, evaluaciones, ejecuciones, gastos, publico):
+    for modulo in (dias, piezas, diseno, evaluaciones, ejecuciones, gastos, memoria, publico):
         app.include_router(modulo.router)
     return app
 

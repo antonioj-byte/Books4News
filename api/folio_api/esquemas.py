@@ -3,6 +3,8 @@ TypeScript de la web (npm run tipos)."""
 
 from __future__ import annotations
 
+from typing import Literal
+
 
 from folio.almacen import Evaluacion, Version
 from folio.modelos import BaseModel, EstadoPieza, HechoComprobado, Pieza
@@ -169,3 +171,16 @@ class PanelGasto(BaseModel):
     dias: list[DiaGasto]
     conceptos: list[ConceptoGasto]        # del mes en curso
     ultimos: list[ApunteGasto]            # los 40 apuntes más recientes
+
+
+# --- Memoria del feedback -------------------------------------------------------------
+
+class ResultadoMemoria(BaseModel):
+    piezas: int                           # piezas con feedback leídas
+    patrones: int                         # patrones guardados o reforzados
+    aviso: str
+
+
+class DecisionPatron(BaseModel):
+    estado: Literal["propuesta", "aceptada", "rechazada", "aplicada"]
+    nota: str = ""

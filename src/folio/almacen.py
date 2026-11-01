@@ -97,7 +97,35 @@ _MIGRACIONES = [
     CREATE TABLE gastos_inicio (ts TEXT NOT NULL);
     INSERT INTO gastos_inicio (ts) VALUES (strftime('%Y-%m-%dT%H:%M:%S+00:00', 'now'));
     """,
+    # 4: memoria del feedback (1/11): patrones que salen de las evaluaciones y ediciones, con su propuesta de regla
+    """
+    CREATE TABLE memoria (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creado_en TEXT NOT NULL,
+        actualizado_en TEXT NOT NULL,
+        patron TEXT NOT NULL,              -- lo que se repite, en una frase
+        evidencia TEXT NOT NULL,           -- JSON: [«pieza: qué pasó»]
+        veces INTEGER NOT NULL DEFAULT 1,  -- en cuántos análisis ha salido
+        propuesta TEXT NOT NULL,           -- la regla que se propone
+        destino TEXT NOT NULL,             -- dónde iría: jefe_cultura, guionista, director_arte, formatos, codigo
+        estado TEXT NOT NULL DEFAULT 'propuesta',  -- propuesta | aceptada | rechazada | aplicada
+        nota TEXT NOT NULL DEFAULT ''
+    );
+    """,
 ]
+
+
+class Patron(BaseModel):
+    id: int
+    creado_en: str
+    actualizado_en: str
+    patron: str
+    evidencia: list[str]
+    veces: int
+    propuesta: str
+    destino: str
+    estado: str
+    nota: str = ""
 
 
 class Gasto(BaseModel):
@@ -227,6 +255,61 @@ class Almacen:
                 db.execute("INSERT INTO versiones VALUES (?, ?, 1, ?, 'pipeline', 'Generada por el pipeline', ?)",
                                 (eid, p.id, generado, p.model_dump_json()))
         return eid
+
+    # --- Memoria del feedback ------------------------------------------------------------
+
+    def patrones(self) -> list[Patron]:
+        filas = self.db.execute("SELECT * FROM memoria ORDER BY estado = 'propuesta' DESC, veces DESC, id DESC").fetchall()
+        return [Patron(**{**dict(f), "evidencia": json.loads(f["evidencia"])}) for f in filas]
+
+    def guardar_patron(self, patron: str, evidencia: list[str], propuesta: str, destino: str, existente: int | None = None) -> int:
+        """Un patrón nuevo, o uno que ya estaba y vuelve a salir (se suma la evidencia y una vez más)."""
+        ahora = _ahora()
+        with self._transaccion() as db:
+            if existente:
+                f = db.execute("SELECT evidencia, veces FROM memoria WHERE id = ?", (existente,)).fetchone()
+                if f:
+                    todas = list(dict.fromkeys(json.loads(f["evidencia"]) + evidencia))
+                    db.execute("UPDATE memoria SET evidencia = ?, veces = ?, actualizado_en = ?, propuesta = ? WHERE id = ?",
+                               (json.dumps(todas, ensure_ascii=False), f["veces"] + 1, ahora, propuesta, existente))
+                    return existente
+            c = db.execute("INSERT INTO memoria (creado_en, actualizado_en, patron, evidencia, propuesta, destino) VALUES (?, ?, ?, ?, ?, ?)",
+                           (ahora, ahora, patron, json.dumps(evidencia, ensure_ascii=False), propuesta, destino))
+            return c.lastrowid
+
+    def decidir_patron(self, pid: int, estado: str, nota: str = "") -> None:
+        with self._transaccion() as db:
+            db.execute("UPDATE memoria SET estado = ?, nota = ?, actualizado_en = ? WHERE id = ?", (estado, nota, _ahora(), pid))
+
+    def feedback(self, desde: str) -> list[dict]:
+        """Lo que ha dicho y hecho quien edita desde `desde` (AAAA-MM-DD), por pieza: evaluación, ediciones a mano
+        (antes y después), peticiones del chat y si se descartó."""
+        out = []
+        piezas = self.db.execute(
+            "SELECT p.ejecucion_id, p.pieza_id, p.estado, e.fecha FROM piezas p JOIN ejecuciones e ON e.id = p.ejecucion_id "
+            "WHERE e.fecha >= ? ORDER BY e.fecha, p.pieza_id", (desde,)).fetchall()
+        for f in piezas:
+            eid, pid = f["ejecucion_id"], f["pieza_id"]
+            versiones = self.db.execute("SELECT n, origen, descripcion, datos FROM versiones WHERE ejecucion_id = ? AND pieza_id = ? ORDER BY n",
+                                        (eid, pid)).fetchall()
+            ev = self.evaluacion(eid, pid)
+            pedidos = [m.texto for m in self.chat(eid, pid) if m.rol == "usuario"]
+            ediciones = []
+            for anterior, v in zip(versiones, versiones[1:]):
+                if v["origen"] != "manual":
+                    continue
+                a, b = Pieza.model_validate_json(anterior["datos"]), Pieza.model_validate_json(v["datos"])
+                for da, db_ in zip(a.guion.diapositivas if a.guion else [], b.guion.diapositivas if b.guion else []):
+                    if (da.texto, da.subtitulo) != (db_.texto, db_.subtitulo):
+                        ediciones.append({"diapositiva": f"{db_.n} ({db_.tipo})", "antes": da.texto, "despues": db_.texto})
+            if not (ev or pedidos or ediciones or f["estado"] == "descartada"):
+                continue
+            ultima = Pieza.model_validate_json(versiones[-1]["datos"]) if versiones else None
+            out.append({"pieza": pid, "fecha": f["fecha"], "estado": f["estado"],
+                        "formato": ultima.eleccion.formato if ultima else None,
+                        "titular": ultima.guion.diapositivas[0].texto if ultima and ultima.guion else (ultima.eleccion.titular if ultima else ""),
+                        "evaluacion": ev[0].model_dump() if ev else None, "pedidos_chat": pedidos, "ediciones": ediciones})
+        return out
 
     # --- Gasto -----------------------------------------------------------------------
 
