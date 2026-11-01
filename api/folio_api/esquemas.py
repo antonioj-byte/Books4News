@@ -72,6 +72,28 @@ class HechoLigado(BaseModel):
     frase: str | None
 
 
+class ProgramadaBuffer(BaseModel):
+    hora: str | None                      # ISO, hora de Madrid; None si va a la cola
+    borrador: bool
+    canal: str = ""
+    en: str | None = None                 # cuándo se programó
+    version: int | None = None
+
+
+class EstadoBuffer(BaseModel):
+    """Lo que la ficha de la pieza enseña junto al botón «Programar en Buffer»."""
+    disponible: bool                      # hay clave de Buffer, URL pública y clave de enlaces
+    motivo: str | None = None             # por qué no, si no está disponible
+    programada: ProgramadaBuffer | None = None
+    mensaje: str | None = None            # el resultado de la última acción
+
+
+class ProgramarBuffer(BaseModel):
+    hora: str | None = None               # «HH:MM» o «AAAA-MM-DD HH:MM» (hora de Madrid); sin ella, a la cola de Buffer
+    borrador: bool = False                # lo deja en borradores: no se publica
+    reemplazar: bool = False              # ya estaba programada y esa publicación se ha borrado en Buffer
+
+
 class VideoDiapositiva(BaseModel):
     n: int                                # número de la diapositiva
     url: str

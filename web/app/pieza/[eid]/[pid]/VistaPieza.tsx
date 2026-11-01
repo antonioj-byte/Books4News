@@ -8,6 +8,7 @@ import { ChatEdicion } from "@/components/ChatEdicion";
 import { FormEvaluacion } from "@/components/FormEvaluacion";
 import { EstadoChip, FormatoChip } from "@/components/Marcas";
 import { Proceder } from "@/components/Proceder";
+import { ProgramarBuffer } from "@/components/ProgramarBuffer";
 import { PanelNoticia } from "@/components/PanelNoticia";
 import { api, ESTADOS } from "@/lib/api";
 import { conCursivas } from "@/lib/cursivas";
@@ -82,6 +83,7 @@ export function VistaPieza() {
               <a href={api.urlDescarga(eid, pid)} download className="boton-suave">Descargar el carrusel (.zip)</a>
               <span className="dato mt-2 block sm:ml-2 sm:mt-0 sm:inline">JPEG, vídeo de portada y pie · tarda hasta un minuto</span>
             </p>
+            {d.pieza.estado === "aprobada" && <ProgramarBuffer key={`buffer:${eid}/${pid}`} eid={eid} pid={pid} />}
             {avisosEdicion.length > 0 && (
               <div className="mx-auto mt-4 max-w-[560px] rounded-[6px] border border-carmesi px-4 py-2.5 text-[13px]">
                 <b className="text-carmesi">Guardado, pero no cumple estas reglas del guion:</b>

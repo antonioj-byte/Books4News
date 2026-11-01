@@ -171,6 +171,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ejecuciones/{eid}/piezas/{pid}/buffer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado Buffer */
+        get: operations["estado_buffer_api_ejecuciones__eid__piezas__pid__buffer_get"];
+        put?: never;
+        /**
+         * Programar Buffer
+         * @description Programa en Buffer la pieza aprobada, en su versión actual (lo mismo que `folio buffer programar --confirmar`).
+         *     Pinta el carrusel en el momento si hace falta: puede tardar hasta un minuto.
+         */
+        post: operations["programar_buffer_api_ejecuciones__eid__piezas__pid__buffer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/diseno/tokens.css": {
         parameters: {
             query?: never;
@@ -413,6 +435,10 @@ export interface components {
             concepto: string | null;
             /** Retrato */
             retrato: string | null;
+            /** Imagen Noticia */
+            imagen_noticia: string | null;
+            /** Credito Noticia */
+            credito_noticia: string | null;
             sin_foto: components["schemas"]["SinFoto"] | null;
             infografia: components["schemas"]["Infografia"] | null;
             /** Esquema */
@@ -610,6 +636,19 @@ export interface components {
             coste_usd: number;
             /** Piezas */
             piezas: number;
+        };
+        /**
+         * EstadoBuffer
+         * @description Lo que la ficha de la pieza enseña junto al botón «Programar en Buffer».
+         */
+        EstadoBuffer: {
+            /** Disponible */
+            disponible: boolean;
+            /** Motivo */
+            motivo: string | null;
+            programada: components["schemas"]["ProgramadaBuffer"] | null;
+            /** Mensaje */
+            mensaje: string | null;
         };
         /** EstadoEjecucion */
         EstadoEjecucion: {
@@ -821,6 +860,12 @@ export interface components {
              * @default
              */
             gancho_libro: string;
+            /**
+             * Protagonista
+             * @description Solo en historia editorial y radar: nombre completo de la persona real que protagoniza la historia (un autor, un editor, una librera), para buscar su retrato; vacío si no hay una
+             * @default
+             */
+            protagonista: string;
             /**
              * Por Que
              * @description Por qué esta historia y no otra, en dos líneas
@@ -1176,6 +1221,37 @@ export interface components {
              * @default
              */
             por_que: string;
+        };
+        /** ProgramadaBuffer */
+        ProgramadaBuffer: {
+            /** Hora */
+            hora: string | null;
+            /** Borrador */
+            borrador: boolean;
+            /**
+             * Canal
+             * @default
+             */
+            canal: string;
+            /** En */
+            en: string | null;
+            /** Version */
+            version: number | null;
+        };
+        /** ProgramarBuffer */
+        ProgramarBuffer: {
+            /** Hora */
+            hora?: string | null;
+            /**
+             * Borrador
+             * @default false
+             */
+            borrador: boolean;
+            /**
+             * Reemplazar
+             * @default false
+             */
+            reemplazar: boolean;
         };
         /** RespuestaChat */
         RespuestaChat: {
@@ -1662,6 +1738,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estado_buffer_api_ejecuciones__eid__piezas__pid__buffer_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoBuffer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    programar_buffer_api_ejecuciones__eid__piezas__pid__buffer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramarBuffer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoBuffer"];
                 };
             };
             /** @description Validation Error */

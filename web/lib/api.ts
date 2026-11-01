@@ -16,6 +16,7 @@ export type RespuestaChat = components["schemas"]["RespuestaChat"];
 export type PanelGasto = components["schemas"]["PanelGasto"];
 export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" };
 export type ResultadoMemoria = components["schemas"]["ResultadoMemoria"];
+export type EstadoBuffer = components["schemas"]["EstadoBuffer"];
 
 async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
   const r = await fetch(ruta, { cache: "no-store", ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
@@ -53,6 +54,10 @@ export const api = {
   chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),
   enviarChat: (eid: number, pid: string, mensaje: string) =>
     pedir<RespuestaChat>(`${pieza(eid, pid)}/chat`, { method: "POST", body: JSON.stringify({ mensaje }) }),
+  // Programar en Buffer la pieza aprobada (a una hora, a la cola o como borrador)
+  buffer: (eid: number, pid: string) => pedir<EstadoBuffer>(`${pieza(eid, pid)}/buffer`),
+  programarBuffer: (eid: number, pid: string, cuerpo: { hora: string | null; borrador: boolean; reemplazar: boolean }) =>
+    pedir<EstadoBuffer>(`${pieza(eid, pid)}/buffer`, { method: "POST", body: JSON.stringify(cuerpo) }),
   // El carrusel listo para publicar (JPEG, vídeo de portada y pie), de la versión actual
   urlDescarga: (eid: number, pid: string) => `${pieza(eid, pid)}/descarga.zip`,
   urlDiapositiva: (eid: number, pid: string, n: number, version: number) =>

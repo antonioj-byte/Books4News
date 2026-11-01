@@ -11,8 +11,8 @@ from folio.llm import LLM
 from folio.modelos import InformeDiario
 from folio_api.dependencias import Contexto, contexto
 from folio_api.ejecutor import EstadoEjecucion
-from folio_api.esquemas import (CambioEstado, EdicionDiapositiva, MensajeNuevo, PiezaDetalle, RespuestaChat,
-                                ResultadoEdicion, VideoDiapositiva)
+from folio_api.esquemas import (CambioEstado, EdicionDiapositiva, EstadoBuffer, MensajeNuevo, PiezaDetalle,
+                                ProgramadaBuffer, ProgramarBuffer, RespuestaChat, ResultadoEdicion, VideoDiapositiva)
 from folio_api.rutas.dias import lomos
 from folio_api.servicio import hechos_ligados
 
@@ -197,3 +197,53 @@ def desarrollar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     if not ctx.ejecutor.lanzar([[sys.executable, "-m", "folio.cli", "desarrollar", pid, "--ejecucion", str(eid), "--quiet"]]):
         raise HTTPException(409, "Hay otra ejecución en marcha; prueba cuando termine")
     return ctx.ejecutor.estado()
+
+
+# --- Programar en Buffer (2/11, a petición del usuario: el botón en la web) -----------------------------
+
+def _estado_buffer(ctx: Contexto, fecha: str, pid: str, mensaje: str | None = None) -> EstadoBuffer:
+    from folio.publicacion import programar
+    faltan = [n for n, v in (("BUFFER_API_KEY", ctx.cfg.buffer_clave), ("FOLIO_URL_PUBLICA", ctx.cfg.url_publica),
+                             ("FOLIO_CLAVE_ENLACES", ctx.cfg.clave_enlaces)) if not v]
+    hecha = programar.estado(ctx.cfg, fecha, pid)
+    return EstadoBuffer(
+        disponible=not faltan, motivo=f"Falta configurar {', '.join(faltan)}" if faltan else None,
+        programada=ProgramadaBuffer(hora=hecha.get("hora"), borrador=bool(hecha.get("borrador")), canal=hecha.get("canal", ""),
+                                    en=hecha.get("en"), version=hecha.get("version")) if hecha else None,
+        mensaje=mensaje)
+
+
+@router.get("/api/ejecuciones/{eid}/piezas/{pid}/buffer", response_model=EstadoBuffer)
+def estado_buffer(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
+    fecha, _ = ctx.ejecucion(eid)
+    ctx.pieza(eid, pid)
+    return _estado_buffer(ctx, fecha, pid)
+
+
+@router.post("/api/ejecuciones/{eid}/piezas/{pid}/buffer", response_model=EstadoBuffer)
+def programar_buffer(eid: int, pid: str, cuerpo: ProgramarBuffer, ctx: Contexto = Depends(contexto)):
+    """Programa en Buffer la pieza aprobada, en su versión actual (lo mismo que `folio buffer programar --confirmar`).
+    Pinta el carrusel en el momento si hace falta: puede tardar hasta un minuto."""
+    import os
+
+    from folio.publicacion import programar
+    from folio.publicacion.buffer import ErrorBuffer
+    fecha, _ = ctx.ejecucion(eid)
+    p, v = ctx.pieza(eid, pid)
+    try:
+        cuando = programar.hora_de_publicacion(cuerpo.hora, os.getenv("FOLIO_ZONA") or "Europe/Madrid") if cuerpo.hora else None
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    render = _video(ctx, fecha, pid).parent
+    reutilizar = _render_vigente(ctx, eid, fecha, pid, v) and bool(_videos(ctx, fecha, pid, p))
+    try:
+        r = programar.programar(ctx.cfg, p, v, fecha, cuando, borrador=cuerpo.borrador, reemplazar=cuerpo.reemplazar,
+                                videos_de=render if reutilizar else None)
+    except programar.NoSePuede as e:
+        raise HTTPException(409, str(e))
+    except ErrorBuffer as e:
+        raise HTTPException(502, f"Buffer: {e}")
+    cuando_txt = cuando.strftime("%d/%m a las %H:%M") if cuando else "en la cola de Buffer"
+    mensaje = (f"Borrador guardado en Buffer ({r.canal}): no se publica." if cuerpo.borrador
+               else f"Programada en {r.canal}: {cuando_txt}.") + (f" Avisos: {'; '.join(r.avisos)}" if r.avisos else "")
+    return _estado_buffer(ctx, fecha, pid, mensaje)

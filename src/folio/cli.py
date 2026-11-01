@@ -342,17 +342,11 @@ def _buffer(cfg):
 
 def hora_de_publicacion(texto: str, zona: str, ahora: datetime | None = None) -> datetime:
     """«2026-11-02 09:30» o «09:30» (la próxima vez que sea esa hora) en la zona de Folio."""
-    from zoneinfo import ZoneInfo
-    tz = ZoneInfo(zona)
-    ahora = (ahora or datetime.now(tz)).astimezone(tz)
+    from folio.publicacion import programar
     try:
-        if len(texto.strip()) <= 5:
-            h, m = (int(x) for x in texto.strip().split(":"))
-            cuando = ahora.replace(hour=h, minute=m, second=0, microsecond=0)
-            return cuando if cuando > ahora else cuando + timedelta(days=1)
-        return datetime.strptime(texto.strip(), "%Y-%m-%d %H:%M").replace(tzinfo=tz)
-    except ValueError:
-        raise typer.BadParameter(f"Hora no válida: «{texto}» (usa «AAAA-MM-DD HH:MM» o «HH:MM»)") from None
+        return programar.hora_de_publicacion(texto, zona, ahora)
+    except ValueError as e:
+        raise typer.BadParameter(str(e)) from None
 
 
 @buffer_app.command("comprobar")
@@ -389,62 +383,34 @@ def buffer_programar(pieza: str,
     """Programa en Buffer una pieza «aprobada» (en su versión actual de la web) como carrusel de Instagram.
 
     Sin --confirmar no programa nada: prepara los archivos, enseña el pie y comprueba el canal."""
-    import json as _json
     import os
-    import shutil
 
-    from folio.publicacion import enlaces
+    from folio.publicacion import programar as prog
     from folio.publicacion.buffer import ErrorBuffer
-    from folio.publicacion.preparar import preparar
 
     cfg = config.cargar()
     fecha = fecha or pieza[:10]
     almacen, eid, p, version = _pieza_aprobada(cfg, pieza, fecha)
     cuando = hora_de_publicacion(a, os.getenv("FOLIO_ZONA") or "Europe/Madrid") if a else None
-    if cuando and cuando <= datetime.now(cuando.tzinfo) + timedelta(minutes=5):
-        typer.echo("La hora tiene que ser al menos dentro de cinco minutos", err=True)
-        raise typer.Exit(1)
-    b = _buffer(cfg)
-    lista = preparar(cfg, p, con_video=not sin_video)
-    for aviso in lista.avisos:
-        typer.echo(f"Aviso: {aviso}")
-    typer.echo(f"Pieza {pieza} (versión {version}): {len(lista.medios)} diapositivas"
-               f"{', en vídeo la ' + ', '.join(str(i) for i, (t, _) in enumerate(lista.medios, 1) if t == 'video') if any(t == 'video' for t, _ in lista.medios) else ''}"
-               f"; archivos en {lista.carpeta}")
-    typer.echo(f"Pie ({len(lista.pie)} caracteres):\n{lista.pie}\n")
-    typer.echo(f"Hora: {cuando.strftime('%d/%m/%Y %H:%M') if cuando else 'la siguiente de la cola de Buffer'}")
-    # Buffer descarga los archivos al publicar: los enlaces valen hasta tres días después de la hora
-    # (con la cola, que no sabemos cuándo sale, treinta días)
-    segundos = int((cuando - datetime.now(cuando.tzinfo)).total_seconds()) + 3 * 86400 if cuando else 30 * 86400
     try:
-        canal = b.canal_instagram(cfg.buffer_canal)
-        typer.echo(f"Canal: {canal['name']} ({canal['id']})")
-        if not confirmar:
-            typer.echo("Prueba: no se ha programado nada. Repite con --confirmar para programarlo.")
-            return
-        # Copia propia y estable: la descarga del .zip y Instagram vuelven a preparar la carpeta de la
-        # pieza, y Buffer descarga los archivos horas o días después
-        estable = lista.carpeta.parent / f"{pieza}-buffer"
-        if (estable / "programada.json").exists() and not reemplazar:
-            typer.echo(f"La pieza ya está programada en Buffer ({estable / 'programada.json'}): sus archivos se "
-                       "descargan al publicar y no se pueden cambiar. Borra antes esa publicación en Buffer y repite "
-                       "con --reemplazar.", err=True)
-            raise typer.Exit(1)
-        shutil.rmtree(estable, ignore_errors=True)
-        shutil.copytree(lista.carpeta, estable)
-        medios = [(tipo, enlaces.firmar(cfg.url_publica, cfg.clave_enlaces, f"{fecha}/{pieza}-buffer/{archivo}", segundos))
-                  for tipo, archivo in lista.medios]
-        post = b.programar(canal["id"], lista.pie, medios, cuando, borrador)
-    except ErrorBuffer as e:
+        r = prog.programar(cfg, p, version, fecha, cuando, borrador=borrador, reemplazar=reemplazar,
+                           confirmar=confirmar, con_video=not sin_video, buffer=_buffer(cfg))
+    except (prog.NoSePuede, ErrorBuffer) as e:
         typer.echo(f"No se pudo: {e}", err=True)
         raise typer.Exit(1)
-    (estable / "programada.json").write_text(
-        _json.dumps({"buffer": post, "version": version, "hora": cuando.isoformat() if cuando else None,
-                     "borrador": borrador}, ensure_ascii=False),
-        encoding="utf-8")
-    typer.echo(f"{'Borrador guardado' if borrador else 'Programada'} en Buffer (post {post['id']}, "
-               f"{'no se publica' if borrador else post.get('dueAt') or 'en cola'}). Los archivos que "
-               f"descargará están en {estable}: no los borres hasta que salga.")
+    for aviso in r.avisos:
+        typer.echo(f"Aviso: {aviso}")
+    videos = f", en vídeo la {', '.join(map(str, r.videos))}" if r.videos else ""
+    typer.echo(f"Pieza {pieza} (versión {version}): {r.diapositivas} diapositivas{videos}; archivos en {r.carpeta}")
+    typer.echo(f"Pie ({len(r.pie)} caracteres):\n{r.pie}\n")
+    typer.echo(f"Hora: {cuando.strftime('%d/%m/%Y %H:%M') if cuando else 'la siguiente de la cola de Buffer'}")
+    typer.echo(f"Canal: {r.canal}")
+    if not r.post:
+        typer.echo("Prueba: no se ha programado nada. Repite con --confirmar para programarlo.")
+        return
+    typer.echo(f"{'Borrador guardado' if borrador else 'Programada'} en Buffer (post {r.post['id']}, "
+               f"{'no se publica' if borrador else r.post.get('dueAt') or 'en cola'}). Los archivos que "
+               f"descargará están en {r.carpeta}: no los borres hasta que salga.")
 
 
 memoria_app = typer.Typer(help="Memoria del feedback: patrones de las evaluaciones y ediciones, con propuestas de regla")

@@ -111,3 +111,61 @@ def test_los_archivos_de_buffer_tienen_enlace_firmado_de_larga_duracion():
     url = enlaces.firmar("https://folio.example", "clave", ruta, 5 * 86400, ahora=1000)
     caduca, firma, resto = url.split("/api/publico/")[1].split("/", 2)
     assert resto == ruta and enlaces.valida("clave", int(caduca), firma, ruta, ahora=1000 + 4 * 86400)
+
+
+def test_el_boton_de_la_web_programa_la_pieza_aprobada(cfg, monkeypatch):
+    """POST /buffer: solo aprobadas, con la hora de Madrid, y no dos veces sin «reemplazar»."""
+    from fastapi.testclient import TestClient
+    from folio import informe
+    from folio.almacen import Almacen
+    from folio.modelos import InformeDiario, Pieza, SeleccionJefe
+    from folio.publicacion import programar as prog
+    from folio.publicacion.preparar import Preparada
+    from folio_api.main import crear_app
+    from datos import ELECCION, LIBRO, guion_valido
+
+    p = Pieza(id="2026-11-02-1", fecha="2026-11-02", estado="propuesta", historia_id="h1", eleccion=ELECCION,
+              n_medios=3, libros=[LIBRO], guion=guion_valido())
+    inf = InformeDiario(fecha="2026-11-02", generado_en=datetime(2026, 11, 2, 5, tzinfo=MADRID), stats={}, top_historias=[],
+                        seleccion=SeleccionJefe(elegidas=[ELECCION], reserva=[]), piezas=[p], coste_total_usd=0)
+    informe.escribir(inf, cfg.dir_informes / "2026-11-02")
+    almacen = Almacen(cfg.ruta_db)
+    almacen.importar_informes(cfg.dir_informes)
+    eid = almacen.ultima_ejecucion("2026-11-02")
+    (cfg.raiz / "diseno").symlink_to((type(cfg)(pipeline={}, fuentes=[]).raiz / "diseno").resolve())
+    cfg.buffer_clave, cfg.url_publica, cfg.clave_enlaces = "clave", "https://folio.example", "firma"
+
+    def preparar(cfg_, pieza, con_video=True, videos_de=None):
+        carpeta = cfg_.dir_informes / pieza.fecha / "publicar" / pieza.id
+        carpeta.mkdir(parents=True, exist_ok=True)
+        (carpeta / "01.mp4").write_bytes(b"v")
+        (carpeta / "02.jpg").write_bytes(b"j")
+        return Preparada(carpeta=carpeta, medios=[("video", "01.mp4"), ("image", "02.jpg")], pie="Pie con créditos", avisos=[])
+    enviados = []
+
+    class BufferFalso:
+        def __init__(self, clave, cliente=None): pass
+        def canal_instagram(self, canal=None): return {"id": "c1", "name": "folio_editorial"}
+        def programar(self, canal, pie, medios, cuando, borrador):
+            enviados.append((pie, medios, cuando, borrador))
+            return {"id": "post1", "dueAt": cuando.isoformat() if cuando else None}
+    monkeypatch.setattr(prog, "preparar", preparar)
+    monkeypatch.setattr(prog, "Buffer", BufferFalso)
+    c = TestClient(crear_app(cfg, almacen))
+    url = f"/api/ejecuciones/{eid}/piezas/2026-11-02-1/buffer"
+    assert c.get(url).json()["disponible"] and c.get(url).json()["programada"] is None
+    r = c.post(url, json={"hora": "2099-01-05 09:30", "borrador": False, "reemplazar": False})
+    assert r.status_code == 409 and "aprobadas" in r.json()["detail"]                      # aún no está aprobada
+    c.patch(f"/api/ejecuciones/{eid}/piezas/2026-11-02-1/estado", json={"estado": "aprobada"})
+    assert c.post(url, json={"hora": "mañana"}).status_code == 422
+    r = c.post(url, json={"hora": "2099-01-05 09:30", "borrador": False, "reemplazar": False})
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert "Programada en folio_editorial" in d["mensaje"] and d["programada"]["hora"].startswith("2099-01-05T09:30")
+    pie, medios, cuando, borrador = enviados[0]
+    assert cuando == datetime(2099, 1, 5, 9, 30, tzinfo=MADRID) and not borrador
+    assert medios[0][0] == "video" and "/2026-11-02-1-buffer/01.mp4" in medios[0][1]
+    # Ya programada: no se repite sin «reemplazar»
+    assert c.post(url, json={"borrador": True}).status_code == 409
+    r = c.post(url, json={"borrador": True, "reemplazar": True})
+    assert r.status_code == 200 and r.json()["programada"]["borrador"] and len(enviados) == 2
