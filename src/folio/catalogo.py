@@ -52,6 +52,7 @@ class Editorial(BaseModel):
     todostuslibros: str | None = None
     excluir: str | None = None
     referencia: bool = False         # una de las 75 de referencia (2/11): se intercalan con las demás cada día
+    pais: str | None = None          # las latinoamericanas (2/11): Argentina y México van como referencia
 
 
 class Novedad(BaseModel):
@@ -304,7 +305,7 @@ def historia(f: Ficha, e: Editorial | None = None) -> Historia:
                    entradilla=resumen, idioma="es", acceso="abierto", carril="catalogo",
                    publicado_en=datetime.fromisoformat(f.fecha).replace(tzinfo=timezone.utc) if f.fecha else None)
     return Historia(id=PREFIJO + f.isbn, articulos=[art], medios=[f.editorial or (e.nombre if e else "")], n_medios=1,
-                    titular_es=f"{f.titulo}, de {', '.join(f.autores)} ({f.editorial}, {f.fecha or 's. f.'})",
+                    titular_es=f"{f.titulo}, de {', '.join(f.autores)} ({f.editorial}{', ' + e.pais if e and e.pais else ''}, {f.fecha or 's. f.'})",
                     resumen_es=resumen + (" [Con crítica de prensa en la ficha]" if f.critica else " [Sin crítica en la ficha]"),
                     seccion="cultura", sobre_libros=True, carril="catalogo")
 
