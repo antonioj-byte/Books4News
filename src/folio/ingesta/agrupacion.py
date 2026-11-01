@@ -33,24 +33,51 @@ class Embedder:
         # Los modelos e5 esperan prefijo; "query: " para comparaciones simétricas.
         return f"query: {texto}" if "e5" in self.modelo.lower() else texto
 
+    def _ruta(self) -> Path:
+        return self.dir_cache / f"embeddings_{hashlib.sha1(self.modelo.encode()).hexdigest()[:8]}.npz"
+
+    def _leer(self) -> dict[str, np.ndarray]:
+        try:
+            return dict(np.load(self._ruta())) if self._ruta().exists() else {}
+        except (OSError, ValueError):            # a medio escribir o dañada: se recalcula lo que falte
+            return {}
+
+    def _guardar(self, cache: dict[str, np.ndarray]) -> None:
+        # Escritura atómica: la lectura periódica y la madrugada comparten esta caché (2/11)
+        tmp = self._ruta().with_suffix(".tmp.npz")
+        np.savez(tmp, **cache)
+        tmp.replace(self._ruta())
+
+    def podar(self, vivos: set[str]) -> int:
+        """Quita de la caché los artículos que ya no están en la ventana. Devuelve cuántos quedan."""
+        cache = self._leer()
+        quedan = {k: v for k, v in cache.items() if k in vivos}
+        if len(quedan) != len(cache):
+            self._guardar(quedan)
+        return len(quedan)
+
     def vectores(self, textos: dict[str, str]) -> dict[str, np.ndarray]:
         """textos: id -> texto. Devuelve id -> vector normalizado."""
         self.dir_cache.mkdir(parents=True, exist_ok=True)
-        clave_modelo = hashlib.sha1(self.modelo.encode()).hexdigest()[:8]
-        ruta = self.dir_cache / f"embeddings_{clave_modelo}.npz"
-        cache: dict[str, np.ndarray] = dict(np.load(ruta)) if ruta.exists() else {}
+        cache = self._leer()
         faltan = [i for i in textos if i not in cache]
         if faltan:
             motor = self._cargar()
             nuevos = list(motor.embed([self._prefijo(textos[i]) for i in faltan], batch_size=32))
             for i, v in zip(faltan, nuevos):
                 cache[i] = np.asarray(v, dtype=np.float32)
-            np.savez(ruta, **cache)
+            self._guardar(cache)
         out = {}
         for i in textos:
             v = cache[i]
             out[i] = v / (np.linalg.norm(v) or 1.0)
         return out
+
+
+def dir_comun(cfg) -> Path:
+    """La caché de embeddings común a todos los días (2/11): la lectura periódica calcula de día los de los artículos
+    nuevos y la madrugada solo los que falten. Antes era por fecha y la madrugada los calculaba todos."""
+    return cfg.dir_cache("x").parent / "embeddings"
 
 
 def texto_articulo(a: Articulo) -> str:

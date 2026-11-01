@@ -68,3 +68,26 @@ def test_un_feed_que_bloquea_se_pausa_una_semana(cfg, monkeypatch):
     pedidas.clear()
     rss.ingerir(cfg, AHORA + timedelta(days=8))                        # pasada la semana, se vuelve a probar
     assert "https://asymptote.example/feed" in pedidas
+
+
+def test_embeddings_de_dia_en_la_cache_comun(cfg, monkeypatch):
+    """2/11: la lectura periódica calcula los embeddings de los artículos nuevos y la madrugada ya no los recalcula."""
+    import numpy as np
+    from folio.ingesta import agrupacion
+    from folio.pipeline import Pipeline
+    calculados = []
+
+    class Motor:
+        def embed(self, textos, batch_size=32):
+            calculados.extend(textos)
+            return [np.ones(4, dtype=np.float32) for _ in textos]
+
+    monkeypatch.setattr(agrupacion.Embedder, "_cargar", lambda self: Motor())
+    monkeypatch.setattr(rss, "ingerir", lambda cfg, ahora=None: ([_art(1), _art(2)], []))
+    lecturas.leer(cfg, AHORA)
+    assert lecturas.embeber(cfg) == (2, 2) and len(calculados) == 2
+    assert lecturas.embeber(cfg) == (0, 2) and len(calculados) == 2          # la segunda vuelta no recalcula
+    # La madrugada (otra fecha) lee de la misma caché: no carga el modelo para esos artículos
+    monkeypatch.setattr(agrupacion.Embedder, "_cargar", lambda self: (_ for _ in ()).throw(AssertionError("no debe cargar")))
+    v = Pipeline(cfg, "2026-11-03").vectores([_art(1), _art(2)])
+    assert set(v) == {"a1", "a2"}

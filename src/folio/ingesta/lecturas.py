@@ -74,3 +74,17 @@ def juntar(cfg, articulos: list[Articulo], ahora: datetime | None = None) -> lis
         salida.append(a)
         vistos_url.add(a.url)
     return salida
+
+
+def embeber(cfg) -> tuple[int, int]:
+    """Los embeddings de los artículos guardados que aún no los tienen, en la caché común (2/11, a petición del
+    usuario: agilizar la madrugada). Gratis (CPU), pero carga el modelo (~2 GB): solo si hay artículos nuevos. Quita
+    de la caché los que ya salieron de la ventana. Devuelve (calculados, en la caché)."""
+    from folio.ingesta import agrupacion
+    guardados = _cargar(cfg)
+    emb = agrupacion.Embedder(cfg.pipeline.agrupacion.modelo_embeddings, agrupacion.dir_comun(cfg))
+    ya = set(emb._leer())
+    textos = {k: agrupacion.texto_articulo(Articulo.model_validate(v)) for k, v in guardados.items() if k not in ya}
+    if textos:
+        emb.vectores(textos)
+    return len(textos), emb.podar(set(guardados))

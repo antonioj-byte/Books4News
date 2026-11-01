@@ -34,6 +34,7 @@ class Ingesta(_Seccion):
     ventana_horas_editorial: int = 72   # los medios del libro publican menos
     timeout_s: float
     concurrencia_llm: int
+    embeddings_de_dia: bool = True     # 2/11: la lectura periódica calcula los embeddings de los artículos nuevos
 
 
 class Agrupacion(_Seccion):

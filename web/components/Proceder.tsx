@@ -22,15 +22,22 @@ export function Proceder({ eid, pid, onHecho, texto = "Proceder" }: {
       return;
     }
     setEtapa("Empezando…");
+    let avisada = false;
     const vigilar = async () => {
       const estado = await api.ejecucionEnMarcha().catch(() => null);
+      // En cuanto la pieza está en la mesa con sus PNG se enseña; los vídeos siguen pintándose detrás (2/11)
+      if (estado?.en_marcha && estado.etapa?.startsWith("La pieza ya está en la mesa")) {
+        if (!avisada) { avisada = true; setEtapa(null); onHecho(); }
+        setTimeout(vigilar, 6000);
+        return;
+      }
       if (estado?.en_marcha) {
         setEtapa(estado.etapa ?? "Trabajando…");
         setTimeout(vigilar, 4000);
         return;
       }
       setEtapa(null);
-      if (estado && estado.codigo !== 0) setError(estado.ultimas_lineas.at(-1) ?? "No se pudo escribir la pieza.");
+      if (estado && estado.codigo !== 0 && !avisada) setError(estado.ultimas_lineas.at(-1) ?? "No se pudo escribir la pieza.");
       onHecho();
     };
     setTimeout(vigilar, 3000);

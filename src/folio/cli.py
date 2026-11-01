@@ -148,6 +148,9 @@ def imagen_fijar(pieza: str, archivo: str, fecha: str = typer.Option(None, help=
     typer.echo(f"{ruta} · {img.credito}")
 
 
+PIEZA_LISTA = "La pieza ya está en la mesa"     # la web (Proceder.tsx) recarga al ver esta etapa
+
+
 @app.command()
 def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defecto, la última ejecución de la fecha de la pieza"),
                 quiet: bool = typer.Option(False, "--quiet", help="Solo la etapa en curso (lo usa la web)")):
@@ -179,11 +182,10 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
     tuberia = Pipeline(cfg, fecha)
     progreso(f"Desarrollando {pieza}")
     hecha = tuberia.desarrollar(p, al_jefe, otras)
+    destino = cfg.dir_informes / fecha / "render"
     if hecha.estado == "propuesta":
-        progreso("Pintando las diapositivas y los vídeos")
-        destino = cfg.dir_informes / fecha / "render"
+        progreso("Pintando las diapositivas")
         renderizar(cfg, [hecha], destino)
-        renderizar_video(cfg, [hecha], destino)
         tuberia.historial.anadir_libros(fecha, [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for l in hecha.libros])
         from folio import cajon
         if cajon.es_del_cajon(hecha.historia_id):
@@ -192,12 +194,16 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
     v = almacen.guardar_version(eid, pieza, hecha, "pipeline", f"Desarrollada desde la mesa ({coste} $)")
     if hecha.estado == "propuesta":
         from folio.render import marcar_render
-        marcar_render(cfg.dir_informes / fecha / "render" / pieza, eid, v)
+        marcar_render(destino / pieza, eid, v)
     almacen.cambiar_estado(eid, pieza, hecha.estado)
     if hecha.estado != "propuesta":
         typer.echo(f"No se pudo escribir: {hecha.error}", err=True)
         raise typer.Exit(1)
     typer.echo(f"{pieza}: versión {v}, {coste} $")
+    # La pieza ya está en la mesa con sus PNG (2/11, a petición del usuario: que «Proceder» la enseñe antes); los
+    # vídeos, después: la web recarga al ver esta etapa y los enseña cuando estén (render.json ya es de esta versión)
+    progreso(f"{PIEZA_LISTA} · pintando los vídeos")
+    renderizar_video(cfg, [hecha], destino)
 
 
 retrato_app = typer.Typer(help="Retratos de autor generados con IA a partir de su foto libre (Magnific)")
@@ -422,6 +428,14 @@ def leer(quiet: bool = typer.Option(False, "--quiet")):
     nuevos, total, errores = lecturas.leer(cfg)
     if not quiet:
         typer.echo(f"Lectura: {nuevos} artículos nuevos; {total} guardados; {len(errores)} feeds fallidos")
+    # Los embeddings de los artículos nuevos, para que la madrugada no los calcule todos (2/11)
+    if cfg.pipeline.ingesta.embeddings_de_dia:
+        try:
+            calculados, en_cache = lecturas.embeber(cfg)
+            if not quiet:
+                typer.echo(f"Embeddings: {calculados} nuevos; {en_cache} en la caché")
+        except Exception as exc:                # noqa: BLE001 — la lectura periódica nunca falla por esto
+            typer.echo(f"Embeddings: no se pudieron calcular ({type(exc).__name__}: {exc})")
     # Y el catálogo de las independientes, de fondo (2/11): unas pocas editoriales caducadas por vuelta, sin modelo
     if cfg.pipeline.seleccion.reparto.get("recomendado"):
         try:

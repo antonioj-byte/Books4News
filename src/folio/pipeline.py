@@ -117,7 +117,7 @@ class Pipeline:
     def embedder(self) -> agrupacion.Embedder:
         """Un único modelo de embeddings por ejecución: cargarlo cuesta 2 GB de memoria."""
         if self._embedder is None:
-            self._embedder = agrupacion.Embedder(self.cfg.pipeline.agrupacion.modelo_embeddings, self.cache)
+            self._embedder = agrupacion.Embedder(self.cfg.pipeline.agrupacion.modelo_embeddings, agrupacion.dir_comun(self.cfg))
         return self._embedder
 
     def vectores(self, articulos: list[Articulo]) -> dict[str, np.ndarray]:
