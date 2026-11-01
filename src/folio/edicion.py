@@ -36,15 +36,20 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
-    tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar"] = Field(
+    tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
+                  "buscar_retrato", "retrato_ilustrado"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
-                    "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena")
+                    "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
+                    "buscar_retrato: buscar la foto libre de una persona real (autor o protagonista) para la portada; "
+                    "retrato_ilustrado: pasar esa foto a ilustración en un estilo de la casa")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
     consultas: list[str] = Field(description="Solo buscar_archivo: 3 o 4 búsquedas de 1 a 3 palabras, en inglés; si no, vacía")
     escena: str = Field(description="Solo ilustrar: la metáfora visual en inglés, de 12 a 70 palabras, sin nombres propios, cifras ni comillas; si no, vacío")
+    persona: str = Field(description="Solo buscar_retrato: nombre completo de la persona real (el autor del libro o quien protagoniza la historia); si no, vacío")
+    estilo: str = Field(description="Solo retrato_ilustrado: low_poly, voxel, render_2000 o dithering (vacío: el que va con el tono); si no, vacío")
 
 
 class RespuestaChat(BaseModel):
@@ -71,6 +76,61 @@ def editar_diapositiva(cfg: Config, p: Pieza, n: int, texto: str, subtitulo: str
         d.subtitulo = " ".join((subtitulo or "").split()) or None
     guionista.corregir_mecanico(nueva.guion)
     return nueva, validar(cfg, nueva, nueva.guion)
+
+
+def _buscar_retrato(cfg: Config, p: Pieza, nueva: Pieza, ar, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
+    """La foto libre de una persona real para la portada (Commons; si no, la de prensa de su editorial). Nunca se
+    genera una cara desde cero (regla del usuario): sin foto con licencia comprobada, no hay retrato."""
+    from folio import arte as direccion
+    from folio.imagenes import prensa, retratos
+    persona = " ".join(a.persona.split()) or direccion.autor_principal(p) or ""
+    if not persona:
+        return None, "(Dime de quién es el retrato: el nombre completo de la persona.)"
+    if p.libros and direccion.autor_principal(p) and persona.lower() != direccion.autor_principal(p).lower():
+        return None, f"(El retrato de la portada es el del autor del libro, {direccion.autor_principal(p)}; no se pone la cara de otra persona.)"
+    img, motivo = retratos.buscar_y_fijar(persona, p.id, dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
+    if not img and cfg.pipeline.arte.fotos_editoriales and p.libros:
+        from folio.infografia import libro_principal
+        libro = libro_principal(p)
+        editorial = libro.edicion_es_detalle.editorial if libro and libro.edicion_es_detalle else None
+        try:
+            img, motivo = prensa.buscar_y_fijar(persona, editorial, p.id, dir_fecha)
+        except prensa.BloqueoEditorial as exc:
+            motivo = str(exc)
+    if not img:
+        return None, (f"(No hay una foto de {persona} con licencia libre: {motivo}. Sin ella no puedo poner su cara, ni "
+                      "dibujarla: una cara solo se ilustra a partir de una foto con la licencia comprobada.)")
+    if not p.libros:
+        nueva.eleccion.protagonista = persona         # sin libro, la cara que vale es la de quien protagoniza la historia
+    ar.registro, ar.retrato = "foto_autor", img.credito
+    if ar.portada == "panorama":
+        ar.portada = cfg.pipeline.arte.portadas[0]
+    return nueva, f"(Retrato de {persona} en la portada: {img.credito}.)"
+
+
+def _retrato_ilustrado(cfg: Config, nueva: Pieza, ar, a: AccionImagen, retrato, dir_fecha) -> tuple[Pieza | None, str]:
+    """El retrato pasado a un estilo de la casa (Magnific), siempre a partir de la foto libre ya fijada; nunca de la
+    de prensa (la cesión es para publicarla, no para obras derivadas)."""
+    from folio import arte as direccion
+    from folio.imagenes import prensa, retrato_generado
+    if not retrato:
+        return None, "(Primero hace falta una foto libre de la persona: pide que busque su retrato.)"
+    if prensa.es_de_prensa(retrato):
+        return None, "(Es una foto de prensa de la editorial: se puede publicar tal cual, pero no transformarla.)"
+    if ar.tono == "grave":
+        return None, "(En piezas graves el retrato va en foto, sin ilustrar.)"
+    estilos = ["low_poly", "voxel", "render_2000", "dithering"]
+    estilo = a.estilo.strip() if a.estilo.strip() in estilos else (cfg.pipeline.arte.retrato_generado.por_tono.get(ar.tono) or ["low_poly"])[0]
+    try:
+        img = retrato_generado.aplicar(cfg, nueva.id, dir_fecha, estilo)
+    except Exception as exc:
+        return None, f"(No se pudo ilustrar el retrato: {exc}.)"
+    ar.registro, ar.retrato = "retrato_ia", img.credito
+    if direccion.AVISO_RETRATO_GENERADO not in nueva.revision_humana:
+        nueva.revision_humana.append(direccion.AVISO_RETRATO_GENERADO)
+    if ar.portada == "panorama":
+        ar.portada = cfg.pipeline.arte.portadas[0]
+    return nueva, f"(Retrato ilustrado en estilo {estilo.replace('_', ' ')}, a partir de la foto libre. Comprueba el parecido.)"
 
 
 def _copiar_imagenes(dir_fecha, pid: str) -> dict:
@@ -201,6 +261,10 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         if ar.portada == "panorama":
             ar.portada = cfg.pipeline.arte.portadas[0]
         return nueva, f"(Nueva imagen de archivo: {ar.credito}.)"
+    if a.tipo == "buscar_retrato":
+        return _buscar_retrato(cfg, p, nueva, ar, a, dir_fecha)
+    if a.tipo == "retrato_ilustrado":
+        return _retrato_ilustrado(cfg, nueva, ar, a, retrato, dir_fecha)
     if a.tipo == "ilustrar":
         escena, motivo = editorial.validar_escena(a.escena, editorial.nombres_de_pieza(p))
         ie = cfg.pipeline.arte.ilustracion_editorial

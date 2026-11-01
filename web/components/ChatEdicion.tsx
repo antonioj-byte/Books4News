@@ -25,9 +25,17 @@ export function ChatEdicion({ eid, pid, onCambio }: { eid: number; pid: string; 
       setMensajes(await api.chat(eid, pid));
       if (r.version) onCambio();
     } catch (e) {
-      setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo enviar");
-      setTexto(m);
-      setMensajes((x) => x.slice(0, -1));      // el mensaje no llegó a guardarse
+      // Si se cortó la conexión pero la api terminó, la respuesta está guardada: se enseña en vez del error
+      const guardados = await api.chat(eid, pid).catch(() => null);
+      const ultimo = guardados?.at(-1), penultimo = guardados?.at(-2);
+      if (ultimo?.rol === "editor" && penultimo?.rol === "usuario" && penultimo.texto === m) {
+        setMensajes(guardados!);
+        if (ultimo.version_n) onCambio();
+      } else {
+        setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo enviar");
+        setTexto(m);
+        setMensajes((x) => x.slice(0, -1));    // el mensaje no llegó a guardarse
+      }
     } finally { setEnviando(false); }
   };
 

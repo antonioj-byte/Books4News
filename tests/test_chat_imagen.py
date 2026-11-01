@@ -14,7 +14,7 @@ from datos import ELECCION, LIBRO, guion_valido
 
 
 def _accion(tipo, **k):
-    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="")
+    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="")
     return AccionImagen(**(datos | k))
 
 
@@ -92,3 +92,33 @@ def test_buscar_otra_imagen_que_falla_no_deja_la_pieza_sin_imagen(cfg, monkeypat
     monkeypatch.setattr(direccion, "_imagen_de_archivo", no_encuentra)
     nueva, nota = edicion.aplicar_imagen(None, cfg, _pieza(registro="archivo"), _accion("buscar_archivo", consultas=["printing press"]))
     assert nueva is None and (libres.dir_imagenes(cfg.dir_cache("2026-10-30")) / "2026-10-30-1.jpg").exists()
+
+
+
+def test_retrato_de_una_persona_real_solo_desde_una_foto_libre(cfg, monkeypatch):
+    from folio.imagenes import retrato_generado, retratos
+    sin_libro = Pieza(id="2026-10-30-1", fecha="2026-10-30", estado="propuesta", historia_id="cajon-el-secuestro-perec",
+                      eleccion=ELECCION.model_copy(update={"formato": "curiosidad", "libros_candidatos": []}), n_medios=1,
+                      libros=[], guion=guion_valido(), arte=Arte(tono="sereno", recurso="ilustracion", portada="panorama"))
+    # Sin foto libre: se dice claro y no se dibuja nada
+    monkeypatch.setattr(retratos, "buscar_y_fijar", lambda *a, **k: (None, "Commons no tiene ninguna libre"))
+    nueva, nota = edicion.aplicar_imagen(None, cfg, sin_libro, _accion("buscar_retrato", persona="Georges Perec"))
+    assert nueva is None and "no puedo poner su cara" in nota
+    # Con foto libre: va en la portada y la pieza sin libro guarda a quién retrata
+    def fija(persona, pid, d, sa):
+        _fijar(cfg, f"{pid}-retrato", "commons:File:Perec.jpg")
+        return libres.de_pieza(f"{pid}-retrato", d), ""
+    monkeypatch.setattr(retratos, "buscar_y_fijar", fija)
+    nueva, nota = edicion.aplicar_imagen(None, cfg, sin_libro, _accion("buscar_retrato", persona="Georges Perec"))
+    assert nueva.eleccion.protagonista == "Georges Perec" and nueva.arte.registro == "foto_autor"
+    assert nueva.arte.portada == "sangre" and "Retrato de Georges Perec" in nota
+    # Ilustrarlo: desde esa foto, en un estilo de la casa, con revisión humana
+    estilos = []
+    monkeypatch.setattr(retrato_generado, "aplicar", lambda cfg, pid, d, estilo: estilos.append(estilo) or libres.de_pieza(f"{pid}-retrato", d))
+    otra, nota = edicion.aplicar_imagen(None, cfg, nueva, _accion("retrato_ilustrado", estilo="voxel"))
+    assert estilos == ["voxel"] and otra.arte.registro == "retrato_ia" and "parecido" in nota
+    assert direccion.AVISO_RETRATO_GENERADO in otra.revision_humana
+    # Con libro, la cara es la del autor y no otra
+    con_libro = _pieza()
+    nueva, nota = edicion.aplicar_imagen(None, cfg, con_libro, _accion("buscar_retrato", persona="Georges Perec"))
+    assert nueva is None and "Hannah Arendt" in nota

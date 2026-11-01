@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
   // Solo local: se abre como http://localhost:3000 o http://127.0.0.1:3000.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   cacheComponents: true,
+  experimental: {
+    // El proxy de /api corta por defecto a los 30 s: un turno del chat con Opus, programar en Buffer o la
+    // descarga del .zip tardan más, y la web devolvía un 500 («socket hang up», 2/11) mientras la api terminaba
+    proxyTimeout: 300_000,
+  },
   partialPrefetching: true,
   turbopack: {
     rules: {
