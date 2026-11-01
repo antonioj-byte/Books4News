@@ -174,6 +174,13 @@ class IlustracionEditorial(_Seccion):
     creditos_imagen: int = Field(default=25, ge=0)   # para el panel de gasto: la API no da el coste
 
 
+class Friso(_Seccion):
+    """La banda superior de las tres fichas de «Tres libros» (2/11, opción B elegida por el usuario): una ilustración
+    que cruza las tres diapositivas de libro."""
+    activo: bool = True
+    max_por_dia: int = Field(default=3, ge=0)
+
+
 class Arte(_Seccion):
     # Composiciones de portada que puede elegir el director de arte. La ilustración vectorial
     # dibujada por el modelo se desactivó el 31/10: el resultado parece clip-art.
@@ -196,6 +203,7 @@ class Arte(_Seccion):
     # Ilustración editorial de la pieza (B1), que cruza la portada y la noticia (B6); el buscador de la
     # portada (B2) y el mapa de la idea dibujado como tres salas (B4)
     ilustracion_editorial: IlustracionEditorial = Field(default_factory=lambda: IlustracionEditorial())
+    friso: Friso = Field(default_factory=lambda: Friso())
     buscador: bool = True
     buscador_max_por_dia: int = Field(default=1, ge=0)   # 2/11 (a petición del usuario): recurso opcional, «queda muy recargado»
     mapa_ilustrado: bool = False
@@ -325,6 +333,7 @@ def perfil_dev(cfg: Config) -> Config:
     dev.pipeline.arte.retrato_generado.activo = False      # tampoco se pagan retratos generados
     dev.pipeline.arte.esquema.activo = False               # ni ilustraciones de esquema (Magnific)
     dev.pipeline.arte.ilustracion_editorial.activo = False # ni ilustraciones editoriales
+    dev.pipeline.arte.friso.activo = False                 # ni frisos de «Tres libros»
     return dev
 
 

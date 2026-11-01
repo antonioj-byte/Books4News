@@ -288,6 +288,12 @@ class EscenaLLM(_TodoObligatorio):
     idea: str = Field(description="La metáfora, en español, en una frase")
 
 
+class EscenaFrisoLLM(_TodoObligatorio):
+    """El ilustrador (prompts/escena_friso.md): la escena continua del friso de las tres fichas de libro."""
+    escena: str = Field(description="Lo que se ve, en inglés, de 30 a 60 palabras (como mucho 90): un paisaje continuo con un motivo por libro, de izquierda a derecha")
+    idea: str = Field(description="La metáfora, en español, en una frase")
+
+
 class EscenasLLM(_TodoObligatorio):
     """El ilustrador (prompts/escena_editorial.md): escenas distintas para la ilustración editorial de la pieza."""
     escenas: list[EscenaLLM] = Field(description="Escenas distintas, cada una con su metáfora")
@@ -341,6 +347,8 @@ class Arte(BaseModel):
     esquema: str | None = None           # crédito de la ilustración técnica de Magnific (infografía «esquema»)
     escena: str | None = None            # escena (en inglés) de la ilustración editorial (recurso «ilustracion», portada «panorama»)
     escena_idea: str | None = None       # su metáfora, en español, para enseñarla en la web
+    friso: str | None = None             # escena del friso de las tres fichas de libro («Tres libros», 2/11)
+    friso_idea: str | None = None        # su metáfora, en español
     pregunta: str | None = None          # la del buscador de la portada (B2)
     # Registro de la imagen de portada, para barajar en el día (31/10): la foto real del autor, su retrato
     # generado con IA, la ilustración editorial o la imagen de archivo

@@ -25,10 +25,10 @@ import yaml
 from PIL import Image, ImageDraw, ImageFont
 
 from folio import infografia, sin_foto
-from folio.imagenes import cubiertas, editorial, esquema, ilustracion, libres, prensa, retrato_generado, retratos
+from folio.imagenes import cubiertas, editorial, esquema, friso, ilustracion, libres, prensa, retrato_generado, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
-from folio.modelos import Arte, EleccionIlustracion, EleccionImagen, EscenasLLM, Infografia, Pieza, PropuestaArte
+from folio.modelos import Arte, EleccionIlustracion, EleccionImagen, EscenaFrisoLLM, EscenasLLM, Infografia, Pieza, PropuestaArte
 from folio.verificacion_texto import normalizar
 
 log = logging.getLogger(__name__)
@@ -295,6 +295,54 @@ def _del_dia(contar, cfg: Config, pieza: Pieza, dir_fecha: Path) -> int:
     las de la carpeta de prueba."""
     real = cfg.dir_cache(pieza.fecha)
     return contar(real, pieza.id) + (contar(dir_fecha, pieza.id) if dir_fecha != real else 0)
+
+
+def diapositivas_de_libro(pieza: Pieza) -> list:
+    return [d for d in (pieza.guion.diapositivas if pieza.guion else []) if d.tipo == "libro"]
+
+
+def lleva_friso(cfg: Config, pieza: Pieza, tono: str | None) -> bool:
+    """El friso de las tres fichas (2/11, opción B elegida por el usuario): solo en «Tres libros» con sus tres
+    diapositivas de libro y nunca en las graves."""
+    return (cfg.pipeline.arte.friso.activo and pieza.eleccion.formato == "balda" and tono != "grave"
+            and len(diapositivas_de_libro(pieza)) == 3)
+
+
+def escena_friso(llm: LLM, cfg: Config, pieza: Pieza) -> tuple[str | None, str, str | None]:
+    """El ilustrador escribe la escena del friso. Devuelve (escena o None, idea, motivo si no vale)."""
+    bloque = "\n\n".join(f"Ficha {i}: {d.texto}" for i, d in enumerate(diapositivas_de_libro(pieza), 1))
+    prompt = cargar_prompt(cfg, "escena_friso", {"[pegar libros]": f"<libros>\n{bloque}\n</libros>"})
+    r, _ = llm.estructurado(f"escena-friso:{pieza.id}", [{"role": "user", "content": prompt}], EscenaFrisoLLM,
+                            etapa_modelo="escena", max_tokens=2000)
+    escena, motivo = editorial.validar_escena(r.escena, editorial.nombres_de_pieza(pieza), max_palabras=friso.MAX_PALABRAS)
+    return escena, r.idea.strip(), motivo
+
+
+def _friso(llm: LLM, cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
+    """Dibuja el friso si toca. Nunca para la etapa: si algo falla, las fichas salen como siempre, con su aviso."""
+    if not lleva_friso(cfg, pieza, arte.tono):
+        return
+    hecho = friso.de_pieza(pieza.id, dir_fecha)
+    if hecho and hecho.descripcion and (libres.dir_imagenes(dir_fecha) / hecho.local).exists():
+        # Relanzar el arte de la pieza no vuelve a pagar el friso: se queda el que tiene (el chat lo rehace si se pide)
+        arte.friso = hecho.descripcion
+        return
+    if _del_dia(friso.del_dia, cfg, pieza, dir_fecha) >= cfg.pipeline.arte.friso.max_por_dia:
+        arte.avisos.append("Friso: ya se han hecho los del día")
+        return
+    try:
+        escena, idea, motivo = escena_friso(llm, cfg, pieza)
+        if not escena:
+            arte.avisos.append(f"Friso: la escena no vale ({motivo})")
+            return
+        img, descartes = friso.generar_limpio(llm, cfg, pieza.id, dir_fecha, escena)
+    except Exception as exc:
+        arte.avisos.append(f"Friso: no se pudo dibujar ({type(exc).__name__}: {str(exc)[:120]})")
+        return
+    if descartes:
+        arte.avisos.append(f"Friso: descartadas {len(descartes)} por {'; '.join(descartes)}")
+    if img:
+        arte.friso, arte.friso_idea = escena, idea
 
 
 def _escenas(llm: LLM, cfg: Config, pieza: Pieza, sugerida: str | None, n: int) -> list[tuple[str, str]]:
@@ -621,5 +669,6 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
     if arte.registro == "archivo" and not arte.imagen:
         arte.registro = None
     _esquema(cfg, pieza, arte, dir_fecha)
+    _friso(llm, cfg, pieza, arte, dir_fecha)
     _cubiertas(cfg, pieza, arte, dir_fecha)
     return arte

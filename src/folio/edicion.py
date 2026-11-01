@@ -38,7 +38,7 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato", "cubierta"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato", "cubierta", "friso"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
@@ -46,12 +46,13 @@ class AccionImagen(BaseModel):
                     "retrato_ilustrado: pasar esa foto a ilustración en un estilo de la casa; "
                     "usar_material: poner en la pieza una foto que ha subido quien edita; "
                     "formato: destacado del titular, antetítulo o color de la pieza; "
-                    "cubierta: la cubierta (y la ficha) de otra edición en castellano de un libro, por su editorial o ISBN")
+                    "cubierta: la cubierta (y la ficha) de otra edición en castellano de un libro, por su editorial o ISBN; "
+                    "friso: dibujar de nuevo (o quitar) la ilustración en banda que cruza las tres fichas de «Tres libros»")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
     consultas: list[str] = Field(description="Solo buscar_archivo: 3 o 4 búsquedas de 1 a 3 palabras, en inglés; si no, vacía")
-    escena: str = Field(description="Solo ilustrar: la metáfora visual en inglés, de 12 a 70 palabras, sin nombres propios, cifras ni comillas; si no, vacío")
+    escena: str = Field(description="Solo ilustrar o friso: la escena en inglés, de 12 a 70 palabras, sin nombres propios, cifras ni comillas (en el friso, un paisaje continuo con un motivo por libro de izquierda a derecha; vacía, la escribe el ilustrador; «ninguno», quita el friso); si no, vacío")
     persona: str = Field(description="Solo buscar_retrato: nombre completo de la persona real (el autor del libro o quien protagoniza la historia); si no, vacío")
     estilo: str = Field(description="Solo retrato_ilustrado: low_poly, voxel, render_2000 o dithering (vacío: el que va con el tono); si no, vacío")
     material: str = Field(description="Solo usar_material: el id del material (la foto subida); si no, vacío")
@@ -243,6 +244,32 @@ def _imagen_sin_romper(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tupl
         return None, f"(No se pudo cambiar la imagen: {type(exc).__name__}: {str(exc)[:160]}.)"
 
 
+def _friso(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
+    """Dibuja de nuevo el friso de las tres fichas de «Tres libros», con la escena que se pida o una nueva del
+    ilustrador, o lo quita (2/11). Sin tope diario: lo pide quien edita, una vez cada vez (25 créditos)."""
+    from folio import arte as direccion
+    from folio.imagenes import editorial, friso
+    if a.escena.strip().lower() in ("ninguno", "ninguna", "quitar", "sin"):
+        if not ar.friso:
+            return None, "(La pieza no lleva friso.)"
+        ar.friso = ar.friso_idea = None
+        return nueva, "(Quitado el friso de las fichas.)"
+    if not direccion.lleva_friso(cfg, nueva, ar.tono):
+        return None, "(El friso solo va en «Tres libros» con sus tres diapositivas de libro, y nunca en piezas graves.)"
+    if a.escena.strip():
+        escena, motivo = editorial.validar_escena(a.escena, editorial.nombres_de_pieza(nueva), max_palabras=friso.MAX_PALABRAS)
+        idea = ""
+    else:
+        escena, idea, motivo = direccion.escena_friso(llm, cfg, nueva)
+    if not escena:
+        return None, f"(La escena del friso no vale: {motivo}.)"
+    img, descartes = friso.generar_limpio(llm, cfg, nueva.id, dir_fecha, escena)
+    if not img:
+        return None, f"(El friso salió con {'; '.join(descartes)}: no lo pongo. Pide otro.)"
+    ar.friso, ar.friso_idea = escena, idea or ar.friso_idea
+    return nueva, f"(Friso nuevo en las tres fichas{': ' + idea if idea else ''}.)"
+
+
 def _cubierta(cfg: Config, nueva: Pieza, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
     """La cubierta de otra edición en castellano de un libro de la pieza (2/11, a petición del usuario: «pon la portada
     de la edición de Random House/Mondadori, en lugar de la extranjera»). La edición la dan Open Library o Google Books
@@ -335,6 +362,8 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return _formato(nueva, ar, a)
     if a.tipo == "cubierta":
         return _cubierta(cfg, nueva, a, dir_fecha)
+    if a.tipo == "friso":
+        return _friso(llm, cfg, nueva, ar, a, dir_fecha)
     if a.tipo == "encuadre":
         usa_retrato = retrato and ar.registro in ("foto_autor", "retrato_ia", None) and ar.portada != "panorama"
         img, clave = (retrato, f"{p.id}-retrato") if usa_retrato else (archivo, p.id)

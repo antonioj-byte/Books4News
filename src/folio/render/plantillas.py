@@ -213,6 +213,17 @@ class Plantillas:
             out["tam_golpe"] = 150 if palabras <= 6 else 124 if palabras <= 9 else 104
         return out
 
+    def _friso(self, pieza: Pieza, d: Diapositiva, n: int) -> dict | None:
+        """El friso de «Tres libros» en su diapositiva de libro: qué tercio le toca (0, 1 o 2). Solo con las tres
+        diapositivas de libro: si una edición deja dos, el friso no se pinta (saldría cortado)."""
+        if d.tipo != "libro" or not (pieza.arte and pieza.arte.friso):
+            return None
+        de_libro = [i for i, x in enumerate(pieza.guion.diapositivas, 1) if x.tipo == "libro"]
+        img = self.medios.imagen(pieza, "-friso")
+        if len(de_libro) != 3 or not img:
+            return None
+        return {"src": img["src"], "k": de_libro.index(n)}
+
     def _medios_y_arte(self, pieza: Pieza, d: Diapositiva, n: int) -> dict:
         a = pieza.arte
         imagen = self.medios.imagen(pieza)
@@ -262,7 +273,7 @@ class Plantillas:
             "libro": libro, "sin_foto": sin_foto, "infografia": info, "contar": contar, "interferencia": interferencia,
             # Las diapositivas que también salen en vídeo (folio.render.video): la portada con imagen o con
             # interferencia, la noticia con cifra que cuenta o con palabra gigante, la idea con infografía
-            "panorama": panorama, "buscador": buscador,
+            "panorama": panorama, "buscador": buscador, "friso": self._friso(pieza, d, n),
             # Lo del pie en las diapositivas: el sello de ficha verificada y los medios que cuentan la noticia
             "sello": bool(self.cfg.pipeline.arte.sello_verificacion and libro and libro.get("verificado")),
             "medios": (list(dict.fromkeys(f.medio for f in pieza.fuentes))[:4]

@@ -20,7 +20,8 @@ def creditos_pie(a: Arte) -> list[str]:
     return ([f"Retrato: {a.retrato}{sa}"] if a.retrato else []) + \
            ([f"{'Ilustración' if a.recurso in ('grabado', 'ilustracion') else 'Imagen'}: {a.credito}"] if a.credito else []) + \
            ([f"Imagen de la noticia: {a.credito_noticia}"] if a.credito_noticia else []) + \
-           ([f"Infografía: {a.esquema}"] if a.esquema and a.infografia and a.infografia.tipo == "esquema" else [])
+           ([f"Infografía: {a.esquema}"] if a.esquema and a.infografia and a.infografia.tipo == "esquema" else []) + \
+           (["Ilustración de las fichas: generada con IA (Magnific) para Folio"] if a.friso else [])
 
 
 def _libro_md(l: LibroVerificado) -> list[str]:

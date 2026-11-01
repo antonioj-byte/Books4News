@@ -412,3 +412,10 @@
   patron: "«Si el tema no es una super entrevista, no merece la pena decir «según recoge Infobae» (es una información que sabe todo el mundo)»."
   propuesta: "El pie no tiene que citar un medio; solo se atribuye lo que es de un medio (una entrevista, una exclusiva). Las fuentes van en el colofón."
   evidencia: ["Conversación, 2/11: pie de la pieza de Gonçalo M. Tavares"]
+
+- clave: friso-tres-libros
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "«Vamos con la banda superior, me encanta. Usemos este recurso en casos como este» (una ilustración que atraviese las tres fichas de libro)."
+  propuesta: "En «Tres libros», un friso: una ilustración en banda que cruza la parte de arriba de las tres fichas de libro, con un motivo de cada libro de izquierda a derecha, detrás de las cubiertas."
+  evidencia: ["Conversación, 2/11: Artifact «Tríptico de las fichas», opción B, con la pieza de Gonçalo M. Tavares"]

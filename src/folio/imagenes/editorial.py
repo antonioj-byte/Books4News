@@ -71,14 +71,14 @@ def estilo(cfg: Config) -> str:
     return m.group(1).strip()
 
 
-def validar_escena(escena: str | None, prohibidos: set[str] = frozenset()) -> tuple[str | None, str | None]:
+def validar_escena(escena: str | None, prohibidos: set[str] = frozenset(), max_palabras: int = 70) -> tuple[str | None, str | None]:
     """La escena si sirve; si no, (None, motivo). Sin nombres propios (palabras con mayúscula que no
-    empiezan frase), comillas ni cifras, y de 12 a 70 palabras."""
+    empiezan frase), comillas ni cifras, y de 12 a `max_palabras` palabras (el friso, con tres motivos, admite más)."""
     if not escena:
         return None, "sin escena"
     e = " ".join(escena.split())
-    if not 12 <= len(e.split()) <= 70:
-        return None, "la escena tiene que tener de 12 a 70 palabras"
+    if not 12 <= len(e.split()) <= max_palabras:
+        return None, f"la escena tiene que tener de 12 a {max_palabras} palabras (tiene {len(e.split())})"
     if re.search(r"[\"“”«»]|\d", e):
         return None, "la escena no puede llevar comillas ni cifras"
     propios = _nombres_propios(e, prohibidos)

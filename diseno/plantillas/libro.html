@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+{% block fondo %}{% if friso %}
+  {# El friso de «Tres libros» (2/11, opción B elegida por el usuario): una ilustración que cruza en banda las tres
+     fichas de libro; cada ficha enseña su tercio (--k: 0, 1 o 2) #}
+  <div class="friso" aria-hidden="true" style="--k: {{ friso.k }}; background-image: url('{{ friso.src }}')"></div>
+{% endif %}{% endblock %}
 {% block cuerpo %}
     {% if libro %}{% with l=libro %}
     <div class="escaparate"><span class="escaparate__bloque"></span>{% include "_cubierta.html" %}
