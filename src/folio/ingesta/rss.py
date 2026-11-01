@@ -75,9 +75,37 @@ def _descargar(cliente: httpx.Client, fuente: Fuente) -> tuple[Fuente, list[Arti
         return fuente, [], f"{fuente.medio} ({fuente.url}): {exc}"
 
 
+DIAS_PAUSA_BLOQUEO = 7
+
+
+def _pausados(cfg: Config, ahora: datetime) -> dict[str, str]:
+    """Feeds que respondieron 403 o 429 en los últimos días (data/feeds_pausados.json): no se les vuelve a pedir
+    hasta que pase la pausa (regla de la casa: ante un bloqueo se para; con la lectura cada dos horas, insistir sería
+    pedir doce veces al día a quien nos ha dicho que no)."""
+    import json
+    try:
+        datos = json.loads((cfg.dir_datos / "feeds_pausados.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    limite = ahora - timedelta(days=DIAS_PAUSA_BLOQUEO)
+    return {u: d for u, d in datos.items() if datetime.fromisoformat(d) >= limite}
+
+
+def _pausar(cfg: Config, urls: list[str], pausados: dict[str, str], ahora: datetime) -> None:
+    import json
+    datos = dict(pausados) | {u: ahora.isoformat() for u in urls}
+    f = cfg.dir_datos / "feeds_pausados.json"
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(datos, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
 def ingerir(cfg: Config, ahora: datetime | None = None) -> tuple[list[Articulo], list[str]]:
-    """Devuelve los artículos dentro de la ventana, deduplicados, y los errores por feed."""
+    """Devuelve los artículos dentro de la ventana, deduplicados, y los errores por feed. Un feed que responde 403 o
+    429 se pausa DIAS_PAUSA_BLOQUEO días."""
     ahora = ahora or datetime.now(timezone.utc)
+    pausados = _pausados(cfg, ahora)
+    fuentes = [f for f in cfg.fuentes if f.url not in pausados]
+    bloqueados: list[str] = []
     limites = {"actualidad": ahora - timedelta(hours=cfg.pipeline.ingesta.ventana_horas),
                "editorial": ahora - timedelta(hours=cfg.pipeline.ingesta.ventana_horas_editorial)}
     errores: list[str] = []
@@ -90,8 +118,11 @@ def ingerir(cfg: Config, ahora: datetime | None = None) -> tuple[list[Articulo],
         follow_redirects=True,
         headers={"User-Agent": f"Mozilla/5.0 (compatible; {cfg.user_agent})"},
     ) as cliente, ThreadPoolExecutor(max_workers=8) as pool:
-        for fuente, lote, error in pool.map(lambda f: _descargar(cliente, f), cfg.fuentes):
+        for fuente, lote, error in pool.map(lambda f: _descargar(cliente, f), fuentes):
             if error:
+                if re.search(r"\b(403|429)\b", error):
+                    bloqueados.append(fuente.url)
+                    error += f" · pausado {DIAS_PAUSA_BLOQUEO} días (no se le vuelve a pedir)"
                 errores.append(error)
                 log.warning("Feed fallido: %s", error)
                 continue
@@ -104,4 +135,8 @@ def ingerir(cfg: Config, ahora: datetime | None = None) -> tuple[list[Articulo],
                 vistos_url.add(a.url)
                 vistos_titulo.add(clave_titulo)
                 articulos.append(a)
+    if bloqueados:
+        _pausar(cfg, bloqueados, pausados, ahora)
+    if pausados:
+        errores.append(f"{len(pausados)} feeds en pausa por un 403 o 429 de los últimos {DIAS_PAUSA_BLOQUEO} días: no se les ha pedido")
     return articulos, errores

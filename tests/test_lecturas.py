@@ -46,3 +46,25 @@ def test_el_lector_no_choca_con_una_ejecucion_en_marcha():
     lanzadas = []
     assert not Lector(Ej(True), 120, lambda: lanzadas.append(1) or 0).una_vuelta() and lanzadas == []
     assert Lector(Ej(False), 120, lambda: lanzadas.append(1) or 0).una_vuelta() and lanzadas == [1]
+
+
+def test_un_feed_que_bloquea_se_pausa_una_semana(cfg, monkeypatch):
+    import httpx
+    from folio.config import Fuente
+    cfg.fuentes = [Fuente(medio="Asymptote", url="https://asymptote.example/feed", idioma="en", acceso="abierto", carril="editorial"),
+                   Fuente(medio="Otro", url="https://otro.example/feed", idioma="es", acceso="abierto")]
+    pedidas = []
+
+    def manejar(req):
+        pedidas.append(str(req.url))
+        return httpx.Response(403) if "asymptote" in str(req.url) else httpx.Response(200, text="<rss><channel></channel></rss>")
+    real = httpx.Client
+    monkeypatch.setattr(rss.httpx, "Client", lambda **k: real(transport=httpx.MockTransport(manejar)))
+    _, errores = rss.ingerir(cfg, AHORA)
+    assert any("Asymptote" in e and "pausado" in e for e in errores)
+    pedidas.clear()
+    _, errores = rss.ingerir(cfg, AHORA + timedelta(hours=2))
+    assert pedidas == ["https://otro.example/feed"] and any("en pausa" in e for e in errores)
+    pedidas.clear()
+    rss.ingerir(cfg, AHORA + timedelta(days=8))                        # pasada la semana, se vuelve a probar
+    assert "https://asymptote.example/feed" in pedidas
