@@ -34,8 +34,10 @@ Variables:
 `FOLIO_API` se usa al construir la web (los rewrites quedan fijados en el build): si cambia, hay que
 volver a desplegar «web». `FOLIO_CLAVE_WEB` se lee al arrancar.
 
-Actualizar: los dos servicios despliegan la rama `fase-3-web` con el autodespliegue apagado, así que
-cada versión nueva se despliega a mano (en cada servicio, «Deploy» del último commit, o «Redeploy»).
+Actualizar: desde el 2/11 los dos servicios tienen el **autodespliegue encendido** sobre la rama
+`fase-3-web` (lo activó el usuario al dejar de usar Instinct): cada push a esa rama se despliega solo en
+unos minutos, así que solo se sube a `fase-3-web` cuando el usuario dice «mergea». Para desplegar a mano
+(o repetir un despliegue): en cada servicio, «Deploy» del último commit, o «Redeploy».
 Las variables nuevas se añaden en el servicio y Railway pide desplegar para aplicarlas. Desde el 31/10,
 cada ejecución lee también unos 1.100 artículos del carril editorial: un par de minutos más de
 embeddings, con la misma memoria.
