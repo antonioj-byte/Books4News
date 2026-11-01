@@ -130,3 +130,7 @@ Haiku (antes y después con el prompt del guionista).
 - Otros candidatos de coste vistos: el chat no cachea sus instrucciones fijas entre turnos cuando la pieza cambia
   (`chat_edicion.md` va sin `con_cache`, ~1.700 tokens); el jefe de los temas y la selección con «completar»
   también son conversaciones. Menos gasto, para otra ronda.
+- **Aviso al cerrar la ronda 2**: tras rebasar, `tests/test_config.py::test_pipeline_yaml_tipado` falla con
+  `KeyError: 'voz-estilo'`. Lo trae el commit `1942db5` («Ronda 1 de la voz», otra sesión que trabaja en la misma
+  rama), que cambió las variantes de `ab` en `config/pipeline.yaml`; falla igual sin los cambios de esta ronda. No se
+  ha tocado: es trabajo en curso de la otra sesión.
