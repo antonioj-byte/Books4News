@@ -14,7 +14,7 @@ from datos import ELECCION, LIBRO, guion_valido
 
 
 def _accion(tipo, **k):
-    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", editorial="", isbn="")
+    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", sin_castellano="", editorial="", isbn="")
     return AccionImagen(**(datos | k))
 
 
@@ -241,3 +241,24 @@ def test_los_enlaces_del_chat_se_leen_y_se_guardan(cfg):
     ms = materiales.lista(cfg, _pieza())
     assert [m.nombre for m in ms] == ["https://www.ft.com/content/abc?x=1"] and ms[0].nota == materiales.NOTA_ENLACE
     assert len(avisos) == 1 and "403" in avisos[0]
+
+
+def test_titulo_sin_traducir_solo_si_se_pide_expresamente(cfg, monkeypatch):
+    """2/11, regla del usuario: «que yo pueda dar instrucciones a títulos extranjeros, excepcionalmente»."""
+    from folio.pipeline import Pipeline
+    vistos = []
+    def verificar(self, pieza, reservados):
+        vistos.append(self.permitir_sin_castellano)
+        if not self.permitir_sin_castellano:
+            from folio.modelos import LibroDescartado
+            pieza.libros_descartados = [LibroDescartado(titulo="Killer App", autor="Darren Loucaides",
+                                                        motivo="sin edición en castellano verificada")]
+            return False
+        pieza.libros = [LIBRO.model_copy(update={"titulo_propuesto": "Killer App", "edicion_es": "desconocido"})]
+        return True
+    monkeypatch.setattr(Pipeline, "_verificar", verificar)
+    monkeypatch.setattr(Pipeline, "_cubiertas_de", lambda self, pieza: None)
+    nada, nota = edicion.aplicar_imagen(None, cfg, _pieza(), _accion("cambiar_libro", libro="Killer App", autor="Darren Loucaides"))
+    assert nada is None and "por excepción" in nota
+    nueva, _ = edicion.aplicar_imagen(None, cfg, _pieza(), _accion("cambiar_libro", libro="Killer App", autor="Darren Loucaides", sin_castellano="si"))
+    assert nueva and vistos == [False, True]

@@ -440,3 +440,10 @@
   patron: "«Te has confundido enteramente de libro. El bueno es Killer App, de Darren Loucaides [enlace]. Rehazlo de 0, y mira el material que te pasé» (el editor contestó que no podía)."
   propuesta: "El chat lee los enlaces que se le pegan (como material de la pieza) y puede cambiar el libro: lo verifica, pasa los enlaces a las fuentes y deja la pieza pendiente para reescribirla con «Proceder»."
   evidencia: ["Conversación, 2/11: pieza 2026-11-01-8, Pavel Durov"]
+
+- clave: excepcion-titulos-sin-traducir
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«Pon como regla que yo pueda dar instrucciones a títulos extranjeros, excepcionalmente»."
+  propuesta: "Un libro sin edición en castellano entra solo si la redacción lo pide expresamente (en el chat o en un tema); ningún agente lo hace por su cuenta."
+  evidencia: ["Conversación, 2/11: Killer App, de Darren Loucaides, para la pieza de Pavel Durov"]

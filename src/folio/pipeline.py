@@ -85,6 +85,9 @@ class Pipeline:
         self.radar: list[HistoriaElegida] = []     # temas del radar del libro (folio.radar)
         self.puentes: dict[str, tuple[int, str]] = {}   # nota del evaluador de puentes por historia (folio.puentes)
         self.sin_novedad = False                     # temas de la redacción: un perfil necesita la obra, no solo novedades (2/11)
+        # Excepción que pide expresamente la redacción (2/11, regla del usuario: «que yo pueda dar instrucciones a títulos
+        # extranjeros, excepcionalmente»): un libro sin edición en castellano puede entrar
+        self.permitir_sin_castellano = False
         self._preverificados: dict = {}             # (título, autor) → ficha o NoVerificado (folio.pipeline._preverificar)
         self._embedder: agrupacion.Embedder | None = None
         self._avisos_pieza = threading.Lock()       # hechos y arte de «Proceder» van a la vez y tocan pieza.avisos
@@ -348,7 +351,7 @@ class Pipeline:
             except NoVerificado as exc:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=exc.motivo))
                 continue
-            if self.cfg.pipeline.seleccion.solo_con_edicion_es and l.edicion_es != "si":
+            if self.cfg.pipeline.seleccion.solo_con_edicion_es and l.edicion_es != "si" and not self.permitir_sin_castellano:
                 # 2/11, a petición del usuario: solo libros que se pueden leer en castellano (traducidos o escritos en él)
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor,
                                                  motivo=f"sin edición en castellano verificada (edición española: {l.edicion_es})"))

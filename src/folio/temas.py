@@ -161,6 +161,7 @@ class RespuestaJefeTema(BaseModel):
     respuesta: str = Field(description="Una o dos frases para la redacción: qué propones y por qué, o por qué preguntas")
     preguntas: list[str] = Field(description="Hasta dos preguntas a la redacción si sin ellas la propuesta saldría mal; si propones, vacía")
     propuesta: HistoriaElegida | None = Field(description="La propuesta de pieza; null si antes necesitas preguntar")
+    sin_castellano: bool = Field(default=False, description="True solo si la redacción pide expresamente un libro que no tiene edición en castellano")
 
 
 def _bloque_conversacion(conversacion: list[dict]) -> str:
@@ -300,6 +301,8 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
     tuberia = Pipeline(cfg, fecha, llm=llm)
     # Un tema de la redacción (un perfil, un premio a toda una obra) no exige novedades: sí la edición en castellano
     tuberia.sin_novedad = True
+    # Por excepción, un título sin traducir si la redacción lo pide expresamente (2/11, regla del usuario)
+    tuberia.permitir_sin_castellano = bool(r.sin_castellano)
     pieza = None
     for intento in range(2):
         pieza = Pieza(id=pid, fecha=fecha, estado="fallida", historia_id=h.id, eleccion=r.propuesta, n_medios=h.n_medios,

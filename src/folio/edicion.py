@@ -63,6 +63,7 @@ class AccionImagen(BaseModel):
     acento: str = Field(description="Solo formato: el color de la pieza, «pluma» (rojo) o «marcador» (amarillo); «ninguno» lo quita; vacío, no se toca")
     libro: str = Field(description="Solo cubierta: el título del libro de la pieza cuya cubierta se cambia; solo cambiar_libro: el título del libro nuevo, tal como lo da quien edita; si no, vacío")
     autor: str = Field(description="Solo cambiar_libro: el autor del libro nuevo; si no, vacío")
+    sin_castellano: str = Field(description="Solo cambiar_libro: «si» solo si quien edita pide expresamente ese libro aunque no tenga edición en castellano; si no, vacío")
     editorial: str = Field(description="Solo cubierta: la editorial de la edición en castellano que se quiere («Mondadori»); si no, vacío")
     isbn: str = Field(description="Solo cubierta: el ISBN de esa edición, si lo da quien edita; si no, vacío")
 
@@ -293,9 +294,13 @@ def _cambiar_libro(cfg: Config, llm: LLM, nueva: Pieza, a: AccionImagen) -> tupl
     prueba.libros, prueba.libros_descartados, prueba.error = [], [], None
     tuberia = Pipeline(cfg, nueva.fecha, llm=llm)
     tuberia.sin_novedad = True
+    # Por excepción, un título sin traducir si quien edita lo pide expresamente (2/11, regla del usuario)
+    tuberia.permitir_sin_castellano = a.sin_castellano.strip().lower() in ("si", "sí", "true")
     if not tuberia._verificar(prueba, set()):
         motivos = "; ".join(f"{d.titulo}: {d.motivo}" for d in prueba.libros_descartados) or prueba.error or "no aparece en los catálogos"
-        return None, f"(No puedo poner «{a.libro.strip()}»: {motivos}. Sin verificar no entra en una pieza.)"
+        pista = (" Si lo quieres igualmente, dímelo expresamente («aunque no tenga edición en castellano») y lo pongo por excepción."
+                 if "castellano" in motivos and not tuberia.permitir_sin_castellano else "")
+        return None, f"(No puedo poner «{a.libro.strip()}»: {motivos}. Sin verificar no entra en una pieza.{pista})"
     tuberia._cubiertas_de(prueba)
     # Los enlaces leídos en el chat, a las fuentes congeladas de la historia (los usarán el guionista y los hechos)
     etapas = EtapasGuardadas(cfg.dir_cache(nueva.fecha))
