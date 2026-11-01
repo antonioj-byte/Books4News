@@ -1,6 +1,7 @@
 # Carril editorial: medios del mundo del libro, importados de publishing-monitor (medios.csv)
 # con `folio fuentes-editoriales`. Solo los feeds RSS activos. tier 1 = medio de referencia.
 fuentes:
+# Quitados el 2/11 (respondieron 403/429 a la lectura automática; regla de la casa: no se insiste): Le Figaro Livres, Chicago Tribune Books, The Japan Times Culture, The Paris Review, Les Temps Modernes, Focus Kultur, Le Point Culture, Electric Literature, Asymptote
 - medio: Publishing Perspectives
   idioma: en
   acceso: abierto
@@ -66,11 +67,6 @@ fuentes:
   acceso: abierto
   url: https://www.lemonde.fr/livres/rss_full.xml
   tier: 1
-- medio: Le Figaro Livres
-  idioma: fr
-  acceso: abierto
-  url: https://www.lefigaro.fr/rss/figaro_culture.xml
-  tier: 2
 - medio: Libération Livres
   idioma: fr
   acceso: abierto
@@ -186,11 +182,6 @@ fuentes:
   acceso: abierto
   url: https://www.bostonglobe.com/arts/books/?p1=BGHeader_RSS
   tier: 2
-- medio: Chicago Tribune Books
-  idioma: en
-  acceso: abierto
-  url: https://www.chicagotribune.com/entertainment/books/rss2.0.xml
-  tier: 2
 - medio: The Globe and Mail Books
   idioma: en
   acceso: abierto
@@ -256,11 +247,6 @@ fuentes:
   acceso: abierto
   url: https://oglobo.globo.com/cultura/rss.xml
   tier: 2
-- medio: The Japan Times Culture
-  idioma: en
-  acceso: abierto
-  url: https://www.japantimes.co.jp/culture/feed/
-  tier: 2
 - medio: South China Morning Post Culture
   idioma: en
   acceso: abierto
@@ -280,11 +266,6 @@ fuentes:
   idioma: en
   acceso: abierto
   url: https://www.nybooks.com/feed/
-  tier: 1
-- medio: The Paris Review
-  idioma: en
-  acceso: abierto
-  url: https://www.theparisreview.org/blog/feed
   tier: 1
 - medio: Harper's Magazine
   idioma: en
@@ -376,11 +357,6 @@ fuentes:
   acceso: abierto
   url: https://www.lamaletadeportbou.com/feed/
   tier: 2
-- medio: Les Temps Modernes
-  idioma: fr
-  acceso: abierto
-  url: https://www.tempsmodernes.net/feed/
-  tier: 2
 - medio: Esprit
   idioma: fr
   acceso: abierto
@@ -456,11 +432,6 @@ fuentes:
   acceso: abierto
   url: https://newsfeed.zeit.de/kultur/index
   tier: 2
-- medio: Focus Kultur
-  idioma: de
-  acceso: abierto
-  url: https://rss.focus.de/fol/XML/rss_folnews_kultur.xml
-  tier: 2
 - medio: Stern Kultur
   idioma: de
   acceso: abierto
@@ -475,11 +446,6 @@ fuentes:
   idioma: fr
   acceso: abierto
   url: https://www.nouvelobs.com/culture/rss.xml
-  tier: 2
-- medio: Le Point Culture
-  idioma: fr
-  acceso: abierto
-  url: https://www.lepoint.fr/culture/rss.xml
   tier: 2
 - medio: L'Express Culture
   idioma: fr
@@ -571,20 +537,10 @@ fuentes:
   acceso: abierto
   url: https://bookriot.com/feed/
   tier: 2
-- medio: Electric Literature
-  idioma: en
-  acceso: abierto
-  url: https://electricliterature.com/feed/
-  tier: 2
 - medio: The Millions
   idioma: en
   acceso: abierto
   url: https://themillions.com/feed
-  tier: 2
-- medio: Asymptote
-  idioma: en
-  acceso: abierto
-  url: https://www.asymptotejournal.com/blog/feed/
   tier: 2
 - medio: Dosdoce
   idioma: es
