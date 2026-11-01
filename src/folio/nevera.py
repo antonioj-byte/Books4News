@@ -163,6 +163,18 @@ def buscar(llm: LLM, cfg, n: int | None = None, hoy: date | None = None,
     return nuevas, avisos
 
 
+def intentada_hoy(cfg, hoy: date) -> bool:
+    """¿Ya se buscó hoy? La lectura periódica la lanza una vez al día aunque encuentre menos de las pedidas (2/11)."""
+    f = cfg.dir_datos / "nevera_intento.txt"
+    return f.exists() and f.read_text(encoding="utf-8").strip() == hoy.isoformat()
+
+
+def marcar_intento(cfg, hoy: date) -> None:
+    f = cfg.dir_datos / "nevera_intento.txt"
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(hoy.isoformat(), encoding="utf-8")
+
+
 def guardar(cfg, nuevas: list[cajon.Curiosidad]) -> None:
     r = ruta(cfg)
     r.parent.mkdir(parents=True, exist_ok=True)

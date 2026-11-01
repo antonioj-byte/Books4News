@@ -32,7 +32,11 @@ def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importa
         except Exception:                       # noqa: BLE001 — un archivo mal escrito no impide arrancar la web
             logging.getLogger(__name__).exception("No se pudo cargar config/memoria_conversacion.yaml")
     app = FastAPI(title="Folio · web local", version="0.1.0")
-    ejecutor = ejecutor or Ejecutor(cfg.dir_datos)
+    if ejecutor is None:
+        ejecutor = Ejecutor(cfg.dir_datos)
+        if lectura_de_entorno():
+            # Con lectura periódica, la nevera y la Memoria van de día con ella (2/11): la madrugada solo hace la mesa
+            ejecutor.diaria = ejecutor.diaria[:2]
     if programador is None:                     # FOLIO_EJECUCION_DIARIA; sin ella, no se programa nada
         programador = Programador(ejecutor, *hora_de_entorno(), cfg.dir_datos)
         programador.arrancar()

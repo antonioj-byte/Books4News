@@ -419,9 +419,35 @@ def buffer_programar(pieza: str,
                f"descargará están en {r.carpeta}: no los borres hasta que salga.")
 
 
+def _nevera_y_memoria_de_dia(cfg, quiet: bool) -> None:
+    from folio import memoria, nevera
+    from folio.almacen import Almacen
+    from folio.llm import LLM
+    hoy = date.today()
+    if cfg.pipeline.seleccion.nevera_por_dia and not nevera.intentada_hoy(cfg, hoy):
+        nevera.marcar_intento(cfg, hoy)          # antes de buscar: un fallo no se reintenta en cada vuelta
+        try:
+            nuevas, avisos = nevera.buscar(LLM(cfg), cfg)
+            if not quiet:
+                typer.echo(f"Nevera: {len(nuevas)} historias nuevas" + "".join(f"\n{a}" for a in avisos))
+        except Exception as exc:                # noqa: BLE001
+            typer.echo(f"Nevera: no se pudo ({type(exc).__name__}: {exc})")
+    try:
+        almacen = Almacen(cfg.ruta_db)
+        toca, motivo = memoria.toca_analisis(almacen)
+        if toca:
+            ids, aviso, n = memoria.analizar(LLM(cfg), cfg, almacen, origen="semanal")
+            if not quiet:
+                typer.echo(f"Memoria: análisis semanal ({motivo}): {n} piezas, {len(ids)} patrones")
+    except Exception as exc:                    # noqa: BLE001
+        typer.echo(f"Memoria: no se pudo ({type(exc).__name__}: {exc})")
+
+
 @app.command()
-def leer(quiet: bool = typer.Option(False, "--quiet")):
-    """Lectura periódica: descarga los RSS y guarda lo nuevo con la hora de primera lectura (gratis, sin modelo)."""
+def leer(quiet: bool = typer.Option(False, "--quiet"),
+         de_dia: bool = typer.Option(True, "--de-dia/--solo-rss", help="Además: embeddings, catálogo, nevera y Memoria")):
+    """Lectura periódica: descarga los RSS y guarda lo nuevo con su primera lectura; de día, además, los embeddings,
+    unas pocas editoriales del catálogo, la nevera del cajón (una vez al día) y, si toca, la Memoria."""
     from folio import catalogo
     from folio.ingesta import lecturas
     cfg = config.cargar()
@@ -429,15 +455,18 @@ def leer(quiet: bool = typer.Option(False, "--quiet")):
     if not quiet:
         typer.echo(f"Lectura: {nuevos} artículos nuevos; {total} guardados; {len(errores)} feeds fallidos")
     # Los embeddings de los artículos nuevos, para que la madrugada no los calcule todos (2/11)
-    if cfg.pipeline.ingesta.embeddings_de_dia:
+    if de_dia and cfg.pipeline.ingesta.embeddings_de_dia:
         try:
             calculados, en_cache = lecturas.embeber(cfg)
             if not quiet:
                 typer.echo(f"Embeddings: {calculados} nuevos; {en_cache} en la caché")
         except Exception as exc:                # noqa: BLE001 — la lectura periódica nunca falla por esto
             typer.echo(f"Embeddings: no se pudieron calcular ({type(exc).__name__}: {exc})")
+    # La nevera del cajón (una vez al día) y, los lunes, el análisis de la Memoria: fuera de la madrugada (2/11)
+    if de_dia:
+        _nevera_y_memoria_de_dia(cfg, quiet)
     # Y el catálogo de las independientes, de fondo (2/11): unas pocas editoriales caducadas por vuelta, sin modelo
-    if cfg.pipeline.seleccion.reparto.get("recomendado"):
+    if de_dia and cfg.pipeline.seleccion.reparto.get("recomendado"):
         try:
             ref, fichas, avisos = catalogo.leer_de_fondo(cfg, date.today())
         except Exception as exc:                # noqa: BLE001 — la lectura periódica nunca falla por el catálogo

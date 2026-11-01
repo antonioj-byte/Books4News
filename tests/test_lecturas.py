@@ -91,3 +91,33 @@ def test_embeddings_de_dia_en_la_cache_comun(cfg, monkeypatch):
     monkeypatch.setattr(agrupacion.Embedder, "_cargar", lambda self: (_ for _ in ()).throw(AssertionError("no debe cargar")))
     v = Pipeline(cfg, "2026-11-03").vectores([_art(1), _art(2)])
     assert set(v) == {"a1", "a2"}
+
+
+def test_nevera_y_memoria_de_dia_una_vez(cfg, monkeypatch):
+    """2/11: la lectura periódica lanza la nevera una vez al día (aunque encuentre menos) y la Memoria si toca."""
+    from typer.testing import CliRunner
+    from folio import cli, config, memoria, nevera
+    monkeypatch.setattr(config, "cargar", lambda *a, **k: cfg)
+    monkeypatch.setattr(rss, "ingerir", lambda cfg, ahora=None: ([], []))
+    monkeypatch.setattr(lecturas, "embeber", lambda cfg: (0, 0))
+    llamadas = []
+    monkeypatch.setattr(nevera, "buscar", lambda llm, cfg: llamadas.append("nevera") or ([], ["Nevera: nada nuevo"]))
+    monkeypatch.setattr(memoria, "analizar", lambda llm, cfg, almacen, origen: llamadas.append(origen) or ([], "", 0))
+    cfg.pipeline.seleccion.reparto = {"lateral": 1}                       # sin catálogo de fondo en el test
+    for _ in range(2):
+        r = CliRunner().invoke(cli.app, ["leer"])
+        assert r.exit_code == 0, r.output
+    assert llamadas.count("nevera") == 1 and "semanal" in llamadas      # dos vueltas, una sola nevera
+
+
+def test_con_lectura_periodica_la_diaria_solo_hace_la_mesa(cfg, monkeypatch):
+    from folio import render
+    from folio.almacen import Almacen
+    from folio_api import main
+    (cfg.raiz / "diseno").symlink_to(render.dir_diseno(type(cfg)(pipeline={}, fuentes=[])).resolve())
+    monkeypatch.setenv("FOLIO_LECTURA_CADA", "120")
+    monkeypatch.setattr(main.Lector, "arrancar", lambda self: None)
+    monkeypatch.setattr(main.Programador, "arrancar", lambda self: None)
+    app = main.crear_app(cfg, Almacen(cfg.ruta_db), importar=False)
+    diaria = app.state.folio.ejecutor.diaria
+    assert len(diaria) == 2 and diaria[1][-2:] == ["render", "--video"]
