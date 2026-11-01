@@ -265,3 +265,10 @@
   patron: "«Molaría pasarle al redactor jefe de cultura vía chat el tema del cual queremos que se hable (por si nosotros queremos proponer temas)»."
   propuesta: "La redacción propone temas desde la mesa: ahora (el jefe lo convierte en una pieza pendiente con sus libros verificados) o para la madrugada, donde el jefe los lleva a la mesa por delante de otros de su formato salvo que no se sostengan."
   evidencia: ["Conversación, 2/11: petición del usuario; prueba real con la huelga de traductores en Francia"]
+
+- clave: portada-con-puente
+  fecha: "2026-11-02"
+  destino: guionista
+  patron: "«Esta pieza no tiene sentido: el titular habla de que el más rápido tiene 41 años; el subtítulo (libro) explica el decaimiento del cuerpo. No veo el link»."
+  propuesta: "Titular y subtítulo se leen como una sola idea: el subtítulo dice qué explica el libro de esta noticia en concreto; el lector sin contexto señala la portada si no se ve el puente."
+  evidencia: ["Conversación, 2/11: portada de Fórmula 1 con Why We Die de Venki Ramakrishnan"]

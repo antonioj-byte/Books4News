@@ -26,6 +26,14 @@ document.fonts.ready.then(() => {
     }
     if (caja.scrollHeight > caja.clientHeight + 1) document.body.dataset.desborda = "1";
   }
+  // La pregunta del buscador va en una línea (para teclearla en el vídeo): si no cabe, se encoge la letra en vez
+  // de cortarla (2/11: «por qué dejamos de repararnos con lo…»)
+  for (const caja of document.querySelectorAll(".buscador")) {
+    const texto = caja.querySelector(".buscador__texto");
+    if (!texto) continue;
+    let tam = parseFloat(getComputedStyle(caja).fontSize);
+    while (texto.scrollWidth > texto.clientWidth + 1 && tam > 18) { tam -= 1; caja.style.fontSize = tam + "px"; }
+  }
   // El colofón no tiene .texto: se encoge entero con su escala hasta que quepa en la ficha (2/11: con cinco
   // noticias y los créditos de la ilustración, la última línea se salía por abajo)
   for (const caja of document.querySelectorAll(".diapositiva--colofon .cuerpo")) {
