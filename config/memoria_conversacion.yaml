@@ -409,6 +409,6 @@
 - clave: sin-segun-recoge
   fecha: "2026-11-02"
   destino: guionista
-  patron: "«Si el tema no es una super entrevista, no merece la pena decir "según recoge Infobae" (es una información que sabe todo el mundo)»."
+  patron: "«Si el tema no es una super entrevista, no merece la pena decir «según recoge Infobae» (es una información que sabe todo el mundo)»."
   propuesta: "El pie no tiene que citar un medio; solo se atribuye lo que es de un medio (una entrevista, una exclusiva). Las fuentes van en el colofón."
   evidencia: ["Conversación, 2/11: pie de la pieza de Gonçalo M. Tavares"]
