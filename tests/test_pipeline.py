@@ -432,3 +432,31 @@ def test_solo_libros_con_edicion_en_castellano(cfg):
     cfg.pipeline.seleccion.solo_con_edicion_es = False
     ok, _ = tuberia._verificar_libros(e, set())
     assert len(ok) == 2
+
+
+def test_proceder_comprueba_hechos_a_la_vez_que_el_arte(cfg, monkeypatch):
+    """Ronda 1 de mejora: en «Proceder» la comprobación de hechos no espera a la dirección de arte (ni al revés).
+    Cada una tarda 0,5 s simulados: juntas tienen que tardar bastante menos de 1 s, y los avisos de las dos quedan."""
+    import time
+    from folio import arte as arte_mod
+    from folio import hechos as hechos_mod
+    p, sel, al_jefe = _pipeline_tres(cfg, monkeypatch, lambda pid: guion_valido())
+    cfg.pipeline.seleccion.desarrollar_al_inicio = 1
+    piezas = p.piezas(sel, al_jefe)
+
+    def comprobar(*a, **k):
+        time.sleep(0.5)
+        raise RuntimeError("Haiku caído")
+
+    def dirigir(llm, cfg, pieza, *a, **k):
+        time.sleep(0.5)
+        raise ValueError("sin imágenes")
+
+    monkeypatch.setattr(hechos_mod, "comprobar", comprobar)
+    monkeypatch.setattr(arte_mod, "dirigir", dirigir)
+    t = time.monotonic()
+    hecha = p.desarrollar(piezas[1], al_jefe, piezas)
+    assert time.monotonic() - t < 0.9
+    assert hecha.estado == "propuesta" and hecha.hechos == [] and hecha.arte is None
+    assert any(a.startswith("No se pudo comprobar los hechos: Haiku caído") for a in hecha.avisos)
+    assert any(a.startswith("Director de arte: no se pudo") for a in hecha.avisos)

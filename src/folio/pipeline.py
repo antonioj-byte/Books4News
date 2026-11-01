@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 import numpy as np
@@ -86,6 +87,7 @@ class Pipeline:
         self.sin_novedad = False                     # temas de la redacción: un perfil necesita la obra, no solo novedades (2/11)
         self._preverificados: dict = {}             # (título, autor) → ficha o NoVerificado (folio.pipeline._preverificar)
         self._embedder: agrupacion.Embedder | None = None
+        self._avisos_pieza = threading.Lock()       # hechos y arte de «Proceder» van a la vez y tocan pieza.avisos
 
     @property
     def dir_informe(self):
@@ -577,33 +579,44 @@ class Pipeline:
         if pieza.estado != "propuesta":
             pieza.estado = "fallida"
             return pieza
-        self.comprobar_hechos([pieza], al_jefe)
-        self.dirigir_arte([*[o for o in otras if o.guion and o.id != pieza.id], pieza], al_jefe, solo={pieza.id})
+        # Hechos y arte a la vez (ronda 1 de mejora del sistema, docs/rondas-sistema.md): el arte no lee los hechos ni los hechos el arte, y la
+        # comprobación (Haiku) dejaba de esperar al director, a las imágenes y a Magnific. Los textos ya están
+        # congelados, así que el hilo de los hechos no carga el modelo de embeddings.
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            hechos_f = pool.submit(self.comprobar_hechos, [pieza], al_jefe, anunciar=False)
+            try:
+                self.dirigir_arte([*[o for o in otras if o.guion and o.id != pieza.id], pieza], al_jefe, solo={pieza.id})
+            finally:
+                hechos_f.result()
         return pieza
 
     # --- Etapa 4: comprobación de hechos ------------------------------------
 
-    def comprobar_hechos(self, piezas: list[Pieza], al_jefe: list[Historia]) -> None:
-        """Comprobación de hechos de todas las piezas a la vez (los textos se leen antes, en orden)."""
+    def comprobar_hechos(self, piezas: list[Pieza], al_jefe: list[Historia], anunciar: bool = True) -> None:
+        """Comprobación de hechos de todas las piezas a la vez (los textos se leen antes, en orden). Con
+        `anunciar=False` no escribe etapas: en «Proceder» va a la vez que el arte, que es el que las anuncia."""
         por_id = {h.id: h for h in al_jefe}
         con_guion = [(p, self.textos_de_historia(por_id[p.historia_id])) for p in piezas if p.guion]
+        aviso = progreso if anunciar else (lambda etapa: None)
 
         def una(pieza: Pieza, textos_h) -> None:
-            pieza.avisos = [a for a in pieza.avisos if not a.startswith("No se pudo comprobar los hechos")]
+            with self._avisos_pieza:
+                pieza.avisos = [a for a in pieza.avisos if not a.startswith("No se pudo comprobar los hechos")]
             try:
                 pieza.hechos = hechos.comprobar(self.llm, pieza.id, pieza.guion, textos_h)
             except Exception as exc:
                 pieza.hechos = []
-                pieza.avisos.append(f"No se pudo comprobar los hechos: {exc}")
+                with self._avisos_pieza:
+                    pieza.avisos.append(f"No se pudo comprobar los hechos: {exc}")
 
         if not con_guion:
             return
         hechas = 0
-        progreso(f"Comprobando hechos (0 de {len(con_guion)})")
+        aviso(f"Comprobando hechos (0 de {len(con_guion)})")
         with ThreadPoolExecutor(max_workers=len(con_guion)) as pool:
             for _ in as_completed([pool.submit(una, p, t) for p, t in con_guion]):
                 hechas += 1
-                progreso(f"Comprobando hechos ({hechas} de {len(con_guion)})")
+                aviso(f"Comprobando hechos ({hechas} de {len(con_guion)})")
 
     # --- Etapa 5: director de arte -------------------------------------------
 
@@ -619,7 +632,8 @@ class Pipeline:
             if solo is not None and pieza.id not in solo:
                 continue
             progreso(f"Dirección de arte ({i} de {len(con_guion)})")
-            pieza.avisos = [a for a in pieza.avisos if not a.startswith("Director de arte:")]
+            with self._avisos_pieza:
+                pieza.avisos = [a for a in pieza.avisos if not a.startswith("Director de arte:")]
             h = por_id.get(pieza.historia_id)
             try:
                 pieza.arte = arte.dirigir(self.llm, self.cfg, pieza, h.seccion if h else None, usadas,
@@ -634,7 +648,8 @@ class Pipeline:
                                               if p.arte and p.id != pieza.id and (solo is not None or con_guion.index(p) < i)))
             except Exception as exc:
                 pieza.arte = None
-                pieza.avisos.append(f"Director de arte: no se pudo ({type(exc).__name__}: {exc}); sale sin imagen")
+                with self._avisos_pieza:
+                    pieza.avisos.append(f"Director de arte: no se pudo ({type(exc).__name__}: {exc}); sale sin imagen")
         if con_guion:
             progreso(f"Dirección de arte ({len(con_guion)} de {len(con_guion)})")
 
