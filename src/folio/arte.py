@@ -15,6 +15,7 @@ sin imagen válida la pieza sale con la composición sin foto. Nada de esto para
 from __future__ import annotations
 
 import base64
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from pathlib import Path
@@ -27,9 +28,10 @@ from folio import infografia, sin_foto
 from folio.imagenes import cubiertas, editorial, esquema, ilustracion, libres, prensa, retrato_generado, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
-from folio.modelos import Arte, EleccionImagen, Infografia, Pieza, PropuestaArte
+from folio.modelos import Arte, EleccionIlustracion, EleccionImagen, EscenasLLM, Infografia, Pieza, PropuestaArte
 from folio.verificacion_texto import normalizar
 
+log = logging.getLogger(__name__)
 MAX_CANDIDATAS = 9
 LADO_MINIMO = 1000          # lado mayor de la imagen original
 _CELDA = 360
@@ -235,25 +237,83 @@ def _del_dia(contar, cfg: Config, pieza: Pieza, dir_fecha: Path) -> int:
     return contar(real, pieza.id) + (contar(dir_fecha, pieza.id) if dir_fecha != real else 0)
 
 
-def _ilustracion_editorial(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte, dir_fecha: Path) -> bool:
-    """La ilustración editorial de la pieza (B1). Si no se puede (desactivada, máximo del día, escena no
-    válida, víctimas o Magnific), se avisa y se busca una foto de archivo: devuelve False."""
+def _escenas(llm: LLM, cfg: Config, pieza: Pieza, sugerida: str | None, n: int) -> list[tuple[str, str]]:
+    """El ilustrador (Opus, prompts/escena_editorial.md) propone escenas distintas a partir de la idea de la pieza
+    y de la que sugirió el director. Devuelve [(escena, idea)] válidas; si falla, la del director si vale."""
+    validas: list[tuple[str, str]] = []
+    try:
+        prompt = cargar_prompt(cfg, "escena_editorial", {"[pegar n]": str(max(n, 2)), "[pegar sugerencia]": sugerida or "(ninguna)",
+                                                         "[pegar pieza]": _bloque_pieza(pieza, None)})
+        r, _ = llm.estructurado(f"escena:{pieza.id}", [{"role": "user", "content": prompt}], EscenasLLM, etapa_modelo="escena", max_tokens=4000)
+        prohibidos = editorial.nombres_de_pieza(pieza)
+        for e in r.escenas:
+            escena, motivo = editorial.validar_escena(e.escena, prohibidos)
+            if not escena:
+                log.info("Escena descartada para %s (%s): %s", pieza.id, motivo, e.escena[:80])
+            if escena and escena not in (x for x, _ in validas):
+                validas.append((escena, e.idea.strip()))
+    except Exception as exc:
+        log.warning("El ilustrador no pudo proponer escenas para %s: %s", pieza.id, exc)
+    if not validas and sugerida:
+        escena, _ = editorial.validar_escena(sugerida, editorial.nombres_de_pieza(pieza))
+        if escena:
+            validas.append((escena, ""))
+    return validas[:n]
+
+
+def _elegir_ilustracion(llm: LLM, cfg: Config, pieza: Pieza, dibujos: list[tuple[str, str, Path]]) -> int | None:
+    """El director de arte elige una de las ilustraciones viendo la hoja de contactos. Índice o None si ninguna."""
+    imgs = [Image.open(r) for _, _, r in dibujos]
+    lista = "\n".join(f"{i}. {idea or escena}" for i, (escena, idea, _) in enumerate(dibujos, 1))
+    texto = cargar_prompt(cfg, "director_arte_ilustracion", {"[pegar pieza]": _bloque_pieza(pieza, None), "[pegar escenas]": lista})
+    hoja = base64.b64encode(hoja_de_contactos(imgs)).decode()
+    r, _ = llm.estructurado(f"arte-ilustracion:{pieza.id}", [{"role": "user", "content": [
+        {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": hoja}},
+        {"type": "text", "text": texto}]}], EleccionIlustracion, etapa_modelo="arte", max_tokens=1500)
+    return r.elegida - 1 if 1 <= r.elegida <= len(dibujos) else None
+
+
+def _ilustracion_editorial(llm: LLM, cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte, dir_fecha: Path) -> bool:
+    """La ilustración editorial de la pieza (B1): el ilustrador (Opus) escribe escenas distintas, Magnific dibuja
+    `variantes` y el director de arte elige una viendo la hoja de contactos. Si no se puede (desactivada, máximo
+    del día, sin escena válida, víctimas, Magnific o ninguna a la altura), se avisa y se busca una foto de archivo:
+    devuelve False."""
     ie = cfg.pipeline.arte.ilustracion_editorial
-    escena, motivo = editorial.validar_escena(propuesta.escena)
+    motivo = None
     if not ie.activo:
         motivo = "desactivada en la configuración"
     elif propuesta.suceso_con_victimas:
         motivo = "con víctimas no se ilustra"
-    elif escena and _del_dia(editorial.del_dia, cfg, pieza, dir_fecha) >= ie.max_por_dia:
+    elif _del_dia(editorial.del_dia, cfg, pieza, dir_fecha) >= ie.max_por_dia:
         motivo = f"ya hay {ie.max_por_dia} hoy (máximo del día)"
-    elif escena:
-        libres.olvidar(pieza.id, dir_fecha)
-        try:
-            img = editorial.generar(cfg, pieza.id, dir_fecha, escena)
-            arte.imagen, arte.credito, arte.escena = img.archivo, img.credito, escena
-            return True
-        except Exception as exc:
-            motivo = f"no se pudo ({exc})"
+    else:
+        escenas = _escenas(llm, cfg, pieza, propuesta.escena, ie.variantes)
+        dibujos, fallos = [], []
+        for escena, idea in escenas:
+            try:
+                dibujos.append((escena, idea, editorial.dibujar(cfg, pieza.id, escena)))
+            except Exception as exc:
+                fallos.append(str(exc))
+                if retrato_generado.bloqueado():
+                    break
+        if not dibujos:
+            motivo = "sin escena válida" if not escenas else f"no se pudo dibujar ({'; '.join(fallos)[:200]})"
+        else:
+            try:
+                i = _elegir_ilustracion(llm, cfg, pieza, dibujos) if len(dibujos) > 1 else 0
+            except Exception as exc:
+                arte.avisos.append(f"Ilustración editorial: el director no pudo elegir ({type(exc).__name__}); va la primera")
+                i = 0
+            if i is None:
+                motivo = f"el director no vio ninguna de las {len(dibujos)} a la altura"
+            else:
+                escena, idea, dibujo = dibujos[i]
+                libres.olvidar(pieza.id, dir_fecha)
+                img = editorial.fijar(cfg, pieza.id, dir_fecha, escena, dibujo)
+                arte.imagen, arte.credito, arte.escena, arte.escena_idea = img.archivo, img.credito, escena, idea or None
+                if len(dibujos) > 1:
+                    arte.por_que += f" Ilustración: elegida la {i + 1} de {len(dibujos)}."
+                return True
     arte.avisos.append(f"Ilustración editorial: {motivo}; se busca una foto de archivo")
     propuesta.recurso = arte.recurso = "foto"
     return False
@@ -443,7 +503,7 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
     retrato = _retrato(cfg, pieza, arte, dir_fecha) if cfg.pipeline.arte.retratos and pieza.libros and pieza.libros[0].autores else None
     quiere_ilustracion = propuesta.recurso == "ilustracion"
     arte.registro = elegir_registro(bool(retrato), quiere_ilustracion, del_dia)
-    if arte.registro == "ilustracion" and not _ilustracion_editorial(cfg, pieza, propuesta, arte, dir_fecha):
+    if arte.registro == "ilustracion" and not _ilustracion_editorial(llm, cfg, pieza, propuesta, arte, dir_fecha):
         arte.registro = "foto_autor" if retrato else "archivo"
     if arte.registro != "ilustracion":
         if quiere_ilustracion:

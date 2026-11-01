@@ -152,3 +152,10 @@ def test_el_estilo_del_retrato_va_con_el_tono(cfg):
     assert rg.estilo_del_dia(cfg, "p1", dir_fecha, "luminoso") == ("voxel", 0)     # el dithering no está activo
     assert rg.estilo_del_dia(cfg, "p1", dir_fecha, "grave") == (None, 0)           # en graves, la foto
     assert rg.estilo_del_dia(cfg, "p1", dir_fecha, "sereno")[0] in rgc.estilos     # sin reparto, rota entre todos
+
+
+def test_el_estilo_de_la_ilustracion_editorial_se_carga_del_prompt(cfg):
+    """dibujar() lo necesita y los tests lo simulan: que exista y se lea (se perdió una vez al reorganizar)."""
+    from folio.imagenes import editorial
+    texto = editorial.estilo(type(cfg)(pipeline={}, fuentes=[]))
+    assert "editorial" in texto.lower() and "no text" in texto.lower()

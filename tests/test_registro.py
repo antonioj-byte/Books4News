@@ -165,3 +165,40 @@ def test_topes_diarios_cuentan_las_piezas_de_verdad_en_las_pruebas(cfg):
     contar = lambda d, pid: vistos.append(d) or 2
     assert arte._del_dia(contar, cfg, _pieza(), prueba) == 4 and vistos == [real, prueba]
     assert arte._del_dia(lambda d, pid: 2, cfg, _pieza(), real) == 2
+
+
+def test_la_ilustracion_se_elige_entre_variantes(cfg, monkeypatch, tmp_path):
+    """El ilustrador propone escenas, se dibujan las variantes y el director elige una (31/10, ilustraciones)."""
+    from PIL import Image
+    from folio.imagenes import editorial
+    from folio.modelos import EscenasLLM
+    escenas = ["a vast quiet suburban block at dusk where every house is a hollow stage set propped up by wooden beams",
+               "a long corridor of empty shelves where a single lamp lights an open book on the floor at night",
+               "Madrid seen from above at night with tiny lights everywhere across the whole wide city"]   # nombre propio: fuera
+
+    class LLM:
+        cfg = None
+
+        def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
+            assert esquema is EscenasLLM and etapa_modelo == "escena"
+            return esquema(escenas=[{"escena": e, "idea": f"idea {i}"} for i, e in enumerate(escenas)]), []
+
+    dibujados = []
+    def dibujar(cfg, pid, escena):
+        ruta = tmp_path / f"{len(dibujados)}.jpg"
+        Image.new("RGB", (160, 90)).save(ruta)
+        dibujados.append(escena)
+        return ruta
+    monkeypatch.setattr(editorial, "dibujar", dibujar)
+    monkeypatch.setattr(arte, "_elegir_ilustracion", lambda llm, cfg, pieza, dibujos: 1)
+    cfg.magnific_api_key = "x"
+    a = Arte(tono="sereno", recurso="ilustracion")
+    ok = arte._ilustracion_editorial(LLM(), cfg, _pieza(), _propuesta(recurso="ilustracion"), a, cfg.dir_cache("2026-10-30"))
+    assert ok and dibujados == escenas[:2] and a.escena == escenas[1] and a.escena_idea == "idea 1"
+    assert "elegida la 2 de 2" in a.por_que
+    # Si el director no ve ninguna a la altura, se busca una foto de archivo
+    monkeypatch.setattr(arte, "_elegir_ilustracion", lambda *x: None)
+    p = _propuesta(recurso="ilustracion")
+    b = Arte(tono="sereno", recurso="ilustracion")
+    assert not arte._ilustracion_editorial(LLM(), cfg, _pieza(), p, b, cfg.dir_cache("2026-10-30"))
+    assert p.recurso == "foto" and "ninguna de las 2" in b.avisos[-1]

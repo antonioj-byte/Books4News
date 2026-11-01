@@ -30,21 +30,25 @@ ASPECTO = "widescreen_16_9"
 CLAVE = "magnific:ilustracion"
 
 
-# Palabras con que puede empezar una frase de la escena; cualquier otra con mayúscula se toma por nombre propio
-_INICIOS = {"a", "an", "the", "in", "on", "at", "inside", "above", "below", "under", "behind", "beside", "between",
-            "around", "across", "through", "over", "from", "with", "without", "one", "two", "three", "several", "many",
-            "each", "every", "some", "tiny", "giant", "huge", "small", "large", "an", "here", "there", "it", "its",
-            "they", "this", "these", "seen", "viewed", "half", "all", "no", "only"}
-
-
-def _nombres_propios(texto: str) -> list[str]:
-    """Palabras con mayúscula que no son el inicio corriente de una frase: en una escena en inglés,
-    nombres propios (de personas, lugares, marcas o artistas)."""
+def _nombres_propios(texto: str, prohibidos: set[str] = frozenset()) -> list[str]:
+    """Palabras con mayúscula dentro de una frase (en inglés, nombres propios) y cualquier palabra que sea un
+    nombre propio de la pieza, esté donde esté. La palabra con que empieza una frase sí vale («Wide landscape…»)."""
     propios = []
     for frase in re.split(r"[.!?;:]\s*", texto):
         palabras = re.findall(r"[A-Za-zÀ-ÿ']+", frase)
-        propios += [w for i, w in enumerate(palabras) if w[0].isupper() and (i > 0 or w.lower() not in _INICIOS)]
+        propios += [w for i, w in enumerate(palabras) if (i > 0 and w[0].isupper()) or w.lower() in prohibidos]
     return propios
+
+
+def nombres_de_pieza(pieza) -> set[str]:
+    """Los nombres propios de la pieza que una escena no puede llevar: los de los autores y las palabras con
+    mayúscula dentro de una frase en el guion (personas, lugares, obras), en minúsculas."""
+    nombres = {w.lower() for l in pieza.libros for a in l.autores for w in re.findall(r"[A-Za-zÀ-ÿ']{3,}", a)}
+    if pieza.guion:
+        for d in pieza.guion.diapositivas:
+            for frase in re.split(r"[.!?;:]\s*", d.texto.replace("*", "")):
+                nombres |= {w.lower() for w in re.findall(r"[A-Za-zÀ-ÿ']{3,}", frase)[1:] if w[0].isupper()}
+    return nombres
 
 
 def estilo(cfg: Config) -> str:
@@ -55,7 +59,7 @@ def estilo(cfg: Config) -> str:
     return m.group(1).strip()
 
 
-def validar_escena(escena: str | None) -> tuple[str | None, str | None]:
+def validar_escena(escena: str | None, prohibidos: set[str] = frozenset()) -> tuple[str | None, str | None]:
     """La escena si sirve; si no, (None, motivo). Sin nombres propios (palabras con mayúscula que no
     empiezan frase), comillas ni cifras, y de 12 a 70 palabras."""
     if not escena:
@@ -65,7 +69,7 @@ def validar_escena(escena: str | None) -> tuple[str | None, str | None]:
         return None, "la escena tiene que tener de 12 a 70 palabras"
     if re.search(r"[\"“”«»]|\d", e):
         return None, "la escena no puede llevar comillas ni cifras"
-    propios = _nombres_propios(e)
+    propios = _nombres_propios(e, prohibidos)
     if propios:
         return None, f"la escena no puede llevar nombres propios ({', '.join(propios[:3])})"
     return e, None
@@ -97,14 +101,14 @@ def del_dia(dir_fecha: Path, sin: str) -> int:
     return n
 
 
-def generar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, cliente: httpx.Client | None = None) -> libres.ImagenLibre:
-    """Dibuja la escena y la fija como imagen de la pieza. ErrorMagnific si no se puede."""
+def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | None = None) -> Path:
+    """Dibuja una escena (una variante) y devuelve su archivo en la caché común (cache/ilustraciones/): la
+    misma escena no se vuelve a pagar. ErrorMagnific si no se puede."""
     if rg.bloqueado():
         raise rg.ErrorMagnific(f"Magnific bloqueado en esta ejecución: {rg.bloqueado()}", bloqueo=True)
     if not cfg.magnific_api_key:
         raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
     texto = f"{escena} {estilo(cfg)}"
-    # La caché es común a todos los días y a las pruebas (cache/ilustraciones/), no de la carpeta del día
     cache = cfg.dir_cache("x").parent / "ilustraciones" / f"{hashlib.sha256(texto.encode()).hexdigest()[:20]}.jpg"
     if not cache.exists():
         try:
@@ -117,13 +121,23 @@ def generar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, cliente: h
         with Image.open(BytesIO(datos)) as im:
             cache.parent.mkdir(parents=True, exist_ok=True)
             im.convert("RGB").save(cache, "JPEG", quality=90)
+    return cache
+
+
+def fijar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, dibujo: Path) -> libres.ImagenLibre:
+    """La ilustración elegida pasa a ser la imagen de la pieza (<pieza>.jpg con sus metadatos)."""
     carpeta = libres.dir_imagenes(dir_fecha)
     carpeta.mkdir(parents=True, exist_ok=True)
-    (carpeta / f"{pieza_id}.jpg").write_bytes(cache.read_bytes())
-    with Image.open(cache) as im:
+    (carpeta / f"{pieza_id}.jpg").write_bytes(dibujo.read_bytes())
+    with Image.open(dibujo) as im:
         ancho, alto = im.size
     img = libres.ImagenLibre(archivo=CLAVE, pagina="", url="", ancho=ancho, alto=alto,
                              licencia="ilustración generada con IA (Magnific)", licencia_url=None, autor="Folio",
                              descripcion=escena, libre=True, motivo="", local=f"{pieza_id}.jpg", fuente="")
     libres.guardar_metadatos(img, pieza_id, dir_fecha)
     return img
+
+
+def generar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, cliente: httpx.Client | None = None) -> libres.ImagenLibre:
+    """Dibuja la escena y la fija como imagen de la pieza (una sola variante). ErrorMagnific si no se puede."""
+    return fijar(cfg, pieza_id, dir_fecha, escena, dibujar(cfg, pieza_id, escena, cliente))

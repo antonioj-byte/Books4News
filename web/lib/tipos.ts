@@ -419,6 +419,8 @@ export interface components {
             esquema: string | null;
             /** Escena */
             escena: string | null;
+            /** Escena Idea */
+            escena_idea: string | null;
             /** Pregunta */
             pregunta: string | null;
             /** Registro */

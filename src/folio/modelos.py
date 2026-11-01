@@ -271,6 +271,22 @@ class PropuestaArte(_TodoObligatorio):
     por_que: str
 
 
+class EscenaLLM(_TodoObligatorio):
+    escena: str = Field(description="Lo que se ve, en inglés, de 20 a 60 palabras, sin nombres propios, personas reales, texto, cifras ni comillas")
+    idea: str = Field(description="La metáfora, en español, en una frase")
+
+
+class EscenasLLM(_TodoObligatorio):
+    """El ilustrador (prompts/escena_editorial.md): escenas distintas para la ilustración editorial de la pieza."""
+    escenas: list[EscenaLLM] = Field(description="Escenas distintas, cada una con su metáfora")
+
+
+class EleccionIlustracion(_TodoObligatorio):
+    """El director de arte elige una de las ilustraciones dibujadas viendo la hoja de contactos."""
+    elegida: int = Field(description="El número de la elegida, o 0 si ninguna está a la altura")
+    por_que: str = Field(description="Una frase")
+
+
 class EleccionImagen(BaseModel):
     """Segunda llamada: el modelo ve las candidatas (ya con licencia libre) y elige una o ninguna."""
     elegida: int | None = Field(description="Número de la candidata elegida, o null si ninguna sirve")
@@ -305,7 +321,8 @@ class Arte(BaseModel):
     sin_foto: SinFoto | None = None    # recurso de la diapositiva de actualidad sin foto ni cifra
     infografia: Infografia | None = None  # infografía de la diapositiva de la idea
     esquema: str | None = None           # crédito de la ilustración técnica de Magnific (infografía «esquema»)
-    escena: str | None = None            # metáfora de la ilustración editorial (recurso «ilustracion», portada «panorama»)
+    escena: str | None = None            # escena (en inglés) de la ilustración editorial (recurso «ilustracion», portada «panorama»)
+    escena_idea: str | None = None       # su metáfora, en español, para enseñarla en la web
     pregunta: str | None = None          # la del buscador de la portada (B2)
     # Registro de la imagen de portada, para barajar en el día (31/10): la foto real del autor, su retrato
     # generado con IA, la ilustración editorial o la imagen de archivo

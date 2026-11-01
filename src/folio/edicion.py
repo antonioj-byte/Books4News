@@ -175,7 +175,7 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
             ar.portada = cfg.pipeline.arte.portadas[0]
         return nueva, f"(Nueva imagen de archivo: {ar.credito}.)"
     if a.tipo == "ilustrar":
-        escena, motivo = editorial.validar_escena(a.escena)
+        escena, motivo = editorial.validar_escena(a.escena, editorial.nombres_de_pieza(p))
         ie = cfg.pipeline.arte.ilustracion_editorial
         if not escena:
             return None, f"(No puedo dibujar esa escena: {motivo}.)"

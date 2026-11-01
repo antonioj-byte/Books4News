@@ -133,7 +133,8 @@ class Esquema(_Seccion):
 
 class IlustracionEditorial(_Seccion):
     activo: bool = True
-    max_por_dia: int = Field(default=3, ge=0)     # ilustraciones por día (unos 25 créditos cada una)
+    max_por_dia: int = Field(default=3, ge=0)     # piezas ilustradas por día (cada variante, unos 25 créditos)
+    variantes: int = Field(default=2, ge=1, le=4) # escenas que se dibujan por pieza; el director elige una
     espera_max_s: int = Field(default=240, gt=0)
 
 
