@@ -300,3 +300,10 @@
   patron: "«Todos los libros que se propongan tienen que tener necesaria y radicalmente traducción al castellano»."
   propuesta: "Solo libros con edición en castellano verificada (traducidos o escritos en castellano); el código descarta los demás al verificar."
   evidencia: ["Conversación, 2/11: petición del usuario"]
+
+- clave: mesa-en-dos-manos
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«La propuesta que más esfuerzo exige es la lectura lateral y el diálogo… el resto deberían ser automáticas, derivadas de tener la base de datos al día, con motores que monitoreen sin mucho coste»."
+  propuesta: "Opus solo para la lectura lateral y el diálogo; el editor del libro (Haiku) propone a la vez el mundo del libro, la historia editorial y el recomendado con lo que hay en la base; la lectura periódica refresca también el catálogo."
+  evidencia: ["Conversación, 2/11: petición del usuario; prueba real del editor del libro"]

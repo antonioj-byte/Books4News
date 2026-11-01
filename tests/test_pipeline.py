@@ -28,6 +28,8 @@ class LLMFalso(LLM):
         self.llamadas.append((paso, mensajes))
         if esquema is ResumenHistoria:
             return ResumenHistoria(titular_es="Titular", resumen_es="Resumen", seccion="sociedad", sobre_libros=False), []
+        if esquema is SeleccionJefe and paso.startswith("seleccion-libro"):
+            return SeleccionJefe(elegidas=[], aviso="Hoy no hay nada del mundo del libro"), []
         if esquema is SeleccionJefe:
             elegida = ELECCION.model_copy(update={"historia_id": self.ids[0]})
             reserva = ELECCION.model_copy(update={"historia_id": self.ids[1], "titular": "Reserva"})
@@ -353,27 +355,34 @@ def test_reparto_en_el_prompt_y_avisos_si_no_se_cumple(cfg):
     from folio import seleccion
     assert seleccion.texto_reparto({"lateral": 2, "dialogo": 2, "edicion": 2}) == \
         "2 de lectura lateral, 2 de diálogo con la actualidad y 2 del mundo del libro"
+    prompts = {}
 
     class LLMJefe:
         def __init__(self, cfg):
             self.cfg = cfg
 
         def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
-            assert "2 de lectura lateral, 2 de diálogo con la actualidad y 2 del mundo del libro" in mensajes[0]["content"]
+            prompts.setdefault(paso, (mensajes[0]["content"], etapa_modelo))
             assert max_tokens > 16000
             e = ELECCION.model_copy(update={"historia_id": "h1", "libros_candidatos": ELECCION.libros_candidatos * 2})
             return SeleccionJefe(elegidas=[e.model_copy(update={"formato": f}) for f in ("lateral", "lateral", "dialogo", "dialogo", "edicion")],
                                  reserva=[]), []
 
     from folio.modelos import Historia
-    h = Historia(id="h1", articulos=_articulos()[:1], n_medios=1, medios=["El País"], titular_es="T", resumen_es="R")
+    h = Historia(id="h1", articulos=_articulos()[:1], n_medios=1, medios=["El País"], titular_es="T", resumen_es="R",
+                 carril="editorial")
     sel, avisos = seleccion.seleccionar(LLMJefe(cfg), [h], "2026-10-31")
+    # El jefe (Opus) lleva lateral y diálogo; el editor del libro (Haiku), el mundo del libro
+    assert "2 de lectura lateral y 2 de diálogo con la actualidad" in prompts["seleccion"][0] and prompts["seleccion"][1] == "seleccion"
+    assert "2 del mundo del libro" in prompts["seleccion-libro"][0] and prompts["seleccion-libro"][1] == "seleccion_libro"
+    assert "Línea editorial de Folio" in prompts["seleccion-libro"][0] and "[pegar" not in prompts["seleccion-libro"][0]
     assert len(sel.elegidas) == 5 and "Propuestas del mundo del libro: 1 (se pedían 2)" in avisos
-    assert any("no pudo completar" in a for a in avisos)
+    assert any("fuera de esta parte de la mesa" in a for a in avisos)
+    assert any("No se pudo completar" in a for a in avisos)
 
 
-def test_si_falta_un_formato_el_jefe_completa_la_mesa(cfg):
-    cfg.pipeline.seleccion.elegidas, cfg.pipeline.seleccion.reparto = 8, {"lateral": 2, "dialogo": 2, "edicion": 2, "curiosidad": 1, "recomendado": 1}   # el mecanismo, con el reparto del 1/11
+def test_si_falta_un_formato_se_completa_la_mesa_y_se_ordena_por_potencial(cfg):
+    cfg.pipeline.seleccion.elegidas, cfg.pipeline.seleccion.reparto = 6, {"lateral": 2, "dialogo": 2, "edicion": 2}
     from folio import seleccion
     from folio.modelos import Historia
     pasos = []
@@ -385,15 +394,19 @@ def test_si_falta_un_formato_el_jefe_completa_la_mesa(cfg):
         def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
             pasos.append(paso)
             e = ELECCION.model_copy(update={"historia_id": "h1", "libros_candidatos": ELECCION.libros_candidatos * 2})
-            formatos = ("lateral", "lateral", "dialogo", "dialogo", "edicion") + (("edicion",) if paso == "seleccion-completar" else ())
+            if paso.startswith("seleccion-libro"):
+                return SeleccionJefe(elegidas=[e.model_copy(update={"formato": "edicion", "potencial": p}) for p in (9, 3)]), []
+            formatos = ("lateral", "lateral", "dialogo") + (("dialogo",) if paso == "seleccion-completar" else ())
             if paso == "seleccion-completar":
-                assert "1 del mundo del libro" in mensajes[-1]["content"] and mensajes[1]["role"] == "assistant"
+                assert "1 de diálogo con la actualidad" in mensajes[-1]["content"] and mensajes[1]["role"] == "assistant"
             return SeleccionJefe(elegidas=[e.model_copy(update={"formato": f}) for f in formatos], reserva=[]), [{"type": "text", "text": "x"}]
 
     h = Historia(id="h1", articulos=_articulos()[:1], n_medios=1, medios=["El País"], titular_es="T", resumen_es="R")
     sel, avisos = seleccion.seleccionar(LLMJefe(cfg), [h], "2026-10-31")
-    assert pasos == ["seleccion", "seleccion-completar"] and len(sel.elegidas) == 6
-    assert "el jefe la ha completado" in avisos[0]
+    assert sorted(pasos) == ["seleccion", "seleccion-completar", "seleccion-libro"] and len(sel.elegidas) == 6
+    assert any("se ha completado" in a for a in avisos)
+    # La mesa se ordena por potencial: la de 9 del editor del libro va primera, la de 3, la última
+    assert [e.potencial for e in sel.elegidas][0] == 9 and sel.elegidas[-1].potencial == 3
 
 
 def test_solo_libros_con_edicion_en_castellano(cfg):

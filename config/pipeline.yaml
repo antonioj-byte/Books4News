@@ -1,6 +1,7 @@
 modelos:
   ingesta: claude-haiku-5-5     # resumen y clasificación de historias
-  seleccion: claude-opus-5-5    # jefe de cultura
+  seleccion: claude-opus-5-5    # jefe de cultura: lectura lateral y diálogo con la actualidad
+  seleccion_libro: claude-haiku-5-5   # editor del libro (2/11): mundo del libro, historia editorial y libro recomendado
   guion: claude-opus-5-5        # guionista
   comprobacion: claude-haiku-5-5  # comprobación de hechos del guion contra las fuentes
   arte: claude-haiku-5-5          # director de arte: tono, búsqueda y elección de la imagen
@@ -18,6 +19,7 @@ dev:                            # folio run --dev: todas las etapas con este mod
 esfuerzo:                       # output_config.effort
   ingesta: low
   seleccion: high
+  seleccion_libro: medium
   guion: high
   comprobacion: medium
   arte: medium
@@ -78,6 +80,7 @@ catalogo:
   max_por_editorial: 1          # por turnos: cada día empieza por editoriales distintas
   editoriales_por_dia: 25       # páginas de novedades que se refrescan al día como mucho (una por semana cada una)
   refresco_dias: 7
+  de_fondo_por_vuelta: 6        # 2/11: la lectura periódica (cada 2 h) refresca así unas pocas editoriales y sus fichas, sin modelo
   pausa_s: 1.2                  # una petición cada 1,2 s (el robots.txt del portal pide 1)
 
 # Radar del libro: temas del mundo del libro sin desarrollar, en una lista aparte de la mesa, a un clic

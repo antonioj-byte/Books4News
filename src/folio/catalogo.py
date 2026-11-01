@@ -298,6 +298,32 @@ def candidatos(cfg, hoy: date, ya_usado=lambda titulo, autor: False, cat: Catalo
     return salida, cat.avisos
 
 
+def leer_de_fondo(cfg, hoy: date, cat: Catalogo | None = None) -> tuple[int, int, list[str]]:
+    """La lectura periódica del catálogo (2/11, a petición del usuario: «motores que monitoreen sin mucho coste»):
+    refresca como mucho `de_fondo_por_vuelta` editoriales caducadas, en el orden del día, y lee la ficha de su novedad
+    más reciente, para que la selección de madrugada lo encuentre casi todo en la caché. Sin modelo, con la misma
+    pausa de cortesía; ante 403 o 429, para. Devuelve (editoriales refrescadas, fichas leídas, avisos)."""
+    p = cfg.pipeline.catalogo
+    cat = cat or Catalogo(cfg, hoy=hoy)
+    eds = {e.nombre: e for e in editoriales(cfg.raiz)}
+    refrescadas = fichas = 0
+    try:
+        for nombre in _orden_del_dia(list(eds), hoy):
+            if refrescadas >= p.de_fondo_por_vuelta:
+                break
+            e = eds[nombre]
+            if not cat.caducada(e):
+                continue
+            refrescadas += 1
+            for n in [n for n in cat.novedades(e, True) if 0 <= meses_atras(hoy, n.mes) <= p.meses][:1]:
+                fichas += cat.ficha(n.url, n.isbn) is not None
+    except BloqueoCatalogo as exc:
+        cat.avisos.append(f"Catálogo de fondo: {exc}; se para hasta la próxima vuelta")
+    except httpx.HTTPError as exc:
+        cat.avisos.append(f"Catálogo de fondo: error de red ({type(exc).__name__})")
+    return refrescadas, fichas, cat.avisos
+
+
 def historia(f: Ficha, e: Editorial | None = None) -> Historia:
     """El libro como historia del carril «catalogo». El resumen lleva si tiene crítica: el jefe lo tiene en cuenta."""
     resumen = f.sinopsis[:420] + ("…" if len(f.sinopsis) > 420 else "")

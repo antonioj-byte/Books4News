@@ -1,6 +1,13 @@
-"""Agente «jefe de cultura» (prompts/jefe_cultura.md)."""
+"""La mesa del día: el jefe de cultura (prompts/jefe_cultura.md, Opus) propone la lectura lateral y el diálogo con la
+actualidad, que cruzan la actualidad con un libro, y el editor del libro (prompts/editor_libro.md, modelo
+`seleccion_libro`, Haiku) propone a la vez el mundo del libro, la historia editorial y el libro recomendado, que salen
+de lo que ya está en la base (medios del sector, cajón y catálogo). 2/11, a petición del usuario: «la propuesta que más
+esfuerzo exige es la lectura lateral y el diálogo… el resto deberían ser automáticas». La mesa se ordena por el
+`potencial` que da cada uno: la primera es la única que se escribe sola."""
 
 from __future__ import annotations
+
+from concurrent.futures import ThreadPoolExecutor
 
 from folio.llm import LLM, ErrorLLM, cargar_prompt
 from folio.modelos import Historia, SeleccionJefe
@@ -82,6 +89,20 @@ def texto_reparto(reparto: dict[str, int]) -> str:
     return ", ".join(partes[:-1]) + (" y " if len(partes) > 1 else "") + partes[-1]
 
 
+FORMATOS_JEFE = ("lateral", "dialogo")
+
+
+def criterios(cfg, fecha: str) -> str:
+    """La línea editorial, los criterios y las reglas de libros del jefe de cultura (prompts/jefe_cultura.md), para
+    que el editor del libro y el jefe ante un tema propuesto juzguen con las mismas reglas que la mesa."""
+    texto = (cfg.dir_prompts / "jefe_cultura.md").read_text(encoding="utf-8")
+    inicio, fin = texto.find("Línea editorial de Folio:"), texto.find("Para cada propuesta devuelve")
+    if inicio < 0 or fin < 0:
+        raise ValueError("prompts/jefe_cultura.md ha cambiado: no encuentro la línea editorial ni las reglas de libros")
+    trozo = texto[inicio:fin].replace("`protagonista`, vacío.", "").strip()
+    return trozo.replace("[pegar año mínimo]", str(anio_minimo(fecha, cfg.pipeline.seleccion.antiguedad_libros)))
+
+
 def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[str, int]) -> tuple[list[str], dict[str, int]]:
     """Quita las propuestas con ids inexistentes (o que mezclan el cajón de curiosidades con otro formato)
     y recorta lo que sobra. `carriles`: id de historia → carril. Devuelve los avisos y lo que falta de
@@ -92,6 +113,9 @@ def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[st
         for e in getattr(sel, grupo):
             if e.historia_id not in carriles:
                 avisos.append(f"El jefe de cultura devolvió un id inexistente ({e.historia_id}); se descarta «{e.titular}»")
+                continue
+            if e.formato not in reparto:
+                avisos.append(f"«{e.titular}»: formato «{e.formato}» fuera de esta parte de la mesa; se descarta")
                 continue
             carril = carriles[e.historia_id]
             if carril == "radar" or any((carril == c) != (e.formato == f) for f, c in _CARRIL_DEL_FORMATO.items()):
@@ -110,7 +134,7 @@ def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[st
             avisos.append(f"Propuestas {_EN_EL_REPARTO[formato]}: {hay} (se pedían {n})")
         if hay < n:
             faltan[formato] = n - hay
-    maximo = cfg["elegidas"] - sum(n for f, n in cfg.reparto.items() if f not in reparto)
+    maximo = sum(reparto.values())
     if len(sel.elegidas) > maximo:
         avisos.append(f"Se recibieron {len(sel.elegidas)} elegidas; se usan las {maximo} primeras")
         sel.elegidas = sel.elegidas[:maximo]
@@ -119,25 +143,14 @@ def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[st
     return avisos, faltan
 
 
-def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[SeleccionJefe, list[str]]:
-    """Devuelve las propuestas del día y avisos de validación (ids desconocidos, recuentos, reparto).
-    Si falta algún formato del reparto (el 1/11 salieron 5 de 6), se le pide al jefe una vez, en la misma
-    conversación, que complete la mesa; si tampoco puede, se sigue con lo que hay y queda el aviso."""
+def _mesa(llm: LLM, paso: str, plantilla: str, etapa: str, marcadores: dict[str, str], reparto: dict[str, int],
+          carriles: dict[str, str]) -> tuple[SeleccionJefe, list[str]]:
+    """Una de las dos mitades de la mesa. Si falta algún formato de su reparto (el 1/11 salieron 5 de 6), se le pide
+    una vez, en la misma conversación, que la complete; si tampoco puede, se sigue con lo que hay y queda el aviso."""
     cfg = llm.cfg.pipeline.seleccion
-    reparto = reparto_del_dia(cfg.reparto, historias)
-    prompt = cargar_prompt(llm.cfg, "jefe_cultura", {
-        "[pegar reparto]": texto_reparto(reparto),
-        "[pegar año mínimo]": str(anio_minimo(fecha, cfg.antiguedad_libros)),
-        "[pegar lista]": bloque_historias([h for h in historias if h.carril == "actualidad"]),
-        "[pegar lista editorial]": bloque_historias([h for h in historias if h.carril == "editorial"], "mundo_del_libro"),
-        "[pegar cajón]": bloque_cajon([h for h in historias if h.carril == "cajon"]),
-        "[pegar catálogo]": bloque_catalogo([h for h in historias if h.carril == "catalogo"]),
-        "[pegar temas]": bloque_temas([h for h in historias if h.carril == "redaccion"]),
-    })
+    prompt = cargar_prompt(llm.cfg, plantilla, {"[pegar reparto]": texto_reparto(reparto), **marcadores})
     mensajes = [{"role": "user", "content": prompt}]
-    sel, contenido = llm.estructurado("seleccion", mensajes, SeleccionJefe,
-                                      etapa_modelo="seleccion", max_tokens=MAX_TOKENS_SELECCION)
-    carriles = {h.id: h.carril for h in historias}
+    sel, contenido = llm.estructurado(paso, mensajes, SeleccionJefe, etapa_modelo=etapa, max_tokens=MAX_TOKENS_SELECCION)
     avisos, faltan = _validar(sel, carriles, cfg, reparto)
     if faltan and sel.elegidas:
         pedido = texto_reparto(faltan)
@@ -146,19 +159,73 @@ def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[Selecc
                       "propuestas que ya diste (en el mismo orden) y las que faltan, eligiendo historias de las listas. "
                       "Si de verdad no hay ninguna buena para ese formato, dilo en «aviso»."}]
         try:
-            otra, _ = llm.estructurado("seleccion-completar", mensajes, SeleccionJefe,
-                                       etapa_modelo="seleccion", max_tokens=MAX_TOKENS_SELECCION)
+            otra, _ = llm.estructurado(f"{paso}-completar", mensajes, SeleccionJefe, etapa_modelo=etapa,
+                                       max_tokens=MAX_TOKENS_SELECCION)
         except ErrorLLM as exc:
             avisos.append(f"No se pudo completar la mesa ({exc}); se sigue con {len(sel.elegidas)} propuestas")
         else:
-            avisos2, faltan2 = _validar(otra, carriles, cfg, reparto)
+            avisos2, _ = _validar(otra, carriles, cfg, reparto)
             if len(otra.elegidas) > len(sel.elegidas):
                 sel = otra
-                avisos = [f"La primera mesa traía {texto_reparto(faltan)} de menos; el jefe la ha completado"] + avisos2
+                avisos = [f"La primera mesa traía {texto_reparto(faltan)} de menos; se ha completado"] + avisos2
             else:
-                avisos.append("El jefe no pudo completar la mesa" + (f": {otra.aviso}" if otra.aviso else ""))
-    if not sel.elegidas and not sel.reserva:
+                avisos.append("No se pudo completar la mesa" + (f": {otra.aviso}" if otra.aviso else ""))
+    return sel, avisos
+
+
+def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[SeleccionJefe, list[str]]:
+    """Devuelve las propuestas del día y avisos de validación (ids desconocidos, recuentos, reparto). El jefe (Opus)
+    y el editor del libro (Haiku) trabajan a la vez, cada uno con su parte del reparto; la mesa se ordena por
+    `potencial` (en empate, las del jefe primero). Si una de las dos llamadas falla, se sigue con la otra."""
+    cfg = llm.cfg.pipeline.seleccion
+    reparto = reparto_del_dia(cfg.reparto, historias)
+    del_jefe = {f: n for f, n in reparto.items() if f in FORMATOS_JEFE and n}
+    del_libro = {f: n for f, n in reparto.items() if f not in FORMATOS_JEFE and n}
+    carriles = {h.id: h.carril for h in historias}
+    editorial = bloque_historias([h for h in historias if h.carril == "editorial"], "mundo_del_libro")
+    trabajos = {}
+    if del_jefe:
+        trabajos["jefe"] = ("seleccion", "jefe_cultura", "seleccion", {
+            "[pegar año mínimo]": str(anio_minimo(fecha, cfg.antiguedad_libros)),
+            "[pegar lista]": bloque_historias([h for h in historias if h.carril == "actualidad"]),
+            "[pegar lista editorial]": editorial,
+            "[pegar temas]": bloque_temas([h for h in historias if h.carril == "redaccion"]),
+        }, del_jefe)
+    if del_libro:
+        trabajos["libro"] = ("seleccion-libro", "editor_libro", "seleccion_libro", {
+            "[pegar criterios]": criterios(llm.cfg, fecha),
+            "[pegar lista editorial]": editorial,
+            "[pegar cajón]": bloque_cajon([h for h in historias if h.carril == "cajon"]),
+            "[pegar catálogo]": bloque_catalogo([h for h in historias if h.carril == "catalogo"]),
+        }, del_libro)
+    resultados: dict[str, tuple[SeleccionJefe, list[str]]] = {}
+    errores: dict[str, Exception] = {}
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futuros = {k: pool.submit(_mesa, llm, paso, plantilla, etapa, marcas, rep, carriles)
+                   for k, (paso, plantilla, etapa, marcas, rep) in trabajos.items()}
+        for k, f in futuros.items():
+            try:
+                resultados[k] = f.result()
+            except ErrorLLM as exc:
+                errores[k] = exc
+    if not resultados:
+        raise next(iter(errores.values())) if errores else ErrorLLM("No había ningún formato que pedir")
+    avisos = [f"{'El jefe de cultura' if k == 'jefe' else 'El editor del libro'} no respondió ({exc}); la mesa sale sin su parte"
+              for k, exc in errores.items()]
+    elegidas, notas = [], []
+    for k in ("jefe", "libro"):
+        if k in resultados:
+            sel, av = resultados[k]
+            elegidas += sel.elegidas
+            avisos += av
+            if sel.aviso:
+                notas.append(sel.aviso)
+    for e in elegidas:
+        e.potencial = max(1, min(10, e.potencial or 5))
+    elegidas.sort(key=lambda e: -e.potencial)          # estable: en empate, las del jefe primero
+    sel = SeleccionJefe(elegidas=elegidas[:cfg.elegidas], reserva=[], aviso=" · ".join(notas) or None)
+    if not sel.elegidas:
         if sel.aviso:
             return sel, avisos
-        raise ErrorLLM("El jefe de cultura no eligió ninguna historia válida")
+        raise ErrorLLM("Ni el jefe de cultura ni el editor del libro eligieron ninguna historia válida")
     return sel, avisos

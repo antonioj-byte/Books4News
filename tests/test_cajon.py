@@ -88,8 +88,10 @@ def test_seleccion_con_el_cajon(cfg):
             return SeleccionJefe(elegidas=[CURIOSIDAD, mezclada, *normales], reserva=[]), []
 
     sel, avisos = seleccion.seleccionar(LLMJefe(cfg), [h, hc], "2026-11-01")
-    assert "1 de historia editorial (del cajón)" in prompts[0] and "id: cajon-biblia-malvada" in prompts[0]
-    assert [e.formato for e in sel.elegidas][0] == "curiosidad" and len(sel.elegidas) == 7
+    libro = next(x for x in prompts if "editor del libro de Folio" in x)
+    assert "1 de historia editorial (del cajón)" in libro and "id: cajon-biblia-malvada" in libro
+    assert not any("cajon-biblia-malvada" in x for x in prompts if x is not libro)    # el cajón no va al jefe
+    assert "curiosidad" in [e.formato for e in sel.elegidas] and len(sel.elegidas) == 7
     assert any("tiene que salir del cajón" in a for a in avisos)
     assert not any("libros candidatos" in a for a in avisos)          # la curiosidad puede ir sin candidatos
     # Sin curiosidades disponibles, el reparto del día no la pide

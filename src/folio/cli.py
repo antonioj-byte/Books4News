@@ -416,10 +416,20 @@ def buffer_programar(pieza: str,
 @app.command()
 def leer(quiet: bool = typer.Option(False, "--quiet")):
     """Lectura periódica: descarga los RSS y guarda lo nuevo con la hora de primera lectura (gratis, sin modelo)."""
+    from folio import catalogo
     from folio.ingesta import lecturas
-    nuevos, total, errores = lecturas.leer(config.cargar())
+    cfg = config.cargar()
+    nuevos, total, errores = lecturas.leer(cfg)
     if not quiet:
         typer.echo(f"Lectura: {nuevos} artículos nuevos; {total} guardados; {len(errores)} feeds fallidos")
+    # Y el catálogo de las independientes, de fondo (2/11): unas pocas editoriales caducadas por vuelta, sin modelo
+    if cfg.pipeline.seleccion.reparto.get("recomendado"):
+        try:
+            ref, fichas, avisos = catalogo.leer_de_fondo(cfg, date.today())
+        except Exception as exc:                # noqa: BLE001 — la lectura periódica nunca falla por el catálogo
+            ref, fichas, avisos = 0, 0, [f"Catálogo de fondo: {type(exc).__name__}: {exc}"]
+        if not quiet:
+            typer.echo(f"Catálogo: {ref} editoriales refrescadas, {fichas} fichas" + "".join(f"\n{a}" for a in avisos))
 
 
 cajon_app = typer.Typer(help="Cajón de historias editoriales y su nevera (historias nuevas que se buscan cada día)")

@@ -74,6 +74,7 @@ class Catalogo(_Seccion):
     max_por_editorial: int = 1          # por turnos: cada día empieza por editoriales distintas
     editoriales_por_dia: int = 25       # páginas de novedades que se refrescan al día como mucho
     refresco_dias: int = 7              # las novedades de cada editorial se leen una vez por semana
+    de_fondo_por_vuelta: int = 6        # 2/11: editoriales caducadas que refresca cada vuelta de la lectura periódica (folio leer)
     pausa_s: float = Field(default=1.2, ge=1.0)
 
 

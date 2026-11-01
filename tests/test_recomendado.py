@@ -74,6 +74,20 @@ def test_candidatos_del_catalogo_con_cache(cfg, monkeypatch):
     assert catalogo.ficha_guardada(cfg, hs[0].id).titulo == "Los adversarios"
 
 
+def test_lectura_de_fondo_del_catalogo(cfg, monkeypatch):
+    """2/11: la lectura periódica refresca unas pocas editoriales caducadas y lee sus fichas; la madrugada ya no pide nada."""
+    monkeypatch.setattr(catalogo.time, "sleep", lambda s: None)
+    _cfg_catalogo(cfg)
+    pedidas = []
+    cat = catalogo.Catalogo(cfg, httpx.Client(transport=_transporte(pedidas)), hoy=date(2026, 11, 1))
+    ref, fichas, avisos = catalogo.leer_de_fondo(cfg, date(2026, 11, 1), cat=cat)
+    assert ref >= 1 and fichas == 1 and avisos == []
+    pedidas.clear()
+    cat2 = catalogo.Catalogo(cfg, httpx.Client(transport=_transporte(pedidas)), hoy=date(2026, 11, 1))
+    assert catalogo.leer_de_fondo(cfg, date(2026, 11, 1), cat=cat2)[:2] == (0, 0) and pedidas == []   # ya no hay caducadas
+    assert catalogo.candidatos(cfg, date(2026, 11, 1), cat=cat2)[0] and pedidas == []                    # la madrugada, de la caché
+
+
 def test_ante_un_403_se_para(cfg, monkeypatch):
     monkeypatch.setattr(catalogo.time, "sleep", lambda s: None)
     _cfg_catalogo(cfg)
@@ -134,8 +148,9 @@ def test_la_seleccion_con_catalogo(cfg):
             return SeleccionJefe(elegidas=[rec, mal] + [e.model_copy(update={"formato": f}) for f in ("lateral", "lateral", "dialogo", "dialogo", "edicion", "edicion")], reserva=[]), []
 
     sel, avisos = seleccion.seleccionar(LLMJefe(cfg), [h, hc], "2026-11-01")
-    assert "1 de libro recomendado" in prompts[0] and "Los adversarios, de Michael Crummey" in prompts[0]
-    assert sel.elegidas[0].formato == "recomendado" and len(sel.elegidas) == 7
+    libro = next(x for x in prompts if "editor del libro de Folio" in x)
+    assert "1 de libro recomendado" in libro and "Los adversarios, de Michael Crummey" in libro
+    assert "recomendado" in [e.formato for e in sel.elegidas] and len(sel.elegidas) == 7
     assert any("el recomendado del catálogo" in a for a in avisos)
 
 

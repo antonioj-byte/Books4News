@@ -146,14 +146,8 @@ def historia(tid: int, texto: str, fuentes: list[FuenteTema]) -> Historia:
 
 
 def criterios(cfg: Config, fecha: str) -> str:
-    """La línea editorial, los criterios y las reglas de libros del jefe de cultura (prompts/jefe_cultura.md), para
-    que el jefe juzgue un tema propuesto con las mismas reglas que la mesa."""
-    from folio.seleccion import anio_minimo
-    texto = (cfg.dir_prompts / "jefe_cultura.md").read_text(encoding="utf-8")
-    inicio, fin = texto.find("Línea editorial de Folio:"), texto.find("En la historia editorial")
-    if inicio < 0 or fin < 0:
-        raise ValueError("prompts/jefe_cultura.md ha cambiado: no encuentro la línea editorial ni las reglas de libros")
-    return texto[inicio:fin].strip().replace("[pegar año mínimo]", str(anio_minimo(fecha, cfg.pipeline.seleccion.antiguedad_libros)))
+    from folio.seleccion import criterios as de_la_mesa
+    return de_la_mesa(cfg, fecha)
 
 
 def proponer(llm: LLM, cfg: Config, h: Historia, texto: str, fuentes: list[FuenteTema], fecha: str) -> HistoriaElegida:
