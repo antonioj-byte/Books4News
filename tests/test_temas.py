@@ -80,6 +80,12 @@ def test_proponer_ahora_deja_una_pieza_pendiente_en_la_mesa(cfg, monkeypatch):
     assert (t.estado, t.pieza_id, t.fecha) == ("en_mesa", "2026-11-02-1", "2026-11-02")
     etapas = EtapasGuardadas(cfg.dir_cache("2026-11-02"))
     assert f"tema-{tid}" in {h.id for h in etapas.historias()[0]} and etapas.textos(f"tema-{tid}")   # para «Proceder»
+    # Si una ejecución de la mesa reescribe las historias del día, «Proceder» rehace la del tema (2/11: KeyError 'tema-3')
+    al_jefe, resumidas, stats = etapas.historias()
+    etapas.guardar_historias([h for h in al_jefe if h.id != f"tema-{tid}"], resumidas, stats)
+    h = temas.historia_guardada(cfg, a, "2026-11-02", f"tema-{tid}")
+    assert h.id == f"tema-{tid}" and h.carril == "redaccion" and f"tema-{tid}" in {x.id for x in etapas.historias()[0]}
+    assert temas.historia_guardada(cfg, a, "2026-11-02", "h1") is None
     # Sin noticias que se lean, el tema queda fallido con el motivo
     tid2 = a.guardar_tema("Algo de lo que no hay nada", ["https://bloquea.org/a"], "ahora")
     with pytest.raises(temas.SinFuentes):

@@ -219,6 +219,25 @@ def guardar_en_el_dia(cfg: Config, fecha: str, h: Historia, fuentes: list[Fuente
                                   f.texto[:cfg.pipeline.guion.max_caracteres_texto]) for f in fuentes])
 
 
+def historia_guardada(cfg: Config, almacen, fecha: str, historia_id: str) -> Historia | None:
+    """Rehace la historia de un tema desde lo guardado en la base de datos (texto y noticias) y la vuelve a poner entre
+    las del día. Hace falta si una ejecución de la mesa reescribió historias.json después de proponer el tema (2/11:
+    «Proceder» falló con «KeyError: 'tema-3'»). None si no es de un tema o el tema no tiene noticias guardadas."""
+    if not historia_id.startswith(PREFIJO):
+        return None
+    try:
+        tid = int(historia_id.removeprefix(PREFIJO))
+    except ValueError:
+        return None
+    tema = next((t for t in almacen.temas() if t.id == tid), None)
+    fuentes = [FuenteTema(**f) for f in almacen.fuentes_tema(tid)] if tema else []
+    if not fuentes:
+        return None
+    h = historia(tid, tema.texto, fuentes)
+    guardar_en_el_dia(cfg, fecha, h, fuentes)
+    return h
+
+
 class NoSePuede(ValueError):
     """La réplica no se puede atender (el tema no existe, ya está escrito…)."""
 

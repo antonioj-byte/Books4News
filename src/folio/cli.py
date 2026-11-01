@@ -178,6 +178,13 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
         typer.echo("La propuesta no tiene ningún libro verificado", err=True)
         raise typer.Exit(1)
     al_jefe, _, _ = EtapasGuardadas(cfg.dir_cache(fecha)).historias()
+    from folio import temas
+    if p.historia_id.startswith(temas.PREFIJO) and p.historia_id not in {h.id for h in al_jefe}:
+        h = temas.historia_guardada(cfg, almacen, fecha, p.historia_id)
+        if h is None:
+            typer.echo(f"No encuentro la historia {p.historia_id} entre las del día", err=True)
+            raise typer.Exit(1)
+        al_jefe = [*al_jefe, h]
     otras = [x for x, _ in almacen.piezas(eid) if x.id != pieza]
     tuberia = Pipeline(cfg, fecha)
     tuberia.embedder.liberar = True        # puede haber otros «Proceder» a la vez (2/11): el modelo, solo mientras se usa
