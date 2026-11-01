@@ -22,6 +22,7 @@ from markupsafe import Markup
 import re
 
 from folio import infografia as infografias
+from folio.verificacion_texto import sin_subtitulo
 from folio import sin_foto as recursos_sin_foto
 from folio.config import Config
 from folio.modelos import Diapositiva, Pieza
@@ -183,7 +184,9 @@ class Plantillas:
         if info and info["tipo"] == "mapa" and self.cfg.pipeline.arte.mapa_ilustrado and \
                 (dir_diseno(self.cfg, self.direccion) / "ilustraciones" / "salas.jpg").exists():
             info["salas"] = "ilustraciones/salas.jpg"          # relativa a <base>: vale en el PNG y en la web
-            info["libro"] = libros[0]["titulo"] if libros else ""
+            # Solo el título, sin el subtítulo («La generación ansiosa», no «…: Por qué las redes…»)
+            info["libro"] = texto_html("*" + sin_subtitulo(pieza.guion.libros[0].titulo.replace("*", "")).strip() + "*") \
+                if pieza.guion.libros else ""
         # El buscador de la portada (B2): la pregunta del director de arte y, de respuesta, el libro
         principal = pieza.guion.libros[0].titulo.replace("*", "") if pieza.guion.libros else None
         buscador = ({"pregunta": a.pregunta, "respuesta": texto_html(f"*{principal}*") if principal else None}

@@ -105,7 +105,7 @@ arte:
   # 16:9, y cruza la portada y la noticia como una panorámica. Unos 25 créditos cada una (~0,025 €).
   ilustracion_editorial: {activo: true, max_por_dia: 10}   # 10 al día (31/10, a petición del usuario): ~250 créditos como mucho
   buscador: true               # B2: el buscador de la portada escribe la pregunta y responde con el libro
-  mapa_ilustrado: true         # B4: el mapa de la idea, dibujado como tres salas (diseno/ilustraciones/salas.jpg)
+  mapa_ilustrado: false        # B4: el mapa sobre tres salas ilustradas. Apagado el 1/11: la imagen era una prueba (con la ilustración de referencia del usuario), no la definitiva; falta elegirla. Sin ella, el mapa de círculos dibujado por el código
   retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
   retratos_cc_by_sa: true      # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia
   fotos_editoriales: true      # sin retrato en Commons, la foto de prensa de la web de la editorial (con su crédito)
