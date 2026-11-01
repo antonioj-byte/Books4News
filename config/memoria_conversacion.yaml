@@ -391,3 +391,10 @@
   patron: "«Fatal maquetado, y faltan las portadas» (cierre de «Tres libros» con las tarjetas apretadas por la cara del autor)."
   propuesta: "En el cierre de tres libros, tres tarjetas iguales con su cubierta pequeña y la ficha, sin la cara del autor."
   evidencia: ["Conversación, 2/11: pieza de Gonçalo M. Tavares, diapositiva de cierre"]
+
+- clave: cubiertas-en-castellano
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«Pon la edición de la portada de Random House/Mondadori, en lugar de la extranjera» (salía la cubierta inglesa de un libro con edición española)."
+  propuesta: "Con edición española, la cubierta sale solo de ediciones en castellano (si no hay, la tipográfica), y el chat puede poner la de otra edición en castellano por su editorial o ISBN, con la ficha de esa edición."
+  evidencia: ["Conversación, 2/11: pieza de Gonçalo M. Tavares, «Aprender a rezar en la era de la técnica»"]

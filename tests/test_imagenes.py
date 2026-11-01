@@ -109,13 +109,44 @@ def test_no_hay_de_un_criterio_anterior_se_vuelve_a_buscar(tmp_path):
 
 
 def test_cubiertas_de_la_obra_y_403_de_google_books_a_la_vista(tmp_path):
+    """Con edición española, solo cubiertas en castellano (2/11: salía la inglesa de «Aprender a rezar…»)."""
     llamadas = []
+    ediciones = {"entries": [
+        {"languages": [{"key": "/languages/eng"}], "covers": [999], "publishers": ["Dalkey Archive"], "publish_date": "2011"},
+        {"languages": [{"key": "/languages/spa"}], "covers": [3332121], "publishers": ["Mondadori"], "publish_date": "2008",
+         "isbn_13": ["9788439721000"]}]}
     rutas = {"googleapis.com/books": [httpx.Response(403, json={"error": {"message": "forbidden"}})],
-             "openlibrary.org/works/OL1386647W.json": [httpx.Response(200, json={"covers": [-1, 3332121]})],
-             "b/id/3332121": [httpx.Response(200, content=_jpg(298, 475, (180, 30, 30)))]}
+             "OL1386647W/editions.json": [httpx.Response(200, json=ediciones)],
+             "b/id/3332121": [httpx.Response(200, content=_jpg(298, 475, (180, 30, 30)))],
+             "b/id/999": [httpx.Response(200, content=_jpg(298, 475, (30, 30, 180)))]}
     assert cubiertas.buscar(_libro_es(), tmp_path, clave_gb="k", cliente=_servidor(rutas, llamadas))
     meta = json.loads((tmp_path / "cubiertas" / "9788483460627.json").read_text())
-    assert "cubierta 3332121" in meta["origen"]
+    assert "en castellano, Mondadori, 2008" in meta["origen"] and not any("b/id/999" in u for u in llamadas)
     assert any("Google Books" in d and "HTTP 403" in d for d in meta["descartes"])
     assert not cubiertas.es_pasajero("Google Books (edición española, 1): HTTP 403")
     assert cubiertas.es_pasajero("Open Library (1): HTTP 502") and cubiertas.es_pasajero("Open Library (1): ConnectTimeout")
+
+
+def test_sin_cubierta_en_castellano_mejor_la_tipografica(tmp_path):
+    """Si solo hay cubiertas en otra lengua, ninguna; y una extranjera guardada de antes deja de valer."""
+    ediciones = {"entries": [{"languages": [{"key": "/languages/eng"}], "covers": [999], "publishers": ["Dalkey"]}]}
+    rutas = {"OL1386647W/editions.json": [httpx.Response(200, json=ediciones)],
+             "OL1386647W.json": [httpx.Response(200, json={"covers": [999]})],
+             "b/id/999": [httpx.Response(200, content=_jpg(298, 475, (30, 30, 180)))]}
+    assert cubiertas.buscar(_libro_es(), tmp_path, cliente=_servidor(rutas, [])) is None
+    carpeta = tmp_path / "cubiertas"
+    (carpeta / "vieja.jpg").write_bytes(_jpg(298, 475, (30, 30, 180)))
+    (carpeta / "9788483460627.json").write_text(json.dumps({"archivo": "vieja.jpg", "origen": "Open Library (obra OL1, cubierta 9)"}))
+    assert cubiertas.en_cache(_libro_es(), tmp_path) is None
+
+
+def test_cubierta_de_una_edicion_pedida_en_el_chat(tmp_path):
+    """«Pon la portada de la edición de Mondadori»: la busca entre las ediciones en castellano y trae sus datos."""
+    ediciones = {"entries": [{"languages": [{"key": "/languages/spa"}], "covers": [3332121], "publishers": ["Mondadori"],
+                              "publish_date": "marzo de 2008", "isbn_13": ["9788439721000"], "title": "Aprender a rezar en la era de la técnica"}]}
+    rutas = {"OL1386647W/editions.json": [httpx.Response(200, json=ediciones)],
+             "b/id/3332121": [httpx.Response(200, content=_jpg(298, 475, (180, 30, 30)))]}
+    ruta, ed, nota = cubiertas.de_edicion(_libro_es(), tmp_path, editorial="Random House / Mondadori", cliente=_servidor(rutas, []))
+    assert ruta and ruta.exists() and ed.editorial == "Mondadori" and ed.anio == "2008" and ed.isbn == "9788439721000"
+    ruta, ed, nota = cubiertas.de_edicion(_libro_es(), tmp_path, editorial="Anagrama", cliente=_servidor(rutas, []))
+    assert ruta is None and "Anagrama" in nota

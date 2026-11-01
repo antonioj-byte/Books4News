@@ -67,7 +67,7 @@ def test_imagen_cifra_antetitulo_y_cubierta(cfg_diseno, pieza):
     imagenes.guardar_metadatos(img, pieza.id, cache)
     (cache.parent / "cubiertas").mkdir()
     (cache.parent / "cubiertas" / "c.jpg").write_bytes(b"jpg")
-    (cache.parent / "cubiertas" / f"{cubiertas._nombre(pieza.libros[0])}.json").write_text('{"archivo": "c.jpg"}')
+    (cache.parent / "cubiertas" / f"{cubiertas._nombre(pieza.libros[0])}.json").write_text('{"archivo": "c.jpg", "origen": "Open Library (edición española, 1)"}')
     pieza.arte = Arte(tono="ironico", recurso="foto", portada="sangre", antetitulo="PODER", cifra="tribunal", cifra_rotulo="juzga",
                       remate="se elige")
     p = render.Plantillas(cfg_diseno, url_medio=lambda r: "/api/medios/" + r.name)

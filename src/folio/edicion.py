@@ -38,14 +38,15 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato", "cubierta"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
                     "buscar_retrato: buscar la foto libre de una persona real (autor o protagonista) para la portada; "
                     "retrato_ilustrado: pasar esa foto a ilustración en un estilo de la casa; "
                     "usar_material: poner en la pieza una foto que ha subido quien edita; "
-                    "formato: destacado del titular, antetítulo o color de la pieza")
+                    "formato: destacado del titular, antetítulo o color de la pieza; "
+                    "cubierta: la cubierta (y la ficha) de otra edición en castellano de un libro, por su editorial o ISBN")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
@@ -58,6 +59,9 @@ class AccionImagen(BaseModel):
     destacado: str = Field(description="Solo formato: el trozo del titular de portada que va destacado (cursiva en el color de la casa, con marcador sobre foto), copiado letra por letra, de 1 a 6 palabras; «ninguno» lo quita; vacío, no se toca")
     antetitulo: str = Field(description="Solo formato: el antetítulo de la portada, de 1 a 3 palabras; «ninguno» lo quita; vacío, no se toca")
     acento: str = Field(description="Solo formato: el color de la pieza, «pluma» (rojo) o «marcador» (amarillo); «ninguno» lo quita; vacío, no se toca")
+    libro: str = Field(description="Solo cubierta: el título del libro de la pieza cuya cubierta se cambia; si no, vacío")
+    editorial: str = Field(description="Solo cubierta: la editorial de la edición en castellano que se quiere («Mondadori»); si no, vacío")
+    isbn: str = Field(description="Solo cubierta: el ISBN de esa edición, si lo da quien edita; si no, vacío")
 
 
 class RespuestaChat(BaseModel):
@@ -239,6 +243,39 @@ def _imagen_sin_romper(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tupl
         return None, f"(No se pudo cambiar la imagen: {type(exc).__name__}: {str(exc)[:160]}.)"
 
 
+def _cubierta(cfg: Config, nueva: Pieza, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
+    """La cubierta de otra edición en castellano de un libro de la pieza (2/11, a petición del usuario: «pon la portada
+    de la edición de Random House/Mondadori, en lugar de la extranjera»). La edición la dan Open Library o Google Books
+    (editorial, año, ISBN) y pasa también a la ficha y al colofón: nunca datos del modelo."""
+    from folio.guion import ajustar_libros
+    from folio.imagenes import cubiertas
+    from folio.verificacion_texto import normalizar
+    if not (a.editorial.strip() or a.isbn.strip()):
+        return None, "(Para cambiar la cubierta necesito la editorial o el ISBN de la edición.)"
+    buscado = normalizar(a.libro)
+    candidatos = [l for l in nueva.libros if buscado and (buscado in normalizar(l.titulo_propuesto) or normalizar(l.titulo_propuesto) in buscado)]
+    if not candidatos and len(nueva.libros) == 1:
+        candidatos = nueva.libros
+    if len(candidatos) != 1:
+        return None, f"(No sé de qué libro de la pieza es la cubierta «{a.libro}».)"
+    libro = candidatos[0]
+    ruta, ed, nota = cubiertas.de_edicion(libro, dir_fecha.parent, editorial=a.editorial, isbn=a.isbn,
+                                          clave_gb=cfg.google_books_api_key)
+    if not ruta:
+        return None, f"({nota})"
+    previa = libro.edicion_es_detalle
+    if previa and ed and not ed.titulo:
+        ed.titulo = previa.titulo
+    libro.edicion_es, libro.edicion_es_detalle = "si", ed
+    if ed and ed.isbn and ed.isbn not in libro.isbn13:
+        libro.isbn13 = [ed.isbn, *libro.isbn13]
+    if nueva.guion:
+        ajustar_libros(nueva.guion, nueva.libros)
+    datos = ", ".join(x for x in (ed.editorial, ed.anio, f"ISBN {ed.isbn}" if ed.isbn else None) if x)
+    return nueva, (f"(Cubierta y ficha de «{libro.titulo_propuesto}» cambiadas a la edición de {datos}. "
+                   "Si el texto nombra la editorial de antes, cámbialo también.)")
+
+
 def _formato(nueva: Pieza, ar, a: AccionImagen) -> tuple[Pieza | None, str]:
     """Destacado del titular, antetítulo y color de la pieza (2/11, a petición del usuario: «si pido edits de formato,
     no me deja»). Lo que no casa (un destacado que no está en el titular) no se aplica y se dice."""
@@ -296,6 +333,8 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
     archivo = libres.de_pieza(p.id, dir_fecha)
     if a.tipo == "formato":
         return _formato(nueva, ar, a)
+    if a.tipo == "cubierta":
+        return _cubierta(cfg, nueva, a, dir_fecha)
     if a.tipo == "encuadre":
         usa_retrato = retrato and ar.registro in ("foto_autor", "retrato_ia", None) and ar.portada != "panorama"
         img, clave = (retrato, f"{p.id}-retrato") if usa_retrato else (archivo, p.id)

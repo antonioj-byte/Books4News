@@ -14,7 +14,7 @@ from datos import ELECCION, LIBRO, guion_valido
 
 
 def _accion(tipo, **k):
-    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="", destacado="", antetitulo="", acento="")
+    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", editorial="", isbn="")
     return AccionImagen(**(datos | k))
 
 
@@ -179,3 +179,25 @@ def test_formato_destacado_antetitulo_y_color(cfg):
     grave, nota = edicion.aplicar_imagen(None, cfg, _pieza(tono="grave") if False else p.model_copy(update={"arte": p.arte.model_copy(update={"tono": "grave"})}),
                                          _accion("formato", acento="pluma"))
     assert grave is None and "grave" in nota
+
+
+def test_cubierta_de_otra_edicion_cambia_tambien_la_ficha(cfg, monkeypatch):
+    """«Pon la portada de la edición de Mondadori»: cubierta y ficha de esa edición, con los datos de la API."""
+    from folio.imagenes import cubiertas
+    from folio.modelos import EdicionEspanola
+    vistos = {}
+
+    def de_edicion(libro, dir_cache, editorial="", isbn="", clave_gb=None):
+        vistos["editorial"] = editorial
+        ruta = dir_cache / "cubiertas" / "x.jpg"
+        ruta.parent.mkdir(parents=True, exist_ok=True)
+        ruta.write_bytes(b"jpg")
+        return ruta, EdicionEspanola(editorial="Mondadori", anio="2008", isbn="9788439721000"), ""
+    monkeypatch.setattr(cubiertas, "de_edicion", de_edicion)
+    nueva, nota = edicion.aplicar_imagen(None, cfg, _pieza(), _accion("cubierta", libro="eichmann en jerusalén", editorial="Mondadori"))
+    assert nueva and vistos["editorial"] == "Mondadori" and "Mondadori, 2008" in nota
+    l = nueva.libros[0]
+    assert l.edicion_es_detalle.editorial == "Mondadori" and l.edicion_es_detalle.titulo == "Eichmann en Jerusalén"
+    assert nueva.guion.libros[0].editorial_espanola == "Mondadori"
+    nada, nota = edicion.aplicar_imagen(None, cfg, _pieza(), _accion("cubierta", libro="Eichmann"))
+    assert nada is None and "editorial o el ISBN" in nota
