@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block cuerpo %}
-    {% if not libros and formato == 'curiosidad' %}
-    {# Curiosidad del cajón sin libro (1/11): no hay ficha que recomendar; la frase final a tamaño de titular #}
-    <div class="antetitulo antetitulo--cajon">Historia editorial</div>
+    {% if not libros and formato in ('curiosidad', 'radar') %}
+    {# Historia editorial o tema del radar sin libro (1/11): no hay ficha que recomendar; la frase final a tamaño de titular #}
+    <div class="antetitulo antetitulo--cajon">{{ "Historia editorial" if formato == 'curiosidad' else "Mundo del libro" }}</div>
     <p class="texto texto--final">{{ texto }}</p>
     {% else %}
     <p class="texto">{{ texto }}</p>

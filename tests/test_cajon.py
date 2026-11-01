@@ -174,3 +174,13 @@ def test_la_portada_sin_libro_lleva_la_cara_de_su_protagonista(cfg):
                   guion=guion_sin_libro(), fuentes=[FUENTE], arte=Arte(tono="sereno", recurso="foto", portada="sangre", registro="foto_autor"))
         return render.Plantillas(cfg).html_diapositiva(p, 1)
     assert "con-retrato" in con("Georges Perec") and "con-retrato" not in con("Italo Calvino")
+
+
+def test_el_cierre_sin_libro_del_radar_tambien_va_a_tamano_de_titular(cfg):
+    (cfg.raiz / "diseno").symlink_to(render.dir_diseno(type(cfg)(pipeline={}, fuentes=[])).resolve())
+    for formato, pildora in (("curiosidad", "Historia editorial"), ("radar", "Mundo del libro")):
+        p = Pieza(id="2026-11-01-9", fecha="2026-11-01", estado="propuesta", historia_id="e1",
+                  eleccion=CURIOSIDAD.model_copy(update={"formato": formato}), n_medios=1, libros=[],
+                  guion=guion_sin_libro(), fuentes=[FUENTE])
+        html = render.Plantillas(cfg).html_diapositiva(p, 4)
+        assert "texto--final" in html and pildora in html
