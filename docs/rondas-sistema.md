@@ -8,8 +8,9 @@ las opciones en un Artifact para que el usuario elija.
 | Ronda | Área | Mejora | Tipo | Probado | Coste |
 |---|---|---|---|---|---|
 | 1 | (a) velocidad | Hechos y arte a la vez en «Proceder» | interna, hecha | sí (test + llamada real a Haiku) | 0,0016 $ |
+| 2 | (b) coste | Caché de la conversación en las correcciones del guionista y en el chat | interna, hecha | sí (tests + llamadas reales a Opus y Haiku) | ~0,08 $ |
 
-Gasto acumulado del bucle: **0,0016 $** (tope: 3 $).
+Gasto acumulado del bucle: **~0,08 $** (tope: 3 $).
 
 ---
 
@@ -67,3 +68,65 @@ real a Haiku para medir la comprobación.
 
 **Pendiente**: medir el ahorro real en Railway tras el próximo merge (lo decide el usuario); valorar las
 cubiertas en paralelo en la mesa si los `TIEMPO:` de madrugada lo justifican.
+
+---
+
+## Ronda 2 · (b) Coste
+
+**Qué encontré**
+
+- `llm.con_cache` (`src/folio/llm.py`) pone el único punto de caché al final de la parte fija del prompt (hasta el
+  primer marcador). Todo lo que va después —en el guionista, el formato, la noticia, los 3–5 textos de hasta
+  6.000 caracteres y los libros— nunca se cachea.
+- El guionista es una conversación: si el guion rompe una regla o el lector sin contexto señala algo,
+  `guion.escribir` (`src/folio/guion.py`, bucle `while True`) añade el guion y la corrección y vuelve a llamar a
+  Opus. Cada corrección pagaba otra vez, a 4 $/M, el primer mensaje entero. El 2/11 el guionista hizo 27 llamadas
+  en un día (CLAUDE.md, «Correcciones del guion con esfuerzo medio»): muchas son correcciones.
+- El chat de edición (`edicion.chat`, Opus) no usaba caché en absoluto: cada turno y cada reintento reenviaban las
+  instrucciones, la pieza y la conversación a precio completo.
+- Duda que había que despejar: la referencia de la API dice que cambiar `effort` entre llamadas invalida la caché
+  de los mensajes, y las correcciones van a `medium` tras un primer guion a `high`. **Probado de verdad con Opus
+  5.5** (3 llamadas, ~0,06 $): la corrección con el esfuerzo cambiado leyó de la caché los 8.938 tokens del primer
+  turno. No hace falta la beta de esfuerzo por mensaje.
+
+**Por qué esta**: es el mayor gasto del día (Opus, entradas largas, repetidas), el cambio no toca qué se envía, solo
+qué se marca para la caché, y no cambia modelos ni esfuerzos.
+
+**Qué se hizo** (mejora interna)
+
+- `llm.cache_al_final(mensajes, hasta=None)`: devuelve una copia de la conversación con un punto de caché al final
+  del mensaje `hasta` (por defecto, el penúltimo). Como se marca una copia en cada llamada, los puntos no se acumulan
+  (dos por petición como mucho; el límite es cuatro).
+- Guionista: `hasta=0`, el primer mensaje. Primero lo probé con el punto móvil (el guion anterior también en la
+  caché): la corrección escribía 7.199 tokens a 1,25× que solo se aprovechan si hay una tercera llamada, que es
+  rara. Con el primer mensaje fijo, la corrección lee lo caro y no escribe nada.
+- Chat de edición: el penúltimo mensaje de cada turno (la conversación crece turno a turno; en el primero, el
+  «Entendido» que sigue a las instrucciones y la pieza).
+
+**Antes / después** (prompt real del guionista con tres textos de 6.000 caracteres y una corrección; Haiku para
+abaratar la prueba, el mecanismo de caché es el mismo)
+
+| | entrada sin caché | escritura | lectura |
+|---|---|---|---|
+| Corrección, antes | 15.132 | 0 | 5.543 (solo instrucciones) |
+| Corrección, después | 5.258 (el guion anterior) | 0 | 14.346 |
+
+Pasado a precios de Opus 5.5: la entrada de cada corrección baja de ~0,061 $ a ~0,024 $ (−0,037 $). Lo que cuesta:
+el primer guion escribe la noticia y los textos en la caché a 1,25× (~+0,009 $ por guion). Compensa en cuanto más de
+una de cada cuatro piezas necesita una corrección, y hoy la necesitan bastantes más.
+
+**Cómo se probó**: tests nuevos en `tests/test_llm.py` (la copia, el punto en el sitio y el original intacto; el
+guionista marca su primer turno); `uv run pytest`, 358 en verde; llamadas reales a Opus (esfuerzo y caché) y a
+Haiku (antes y después con el prompt del guionista).
+
+**Coste**: ~0,06 $ (Opus, prueba del esfuerzo) + ~0,02 $ (Haiku) ≈ 0,08 $.
+
+**Pendiente**
+
+- Ver el efecto en el panel de gasto (etapa `guion`) después del próximo merge: la lectura de caché de los
+  `guion:<pieza>:2` debería pasar de unos 5.000 a unos 14.000 tokens.
+- `--reutilizar-llm` (`data/cache/llm/`): la clave incluye los mensajes, así que las respuestas guardadas antes del
+  cambio para el guionista y el chat no se reutilizan una vez (se vuelven a pedir).
+- Otros candidatos de coste vistos: el chat no cachea sus instrucciones fijas entre turnos cuando la pieza cambia
+  (`chat_edicion.md` va sin `con_cache`, ~1.700 tokens); el jefe de los temas y la selección con «completar»
+  también son conversaciones. Menos gasto, para otra ronda.

@@ -102,3 +102,47 @@ def test_fallo_de_conexion_dice_la_causa(cfg):
     llm = LLM(cfg, cliente=cliente)
     with pytest.raises(ErrorLLM, match="no se pudo conectar.*ConnectError: Name or service not known"):
         llm.estructurado("resumen:h1", [{"role": "user", "content": "hola"}], ResumenHistoria, etapa_modelo="ingesta")
+
+
+def test_cache_al_final_marca_solo_el_ultimo_bloque_de_una_copia():
+    """Ronda 2 de mejora: las correcciones del guionista y los turnos del chat leen de la caché todo lo anterior."""
+    from folio.llm import cache_al_final
+    fijo = {"type": "text", "text": "instrucciones", "cache_control": {"type": "ephemeral"}}
+    mensajes = [{"role": "user", "content": [fijo, {"type": "text", "text": "datos"}]}]
+    marcados = cache_al_final(mensajes)
+    assert marcados[0]["content"][1]["cache_control"] == {"type": "ephemeral"}
+    assert "cache_control" not in mensajes[0]["content"][1]             # el original no se toca
+    mensajes += [{"role": "assistant", "content": [{"type": "text", "text": "{}"}]},
+                 {"role": "user", "content": "Corrígelo"}]
+    marcados = cache_al_final(mensajes)
+    puntos = [b for m in marcados if isinstance(m["content"], list) for b in m["content"] if "cache_control" in b]
+    assert len(puntos) == 2 and marcados[1]["content"][-1]["cache_control"] == {"type": "ephemeral"}
+    assert marcados[-1] == mensajes[-1] and "cache_control" not in mensajes[1]["content"][-1]   # la corrección, igual
+
+
+def test_el_guionista_marca_el_final_de_cada_turno(cfg):
+    from datos import ELECCION, FUENTES, LIBRO, guion_valido
+    from folio import guion as guionista
+    from folio.llm import LLM
+
+    class Falso(LLM):
+        def __init__(self):
+            super().__init__(cfg, cliente=object())
+            self.vistos = []
+
+        def estructurado(self, paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
+            self.vistos.append(mensajes)
+            return guion_valido(), []
+
+    llm = Falso()
+    cfg.pipeline.guion.lector_sin_contexto = False
+    guionista.escribir(llm, "p", ELECCION, [(FUENTES[0], "Texto de la noticia aquí.")], [LIBRO])
+    unico = llm.vistos[0][-1]["content"]           # el primer turno: el único mensaje, con la noticia y los textos
+    assert isinstance(unico, list) and unico[-1].get("cache_control") == {"type": "ephemeral"}
+
+
+def test_con_hasta_cero_el_punto_se_queda_en_el_primer_mensaje():
+    from folio.llm import cache_al_final
+    m = [{"role": "user", "content": "datos"}, {"role": "assistant", "content": "{}"}, {"role": "user", "content": "Corrígelo"}]
+    marcados = cache_al_final(m, hasta=0)
+    assert marcados[0]["content"][-1]["cache_control"] == {"type": "ephemeral"} and marcados[1:] == m[1:]

@@ -68,6 +68,34 @@ def con_cache(cfg: Config, nombre: str, texto: str) -> str | list[dict]:
     ]
 
 
+def cache_al_final(mensajes: list[dict], hasta: int | None = None) -> list[dict]:
+    """Copia de la conversación con un punto de caché al final del mensaje `hasta` (por defecto el penúltimo, o el
+    único si solo hay uno) (ronda 2 de mejora, coste). El guionista pasa `hasta=0`: el primer mensaje (instrucciones,
+    noticia, textos y libros) es lo caro y lo que se repite en cada corrección; marcar también el guion anterior
+    obliga a escribirlo en la caché (1,25×) y solo compensa si hay una tercera llamada, que es rara.
+
+    Para las conversaciones de varios turnos (correcciones del guionista, chat de edición): sin él, cada turno nuevo
+    solo leía de la caché las instrucciones fijas (`con_cache`) y pagaba enteros, al precio de entrada, la noticia, los
+    textos, los libros y el guion anterior. Con él, el turno siguiente los lee de la caché (a 0,20 $/M en Opus en vez
+    de 4 $/M). El último mensaje (la corrección o la petición, unas pocas palabras) no se marca: queda igual. Se marca
+    una copia en cada llamada, así que los puntos no se acumulan: como mucho dos por petición (este y el de
+    `con_cache`; el límite de la API es cuatro). Probado de verdad: cambiar el esfuerzo de `high` a `medium` entre
+    turnos no invalida esta caché en Opus 5.5."""
+    if not mensajes:
+        return mensajes
+    n = hasta if hasta is not None else (len(mensajes) - 2 if len(mensajes) > 1 else 0)
+    m = mensajes[n]
+    contenido = m["content"]
+    if isinstance(contenido, str):
+        bloques = [{"type": "text", "text": contenido}]
+    else:
+        bloques = [b if isinstance(b, dict) else bloque_reenviable(b) for b in contenido]
+    if not bloques:
+        return mensajes
+    bloques = [*bloques[:-1], {**bloques[-1], "cache_control": {"type": "ephemeral"}}]
+    return [*mensajes[:n], {**m, "content": bloques}, *mensajes[n + 1:]]
+
+
 class LLM:
     def __init__(self, cfg: Config, cliente: anthropic.Anthropic | None = None, reutilizar: bool = False):
         """Con `reutilizar`, cada respuesta se guarda en data/cache/llm/ y una petición idéntica

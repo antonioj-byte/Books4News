@@ -28,7 +28,7 @@ from pydantic import BaseModel, Field
 
 from folio import guion as guionista
 from folio.config import Config
-from folio.llm import LLM, cargar_prompt
+from folio.llm import LLM, cache_al_final, cargar_prompt
 from folio.modelos import GuionLLM, Pieza
 from folio.verificacion_texto import normalizar
 
@@ -184,7 +184,7 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
     avisos: list[str] = []
     previos = set(validar(cfg, p, p.guion))
     for intento in range(cfg.pipeline.guion.reintentos + 1):
-        r, contenido = llm.estructurado(f"chat:{p.id}:{intento + 1}", mensajes, RespuestaChat, etapa_modelo="chat")
+        r, contenido = llm.estructurado(f"chat:{p.id}:{intento + 1}", cache_al_final(mensajes), RespuestaChat, etapa_modelo="chat")
         if r.guion is None and _dice_que_cambio_el_texto(r.respuesta) and intento < cfg.pipeline.guion.reintentos:
             # 2/11: el editor describió cambios en el texto, devolvió solo un cambio de imagen y la «versión nueva» no
             # tenía el texto nuevo. Si dice que ha cambiado el texto, tiene que traer el guion

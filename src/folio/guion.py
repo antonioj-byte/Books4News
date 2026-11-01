@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from folio.config import Config
 from folio.config import Guion as ConfigGuion
-from folio.llm import LLM, bloque_reenviable, cargar_prompt, con_cache
+from folio.llm import LLM, bloque_reenviable, cache_al_final, cargar_prompt, con_cache
 from folio.modelos import CitaVerificada, DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroGuion, LibroVerificado
 from folio.verificacion_texto import apellido, autor_coincide, normalizar, sin_subtitulo, titulos_coinciden
 
@@ -542,7 +542,7 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     while True:
         # El primer guion, con el esfuerzo del guionista; los reintentos y la reescritura para el lector sin contexto
         # son correcciones sobre un guion hecho: mismo modelo, esfuerzo medio (2/11, a petición del usuario, por el gasto)
-        guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", mensajes, GuionLLM,
+        guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", cache_al_final(mensajes, hasta=0), GuionLLM,
                                             etapa_modelo="guion" if intento == 0 else "guion_correccion")
         corregido = corregir_mecanico(guion)
         if corregido:
