@@ -135,7 +135,9 @@ arte:
   # Ilustración editorial (31/10, B1 y B6 del catálogo): el director de arte puede pedir una metáfora visual
   # en vez de una foto de archivo; Magnific la dibuja con el estilo de prompts/ilustracion_editorial.md, en
   # 16:9, y cruza la portada y la noticia como una panorámica. Unos 25 créditos cada una (~0,025 €).
-  ilustracion_editorial: {activo: true, max_por_dia: 10, variantes: 2}   # 10 al día (31/10, a petición del usuario): ~250 créditos como mucho
+  # Apagada el 2/11 (a petición del usuario: «se nota mucho que es IA… volver al modelo Wired/The Atlantic»; Seedream
+  # escribía letras falsas arriba). Sin ella: foto del autor o archivo en blanco y negro con grano
+  ilustracion_editorial: {activo: false, max_por_dia: 10, variantes: 2}
   colofon: true                # diapositiva final con las fuentes, la ficha verificada y los créditos de las imágenes
   sello_verificacion: true     # «ficha verificada» en la diapositiva del libro
   medios_en_noticia: true      # «lo cuentan: DW · BBC · FT» en la diapositiva de la noticia

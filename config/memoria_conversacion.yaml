@@ -230,3 +230,10 @@
   patron: "El producto se llama Folio."
   propuesta: "«Folio · Mesa de edición»; nunca «Tapablanda»."
   evidencia: ["Conversación, 30/10: preferencia del usuario"]
+
+- clave: sin-ilustracion-ia
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "«Se nota mucho que es IA; tenemos que volver al modelo Wired/The Atlantic; es muy feo las letras esas de IA arriba»."
+  propuesta: "Ilustración editorial generada apagada: la portada es la foto del autor o el archivo en blanco y negro con grano."
+  evidencia: ["Conversación, 2/11: portada de La generación ansiosa con letras falsas («epfal Ediiorial Beslgnes») y cuadros verdes"]

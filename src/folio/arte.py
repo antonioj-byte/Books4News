@@ -555,7 +555,8 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
                 avisos=validar_cifra(propuesta, pieza))
     del_dia = registros_del_dia or []
     retrato = _retrato(cfg, pieza, arte, dir_fecha) if cfg.pipeline.arte.retratos and autor_principal(pieza) else None
-    quiere_ilustracion = propuesta.recurso == "ilustracion"
+    # Apagada (2/11), la ilustración no cuenta ni para barajar: si no, la foto del autor cedía su sitio al archivo
+    quiere_ilustracion = propuesta.recurso == "ilustracion" and cfg.pipeline.arte.ilustracion_editorial.activo
     arte.registro = elegir_registro(bool(retrato), quiere_ilustracion, del_dia)
     if arte.registro == "ilustracion" and not _ilustracion_editorial(llm, cfg, pieza, propuesta, arte, dir_fecha):
         arte.registro = "foto_autor" if retrato else "archivo"

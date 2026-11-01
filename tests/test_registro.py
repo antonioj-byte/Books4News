@@ -169,6 +169,7 @@ def test_topes_diarios_cuentan_las_piezas_de_verdad_en_las_pruebas(cfg):
 
 def test_la_ilustracion_se_elige_entre_variantes(cfg, monkeypatch, tmp_path):
     """El ilustrador propone escenas, se dibujan las variantes y el director elige una (31/10, ilustraciones)."""
+    cfg.pipeline.arte.ilustracion_editorial.activo = True   # apagada en producción desde el 2/11
     from PIL import Image
     from folio.imagenes import editorial
     from folio.modelos import EscenasLLM
@@ -202,3 +203,16 @@ def test_la_ilustracion_se_elige_entre_variantes(cfg, monkeypatch, tmp_path):
     b = Arte(tono="sereno", recurso="ilustracion")
     assert not arte._ilustracion_editorial(LLM(), cfg, _pieza(), p, b, cfg.dir_cache("2026-10-30"))
     assert p.recurso == "foto" and "ninguna de las 2" in b.avisos[-1]
+
+
+def test_con_la_ilustracion_apagada_la_foto_del_autor_no_cede_su_sitio(cfg, monkeypatch):
+    """2/11: la ilustración se apagó; si contaba para barajar, la foto del autor acababa en archivo."""
+    monkeypatch.setattr(retratos, "buscar_y_fijar", lambda *a, **k: (None, "Sin retrato en Wikidata"))
+    monkeypatch.setattr(prensa, "buscar_y_fijar", lambda autor, editorial, pid, d, **k: (_foto_prensa(cfg, pid), ""))
+    monkeypatch.setattr(arte, "_imagen_de_archivo", lambda *a, **k: None)
+    monkeypatch.setattr(arte, "_propuesta", lambda *a, **k: _propuesta().model_copy(update={"recurso": "ilustracion"}))
+    from folio.imagenes import cubiertas
+    monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)
+    assert cfg.pipeline.arte.ilustracion_editorial.activo is False
+    a = arte.dirigir(None, cfg, _pieza(), None, registros_del_dia=["foto_autor"])
+    assert a.registro == "foto_autor"

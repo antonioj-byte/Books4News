@@ -64,6 +64,7 @@ def test_buscar_otra_imagen_de_archivo(cfg, monkeypatch):
 
 
 def test_ilustrar_con_escena_valida_y_tope_del_dia(cfg, monkeypatch):
+    cfg.pipeline.arte.ilustracion_editorial.activo = True   # apagada en producción desde el 2/11
     assert "nombres propios" in edicion.aplicar_imagen(None, cfg, _pieza(), _accion("ilustrar", escena="Madrid at night " * 5))[1]
     llamadas = []
     monkeypatch.setattr(editorial, "generar", lambda cfg, pid, d, escena: llamadas.append(escena) or libres.ImagenLibre(
