@@ -14,6 +14,9 @@ export type ResultadoEdicion = components["schemas"]["ResultadoEdicion"];
 export type MensajeChat = components["schemas"]["MensajeChat"];
 export type RespuestaChat = components["schemas"]["RespuestaChat"];
 export type PanelGasto = components["schemas"]["PanelGasto"];
+export type Tema = components["schemas"]["Tema"];
+export type TemaNuevo = components["schemas"]["TemaNuevo"];
+export type TemaCreado = components["schemas"]["TemaCreado"];
 export type Material = components["schemas"]["Material"];
 export type EstadoMemoria = components["schemas"]["EstadoMemoria"];
 export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" };
@@ -58,6 +61,9 @@ export const api = {
   editarDiapositiva: (eid: number, pid: string, n: number, texto: string, subtitulo?: string | null) =>
     pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),
   chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),
+  temas: () => pedir<Tema[]>("/api/temas"),
+  proponerTema: (t: TemaNuevo) => pedir<TemaCreado>("/api/temas", { method: "POST", body: JSON.stringify(t) }),
+  descartarTema: (id: number) => pedir<Tema>(`/api/temas/${id}`, { method: "DELETE" }),
   materiales: (eid: number, pid: string) => pedir<Material[]>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales`),
   subirMaterial: (eid: number, pid: string, archivo: File, credito: string, nota: string) =>
     pedir<Material>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales?${new URLSearchParams({ nombre: archivo.name, credito, nota })}`,

@@ -432,6 +432,41 @@ export interface paths {
         patch: operations["decidir_api_memoria__pid__patch"];
         trace?: never;
     };
+    "/api/temas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista */
+        get: operations["lista_api_temas_get"];
+        put?: never;
+        /** Proponer */
+        post: operations["proponer_api_temas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/temas/{tid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Descartar */
+        delete: operations["descartar_api_temas__tid__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1450,6 +1485,57 @@ export interface components {
              */
             sello: string;
         };
+        /** Tema */
+        Tema: {
+            /** Id */
+            id: number;
+            /** Creado En */
+            creado_en: string;
+            /** Texto */
+            texto: string;
+            /** Enlaces */
+            enlaces: string[];
+            /** Cuando */
+            cuando: string;
+            /** Estado */
+            estado: string;
+            /** Fecha */
+            fecha: string | null;
+            /** Pieza Id */
+            pieza_id: string | null;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
+        };
+        /** TemaCreado */
+        TemaCreado: {
+            tema: components["schemas"]["Tema"];
+            /** Pieza Id */
+            pieza_id?: string | null;
+            /** Estado Pieza */
+            estado_pieza?: string | null;
+            /**
+             * Avisos
+             * @default []
+             */
+            avisos: string[];
+        };
+        /** TemaNuevo */
+        TemaNuevo: {
+            /** Texto */
+            texto: string;
+            /** Enlaces */
+            enlaces?: string[];
+            /**
+             * Cuando
+             * @enum {string}
+             */
+            cuando: "ahora" | "manana";
+            /** Ejecucion */
+            ejecucion?: number | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -2275,6 +2361,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecisionPatron-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lista_api_temas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tema"][];
+                };
+            };
+        };
+    };
+    proponer_api_temas_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemaNuevo"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemaCreado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    descartar_api_temas__tid__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tema"];
                 };
             };
             /** @description Validation Error */

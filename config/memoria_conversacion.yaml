@@ -258,3 +258,10 @@
   patron: "«Lo veo muy IA aún: usa el mejor modelo disponible, no escatimes; tiene que parecer Wired, The Atlantic, The New Yorker»."
   propuesta: "La ilustración se dibuja con Flux 2 Pro y un estilo de gouache sobre papel con trazo imperfecto y grano de serigrafía, sin nombrar revistas en el prompt."
   evidencia: ["Conversación, 2/11: comparación de Flux 2 Pro, Mystic, RunWay y Seedream con las mismas escenas; elegido Flux 2 Pro"]
+
+- clave: temas-de-la-redaccion
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«Molaría pasarle al redactor jefe de cultura vía chat el tema del cual queremos que se hable (por si nosotros queremos proponer temas)»."
+  propuesta: "La redacción propone temas desde la mesa: ahora (el jefe lo convierte en una pieza pendiente con sus libros verificados) o para la madrugada, donde el jefe los lleva a la mesa por delante de otros de su formato salvo que no se sostengan."
+  evidencia: ["Conversación, 2/11: petición del usuario; prueba real con la huelga de traductores en Francia"]

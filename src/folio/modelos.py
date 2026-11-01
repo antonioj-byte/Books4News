@@ -34,7 +34,7 @@ SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar")
 # «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml); «catalogo»: novedades de
 # las editoriales independientes (formato «recomendado»); «radar»: historias del mundo del libro que no pasan al jefe
 # pero sí a la lista del radar
-Carril = Literal["actualidad", "editorial", "cajon", "catalogo", "radar"]
+Carril = Literal["actualidad", "editorial", "cajon", "catalogo", "radar", "redaccion"]
 TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre"]
 
 

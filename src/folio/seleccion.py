@@ -53,6 +53,11 @@ def bloque_cajon(historias: list[Historia]) -> str:
     return "<cajon_de_curiosidades>\n" + "\n\n".join(partes) + "\n</cajon_de_curiosidades>"
 
 
+def bloque_temas(historias: list[Historia]) -> str:
+    from folio.temas import bloque_para_la_seleccion
+    return bloque_para_la_seleccion(historias)
+
+
 def reparto_del_dia(reparto: dict[str, int], historias: list[Historia]) -> dict[str, int]:
     """El reparto de la configuración, sin la curiosidad si el cajón no tiene ninguna disponible hoy ni el
     recomendado si el catálogo no ha dado candidatos."""
@@ -127,6 +132,7 @@ def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[Selecc
         "[pegar lista editorial]": bloque_historias([h for h in historias if h.carril == "editorial"], "mundo_del_libro"),
         "[pegar cajón]": bloque_cajon([h for h in historias if h.carril == "cajon"]),
         "[pegar catálogo]": bloque_catalogo([h for h in historias if h.carril == "catalogo"]),
+        "[pegar temas]": bloque_temas([h for h in historias if h.carril == "redaccion"]),
     })
     mensajes = [{"role": "user", "content": prompt}]
     sel, contenido = llm.estructurado("seleccion", mensajes, SeleccionJefe,

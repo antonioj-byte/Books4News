@@ -127,6 +127,21 @@ _MIGRACIONES = [
         aviso TEXT NOT NULL DEFAULT ''
     );
     """,
+    # 6: temas que propone la redacción al jefe de cultura (2/11): ahora (una pieza pendiente al momento) o para la
+    # selección de la madrugada siguiente
+    """
+    CREATE TABLE temas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creado_en TEXT NOT NULL,
+        texto TEXT NOT NULL,
+        enlaces TEXT NOT NULL,             -- JSON: [url]
+        cuando TEXT NOT NULL,              -- ahora | manana
+        estado TEXT NOT NULL DEFAULT 'pendiente',  -- pendiente | en_mesa | no_elegido | fallido | descartado
+        fecha TEXT,                        -- día de la mesa en que entró (o en que el jefe no lo eligió)
+        pieza_id TEXT,
+        nota TEXT NOT NULL DEFAULT ''
+    );
+    """,
 ]
 
 
@@ -143,6 +158,18 @@ class Patron(BaseModel):
     nota: str = ""
     origen: str = "feedback"           # feedback (análisis de la web) | conversacion (decidido en una sesión)
     clave: str | None = None
+
+
+class Tema(BaseModel):
+    id: int
+    creado_en: str
+    texto: str
+    enlaces: list[str]
+    cuando: str
+    estado: str
+    fecha: str | None = None
+    pieza_id: str | None = None
+    nota: str = ""
 
 
 class Gasto(BaseModel):
@@ -321,6 +348,39 @@ class Almacen:
                            (ts, ts, e["patron"], evidencia, e["propuesta"], e["destino"], e["clave"]))
                 nuevas += 1
         return nuevas
+
+    # --- Temas de la redacción ---------------------------------------------------------
+
+    def guardar_tema(self, texto: str, enlaces: list[str], cuando: str) -> int:
+        with self._transaccion() as db:
+            return db.execute("INSERT INTO temas (creado_en, texto, enlaces, cuando) VALUES (?, ?, ?, ?)",
+                              (_ahora(), texto, json.dumps(enlaces, ensure_ascii=False), cuando)).lastrowid
+
+    def temas(self, estado: str | None = None) -> list[Tema]:
+        filas = self.db.execute("SELECT * FROM temas" + (" WHERE estado = ?" if estado else "") + " ORDER BY id DESC",
+                                (estado,) if estado else ()).fetchall()
+        return [Tema(**{**dict(f), "enlaces": json.loads(f["enlaces"])}) for f in filas]
+
+    def actualizar_tema(self, tid: int, **campos) -> None:
+        permitidos = {"estado", "fecha", "pieza_id", "nota"}
+        if not campos or set(campos) - permitidos:
+            raise ValueError(f"campos no válidos: {set(campos) - permitidos}")
+        with self._transaccion() as db:
+            db.execute(f"UPDATE temas SET {', '.join(f'{k} = ?' for k in campos)} WHERE id = ?", (*campos.values(), tid))
+
+    def anadir_pieza(self, eid: int, pieza: Pieza, descripcion: str) -> None:
+        """Una pieza nueva en una ejecución ya registrada (un tema propuesto por la redacción), con su versión 1."""
+        with self._transaccion() as db:
+            db.execute("INSERT INTO piezas VALUES (?, ?, ?, 1)", (eid, pieza.id, pieza.estado))
+            db.execute("INSERT INTO versiones VALUES (?, ?, 1, ?, 'tema', ?, ?)",
+                       (eid, pieza.id, _ahora(), descripcion, pieza.model_dump_json()))
+
+    def siguiente_numero(self, eid: int, fecha: str) -> int:
+        """El número de la próxima pieza de la ejecución (<fecha>-<n>)."""
+        ns = [int(f["pieza_id"].rsplit("-", 1)[1]) for f in self.db.execute(
+            "SELECT pieza_id FROM piezas WHERE ejecucion_id = ?", (eid,)) if f["pieza_id"].startswith(fecha + "-")
+            and f["pieza_id"].rsplit("-", 1)[1].isdigit()]
+        return max(ns, default=0) + 1
 
     def registrar_analisis(self, origen: str, piezas: int, patrones: int, coste_usd: float, aviso: str = "") -> None:
         with self._transaccion() as db:

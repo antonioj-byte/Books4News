@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 import numpy as np
 from folio import guion as guionista
-from folio import arte, cajon, catalogo, hechos, informe, radar, seleccion, textos
+from folio import arte, cajon, catalogo, hechos, informe, radar, seleccion, temas, textos
 from folio.imagenes import cubiertas
 from folio.libros import citas
 from folio.etapas import ORDEN, Etapa, EtapasGuardadas
@@ -194,6 +194,30 @@ class Pipeline:
         self.avisos += avisos
         return libros
 
+    def _de_la_redaccion(self) -> list[Historia]:
+        """Temas que ha propuesto la redacción para la mesa de hoy (folio.temas, «para mañana»), con sus noticias.
+        El que no tiene noticias que se lean queda «fallido» con el motivo. Nada en las ejecuciones de prueba."""
+        if self.dev or self.solo_pieza is not None:
+            return []
+        from folio.almacen import Almacen
+        almacen = Almacen(self.cfg.ruta_db)
+        historias = []
+        for t in reversed(almacen.temas("pendiente")):
+            if t.cuando != "manana":
+                continue
+            try:
+                fuentes, avisos = temas.fuentes_del_tema(self.llm, self.cfg, t.texto, t.enlaces)
+            except Exception as exc:
+                fuentes, avisos = [], [f"{type(exc).__name__}: {exc}"]
+            self.avisos += [f"Tema de la redacción {t.id}: {a}" for a in avisos]
+            if not fuentes:
+                almacen.actualizar_tema(t.id, estado="fallido", fecha=self.fecha, nota="Sin noticias que se puedan leer")
+                continue
+            h = temas.historia(t.id, t.texto, fuentes)
+            temas.guardar_en_el_dia(self.cfg, self.fecha, h, fuentes)
+            historias.append(h)
+        return historias
+
     def historias(self, articulos: list[Articulo], vectores, con_llm: bool) -> tuple[list[Historia], list[HistoriaResumida]]:
         """Agrupa, excluye las ya usadas y resume las que pasan al jefe de cultura.
 
@@ -218,6 +242,8 @@ class Pipeline:
         al_jefe += del_cajon
         del_catalogo = self._del_catalogo()
         al_jefe += del_catalogo
+        de_la_redaccion = self._de_la_redaccion() if con_llm else []
+        al_jefe += de_la_redaccion
         ids_jefe = {h.id for h in al_jefe}
         mostradas = [h for h in candidatas if h.id in ids_jefe or h.id in excluidas]
         resumidas = [HistoriaResumida(
@@ -229,7 +255,8 @@ class Pipeline:
             "medios": len({a.medio for a in articulos}),
             "historias": len(todas),
             "historias_multimedio": len(candidatas),
-            "historias_al_jefe": len(al_jefe) - len(del_libro) - len(del_cajon) - len(del_catalogo),
+            "historias_al_jefe": len(al_jefe) - len(del_libro) - len(del_cajon) - len(del_catalogo) - len(de_la_redaccion),
+            "temas_de_la_redaccion": len(de_la_redaccion),
             "articulos_editoriales": len(editoriales),
             "historias_editoriales_al_jefe": sum(h.carril == "editorial" for h in del_libro),
             "historias_solo_radar": sum(h.carril == "radar" for h in del_libro),
@@ -245,6 +272,7 @@ class Pipeline:
         sel, avisos = seleccion.seleccionar(self.llm, al_jefe, self.fecha)
         self.avisos += avisos
         self._guardar_etapa(self.etapas.guardar_seleccion, sel)
+        self._marcar_temas(sel, al_jefe)
         try:
             self.radar, avisos_radar = radar.temas(self.llm, al_jefe, sel)
             self.avisos += avisos_radar
@@ -253,6 +281,22 @@ class Pipeline:
             self.avisos.append(f"Radar del libro: no se pudo ({type(exc).__name__}: {exc})")
         self._guardar_etapa(self.etapas.guardar_radar, self.radar)
         return sel
+
+    def _marcar_temas(self, sel: SeleccionJefe, al_jefe: list[Historia]) -> None:
+        """Los temas de la redacción que ha visto el jefe: en la mesa (con el id de su pieza) o no elegidos."""
+        de_la_redaccion = [h for h in al_jefe if temas.es_tema(h.id)]
+        if not de_la_redaccion or self.dev or self.solo_pieza is not None:
+            return
+        from folio.almacen import Almacen
+        almacen = Almacen(self.cfg.ruta_db)
+        elegidas = {e.historia_id: i for i, e in enumerate(sel.elegidas, 1)}
+        for h in de_la_redaccion:
+            tid = int(h.id.removeprefix(temas.PREFIJO))
+            if h.id in elegidas:
+                almacen.actualizar_tema(tid, estado="en_mesa", fecha=self.fecha, pieza_id=f"{self.fecha}-{elegidas[h.id]}")
+            else:
+                almacen.actualizar_tema(tid, estado="no_elegido", fecha=self.fecha, nota=(sel.aviso or "")[:300])
+                self.avisos.append(f"El jefe no ha llevado a la mesa el tema de la redacción «{h.titular_es}»")
 
     # --- Etapa 3: verificación y guion --------------------------------------
 
@@ -575,7 +619,8 @@ class Pipeline:
     def _registrar_historial(self, buenas: list[Pieza], al_jefe: list[Historia], vectores) -> None:
         """Historias y libros usados hoy, para no repetirlos en los próximos días."""
         por_id = {h.id: h for h in al_jefe}
-        noticias = [p for p in buenas if not cajon.es_del_cajon(p.historia_id) and not catalogo.es_del_catalogo(p.historia_id)]
+        noticias = [p for p in buenas if not cajon.es_del_cajon(p.historia_id) and not catalogo.es_del_catalogo(p.historia_id)
+                    and not temas.es_tema(p.historia_id) and p.historia_id in por_id]
         self.historial.registrar_dia(
             self.fecha,
             [(p.historia_id, p.eleccion.titular, agrupacion.centroide(por_id[p.historia_id], vectores)) for p in noticias],

@@ -8,6 +8,8 @@ Hay cinco formatos:
 4. **Historia editorial** (`curiosidad`): una historia del mundo del libro sin percha de actualidad, de las que se encuentran en la balda de historia del libro de una buena librería: una errata famosa, una librería mítica, un editor que se la jugó, un manuscrito perdido, un juicio, una tirada. Una moneda conversacional: algo que sorprende y que alguien del mundo del libro querría contar o compartir. Sale solo del cajón de curiosidades, y el cajón solo sirve para este formato. No necesita libro: propón 0–4 candidatos solo si hay un libro reciente que de verdad la cuente o la continúe; si no, ninguno. Elige la que mejor contraste con el resto de la mesa.
 5. **Libro recomendado** (`recomendado`): una novedad de los últimos meses de una editorial independiente de prestigio, que recomendarías a un lector experimentado por su calidad literaria o editorial. Sale solo del catálogo de las independientes, y el catálogo solo sirve para este formato. Prefiere los que tienen crítica de prensa en la ficha (lo dice la lista) y los que nadie más está recomendando: un hallazgo, no el libro que ya está en todas partes. De libros candidatos, ese libro y solo ese (título y autor tal como vienen). El gancho es por qué leerlo ahora.
 
+Temas de la redacción: si la redacción ha propuesto temas (la lista «temas de la redacción», al final), llévalos a la mesa, en el formato que mejor les vaya (lectura lateral, diálogo o mundo del libro) y contando dentro del reparto, por delante de otras de su formato. Son de quien edita y los quiere ver escritos: tu trabajo es encontrarles el ángulo y el libro. Solo si de verdad no se sostienen (no hay hechos o no hay un libro que lo merezca), déjalos fuera y explícalo en `aviso`.
+
 Reparto: [pegar reparto]. Devuélvelas todas en `elegidas`, ordenadas por preferencia: la primera es la que mejor funciona hoy y se escribe sola, aunque nadie elija; las demás se escriben si la redacción las elige. Si un formato no tiene hoy material bueno, propón menos de ese formato y explícalo en `aviso`: mejor una propuesta menos que una forzada. Que no se repitan noticias ni cuestiones de fondo, y que no sean todas graves.
 
 Línea editorial de Folio:
@@ -47,3 +49,6 @@ Cajón de curiosidades (para el formato «curiosidad»; no son noticias, no tien
 
 Catálogo de las editoriales independientes (para el formato «libro recomendado»; novedades de los últimos meses):
 [pegar catálogo]
+
+Temas de la redacción:
+[pegar temas]

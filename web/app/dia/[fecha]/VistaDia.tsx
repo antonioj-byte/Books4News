@@ -8,6 +8,7 @@ import { Estanteria } from "@/components/Estanteria";
 import { LanzarEjecucion } from "@/components/LanzarEjecucion";
 import { EstadoChip, FormatoChip, Marcas } from "@/components/Marcas";
 import { Proceder } from "@/components/Proceder";
+import { ProponerTema } from "@/components/ProponerTema";
 import { api } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
 
@@ -120,6 +121,8 @@ export function VistaDia() {
           </Link>
         ))}
       </div>
+
+      <ProponerTema eid={dia?.ejecucion.id} onPieza={recargarDia} />
 
       {radar.length > 0 && (
         <section className="mt-12" aria-labelledby="h-radar">
