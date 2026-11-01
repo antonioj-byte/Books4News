@@ -15,7 +15,7 @@ def lanzar(ctx: Contexto = Depends(contexto)):
     vídeos de las diapositivas animadas). La ejecución aparece en la portada del día en cuanto termina el pipeline (la
     guarda en la base de datos); el vídeo, cuando termina el render."""
     if not ctx.ejecutor.lanzar(ctx.ejecutor.diaria):
-        raise HTTPException(409, "Ya hay una ejecución en marcha")
+        raise HTTPException(409, ctx.ejecutor.motivo_ocupado() or "Ya hay una ejecución en marcha")
     return ctx.ejecutor.estado()
 
 

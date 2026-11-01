@@ -9,6 +9,7 @@ las opciones en un Artifact para que el usuario elija.
 |---|---|---|---|---|---|
 | 1 | (a) velocidad | Hechos y arte a la vez en «Proceder» | interna, hecha | sí (test + llamada real a Haiku) | 0,0016 $ |
 | 2 | (b) coste | Caché de la conversación en las correcciones del guionista y en el chat | interna, hecha | sí (tests + llamadas reales a Opus y Haiku) | ~0,08 $ |
+| 3 | (c) fiabilidad | La lectura periódica y la ejecución del día ya no se pisan; `lecturas.json` atómico | interna, hecha | sí (tests + lectura real de los RSS + carrera medida) | 0 $ |
 
 Gasto acumulado del bucle: **~0,08 $** (tope: 3 $).
 
@@ -134,3 +135,59 @@ Haiku (antes y después con el prompt del guionista).
   `KeyError: 'voz-estilo'`. Lo trae el commit `1942db5` («Ronda 1 de la voz», otra sesión que trabaja en la misma
   rama), que cambió las variantes de `ab` en `config/pipeline.yaml`; falla igual sin los cambios de esta ronda. No se
   ha tocado: es trabajo en curso de la otra sesión.
+
+---
+
+## Ronda 3 · (c) Fiabilidad
+
+**Qué encontré**
+
+- La lectura periódica (`folio leer`, cada 2 h, `programador.Lector`) es un proceso que el ejecutor no conoce: solo
+  miraba al empezar si había una ejecución en marcha (`Lector.una_vuelta`), pero nada impedía lo contrario. Si la
+  lectura empieza a las 4:44 y la diaria salta a las 4:45 (o alguien pulsa «Lanzar ejecución del día»), corren a la
+  vez: la lectura descarga ~120 feeds, calcula embeddings, y algunos días lanza la nevera y la Memoria; tarda minutos.
+- `lecturas.leer` reescribía `data/lecturas.json` con un `write_text` directo (`src/folio/ingesta/lecturas.py:51`), y
+  `lecturas._cargar` devuelve `{}` si el JSON no se puede leer. La madrugada (`pipeline.ingesta` → `lecturas.juntar`)
+  lo lee: a medio escribir, lo da por vacío **sin avisar** y pierde los artículos que ya salieron del RSS y la hora
+  en que Folio vio cada uno (`visto_en`), que es lo que usa el jefe para no tratar en caliente una noticia dolorosa.
+- Además, los dos procesos podían tener cargado a la vez el modelo de embeddings (2 GB cada uno).
+- Medido con datos reales (1.351 artículos, 910 KB), un proceso reescribiendo y otro leyendo durante 3 s:
+  **3.387 de 3.720 lecturas salían vacías** con el código anterior; **0 de 285** con la escritura atómica.
+- Otros candidatos vistos: `Embedder.podar` (`agrupacion.py`) lee y reescribe la caché de embeddings fuera del
+  cerrojo y puede borrar vectores recién calculados por otro proceso (solo cuesta recalcularlos: menos grave); si el
+  `Popen` de un paso encadenado falla, `_Trabajo` se queda «vivo» para siempre (improbable).
+
+**Por qué esta**: afecta a la ejecución que más importa (la de madrugada), el fallo es silencioso y toca una regla
+editorial (los días en caliente); el arreglo es pequeño y no cambia nada cuando no hay choque.
+
+**Qué se hizo** (arreglo interno)
+
+- `Ejecutor.empezar_lectura` / `acabar_lectura`: la lectura pide turno bajo el mismo cerrojo que el pipeline; si hay
+  una ejecución del día, se salta la vuelta (como antes) y, mientras lee, `Ejecutor.lanzar` no lanza el pipeline.
+  «Proceder» no cambia (sigue pudiendo ir a la vez que la lectura).
+- La programada ya reintentaba cada 30 s dentro de su ventana de dos horas: ahora espera a que acabe la lectura.
+- `Ejecutor.motivo_ocupado`: el 409 de «Lanzar ejecución del día» dice el motivo real («Se están leyendo las noticias
+  (lectura periódica); prueba en unos minutos», o que hay piezas escribiéndose); antes decía siempre «Ya hay una
+  ejecución en marcha», también cuando lo que había era un «Proceder».
+- `lecturas.leer` escribe en un temporal y lo renombra (atómico), como ya hacía la caché de embeddings.
+- Si la lectura falla, el turno se suelta (`finally`).
+
+**Cómo se probó**: tests nuevos en `tests/test_lecturas.py` (con el ejecutor real y procesos reales: la lectura no
+arranca con una ejecución en marcha; con la lectura a medias no se lanza la diaria y el motivo es el correcto; una
+lectura que falla no deja el turno cogido; la escritura no deja temporales). `uv run pytest`: 359 en verde y 1 rojo que
+no es de esta ronda (ver abajo). Una lectura real de los RSS (`folio leer --solo-rss`, gratis): 1.351 artículos,
+archivo íntegro. La carrera, medida antes y después con esos datos.
+
+**Coste**: 0 $.
+
+**Avisos**
+
+- **403/429 en la lectura real**: dos feeds respondieron 403 o 429 desde este entorno, La Stampa Cultura y The
+  Believer. El código los pausó 7 días (`data/feeds_pausados.json` de este contenedor; producción no se entera) y no
+  se reintentó nada. No se han vuelto a lanzar lecturas de RSS en el bucle. Si también bloquean desde Railway, la
+  pausa de allí lo dirá en los avisos de la ejecución.
+- `tests/test_config.py::test_pipeline_yaml_tipado` sigue en rojo por el commit `1942db5` de la otra sesión
+  (`voz-estilo`), como al cerrar la ronda 2.
+
+**Pendiente**: no se ha probado en Railway con la API de verdad (hilo del lector y programada a la vez); lo cubren los
+tests con el ejecutor real. Valorar `Embedder.podar` bajo el cerrojo en otra ronda de fiabilidad.

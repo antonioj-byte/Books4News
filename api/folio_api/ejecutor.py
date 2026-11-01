@@ -82,13 +82,39 @@ class Ejecutor:
         self._trabajo: _Trabajo | None = None
         self._desarrollos: dict[str, _Trabajo] = {}
         self._cerrojo = threading.Lock()
+        # La lectura periódica (folio leer, programador.Lector) reescribe data/lecturas.json y la caché de embeddings
+        # que el pipeline lee: mientras lee, no se lanza el pipeline (ronda 3 de mejora, fiabilidad)
+        self._leyendo = False
+
+    def empezar_lectura(self) -> bool:
+        """La lectura periódica pide turno: False si hay una ejecución del día en marcha (se salta la vuelta)."""
+        with self._cerrojo:
+            if self.ocupado():
+                return False
+            self._leyendo = True
+            return True
+
+    def acabar_lectura(self) -> None:
+        with self._cerrojo:
+            self._leyendo = False
+
+    def motivo_ocupado(self) -> str | None:
+        """Por qué no se puede lanzar ahora la ejecución del día (None si se puede)."""
+        if self.ocupado():
+            return "Ya hay una ejecución en marcha"
+        if self.desarrollando():
+            return "Se están escribiendo piezas con «Proceder»; prueba cuando acaben"
+        if self._leyendo:
+            return "Se están leyendo las noticias (lectura periódica); prueba en unos minutos"
+        return None
 
     def lanzar(self, pasos: list[list[str]] | None = None) -> bool:
-        """Lanza la ejecución del día (por defecto, solo el pipeline). False si ya hay una en marcha o si se están
-        escribiendo piezas con «Proceder» (el pipeline reescribe las historias del día que ellas leen)."""
+        """Lanza la ejecución del día (por defecto, solo el pipeline). False si ya hay una en marcha, si se están
+        escribiendo piezas con «Proceder» (el pipeline reescribe las historias del día que ellas leen) o si la lectura
+        periódica está a medias (reescribe las lecturas que el pipeline lee)."""
         pasos = pasos or [self.comando]
         with self._cerrojo:
-            if self.ocupado() or self.desarrollando():
+            if self.motivo_ocupado():
                 return False
             self._trabajo = _Trabajo(self.registro, pasos)
             return True

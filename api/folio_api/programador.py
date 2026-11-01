@@ -6,7 +6,7 @@ el cambio de hora resuelto). Sin la variable no hace nada: en local, nada cambia
 la API (un hilo que mira el reloj cada 30 s), así que no hace falta otro servicio en Railway.
 
 Reglas: una vez al día; si a esa hora hay una ejecución en marcha (lanzada a mano), espera a que acabe
-mientras siga dentro de la ventana; si la API arranca tarde (un despliegue, un reinicio), recupera la del
+mientras siga dentro de la ventana (también si está a medias la lectura periódica de las noticias); si la API arranca tarde (un despliegue, un reinicio), recupera la del
 día solo dentro de la ventana, para no lanzar a mediodía una ejecución de ~1 $ que nadie pidió. El día
 de la última lanzada se guarda en el volumen (ejecucion_diaria.json).
 """
@@ -124,9 +124,14 @@ class Lector:
         self.ultima: str | None = None
 
     def una_vuelta(self) -> bool:
-        if self.ejecutor.ocupado():
+        # Con turno en el ejecutor: si no, la diaria podía arrancar con la lectura a medias y leer lecturas.json
+        # mientras se reescribía (lo daba por vacío) y cargar a la vez dos veces el modelo de embeddings (ronda 3)
+        if not self.ejecutor.empezar_lectura():
             return False
-        codigo = self._lanzar()
+        try:
+            codigo = self._lanzar()
+        finally:
+            self.ejecutor.acabar_lectura()
         self.ultima = datetime.now().astimezone().isoformat(timespec="minutes")
         if codigo:
             log.warning("Lectura periódica: salió con código %s", codigo)

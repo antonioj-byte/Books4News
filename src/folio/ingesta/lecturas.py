@@ -13,6 +13,7 @@ Sin embeddings: no carga el modelo (4 GB) a deshoras ni compite con «Proceder»
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timedelta, timezone
 
 from folio.ingesta import rss
@@ -48,7 +49,10 @@ def leer(cfg, ahora: datetime | None = None) -> tuple[int, int, list[str]]:
     limite = ahora - _ventana(cfg)
     guardados = {k: v for k, v in guardados.items() if datetime.fromisoformat(v["visto_en"]) >= limite}
     ruta(cfg).parent.mkdir(parents=True, exist_ok=True)
-    ruta(cfg).write_text(json.dumps(guardados, ensure_ascii=False), encoding="utf-8")
+    # Escritura atómica: la madrugada lo lee (juntar) y, a medio escribir, lo daba por vacío sin avisar (ronda 3)
+    tmp = ruta(cfg).with_name(f".lecturas.{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(guardados, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(ruta(cfg))
     return nuevos, len(guardados), errores
 
 

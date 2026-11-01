@@ -37,15 +37,52 @@ def test_el_jefe_ve_desde_cuando_circula_la_historia():
     assert seleccion._desde(h) == (AHORA - timedelta(days=2)).strftime("%Y-%m-%d %H:%M UTC")
 
 
-def test_el_lector_no_choca_con_una_ejecucion_en_marcha():
+def test_el_lector_no_choca_con_una_ejecucion_en_marcha(tmp_path):
+    import sys
+    import time
+    from folio_api.ejecutor import Ejecutor
     from folio_api.programador import Lector
-
-    class Ej:
-        def __init__(self, ocupado): self._o = ocupado
-        def ocupado(self): return self._o
+    ej = Ejecutor(tmp_path)
+    assert ej.lanzar([[sys.executable, "-c", "import time; time.sleep(0.5)"]])
     lanzadas = []
-    assert not Lector(Ej(True), 120, lambda: lanzadas.append(1) or 0).una_vuelta() and lanzadas == []
-    assert Lector(Ej(False), 120, lambda: lanzadas.append(1) or 0).una_vuelta() and lanzadas == [1]
+    assert not Lector(ej, 120, lambda: lanzadas.append(1) or 0).una_vuelta() and lanzadas == []
+    while ej.ocupado():
+        time.sleep(0.05)
+    assert Lector(ej, 120, lambda: lanzadas.append(1) or 0).una_vuelta() and lanzadas == [1]
+
+
+def test_con_la_lectura_a_medias_no_se_lanza_la_diaria(tmp_path):
+    """Ronda 3 de mejora: la diaria (o «Lanzar») no arranca mientras folio leer reescribe lecturas.json; la
+    programada lo reintenta en la vuelta siguiente y la web dice por qué. Al acabar la lectura, se puede."""
+    import sys
+    from folio_api.ejecutor import Ejecutor
+    from folio_api.programador import Lector
+    ej = Ejecutor(tmp_path)
+    vistos = []
+
+    def leer():
+        vistos.append((ej.lanzar([[sys.executable, "-c", "pass"]]), ej.motivo_ocupado()))
+        return 0
+    assert Lector(ej, 120, leer).una_vuelta()
+    assert vistos == [(False, "Se están leyendo las noticias (lectura periódica); prueba en unos minutos")]
+    assert ej.motivo_ocupado() is None and ej.lanzar([[sys.executable, "-c", "pass"]])
+
+    def falla():
+        raise RuntimeError("se cayó")
+    while ej.ocupado():
+        pass
+    try:
+        Lector(ej, 120, falla).una_vuelta()
+    except RuntimeError:
+        pass
+    assert ej.motivo_ocupado() is None                       # una lectura que falla no deja el turno cogido
+
+
+def test_lecturas_se_escriben_de_forma_atomica(cfg, monkeypatch):
+    from folio.ingesta import lecturas
+    monkeypatch.setattr(rss, "ingerir", lambda cfg, ahora: ([_art(1, publicado=AHORA)], []))
+    lecturas.leer(cfg, AHORA)
+    assert list(lecturas._cargar(cfg)) and not list(lecturas.ruta(cfg).parent.glob(".lecturas.*.tmp"))
 
 
 def test_un_feed_que_bloquea_se_pausa_una_semana(cfg, monkeypatch):
