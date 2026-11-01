@@ -344,12 +344,9 @@ def _longitud_pie(c: _Guion) -> list[str]:
     return [f"El pie tiene {n} palabras; debe tener entre {c.p.pie_min_palabras} y {c.p.pie_max_palabras}."]
 
 
-def _pie_cita_medio(c: _Guion) -> list[str]:
-    if c.formato == "recomendado":           # no hay noticia: los textos son la ficha del libro y su crítica
-        return []
-    if any(normalizar(f.medio) in normalizar(c.g.pie_instagram) for f in c.fuentes):
-        return []
-    return ["El pie debe citar el medio de la noticia (uno de: " + ", ".join(f.medio for f in c.fuentes) + ")."]
+# _pie_cita_medio se quitó el 2/11 (a petición del usuario: «si el tema no es una super entrevista, no merece la pena
+# decir "según recoge Infobae"; es una información que sabe todo el mundo»): las fuentes ya están en el colofón, y el
+# guionista atribuye solo lo que es de un medio (una entrevista, una exclusiva, una declaración hecha a él).
 
 
 def _libros_verificados(c: _Guion) -> list[str]:
@@ -393,7 +390,7 @@ REGLAS = (
     _extension, _justificacion_extra, _numeracion, _primera_es_portada, _ultima_es_cierre, _tipos_obligatorios,
     _palabras_por_diapositiva, _portada_con_libro, _cierre_nombra_libro, _una_actualidad, _libro_pronto,
     _pie_nombra_libro, _portada_no_pregunta, _firma, _frases_vetadas_y_citas, _traduccion, _longitud_pie,
-    _pie_cita_medio, _libros_verificados, _uno_o_tres_libros, _una_de_libro_por_libro, _fuentes_conocidas,
+    _libros_verificados, _uno_o_tres_libros, _una_de_libro_por_libro, _fuentes_conocidas,
 )
 
 

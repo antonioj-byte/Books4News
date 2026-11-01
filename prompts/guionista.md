@@ -42,7 +42,7 @@ Antes de devolver el JSON, repasa esta lista; el guion se rechaza si no la cumpl
 - Portada: titular de 12 palabras como máximo, sin acabar en pregunta, y subtítulo de 10 a 22 palabras. El libro o su autor aparecen en el titular o en el subtítulo. Solo la portada lleva subtítulo.
 - Cierre: nombra el libro y a su autor, y termina con la firma Folio.
 - Nada entre comillas salvo títulos de libros verificados y, como mucho, una cita literal del libro que sepas textual. Nada de «en un mundo donde».
-- Pie: entre 80 y 150 palabras, nombra el libro y cita al menos uno de los medios de los textos recibidos.
+- Pie: entre 80 y 150 palabras y nombra el libro. No hace falta citar medios: las fuentes van en el colofón. Atribuye a un medio solo lo que es suyo (una entrevista, una exclusiva, una declaración hecha a ese medio: «le dijo a El Cultural…»); lo que cuentan todos (un premio, un nombramiento, una cifra oficial) se cuenta sin «según recoge…» (2/11).
 - Solo libros de la lista verificada. En `fuentes_noticia`, el medio y la URL exactos de los textos recibidos.
 - Sobre la traducción, nada, salvo que conste verificado que no hay edición española.
 

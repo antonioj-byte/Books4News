@@ -125,8 +125,8 @@ def test_citas_de_la_critica_solo_si_estan_letra_por_letra(cfg):
     inventada = _guion_recomendado("«la novela canadiense más importante del siglo», según The New Yorker.")
     assert guion.citas_de_la_critica(inventada, libros, tx) == []
     assert any("Texto entre comillas" in e for e in guion.validar(cfg, inventada, libros, fuentes, frozenset(), frozenset(), "recomendado"))
-    # Fuera del recomendado, el pie sigue teniendo que citar un medio
-    assert any("citar el medio" in e for e in guion.validar(cfg, g, libros, fuentes, frozenset(), ok, "lateral"))
+    # Desde el 2/11 ningún formato obliga a citar un medio en el pie
+    assert not any("citar el medio" in e for e in guion.validar(cfg, g, libros, fuentes, frozenset(), ok, "lateral"))
 
 
 def test_la_seleccion_con_catalogo(cfg):

@@ -405,3 +405,10 @@
   patron: "«Quiero eliminar lo de ficha verificada»."
   propuesta: "La diapositiva del libro va sin el sello «✓ Ficha verificada» (arte.sello_verificacion: false); la verificación sigue en el colofón."
   evidencia: ["Conversación, 2/11: pieza de Gonçalo M. Tavares, diapositivas de libro"]
+
+- clave: sin-segun-recoge
+  fecha: "2026-11-02"
+  destino: guionista
+  patron: "«Si el tema no es una super entrevista, no merece la pena decir "según recoge Infobae" (es una información que sabe todo el mundo)»."
+  propuesta: "El pie no tiene que citar un medio; solo se atribuye lo que es de un medio (una entrevista, una exclusiva). Las fuentes van en el colofón."
+  evidencia: ["Conversación, 2/11: pie de la pieza de Gonçalo M. Tavares"]
