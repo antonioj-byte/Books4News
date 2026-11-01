@@ -144,6 +144,22 @@ def _slug(nombre: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", t.replace("&", " ")).strip("-")
 
 
+_GENERICAS = {"editorial", "editoriales", "ediciones", "edicions", "editores", "editora", "libros", "s", "l", "sl", "sa", "u",
+              "sll", "slu", "de", "del", "la", "el", "los", "las", "y", "e"}
+
+
+def ruta_que_casa(nombre: str, rutas: list[str]) -> str | None:
+    """De los enlaces a editoriales de una página, el que corresponde a `nombre`: todas las palabras con contenido
+    del nombre están en la ruta. Si el portal no encuentra la editorial enseña otras (el 2/11 «Pre-Textos»
+    acababa en «plaza-janes»), y entonces no hay ninguna."""
+    clave = {w for w in _slug(nombre).split("-") if w and w not in _GENERICAS}
+    for r in dict.fromkeys(rutas):
+        palabras = set(r.rsplit("_", 1)[0].split("-"))
+        if clave and clave <= palabras:
+            return r
+    return None
+
+
 class Catalogo:
     def __init__(self, cfg, cliente: httpx.Client | None = None, hoy: date | None = None):
         self.cfg = cfg
@@ -181,13 +197,13 @@ class Catalogo:
         """«impedimenta_79803»: de la configuración o, una vez, de la página /editorial/<nombre> (se guarda)."""
         if e.todostuslibros:
             return e.todostuslibros
-        rutas_f = self.dir / "editoriales.json"
+        # v2 (2/11): la v1 guardaba rutas de otras editoriales cuando el portal no encontraba el nombre
+        rutas_f = self.dir / "editoriales-v2.json"
         rutas = self._leer_json(rutas_f) or {}
         if e.nombre in rutas:
             return rutas[e.nombre]
         html = self._get(f"{BASE}/editorial/{_slug(e.nombre)}")
-        m = re.search(r"/editoriales/([a-z0-9-]+_\d+)", html or "")
-        rutas[e.nombre] = m.group(1) if m else None
+        rutas[e.nombre] = ruta_que_casa(e.nombre, re.findall(r"/editoriales/([a-z0-9-]+_\d+)", html or ""))
         self._guardar_json(rutas_f, rutas)
         return rutas[e.nombre]
 
@@ -205,7 +221,7 @@ class Catalogo:
         return libros
 
     def caducada(self, e: Editorial) -> bool:
-        ruta = (self._leer_json(self.dir / "editoriales.json") or {}).get(e.nombre, e.todostuslibros)
+        ruta = (self._leer_json(self.dir / "editoriales-v2.json") or {}).get(e.nombre, e.todostuslibros)
         if not ruta:
             return True
         g = self._leer_json(self.dir / "novedades" / f"{ruta}.json")

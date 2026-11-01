@@ -61,6 +61,8 @@ class Seleccion(_Seccion):
     # Cajón de curiosidades (1/11, a petición del usuario): una historia del mundo del libro sin percha
     # (config/cajon_curiosidades.yaml) no vuelve a ofrecerse al jefe hasta pasados estos días
     dias_curiosidades: int = Field(default=90, ge=0)
+    # La nevera (2/11, a petición del usuario: «busca 3 nuevas al día para hacer nevera»)
+    nevera_por_dia: int = Field(default=3, ge=0)
 
 
 class Catalogo(_Seccion):
@@ -196,6 +198,7 @@ class Gasto(_Seccion):
     # Magnific no devuelve el coste por la API: medido en su panel el 31/10 (16.000 créditos por 16 €)
     magnific_creditos_imagen: float = 25
     magnific_euros_credito: float = 0.001
+    busqueda_web_usd: float = 0.01        # cada búsqueda web del servidor de Anthropic (10 $ por 1.000)
 
 
 class ConfigPipeline(_Seccion):

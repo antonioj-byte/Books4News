@@ -413,6 +413,43 @@ def buffer_programar(pieza: str,
                f"descargará están en {r.carpeta}: no los borres hasta que salga.")
 
 
+cajon_app = typer.Typer(help="Cajón de historias editoriales y su nevera (historias nuevas que se buscan cada día)")
+app.add_typer(cajon_app, name="cajon")
+
+
+@cajon_app.command("buscar")
+def cajon_buscar(n: int = typer.Option(None, "--n", help="Cuántas historias nuevas (por defecto, seleccion.nevera_por_dia)")):
+    """Busca en la web historias editoriales nuevas, comprueba sus fuentes y las guarda en la nevera (~0,03 $).
+    Nunca falla la ejecución diaria: si no encuentra nada, lo dice y sale bien."""
+    from folio import nevera
+    from folio.llm import LLM, ErrorLLM
+    cfg = config.cargar()
+    llm = LLM(cfg)
+    try:
+        nuevas, avisos = nevera.buscar(llm, cfg, n)
+    except ErrorLLM as e:
+        typer.echo(f"Nevera: no se pudo buscar ({e})")
+        return
+    for a in avisos:
+        typer.echo(a)
+    for c in nuevas:
+        typer.echo(f"+ {c.id}: {c.titular} ({len(c.fuentes)} fuentes)")
+    coste = round(sum(t.coste_usd for t in llm.trazas), 4)
+    typer.echo(f"Nevera: {len(nuevas)} historias nuevas guardadas en {nevera.ruta(cfg)} · {coste} $")
+
+
+@cajon_app.command("lista")
+def cajon_lista():
+    """Las historias del cajón (repositorio y nevera) y cuándo se usó cada una."""
+    from folio import cajon, nevera
+    from folio.historial import Historial
+    cfg = config.cargar()
+    usadas = Historial(cfg.ruta_db).curiosidades_recientes("9999-12-31", 100000)
+    for c in cajon.cargar(cfg.raiz, nevera.ruta(cfg)):
+        marca = "usada" if c.id in usadas else ("nevera " + (c.añadida or "")) if c.origen == "busqueda" else "repositorio"
+        typer.echo(f"[{marca}] {c.id}: {c.titular}")
+
+
 memoria_app = typer.Typer(help="Memoria del feedback: patrones de las evaluaciones y ediciones, con propuestas de regla")
 app.add_typer(memoria_app, name="memoria")
 

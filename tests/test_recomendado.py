@@ -168,3 +168,10 @@ def test_el_archivo_de_editoriales_es_valido():
     from folio.config import RAIZ
     eds = catalogo.editoriales(RAIZ)
     assert len(eds) > 100 and all(e.nombre for e in eds) and not any(e.excluir for e in eds)
+
+
+def test_la_ruta_de_la_editorial_tiene_que_casar_con_el_nombre():
+    assert catalogo.ruta_que_casa("Impedimenta", ["masson_6404", "impedimenta_79803"]) == "impedimenta_79803"
+    assert catalogo.ruta_que_casa("Pre-Textos", ["plaza-janes_84460"]) is None
+    assert catalogo.ruta_que_casa("Libros del Asteroide", ["libros-del-asteroide-s-l-u_81623"]) == "libros-del-asteroide-s-l-u_81623"
+    assert catalogo.ruta_que_casa("Errata Naturae", ["desconocido_173060"]) is None

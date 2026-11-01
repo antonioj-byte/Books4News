@@ -102,6 +102,46 @@ class LLM:
         return round((entrada * precios[0] + escritura * precios[0] * 1.25
                       + lectura * lectura_precio + salida * precios[1]) / 1e6, 5)
 
+    def con_busqueda(self, paso: str, prompt: str, *, etapa_modelo: str, max_busquedas: int = 6,
+                     max_tokens: int = 8000) -> tuple[str, set[str]]:
+        """Llamada con la herramienta de búsqueda web del servidor (2/11, la nevera del cajón). Devuelve el texto
+        de la respuesta y las URLs que salieron en los resultados de búsqueda (para no aceptar URLs inventadas).
+        Cada búsqueda cuesta aparte (`gasto.busqueda_web_usd`) y se apunta en la traza y el panel de gasto."""
+        modelo = self.cfg.modelo(etapa_modelo)
+        # La versión con filtrado dinámico solo la tienen Opus y Sonnet; Haiku usa la básica
+        tipo = "web_search_20250305" if "haiku" in modelo else "web_search_20260209"
+        mensajes = [{"role": "user", "content": prompt}]
+        texto, urls, entrada, salida, busquedas = [], set(), 0, 0, 0
+        inicio = time.monotonic()
+        for _ in range(3):                       # pause_turn: se reenvía tal cual y el servidor sigue
+            try:
+                r = self.cliente.messages.create(model=modelo, max_tokens=max_tokens, messages=mensajes,
+                                                 tools=[{"type": tipo, "name": "web_search", "max_uses": max_busquedas}],
+                                                 output_config={"effort": self.cfg.esfuerzo(etapa_modelo)})
+            except anthropic.APIConnectionError as exc:
+                raise ErrorLLM(f"{paso}: no se pudo conectar con la API de Anthropic ({exc.__cause__})") from exc
+            entrada += r.usage.input_tokens + (getattr(r.usage, "cache_read_input_tokens", 0) or 0)
+            salida += r.usage.output_tokens
+            uso = getattr(r.usage, "server_tool_use", None)
+            busquedas += (getattr(uso, "web_search_requests", 0) or 0) if uso else 0
+            for b in r.content:
+                if b.type == "text":
+                    texto.append(b.text)
+                elif b.type == "web_search_tool_result" and isinstance(b.content, list):
+                    urls |= {x.url for x in b.content if getattr(x, "url", None)}
+            if r.stop_reason != "pause_turn":
+                break
+            mensajes = [mensajes[0], {"role": "assistant", "content": r.content}]
+        if r.stop_reason == "refusal":
+            raise ErrorLLM(f"{paso}: el modelo rechazó la petición")
+        coste = round(self._coste(modelo, entrada, salida) + busquedas * self.cfg.pipeline.gasto.busqueda_web_usd, 5)
+        self.trazas.append(Traza(paso=paso, modelo=modelo, tokens_entrada=entrada, tokens_salida=salida, coste_usd=coste,
+                                 segundos=round(time.monotonic() - inicio, 1), nota=f"{busquedas} búsquedas web"))
+        from folio import gastos
+        gastos.apuntar(self.cfg, "anthropic", paso.split(":")[0], coste, "USD", unidades=entrada + salida, modelo=modelo,
+                       detalle=f"{paso} · {busquedas} búsquedas")
+        return "\n".join(texto).strip(), urls
+
     def estructurado(
         self,
         paso: str,

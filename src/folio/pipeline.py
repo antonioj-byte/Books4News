@@ -164,7 +164,9 @@ class Pipeline:
         if not p.reparto.get("curiosidad"):
             return []
         try:
-            return cajon.disponibles(self.cfg.raiz, self.historial.curiosidades_recientes(self.fecha, p.dias_curiosidades))
+            from folio import nevera
+            return cajon.disponibles(self.cfg.raiz, self.historial.curiosidades_recientes(self.fecha, p.dias_curiosidades),
+                                     nevera.ruta(self.cfg))
         except Exception as exc:
             self.avisos.append(f"No se pudo leer el cajón de curiosidades: {exc}")
             return []

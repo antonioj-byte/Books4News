@@ -30,22 +30,28 @@ class Curiosidad(BaseModel):
     resumen: str
     protagonista: str = ""          # la persona real de la historia, si la hay (su retrato va en la portada)
     fuentes: list[FuenteCajon] = Field(min_length=1)
+    añadida: str | None = None      # las de la nevera: el día que se encontraron
+    origen: str = "repositorio"     # repositorio (config/) o busqueda (la nevera, folio.nevera)
 
 
 def ruta(raiz: Path) -> Path:
     return raiz / "config" / "cajon_curiosidades.yaml"
 
 
-def cargar(raiz: Path) -> list[Curiosidad]:
-    """Las curiosidades del cajón (vacío si no hay archivo). Un id repetido es un error."""
-    r = ruta(raiz)
+def _leer(r: Path) -> list[Curiosidad]:
     if not r.exists():
         return []
-    cajon = [Curiosidad.model_validate(x) for x in yaml.safe_load(r.read_text(encoding="utf-8")) or []]
+    return [Curiosidad.model_validate(x) for x in yaml.safe_load(r.read_text(encoding="utf-8")) or []]
+
+
+def cargar(raiz: Path, nevera: Path | None = None) -> list[Curiosidad]:
+    """Las historias del cajón: las del repositorio y, detrás, las de la nevera (data/cajon_nevera.yaml), que
+    añade cada día folio.nevera. Un id repetido es un error."""
+    cajon = _leer(ruta(raiz)) + (_leer(nevera) if nevera else [])
     ids = [c.id for c in cajon]
     repetidos = {i for i in ids if ids.count(i) > 1}
     if repetidos:
-        raise ValueError(f"cajon_curiosidades.yaml: ids repetidos: {', '.join(sorted(repetidos))}")
+        raise ValueError(f"cajón de historias editoriales: ids repetidos: {', '.join(sorted(repetidos))}")
     return cajon
 
 
@@ -63,6 +69,6 @@ def historia(c: Curiosidad) -> Historia:
                     titular_es=c.titular, resumen_es=c.resumen + (f" (protagonista: {c.protagonista})" if c.protagonista else ""), seccion="cultura", sobre_libros=True, carril="cajon")
 
 
-def disponibles(raiz: Path, usadas: set[str]) -> list[Historia]:
+def disponibles(raiz: Path, usadas: set[str], nevera: Path | None = None) -> list[Historia]:
     """Las del cajón que no se han usado en los últimos días (`usadas`: ids sin prefijo), en su orden."""
-    return [historia(c) for c in cargar(raiz) if c.id not in usadas]
+    return [historia(c) for c in cargar(raiz, nevera) if c.id not in usadas]

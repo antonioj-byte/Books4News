@@ -9,6 +9,7 @@ modelos:
   memoria: claude-opus-5-5        # memoria del feedback: patrones y propuestas de regla
   escena: claude-opus-5-5         # ilustrador: escenas de la ilustración editorial
   radar: claude-haiku-5-5         # radar del libro: temas del mundo del libro sin desarrollar
+  nevera: claude-haiku-5-5        # nevera del cajón: busca historias editoriales nuevas en la web
 
 dev:                            # folio run --dev: todas las etapas con este modelo y esfuerzo bajo
   modelo: claude-haiku-5-5
@@ -24,6 +25,7 @@ esfuerzo:                       # output_config.effort
   memoria: high
   escena: medium
   radar: low
+  nevera: medium
 
 # USD por millón de tokens (entrada, salida[, lectura de caché]). Solo para estimar el coste en el
 # informe. La escritura en caché cuesta 1,25 × entrada; sin tercer valor, la lectura es el 10 % de la entrada.
@@ -64,6 +66,7 @@ seleccion:
   desarrollar_al_inicio: 1
   antiguedad_libros: 2          # novedad: libros publicados en los últimos 2 años (primera edición o edición española)
   dias_curiosidades: 90         # una curiosidad del cajón no se repite en 90 días
+  nevera_por_dia: 3             # historias editoriales nuevas que se buscan cada día para el cajón (2/11)
 
 # Formato «recomendado»: novedades de config/editoriales_independientes.yaml leídas en todostuslibros.com
 catalogo:
@@ -108,7 +111,7 @@ guion:
   pie_max_palabras: 150
 
 # Precios de Magnific para el panel de gasto (la API no los devuelve; medidos en su panel el 31/10)
-gasto: {magnific_creditos_imagen: 25, magnific_euros_credito: 0.001}
+gasto: {magnific_creditos_imagen: 25, magnific_euros_credito: 0.001, busqueda_web_usd: 0.01}
 
 # Prueba A/B del guionista (folio ab / folio ab-resultados). El control es el de producción y se
 # reutiliza su guion; las demás variantes reescriben con los mismos libros y textos.
