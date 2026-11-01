@@ -138,14 +138,21 @@ def candidatas(propuesta: PropuestaArte, excluir: set[str] = frozenset()) -> lis
     consultas = [c + _GRABADO if propuesta.recurso == "grabado" else c for c in propuesta.consultas[:4]]
     if propuesta.recurso == "grabado":
         consultas += propuesta.consultas[:4]
+    # Las primeras cuatro búsquedas, a la vez (2/11, para agilizar); las de respaldo, solo si hacen falta
+    def buscar(q):
+        try:
+            return libres.buscar_europeana(q, 10)
+        except httpx.HTTPError:
+            return None
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        primeras = dict(zip(consultas[:4], pool.map(buscar, consultas[:4])))
     for i, q in enumerate(consultas):
         if i >= 4 and len(out) >= 3:
             break
-        try:
-            encontradas = [c for c in libres.buscar_europeana(q, 10)
-                           if c.libre and c.archivo not in vistas and c.url not in vistas]
-        except httpx.HTTPError:
+        resultado = primeras[q] if q in primeras else buscar(q)
+        if resultado is None:
             continue
+        encontradas = [c for c in resultado if c.libre and c.archivo not in vistas and c.url not in vistas]
         for c in encontradas:
             vistas |= {c.archivo, c.url}
         with httpx.Client(headers={"User-Agent": libres.AGENTE}, timeout=30, follow_redirects=True) as cli, \
@@ -328,8 +335,9 @@ def _sin_letras(llm: LLM, cfg: Config, pieza: Pieza, dibujos: list[tuple[str, st
     """Quita las variantes con letras o manchas sueltas (2/11). Si no queda ninguna, vuelve a dibujar una vez la
     primera escena (la descartada se borró de la caché, así que sale otra)."""
     limpios, descartes = [], []
-    for escena, idea, dibujo in dibujos:
-        motivo = editorial.revisar(llm, cfg, pieza.id, dibujo)
+    with ThreadPoolExecutor(max_workers=max(1, len(dibujos))) as pool:     # las revisiones, a la vez
+        motivos = list(pool.map(lambda d: editorial.revisar(llm, cfg, pieza.id, d[2]), dibujos))
+    for (escena, idea, dibujo), motivo in zip(dibujos, motivos):
         (descartes.append(motivo) if motivo else limpios.append((escena, idea, dibujo)))
     if dibujos and not limpios and not retrato_generado.bloqueado():
         escena, idea, _ = dibujos[0]
@@ -358,13 +366,16 @@ def _ilustracion_editorial(llm: LLM, cfg: Config, pieza: Pieza, propuesta: Propu
     else:
         escenas = _escenas(llm, cfg, pieza, propuesta.escena, ie.variantes)
         dibujos, fallos = [], []
-        for escena, idea in escenas:
+        # Las variantes se dibujan a la vez (2/11, para agilizar: ~15 s en vez de ~30)
+        def dibujar(par):
+            escena, idea = par
             try:
-                dibujos.append((escena, idea, editorial.dibujar(cfg, pieza.id, escena)))
+                return (escena, idea, editorial.dibujar(cfg, pieza.id, escena)), None
             except Exception as exc:
-                fallos.append(str(exc))
-                if retrato_generado.bloqueado():
-                    break
+                return None, str(exc)
+        with ThreadPoolExecutor(max_workers=max(1, len(escenas))) as pool:
+            for hecho, fallo in pool.map(dibujar, escenas):
+                (dibujos.append(hecho) if hecho else fallos.append(fallo))
         dibujos, descartes = _sin_letras(llm, cfg, pieza, dibujos, fallos)
         if descartes:
             arte.avisos.append(f"Ilustración editorial: descartadas {len(descartes)} con letras o manchas ({'; '.join(descartes)[:240]})")

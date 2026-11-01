@@ -187,7 +187,8 @@ def test_la_ilustracion_se_elige_entre_variantes(cfg, monkeypatch, tmp_path):
 
     dibujados = []
     def dibujar(cfg, pid, escena):
-        ruta = tmp_path / f"{len(dibujados)}.jpg"
+        import uuid
+        ruta = tmp_path / f"{uuid.uuid4().hex}.jpg"           # las variantes se dibujan a la vez
         Image.new("RGB", (160, 90)).save(ruta)
         dibujados.append(escena)
         return ruta
@@ -196,7 +197,7 @@ def test_la_ilustracion_se_elige_entre_variantes(cfg, monkeypatch, tmp_path):
     cfg.magnific_api_key = "x"
     a = Arte(tono="sereno", recurso="ilustracion")
     ok = arte._ilustracion_editorial(LLM(), cfg, _pieza(), _propuesta(recurso="ilustracion"), a, cfg.dir_cache("2026-10-30"))
-    assert ok and dibujados == escenas[:2] and a.escena == escenas[1] and a.escena_idea == "idea 1"
+    assert ok and sorted(dibujados) == sorted(escenas[:2]) and a.escena == escenas[1] and a.escena_idea == "idea 1"
     assert "elegida la 2 de 2" in a.por_que
     # Si el director no ve ninguna a la altura, se busca una foto de archivo
     monkeypatch.setattr(arte, "_elegir_ilustracion", lambda *x: None)
@@ -242,7 +243,8 @@ def test_las_variantes_con_letras_se_descartan_y_se_dibuja_otra(cfg, monkeypatch
 
     dibujados = []
     def dibujar(cfg, pid, escena):
-        ruta = tmp_path / f"{len(dibujados)}.jpg"
+        import uuid
+        ruta = tmp_path / f"{uuid.uuid4().hex}.jpg"           # las variantes se dibujan a la vez
         Image.new("RGB", (160, 90)).save(ruta)
         dibujados.append(ruta)
         return ruta
