@@ -16,7 +16,9 @@ trazos que forman parte de un objeto sin parecer escritura (las líneas de un pa
 cuentan; un papel o un cartel con garabatos que imitan escritura, sí.
 
 Responde también si hay **manchas sueltas que no pertenecen a la escena**: cuadrados o rectángulos de color
-flotando, restos de maquetación, marcos o recuadros que no son parte de ningún objeto.
+flotando, restos de maquetación, marcos o recuadros que no son parte de ningún objeto. Cuenta también como mancha que la imagen
+esté partida en dos o más paneles, o que tenga un margen o un borde blanco alrededor o en medio: tiene que ser
+una sola escena continua de borde a borde.
 
 `letras`: true si hay letras o pseudotexto. `manchas`: true si hay manchas sueltas. `donde`: en pocas palabras,
 dónde están (vacío si no hay nada).
