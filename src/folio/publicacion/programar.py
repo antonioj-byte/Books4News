@@ -77,7 +77,12 @@ def programar(cfg, p: Pieza, version: int, fecha: str, cuando: datetime | None, 
     if cuando and cuando <= datetime.now(cuando.tzinfo) + timedelta(minutes=5):
         raise NoSePuede("La hora tiene que ser al menos dentro de cinco minutos")
     estable = carpeta_estable(cfg, fecha, p.id)
-    if confirmar and (estable / "programada.json").exists() and not reemplazar:
+    previa = estado(cfg, fecha, p.id)
+    # Desde un borrador se puede programar sin borrarlo antes (2/11, a petición del usuario: el botón «no funcionaba»):
+    # un borrador no se publica solo; queda en Buffer y se avisa para que se borre allí
+    if previa and previa.get("borrador") and not reemplazar:
+        reemplazar = True
+    if confirmar and previa and not reemplazar:
         raise NoSePuede("La pieza ya está programada en Buffer: sus archivos se descargan al publicar y no se pueden "
                         "cambiar. Borra antes esa publicación en Buffer y vuelve a programarla marcando «reemplazar».")
     b = buffer or Buffer(cfg.buffer_clave)
@@ -96,6 +101,8 @@ def programar(cfg, p: Pieza, version: int, fecha: str, cuando: datetime | None, 
     medios = [(tipo, enlaces.firmar(cfg.url_publica, cfg.clave_enlaces, f"{fecha}/{p.id}-buffer/{archivo}", segundos))
               for tipo, archivo in lista.medios]
     resultado.post = b.programar(canal["id"], lista.pie, medios, cuando, borrador)
+    if previa and previa.get("borrador"):
+        resultado.avisos.append("El borrador anterior sigue en Buffer: bórralo allí para no tener dos")
     resultado.carpeta = estable
     (estable / "programada.json").write_text(json.dumps(
         {"buffer": resultado.post, "version": version, "hora": cuando.isoformat() if cuando else None,

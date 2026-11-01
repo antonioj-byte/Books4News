@@ -169,3 +169,10 @@ def test_el_boton_de_la_web_programa_la_pieza_aprobada(cfg, monkeypatch):
     assert c.post(url, json={"borrador": True}).status_code == 409
     r = c.post(url, json={"borrador": True, "reemplazar": True})
     assert r.status_code == 200 and r.json()["programada"]["borrador"] and len(enviados) == 2
+    # Desde un borrador se programa sin borrarlo antes, con aviso (2/11: «no funciona el botón»)
+    r = c.post(url, json={"hora": "2099-01-06 10:00", "borrador": False, "reemplazar": False})
+    assert r.status_code == 200, r.text
+    assert "borrador anterior sigue en Buffer" in r.json()["mensaje"] and len(enviados) == 3
+    assert not r.json()["programada"]["borrador"]
+    # Y ya programada a una hora, otra vez hace falta «reemplazar»
+    assert c.post(url, json={"borrador": True}).status_code == 409

@@ -356,3 +356,10 @@
   patron: "«¿No puede hacer dos cosas a la vez? Debería, ¿no?» (Proponer un tema bloqueado por una ejecución en marcha)."
   propuesta: "«Proponer ahora» y las réplicas solo esperan al pipeline del día; con «Proceder», el render, la nevera o la Memoria en marcha se pueden usar. Y «Proceder» escribe hasta tres piezas a la vez, cada una en su proceso."
   evidencia: ["Conversación, 2/11: el tema de Tavares rechazado con «Hay una ejecución en marcha»"]
+
+- clave: buffer-desde-borrador
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«Si pincho en mandar a Buffer no funciona el botón» (la pieza ya estaba como borrador en Buffer)."
+  propuesta: "Una pieza guardada como borrador en Buffer se puede programar sin borrarlo antes; se avisa de que el borrador sigue allí. El botón desactivado se ve apagado y dice por qué."
+  evidencia: ["Conversación, 2/11: pieza en borrador, versión 2"]

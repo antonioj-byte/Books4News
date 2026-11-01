@@ -55,6 +55,8 @@ export function ProgramarBuffer({ eid, pid }: { eid: number; pid: string }) {
   };
 
   const yaProgramada = estado.programada;
+  // Un borrador no se publica solo: se puede programar encima sin borrarlo antes (2/11)
+  const bloqueada = !!yaProgramada && !yaProgramada.borrador && !reemplazar;
   return (
     <section className="mx-auto mt-6 max-w-[560px] rounded-[8px] border border-borde bg-panel p-4" aria-labelledby="h-buffer">
       <h3 id="h-buffer" className="antetitulo mb-2">Programar en Instagram</h3>
@@ -67,7 +69,9 @@ export function ProgramarBuffer({ eid, pid }: { eid: number; pid: string }) {
               {yaProgramada.borrador ? "Guardada como borrador en Buffer" : yaProgramada.hora ? `Programada para el ${fechaLegible(yaProgramada.hora)}` : "En la cola de Buffer"}
               {yaProgramada.canal ? ` · ${yaProgramada.canal}` : ""}
               {yaProgramada.version ? ` · versión ${yaProgramada.version}` : ""}.
-              {" "}Para cambiarla, bórrala antes en Buffer y marca «Ya la he borrado en Buffer».
+              {" "}{yaProgramada.borrador
+                ? "Puedes programarla ya: el borrador se queda en Buffer y conviene borrarlo allí después."
+                : "Para cambiarla, bórrala antes en Buffer y marca «Ya la he borrado en Buffer»."}
             </p>
           )}
           <fieldset className="flex flex-wrap gap-x-4 gap-y-2" disabled={enviando}>
@@ -86,14 +90,16 @@ export function ProgramarBuffer({ eid, pid }: { eid: number; pid: string }) {
                      className="rounded-[6px] border border-borde bg-papel px-2 py-1 font-mono text-[13px]" disabled={enviando} />
             </label>
           )}
-          {yaProgramada && (
+          {yaProgramada && !yaProgramada.borrador && (
             <label className="flex items-center gap-1.5 text-[13px]">
               <input id="buffer-reemplazar" type="checkbox" checked={reemplazar} onChange={(e) => setReemplazar(e.target.checked)} disabled={enviando} />
               Ya la he borrado en Buffer
             </label>
           )}
           {!confirmando ? (
-            <button className="boton-suave self-start" disabled={enviando || (!!yaProgramada && !reemplazar)} onClick={() => setConfirmando(true)}>
+            <button className="boton-suave self-start disabled:cursor-not-allowed disabled:opacity-40" disabled={enviando || bloqueada}
+                    title={bloqueada ? "Bórrala antes en Buffer y marca «Ya la he borrado en Buffer»" : undefined}
+                    onClick={() => setConfirmando(true)}>
               Programar en Buffer
             </button>
           ) : (
