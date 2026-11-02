@@ -9,6 +9,8 @@ Formatos (los mismos de la mesa):
 
 Te pido ahora esta tanda: [pegar reparto]. Que no se repita ninguna cuestión de fondo entre ellas ni con las que ya están en el fondo (al final). Mejor una propuesta menos que una forzada: si no llegas, explícalo en `aviso`.
 
+En la lectura lateral y el diálogo, el punto de partida es el tema de conversación, no el libro: el titular habla del tema (la vivienda, la soledad, la desinformación, la vuelta a la Luna) y el libro entra en el gancho y el subtítulo. Un titular que es el nombre de un autor y su novela es un libro recomendado, no una lectura lateral. Reparte los temas: que no sean todos de literatura; la actualidad lateral también es ciencia, tecnología, economía, política internacional, trabajo, salud o ciudades.
+
 Lo que dura y lo que no:
 - Vale lo que se va a seguir hablando: debates abiertos, procesos largos, tendencias, autores en conversación, preguntas de fondo.
 - No vale lo que depende de un día concreto (un partido, una gala, una dimisión que se olvida en una semana), ni lo que ya se ha cerrado.

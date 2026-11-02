@@ -25,7 +25,7 @@ from pydantic import BaseModel, Field
 from folio.config import Config
 from folio.llm import LLM, ErrorLLM, cargar_prompt
 from folio.modelos import Formato, HistoriaElegida, LibroCandidato, SeleccionJefe
-from folio.verificacion_texto import clave_libro, normalizar
+from folio.verificacion_texto import apellido, autor_coincide, clave_libro, normalizar
 
 PREFIJO = "fondo-"
 DIAS_COSECHA = 30
@@ -235,6 +235,13 @@ def preparar_tanda(cfg: Config, almacen, fecha: str, llm: LLM | None = None, n: 
             motivos = "; ".join(f"«{d.titulo}»: {d.motivo}" for d in descartes) or "sin libros"
             fuera.append(f"«{e.titular}» (ningún libro pasó: {motivos})")
             continue
+        primero = e.libros_candidatos[0] if e.libros_candidatos else None
+        if primero and e.formato != "balda" and _nombra(e, primero) and not any(
+                autor_coincide(primero.autor, l.autores) for l in libros):
+            # 2/11: «Naomi Klein y el mundo espejo…» salió con el libro de Da Empoli porque el de Klein ya estaba en otra
+            # propuesta: si el titular o el gancho nombran el primer libro, una reserva de otro autor no vale
+            fuera.append(f"«{e.titular}» (el libro que nombra, «{primero.titulo}», no pasó y la reserva es de otro autor)")
+            continue
         usados |= {clave_libro(l.titulo_propuesto, l.autores[0] if l.autores else "") for l in libros}
         p = por_id[e.historia_id]
         puente = notas.get(e.historia_id)
@@ -248,6 +255,12 @@ def preparar_tanda(cfg: Config, almacen, fecha: str, llm: LLM | None = None, n: 
         })
     almacen.guardar_fondo(mes, guardar)
     return ResultadoTanda(len(guardar), len(tanda.propuestas), fuera, avisos)
+
+
+def _nombra(e: HistoriaElegida, c: LibroCandidato) -> bool:
+    """Si el titular o el gancho nombran el libro (su título o el apellido de su autor)."""
+    texto = f" {normalizar(e.titular + ' ' + e.gancho_libro)} "
+    return f" {normalizar(apellido(c.autor))} " in texto or f" {normalizar(c.titulo)} " in texto
 
 
 def texto_tema(x: dict) -> str:
