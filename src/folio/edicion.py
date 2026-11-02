@@ -59,11 +59,11 @@ class AccionImagen(BaseModel):
     persona: str = Field(description="Solo buscar_retrato o banda: nombre completo de la persona real (el autor del libro o quien protagoniza la historia); si no, vacío")
     estilo: str = Field(description="Solo retrato_ilustrado: low_poly, voxel, render_2000 o dithering (vacío: el que va con el tono); si no, vacío")
     material: str = Field(description="Solo usar_material: el id del material (la foto subida); si no, vacío")
-    como: str = Field(description="Solo usar_material: «portada» (la imagen de la portada) o «retrato» (la foto del autor o protagonista); si no, vacío")
+    como: str = Field(description="Solo usar_material: «portada» (la imagen de la portada), «retrato» (la foto del autor o protagonista) o «cubierta» (la cubierta de un libro de la pieza: pon su título en `libro`); si no, vacío")
     destacado: str = Field(description="Solo formato: el trozo del titular de portada que va destacado (cursiva en el color de la casa, con marcador sobre foto), copiado letra por letra, de 1 a 6 palabras; «ninguno» lo quita; vacío, no se toca")
     antetitulo: str = Field(description="Solo formato: el antetítulo de la portada, de 1 a 3 palabras; «ninguno» lo quita; vacío, no se toca")
     acento: str = Field(description="Solo formato: el color de la pieza, «pluma» (rojo) o «marcador» (amarillo); «ninguno» lo quita; vacío, no se toca")
-    libro: str = Field(description="Solo cubierta: el título del libro de la pieza cuya cubierta se cambia; solo cambiar_libro: el título del libro nuevo, tal como lo da quien edita; si no, vacío")
+    libro: str = Field(description="Solo cubierta, o usar_material como cubierta: el título del libro de la pieza cuya cubierta se cambia; solo cambiar_libro: el título del libro nuevo, tal como lo da quien edita; si no, vacío")
     autor: str = Field(description="Solo cambiar_libro: el autor del libro nuevo; si no, vacío")
     sin_castellano: str = Field(description="Solo cambiar_libro: «si» solo si quien edita pide expresamente ese libro aunque no tenga edición en castellano; si no, vacío")
     editorial: str = Field(description="Solo cubierta: la editorial de la edición en castellano que se quiere («Mondadori»); si no, vacío")
@@ -563,7 +563,7 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return _retrato_ilustrado(cfg, nueva, ar, a, retrato, dir_fecha)
     if a.tipo == "usar_material":
         from folio import materiales
-        return materiales.usar(cfg, p, nueva, ar, a.material, a.como)
+        return materiales.usar(cfg, p, nueva, ar, a.material, a.como, a.libro)
     if a.tipo == "ilustrar":
         escena, motivo = editorial.validar_escena(a.escena, editorial.nombres_de_pieza(p))
         ie = cfg.pipeline.arte.ilustracion_editorial

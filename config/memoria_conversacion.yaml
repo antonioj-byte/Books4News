@@ -517,3 +517,10 @@
   patron: "«Buena parte de los contenidos son lecturas laterales… temas que admiten una ventana de tiempo de unos 3 meses. Que el jefe planteara una vez al mes una selección de 150 historias reciclables; eso nos permite tener más margen de previsión.»"
   propuesta: "Cada día 1, el jefe prepara el fondo del mes: 150 propuestas de actualidad lateral que valen de 1 a 3 meses (60 laterales, 35 diálogos, 20 tres libros y perfiles, 20 recomendados, 15 del mundo del libro), con libro verificado y qué noticia las reactivaría; se escriben desde la página Fondo buscando lo último del tema."
   evidencia: ["Conversación, 2/11: plan del fondo del mes, aprobado"]
+
+- clave: cubierta-subida-por-la-redaccion
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "Subió la cubierta de Killer App como material y el editor dijo que no podía ponerla en la diapositiva del libro: «no puede ser tan difícil subir esta portada»."
+  propuesta: "Una foto subida puede ir como cubierta de un libro de la pieza (en su diapositiva de libro y en el cierre), por encima de la de los catálogos; el editor no dice que no se puede."
+  evidencia: ["Conversación, 2/11: pieza de Killer App, diapositiva 3"]

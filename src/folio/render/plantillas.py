@@ -253,7 +253,7 @@ class Plantillas:
     def _medios_y_arte_sin_banda(self, pieza: Pieza, d: Diapositiva, n: int) -> dict:
         a = pieza.arte
         imagen = self.medios.imagen(pieza)
-        libros = ficha_libros(pieza, self.medios.cubierta)
+        libros = ficha_libros(pieza, self.medios.cubiertas_de(pieza))
         libro = self._libro(libros, pieza, n) if d.tipo == "libro" else None
         retrato = self.medios.retrato(pieza)
         # La cara solo va con su libro: en la portada, si es el autor del libro principal; en una

@@ -173,9 +173,29 @@ def es_material(img) -> bool:
     return bool(img and img.archivo.startswith(PREFIJO))
 
 
-def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str) -> tuple[Pieza | None, str]:
-    """Pone una foto subida en la pieza: en la portada («portada») o como retrato («retrato») del autor del libro
-    principal o, sin libro, de quien protagoniza la historia. Devuelve (pieza nueva o None, nota)."""
+ANCHO_CUBIERTA = 280                  # como las cubiertas de los catálogos: se pintan a unos 400 px
+
+
+def libro_de_la_pieza(p: Pieza, titulo: str) -> int | None:
+    """El índice en `p.libros` del libro que se nombra (por título), o el único si hay uno y no se nombra."""
+    from folio.verificacion_texto import titulos_coinciden
+    if titulo.strip():
+        for i, l in enumerate(p.libros):
+            titulos = [l.titulo, l.titulo_propuesto] + ([l.edicion_es_detalle.titulo] if l.edicion_es_detalle and l.edicion_es_detalle.titulo else [])
+            if any(titulos_coinciden(titulo.replace("*", ""), t, umbral=0.8) for t in titulos if t):
+                return i
+        return None
+    return 0 if len(p.libros) == 1 else None
+
+
+def clave_cubierta(pid: str, i: int) -> str:
+    return f"{pid}-cubierta-{i}"
+
+
+def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str, libro: str = "") -> tuple[Pieza | None, str]:
+    """Pone una foto subida en la pieza: en la portada («portada»), como retrato («retrato») del autor del libro
+    principal o, sin libro, de quien protagoniza la historia, o como cubierta de un libro de la pieza («cubierta»,
+    2/11, a petición del usuario: «no puede ser tan difícil subir esta portada»). Devuelve (pieza nueva o None, nota)."""
     from folio import arte as direccion
     from folio.imagenes import libres
     m = buscar(cfg, p, mid)
@@ -187,8 +207,26 @@ def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str) -> tuple[
         return None, "(Esa foto no tiene crédito: súbela otra vez con el crédito, que va en el pie de la publicación.)"
     dir_fecha = cfg.dir_cache(p.fecha)
     como = como.strip().lower() or "portada"
+    if como == "cubierta":
+        i = libro_de_la_pieza(p, libro)
+        if i is None:
+            return None, ("(No sé de qué libro es la cubierta: dime su título; los de la pieza son "
+                          + ", ".join(f"«{l.titulo_propuesto}»" for l in p.libros) + ".)" if p.libros else
+                          "(La pieza no tiene libro: no hay cubierta que cambiar.)")
+        if (m.ancho or 0) < ANCHO_CUBIERTA:
+            return None, f"(La imagen tiene {m.ancho} px de ancho y una cubierta necesita al menos {ANCHO_CUBIERTA}: súbela más grande.)"
+        clave = clave_cubierta(p.id, i)
+        carpeta_img = libres.dir_imagenes(dir_fecha)
+        carpeta_img.mkdir(parents=True, exist_ok=True)
+        libres.olvidar(clave, dir_fecha)
+        (carpeta_img / f"{clave}.jpg").write_bytes(ruta(cfg, p, m).read_bytes())
+        libres.guardar_metadatos(libres.ImagenLibre(
+            archivo=PREFIJO + m.id, pagina="", url="", ancho=m.ancho or 0, alto=m.alto or 0, licencia="", licencia_url=None,
+            autor=m.credito, descripcion=p.libros[i].titulo_propuesto, libre=True, motivo="", local=f"{clave}.jpg",
+            fuente=""), clave, dir_fecha)
+        return nueva, f"(La cubierta subida va en «{p.libros[i].titulo_propuesto}»: en su diapositiva de libro y en el cierre.)"
     if como not in ("portada", "retrato"):
-        return None, "(Una foto subida va en la portada o como retrato.)"
+        return None, "(Una foto subida va en la portada, como retrato o como cubierta de un libro.)"
     persona = direccion.autor_principal(p) if como == "retrato" else None
     if como == "retrato" and not persona:
         return None, "(No sé de quién es el retrato: la pieza no tiene autor ni protagonista.)"

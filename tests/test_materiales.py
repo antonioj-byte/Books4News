@@ -83,3 +83,19 @@ def test_usar_una_foto_subida_en_la_portada_o_como_retrato(cfg):
     assert nueva.arte.registro == "foto_autor" and r.persona == "Hannah Arendt" and materiales.es_material(r)
     # Nunca se transforma con IA una foto subida
     assert "no transformarla" in edicion.aplicar_imagen(None, cfg, nueva, _accion(tipo="retrato_ilustrado"))[1]
+
+
+def test_usar_una_foto_subida_como_cubierta(cfg):
+    """2/11: «no puede ser tan difícil subir esta portada»: la cubierta subida va en la diapositiva del libro."""
+    from folio import render
+    (cfg.raiz / "diseno").symlink_to(render.dir_diseno(type(cfg)(pipeline={}, fuentes=[])).resolve())
+    p = _pieza()
+    m = materiales.guardar(cfg, p, "Killer-App.jpg", _png(600), "image/png", "© Faber & Faber")
+    pequena = materiales.guardar(cfg, p, "mini.png", _png(200), "image/png", "© Faber")
+    assert "al menos 280" in edicion.aplicar_imagen(None, cfg, p, _accion(material=pequena.id, como="cubierta"))[1]
+    assert "No sé de qué libro" in edicion.aplicar_imagen(None, cfg, p, _accion(material=m.id, como="cubierta", libro="Otro libro"))[1]
+    nueva, nota = edicion.aplicar_imagen(None, cfg, p, _accion(material=m.id, como="cubierta", libro=LIBRO.titulo_propuesto))
+    assert nueva and "cubierta subida" in nota
+    pl = render.Plantillas(cfg, url_medio=lambda r: "/api/medios/" + r.name)
+    n = next(i for i, d in enumerate(nueva.guion.diapositivas, 1) if d.tipo == "libro")
+    assert f"{p.id}-cubierta-0.jpg" in pl.html_diapositiva(nueva, n)

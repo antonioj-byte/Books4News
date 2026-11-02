@@ -41,6 +41,21 @@ class Medios:
             self._cubiertas[clave] = self.url_medio(ruta) if ruta else None
         return self._cubiertas[clave]
 
+    def cubiertas_de(self, pieza: Pieza) -> Callable[[LibroVerificado], str | None]:
+        """Las cubiertas de los libros de la pieza: la que haya subido quien edita (folio.materiales, «cubierta») y,
+        si no, la de los catálogos."""
+        cache = self.cfg.dir_cache(pieza.fecha)
+
+        def cubierta(libro: LibroVerificado) -> str | None:
+            for i, l in enumerate(pieza.libros):
+                if l is libro or (l.titulo == libro.titulo and l.autores == libro.autores):
+                    img = libres.de_pieza(f"{pieza.id}-cubierta-{i}", cache)
+                    if img and img.local and (libres.dir_imagenes(cache) / img.local).exists():
+                        return self.url_medio(libres.dir_imagenes(cache) / img.local)
+                    break
+            return self.cubierta(libro)
+        return cubierta
+
     def imagen(self, pieza: Pieza, sufijo: str = "") -> dict | None:
         """La imagen fijada para la pieza (o su retrato, con sufijo «-retrato»), lista para la plantilla."""
         cache = self.cfg.dir_cache(pieza.fecha)
