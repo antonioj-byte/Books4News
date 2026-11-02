@@ -218,7 +218,7 @@ def dir_imagenes(dir_cache_fecha: Path) -> Path:
     return dir_cache_fecha / "imagenes"
 
 
-def fijar(imagen: ImagenLibre, pieza_id: str, dir_cache_fecha: Path) -> Path:
+def fijar(imagen: ImagenLibre, pieza_id: str, dir_cache_fecha: Path, ancho_minimo: int = ANCHO_MINIMO) -> Path:
     """Descarga la imagen para la pieza y guarda sus metadatos. Rechaza las que no son libres."""
     if not imagen.libre:
         raise ValueError(f"{imagen.archivo}: {imagen.motivo}")
@@ -235,7 +235,7 @@ def fijar(imagen: ImagenLibre, pieza_id: str, dir_cache_fecha: Path) -> Path:
 
     with Image.open(BytesIO(r.content)) as im:
         imagen.ancho, imagen.alto = im.size
-        if im.width < ANCHO_MINIMO:
+        if im.width < ancho_minimo:
             raise ValueError(f"{imagen.archivo}: demasiado pequeña ({im.width} px)")
         if ext not in (".jpg", ".jpeg", ".png"):
             ext = ".jpg"

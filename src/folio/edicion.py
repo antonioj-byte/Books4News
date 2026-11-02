@@ -189,7 +189,8 @@ def _banda(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha) 
             return None, (f"(La portada ya lleva la cara de {cara}, y una cara sale una sola vez en la pieza. Cambia antes "
                           "la portada a la ilustración o al archivo, o pide la banda sin la persona.)")
     if persona:
-        img, motivo = retratos.buscar_y_fijar(persona, f"{nueva.id}-banda", dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
+        img, motivo = retratos.buscar_y_fijar(persona, f"{nueva.id}-banda", dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa,
+                                              banda.ANCHO_REFERENCIA)
         if not img or not img.local:
             return None, (f"(No hay una foto de {persona} con licencia libre: {motivo}. Sin ella no lo pinto: una cara "
                           "solo se ilustra a partir de una foto con la licencia comprobada.)")

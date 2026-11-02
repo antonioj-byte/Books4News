@@ -28,6 +28,9 @@ SUFIJO = "-banda"
 CLAVE = "magnific:banda"
 PROPORCION = 12 / 5                    # tres diapositivas de 1080×1350
 ASPECTO_EDIT = "widescreen_16_9"       # Seedream 4.5 Edit: el más ancho que se ha probado; se recorta a 12:5
+# La foto de la persona solo es la referencia del pintor, no se publica: basta con que se le vea bien la cara
+# (la de Durov en Commons tiene 438 px)
+ANCHO_REFERENCIA = 400
 _ANONIMAS = "No real or recognisable people; any human figures are anonymous."
 
 

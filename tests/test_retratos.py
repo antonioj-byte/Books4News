@@ -1,3 +1,4 @@
+from dataclasses import replace
 import httpx
 
 from folio.imagenes import libres as imagenes, retratos
@@ -29,3 +30,14 @@ def test_archivo_en_commons_desde_wikidata():
         assert retratos.archivo_en_commons("Simon Winchester", c) == "Simon Winchester 2018.jpg"
     with httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"results": {"bindings": []}}))) as c:
         assert retratos.archivo_en_commons("Nadie", c) is None
+
+
+def test_una_cc_by_sa_pequena_no_pasa_salvo_como_referencia():
+    """2/11: la foto de Durov (CC BY-SA, 438 px) pasaba la licencia sin mirar el tamaño y fallaba al descargarse."""
+    pequena = replace(_img("CC BY-SA 3.0"), ancho=438, alto=600)
+    assert not retratos.licencia_retrato(replace(pequena), True).libre
+    assert "pequeña" in retratos.licencia_retrato(replace(pequena), True).motivo
+    assert retratos.licencia_retrato(replace(pequena), True, ancho_minimo=400).libre
+    # Una CC BY pequeña, rechazada por el tamaño, vale como referencia
+    by = replace(_img("CC BY 2.0"), ancho=438, motivo="demasiado pequeña (438 px)")
+    assert retratos.licencia_retrato(by, False, ancho_minimo=400).libre

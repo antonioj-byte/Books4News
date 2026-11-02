@@ -54,12 +54,19 @@ def archivo_en_commons(nombre: str, cliente: httpx.Client) -> str | None:
     return unquote(url.rsplit("/", 1)[-1]).replace("_", " ")
 
 
-def licencia_retrato(img: imagenes.ImagenLibre, permitir_cc_by_sa: bool) -> imagenes.ImagenLibre:
-    """Con permitir_cc_by_sa, una foto rechazada solo por ser CC BY-SA (sin NC ni ND) pasa a ser libre."""
+def licencia_retrato(img: imagenes.ImagenLibre, permitir_cc_by_sa: bool,
+                     ancho_minimo: int = imagenes.ANCHO_MINIMO) -> imagenes.ImagenLibre:
+    """Con permitir_cc_by_sa, una foto rechazada solo por ser CC BY-SA (sin NC ni ND) pasa a ser libre, si tiene el
+    ancho mínimo: Commons no mira el tamaño de las que ya rechaza por la licencia (2/11: la de Durov, de 438 px, pasaba
+    aquí y luego fallaba al descargarla). `ancho_minimo` baja para una foto que solo sirve de referencia (la banda)."""
     partes = img.licencia.lower().replace("-", " ").split()
+    if not img.libre and img.motivo.startswith("demasiado pequeña") and img.ancho >= ancho_minimo:
+        img.libre, img.motivo = imagenes.licencia_libre(img.licencia)
     if not img.libre and permitir_cc_by_sa and partes[:2] == ["cc", "by"] and "sa" in partes \
             and not {"nc", "nd"} & set(partes):
         img.libre, img.motivo = True, ""
+    if img.libre and img.ancho and img.ancho < ancho_minimo:
+        img.libre, img.motivo = False, f"demasiado pequeña ({img.ancho} px)"
     return img
 
 
@@ -72,7 +79,8 @@ def reiniciar() -> None:
     _bloqueo = None
 
 
-def buscar_y_fijar(autor: str, pieza_id: str, dir_cache_fecha: Path, permitir_cc_by_sa: bool = False) -> tuple[imagenes.ImagenLibre | None, str]:
+def buscar_y_fijar(autor: str, pieza_id: str, dir_cache_fecha: Path, permitir_cc_by_sa: bool = False,
+                   ancho_minimo: int = imagenes.ANCHO_MINIMO) -> tuple[imagenes.ImagenLibre | None, str]:
     """Busca el retrato del autor y lo fija para la pieza. Devuelve (imagen o None, motivo). Si Wikidata
     responde 403 o 429, se para sin reintentar y no se le vuelve a preguntar en esta ejecución."""
     global _bloqueo
@@ -88,12 +96,15 @@ def buscar_y_fijar(autor: str, pieza_id: str, dir_cache_fecha: Path, permitir_cc
             raise
     if not archivo:
         return None, f"Sin retrato de {autor} en Wikidata"
-    img = licencia_retrato(imagenes.ficha(f"commons:File:{archivo}"), permitir_cc_by_sa)
+    img = licencia_retrato(imagenes.ficha(f"commons:File:{archivo}"), permitir_cc_by_sa, ancho_minimo)
     if not img.libre:
         return None, f"Retrato de {autor} descartado: {img.motivo}"
     img.enfoque = (50, 28)        # en un retrato, la cara suele estar en el tercio de arriba
     img.persona = autor
-    imagenes.fijar(img, f"{pieza_id}-retrato", dir_cache_fecha)
+    try:
+        imagenes.fijar(img, f"{pieza_id}-retrato", dir_cache_fecha, ancho_minimo)
+    except ValueError as e:            # la descarga sale más pequeña de lo que dice la ficha
+        return None, f"Retrato de {autor} descartado: {e}"
     return img, ""
 
 
