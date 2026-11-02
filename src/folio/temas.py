@@ -260,7 +260,7 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
     réplica, si la pieza del tema aún no está escrita, se rehace en el sitio (versión nueva). SinFuentes o ErrorLLM
     si no se puede; el tema queda «fallido» con el motivo."""
     from folio.modelos import Pieza
-    from folio.pipeline import Pipeline
+    from folio.pipeline import Pipeline, es_pasajero
     from folio.verificacion_texto import clave_libro
     tema = next((t for t in almacen.temas() if t.id == tid), None)
     if not tema:
@@ -302,12 +302,12 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
     tuberia = Pipeline(cfg, fecha, llm=llm)
     # Un tema de la redacción (un perfil, un premio a toda una obra) no exige novedades: sí la edición en castellano
     tuberia.sin_novedad = True
-    # Por excepción, un título sin traducir si la redacción lo pide expresamente (2/11, regla del usuario)
-    tuberia.permitir_sin_castellano = bool(r.sin_castellano)
-    # Y un libro ya usado, si la redacción pide repetirlo (2/11, regla del usuario)
-    tuberia.permitir_repetidos = bool(r.repetir)
     pieza = None
     for intento in range(2):
+        # Por excepción, un título sin traducir o un libro ya usado si la redacción lo pide expresamente (2/11, reglas
+        # del usuario). Dentro del bucle: la segunda propuesta del jefe puede marcarlos y antes no se aplicaban
+        tuberia.permitir_sin_castellano = bool(r.sin_castellano)
+        tuberia.permitir_repetidos = bool(r.repetir)
         pieza = Pieza(id=pid, fecha=fecha, estado="fallida", historia_id=h.id, eleccion=r.propuesta, n_medios=h.n_medios,
                       avisos=["Tema propuesto por la redacción", *avisos])
         if tuberia._verificar(pieza, set(reservados)):
@@ -315,6 +315,10 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
             tuberia._cubiertas_de(pieza)
             break
         if intento == 1 or not pieza.libros_descartados:
+            break
+        if all(es_pasajero(d.motivo) for d in pieza.libros_descartados):
+            # Un catálogo no respondió: los libros pueden ser buenos. No se gasta un turno de Opus en cambiarlos; la pieza
+            # queda fallida con «vuelve a verificar» (revisión general, 2/11)
             break
         # Ningún libro pasó: el jefe ve por qué y propone otros, una vez (2/11: el perfil de Tavares se quedó sin libro)
         motivos = "; ".join(f"«{d.titulo}»: {d.motivo}" for d in pieza.libros_descartados)

@@ -67,6 +67,15 @@ def libros_del_formato(formato: str | None) -> int:
     return 3 if formato == "balda" else 1
 
 
+
+# Un libro que no se pudo verificar porque un catálogo no respondió (no porque no exista o no esté traducido)
+MOTIVO_PASAJERO = "no se pudo consultar: "
+ERROR_CATALOGOS = "No se pudieron consultar los catálogos de libros"
+
+
+def es_pasajero(motivo: str) -> bool:
+    return motivo.startswith("no se pudo consultar")
+
 class Pipeline:
     def __init__(self, cfg: Config, fecha: str, llm: LLM | None = None,
                  verificador: Verificador | None = None, historial: Historial | None = None,
@@ -335,10 +344,12 @@ class Pipeline:
         por_clave = {(c.titulo, c.autor): c for e in elegidas for c in e.libros_candidatos}
 
         def uno(clave):
+            # Lo pasajero (un catálogo que no respondió) no se guarda: la pasada en orden lo vuelve a intentar
             try:
-                return clave, self.verificador.verificar(por_clave[clave])
+                l = self.verificador.verificar(por_clave[clave])
+                return clave, None if (l.consulta_incompleta and l.edicion_es != "si") else l
             except NoVerificado as exc:
-                return clave, exc
+                return clave, None if es_pasajero(exc.motivo) else exc
             except Exception:                    # cualquier otro error: se reintenta en orden, como antes
                 return clave, None
         with ThreadPoolExecutor(max_workers=4) as pool:
@@ -364,6 +375,13 @@ class Pipeline:
                 l = previo if previo is not None else self.verificador.verificar(c)
             except NoVerificado as exc:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=exc.motivo))
+                continue
+            if (self.cfg.pipeline.seleccion.solo_con_edicion_es and l.edicion_es == "desconocido" and l.consulta_incompleta
+                    and not self.permitir_sin_castellano):
+                # Un catálogo no respondió: no se sabe si hay edición en castellano. Es pasajero (revisión general, 2/11:
+                # el 503 de Google Books descartaba libros traducidos y dejaba la pieza fallida sin decir por qué)
+                descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=MOTIVO_PASAJERO
+                                                 + "un catálogo no respondió y no se sabe si hay edición en castellano"))
                 continue
             if self.cfg.pipeline.seleccion.solo_con_edicion_es and l.edicion_es != "si" and not self.permitir_sin_castellano:
                 # 2/11, a petición del usuario: solo libros que se pueden leer en castellano (traducidos o escritos en él)
@@ -438,8 +456,8 @@ class Pipeline:
             return True
         if not libros:
             # 2/11: dos piezas fallaron de madrugada porque Google Books no respondía; si fue eso, se dice
-            caidos = [d for d in descartes if d.motivo.startswith("no se pudo consultar")]
-            pieza.error = ("No se pudieron consultar los catálogos de libros (" + caidos[0].motivo.removeprefix("no se pudo consultar: ")[:120]
+            caidos = [d for d in descartes if es_pasajero(d.motivo)]
+            pieza.error = (ERROR_CATALOGOS + " (" + caidos[0].motivo.removeprefix(MOTIVO_PASAJERO)[:120]
                            + "): vuelve a verificar los libros más tarde") if caidos else "Ningún libro candidato se pudo verificar"
             return False
         for l in libros:
@@ -754,6 +772,8 @@ class Pipeline:
         las escritas (2/11: la de Fitzek, fallida un día por falta de libro, volvió a proponerse al
         siguiente). Los libros, solo los de las piezas escritas."""
         por_id = {h.id: h for h in al_jefe}
+        # Una pieza fallida porque un catálogo no respondió no quema su historia una semana (revisión general, 2/11)
+        piezas = [p for p in piezas if not (p.estado == "fallida" and (p.error or "").startswith(ERROR_CATALOGOS))]
         noticias = list({p.historia_id: p for p in piezas
                          if not cajon.es_del_cajon(p.historia_id) and not catalogo.es_del_catalogo(p.historia_id)
                          and not temas.es_tema(p.historia_id) and p.historia_id in por_id}.values())

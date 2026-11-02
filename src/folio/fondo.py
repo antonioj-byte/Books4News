@@ -277,7 +277,10 @@ def _tuberia(cfg: Config, fecha: str, llm: LLM):
 
 def _catalogo_caido(motivo: str) -> bool:
     """El libro no se pudo verificar porque un catálogo no respondió, no porque no exista o no esté traducido."""
-    return motivo.startswith("no se pudo consultar") or "edición española: desconocido" in motivo
+    # Antes también contaba cualquier «desconocido»; sin clave de Google Books eso dejaba propuestas pendientes para
+    # siempre. Ahora la verificación marca lo pasajero de verdad (revisión general, 2/11)
+    from folio.pipeline import es_pasajero
+    return es_pasajero(motivo)
 
 
 def _entrada(p: PropuestaFondo, fecha: str, libros, puente, temas: list[TemaCosecha],

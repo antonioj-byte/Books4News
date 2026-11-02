@@ -22,3 +22,30 @@ def test_los_libros_usados_llegan_al_jefe_y_a_la_balda(cfg):
 
 def test_sin_libros_usados(cfg):
     assert seleccion.libros_usados(cfg, "2026-11-02") == "(ninguno)"
+
+
+def test_un_catalogo_caido_no_descarta_ni_quema_la_historia(cfg, monkeypatch):
+    """Revisión general (2/11): un 503 de Google Books dejaba el libro en «desconocido», la pieza fallida sin decir por
+    qué y la historia fuera una semana."""
+    from datos import ELECCION, LIBRO
+    from folio.modelos import Pieza
+    from folio.pipeline import ERROR_CATALOGOS, Pipeline
+    caido = LIBRO.model_copy(update={"edicion_es": "desconocido", "consulta_incompleta": True})
+    t = Pipeline(cfg, "2026-11-02")
+
+    class V:
+        llamadas = 0
+
+        def verificar(self, c):
+            V.llamadas += 1
+            return caido
+    t.verificador = V()
+    t._preverificar([ELECCION])
+    assert not t._preverificados                         # lo pasajero no se guarda
+    p = Pieza(id="2026-11-02-1", fecha="2026-11-02", estado="fallida", historia_id="h1", eleccion=ELECCION, n_medios=3)
+    assert not t._verificar(p, set())
+    assert p.error.startswith(ERROR_CATALOGOS) and "vuelve a verificar" in p.error
+    registradas = []
+    monkeypatch.setattr(t.historial, "registrar_dia", lambda f, h, l, c=(): registradas.append(h))
+    t._registrar_historial([p], [], [], None)
+    assert registradas == [[]]

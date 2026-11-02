@@ -35,8 +35,22 @@ def test_si_sigue_fallando_dice_que_es_pasajero(cfg, sin_esperas):
     assert sin_esperas == list(m.ESPERAS_5XX)
 
 
-def test_un_429_no_se_reintenta(cfg, sin_esperas):
+def test_un_429_no_se_reintenta_y_es_un_error_llm(cfg, sin_esperas):
     l = m.LLM(cfg)
-    with pytest.raises(anthropic.APIStatusError):
+    with pytest.raises(m.LimiteLLM):
         l._con_paciencia("guion", lambda: (_ for _ in ()).throw(_error(429)))
+    with pytest.raises(m.PeticionInvalida):
+        l._con_paciencia("guion", lambda: (_ for _ in ()).throw(_error(400)))
     assert sin_esperas == []
+    assert issubclass(m.LimiteLLM, m.ErrorLLM) and issubclass(m.PeticionInvalida, m.ErrorLLM)
+
+
+def test_el_sdk_no_reintenta_por_su_cuenta(cfg):
+    cfg.anthropic_api_key = cfg.anthropic_api_key or "x"
+    assert m.LLM(cfg).cliente.max_retries == 0
+
+
+def test_un_corte_de_red_se_reintenta(cfg, sin_esperas):
+    l = m.LLM(cfg)
+    fallos = [anthropic.APIConnectionError(request=httpx.Request("POST", "https://api.anthropic.com"))]
+    assert l._con_paciencia("x", lambda: (_ for _ in ()).throw(fallos.pop()) if fallos else "ok") == "ok"

@@ -110,7 +110,8 @@ def test_si_el_catalogo_no_responde_queda_por_confirmar(cfg, monkeypatch):
     from folio.pipeline import Pipeline
     monkeypatch.setattr(fondo, "REPARTO_MES", {"lateral": 3})
     monkeypatch.setattr(Pipeline, "_preverificar", lambda self, e: None)
-    caido = ([], [LibroDescartado(titulo="X", autor="Y", motivo="sin edición en castellano verificada (edición española: desconocido)")])
+    from folio.pipeline import MOTIVO_PASAJERO
+    caido = ([], [LibroDescartado(titulo="X", autor="Y", motivo=MOTIVO_PASAJERO + "un catálogo no respondió y no se sabe si hay edición en castellano")])
     monkeypatch.setattr(Pipeline, "_verificar_libros", lambda self, e, usados: caido)
     a = Almacen(cfg.ruta_db)
     llm = LLMFondo(cfg)

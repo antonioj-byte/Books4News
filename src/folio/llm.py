@@ -31,8 +31,9 @@ _CON_FALLBACK = ("claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude
 _BETA_FALLBACK = "server-side-fallback-2026-07-01"
 
 
-# Esperas extra ante un 5xx de Anthropic, después de los reintentos rápidos del SDK
-ESPERAS_5XX = (20, 60)
+# Esperas ante un 5xx, un 529 o un corte de red de Anthropic. El SDK ya no reintenta por su cuenta (max_retries=0):
+# reintentaba también los 429, contra la regla de la casa (revisión general, 2/11)
+ESPERAS_5XX = (2, 8, 20, 60)
 
 
 def _mensaje_api(exc) -> str:
@@ -48,6 +49,14 @@ class ErrorLLM(RuntimeError):
 
 class RespuestaCortada(ErrorLLM):
     """La respuesta llegó sin cerrar (casi siempre, el razonamiento se comió el tope de tokens)."""
+
+
+class LimiteLLM(ErrorLLM):
+    """429 de Anthropic: se para sin reintentar (los límites no se esquivan)."""
+
+
+class PeticionInvalida(ErrorLLM):
+    """Un 4xx que no es un límite (400, 413…): reintentar no lo arregla."""
 
 
 
@@ -176,7 +185,7 @@ class LLM:
         if self._cliente is None:
             if not self.cfg.anthropic_api_key:
                 raise ErrorLLM("Falta ANTHROPIC_API_KEY o FOLIO_ANTHROPIC_API_KEY (ponla en .env)")
-            self._cliente = anthropic.Anthropic(api_key=self.cfg.anthropic_api_key, max_retries=4)
+            self._cliente = anthropic.Anthropic(api_key=self.cfg.anthropic_api_key, max_retries=0)
         return self._cliente
 
     def _coste(self, modelo: str, entrada: int, salida: int, escritura: int = 0, lectura: int = 0) -> float:
@@ -272,22 +281,35 @@ class LLM:
         return self._procesar(paso, modelo, resp, esquema, ruta_cache, time.monotonic() - inicio)
 
     def _con_paciencia(self, paso: str, llamada):
-        """Errores pasajeros de Anthropic (500, 503, 529 «overloaded»; 2/11: «Proceder» falló con «Error code: 500 …
-        Unable to complete this request right now»). El SDK ya reintenta 4 veces en pocos segundos; si aun así falla,
-        se espera más (`ESPERAS_5XX`) y se prueba otra vez. Después, un ErrorLLM que dice qué hacer. Un 429 no se
-        reintenta aquí: los límites no se esquivan."""
+        """Llama a Anthropic con los reintentos de la casa y convierte todo error del SDK en un ErrorLLM, que es lo que
+        capturan los llamantes (revisión general, 2/11: un 429 o un 400 se escapaba y tumbaba la mesa entera).
+        - 5xx, 529, 408/409 y cortes de red: se reintenta con las esperas de `ESPERAS_5XX` (2/11: «Proceder» falló
+          con un 500 «Unable to complete this request right now»).
+        - 429: LimiteLLM, sin reintentar. Otros 4xx: PeticionInvalida."""
         for espera in (*ESPERAS_5XX, None):
             try:
                 return llamada()
             except anthropic.APIStatusError as exc:
-                if exc.status_code < 500:
-                    raise
+                codigo = exc.status_code
+                if codigo == 429:
+                    raise LimiteLLM(f"{paso}: Anthropic ha puesto un límite (429: {_mensaje_api(exc)}). "
+                                    "No se reintenta; espera un rato antes de volver a probar.") from exc
+                if codigo < 500 and codigo not in (408, 409):
+                    raise PeticionInvalida(f"{paso}: Anthropic rechazó la petición ({codigo}: {_mensaje_api(exc)})") from exc
                 if espera is None:
-                    raise ErrorLLM(f"{paso}: la API de Anthropic no respondió ({exc.status_code}: "
+                    raise ErrorLLM(f"{paso}: la API de Anthropic no respondió ({codigo}: "
                                    f"{_mensaje_api(exc)}) tras varios intentos. Es un fallo pasajero de Anthropic, "
                                    "no de la pieza: vuelve a intentarlo en unos minutos.") from exc
-                log.warning("%s: Anthropic respondió %s; reintento en %s s", paso, exc.status_code, espera)
-                time.sleep(espera)
+                log.warning("%s: Anthropic respondió %s; reintento en %s s", paso, codigo, espera)
+            except anthropic.APIConnectionError as exc:
+                if espera is None:
+                    # El SDK resume como «Connection error» fallos muy distintos: red, DNS o una clave con un salto
+                    # de línea (cabecera inválida). La causa real va en el mensaje.
+                    causa = exc.__cause__
+                    raise ErrorLLM(f"{paso}: no se pudo conectar con la API de Anthropic "
+                                   f"({type(causa).__name__ if causa else 'sin causa'}: {causa})") from exc
+                log.warning("%s: sin conexión con Anthropic; reintento en %s s", paso, espera)
+            time.sleep(espera)
 
     def _llamar(self, modelo, max_tokens, mensajes, esquema, esfuerzo, extra):
         return self.cliente.beta.messages.parse(

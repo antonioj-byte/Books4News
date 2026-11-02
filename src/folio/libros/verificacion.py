@@ -244,7 +244,7 @@ class Verificador:
             isbn13=sorted({i for e in obra.ediciones for i in e.isbn13})[:20],
             fuentes_verificacion=q.fuentes, url_ficha=obra.url,
             confianza="alta" if (q.gb_todos or len(obra.ediciones) >= 2) else "media",
-            notas=q.notas, sinopsis=_sinopsis(q),
+            notas=q.notas, sinopsis=_sinopsis(q), consulta_incompleta=bool(q.errores),
         )
 
     # --- Pasos de verificar() ---------------------------------------------------
@@ -276,9 +276,13 @@ class Verificador:
                     ediciones_es.append((ed, f"Open Library ({como})"))
             if not ediciones_es and "spa" in q.obra.idiomas:
                 q.notas.append("Open Library indica ediciones en español pero sin datos de ninguna")
-        for o in q.gb_es:
+        # También los volúmenes en español de la búsqueda general: la búsqueda con langRestrict devuelve 0 de forma
+        # errática y su silencio no puede convertirse en un «no» (revisión general, 2/11)
+        vistos = set()
+        for o in [*q.gb_es, *q.gb_todos]:
             ed = o.ediciones[0]
-            if ed.idiomas == ["es"]:
+            if ed.idiomas == ["es"] and o.id not in vistos:
+                vistos.add(o.id)
                 ediciones_es.append((ed, "Google Books (idioma de la edición)"))
         titulo_obra = q.obra.titulo if q.ol else q.gb_todos[0].titulo
         if not ediciones_es and self.gb and not titulos_coinciden(q.cand.titulo, titulo_obra, umbral=1.0):
@@ -358,5 +362,5 @@ class Verificador:
             anio_primera_edicion=None, edicion_es=edicion_es, edicion_es_detalle=detalle,
             google_id=o.id, isbn13=o.ediciones[0].isbn13, fuentes_verificacion=["googlebooks"],
             url_ficha=o.url, confianza="media", notas=q.notas + ["Solo encontrado en Google Books"],
-            sinopsis=_sinopsis(q),
+            sinopsis=_sinopsis(q), consulta_incompleta=bool(q.errores),
         )
