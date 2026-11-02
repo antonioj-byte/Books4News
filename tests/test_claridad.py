@@ -46,3 +46,23 @@ def test_sin_problemas_no_hay_turno_de_mas(cfg):
     llm = LLMFalso(cfg, [guion_valido()], [[]])
     guion.escribir(llm, "p1", ELECCION, [(FUENTES[0], "Texto")], [LIBRO])
     assert [p.split(":")[0] for p in llm.pasos] == ["guion", "claridad"]
+
+
+def test_un_guion_cortado_se_repite_con_esfuerzo_medio(cfg):
+    # 2/11: el primer guion de 2026-11-02-9 llegó con el JSON sin cerrar
+    from folio.llm import RespuestaCortada
+    cfg.pipeline.guion.lector_sin_contexto = False
+    llm = LLMFalso(cfg, [guion_valido()], [])
+    etapas, original = [], llm.estructurado
+
+    def estructurado(paso, mensajes, esquema, *, etapa_modelo, max_tokens=16000):
+        etapas.append((etapa_modelo, max_tokens))
+        if len(etapas) == 1:
+            raise RespuestaCortada("guion:p1:1: la respuesta llegó incompleta")
+        return original(paso, mensajes, esquema, etapa_modelo=etapa_modelo, max_tokens=max_tokens)
+
+    llm.estructurado = estructurado
+    g, avisos, _ = guion.escribir(llm, "p1", ELECCION, [(FUENTES[0], "Texto")], [LIBRO])
+    assert g and [e for e, _ in etapas] == ["guion", "guion_correccion"]
+    assert all(m == guion.MAX_TOKENS_GUION for _, m in etapas)
+    assert any("cortado" in a for a in avisos)

@@ -46,6 +46,11 @@ class ErrorLLM(RuntimeError):
     pass
 
 
+class RespuestaCortada(ErrorLLM):
+    """La respuesta llegó sin cerrar (casi siempre, el razonamiento se comió el tope de tokens)."""
+
+
+
 _INCLUIR = re.compile(r"\[incluir (\w+)\]")
 
 
@@ -262,7 +267,7 @@ class LLM:
         except pydantic.ValidationError as exc:
             # 2/11: el SDK valida al recibir y, si la respuesta llega cortada (JSON sin cerrar), lanza ValidationError en
             # vez de dejarla en stop_reason «max_tokens»; tumbaba la tanda del fondo entera. Es un fallo del modelo.
-            raise ErrorLLM(f"{paso}: la respuesta llegó incompleta o no valida contra {esquema.__name__} "
+            raise RespuestaCortada(f"{paso}: la respuesta llegó incompleta o no valida contra {esquema.__name__} "
                            f"({str(exc).splitlines()[1][:160] if len(str(exc).splitlines()) > 1 else exc})") from exc
         return self._procesar(paso, modelo, resp, esquema, ruta_cache, time.monotonic() - inicio)
 
@@ -319,7 +324,7 @@ class LLM:
         if resp.stop_reason == "refusal":
             raise ErrorLLM(f"{paso}: el modelo rechazó la petición ({getattr(resp, 'stop_details', None)})")
         if resp.stop_reason == "max_tokens":
-            raise ErrorLLM(f"{paso}: respuesta cortada por max_tokens")
+            raise RespuestaCortada(f"{paso}: respuesta cortada por max_tokens")
         if resp.parsed_output is None:
             raise ErrorLLM(f"{paso}: la respuesta no se pudo validar contra {esquema.__name__}")
         if ruta_cache:

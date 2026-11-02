@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from folio.config import Config
 from folio.config import Guion as ConfigGuion
-from folio.llm import LLM, bloque_reenviable, cache_al_final, cargar_prompt, con_cache
+from folio.llm import LLM, RespuestaCortada, bloque_reenviable, cache_al_final, cargar_prompt, con_cache
 from folio.modelos import CitaVerificada, DiscrepanciaEdicion, FuenteNoticia, GuionLLM, HistoriaElegida, LibroGuion, LibroVerificado
 from folio.verificacion_texto import apellido, autor_coincide, normalizar, sin_subtitulo, titulos_coinciden
 
@@ -318,6 +318,7 @@ def _firma(c: _Guion) -> list[str]:
 
 
 MAX_CRITICAS = 2          # citas de la crítica por guion (formato «recomendado»; decisión del usuario, 1/11)
+MAX_TOKENS_GUION = 21000   # el máximo sin streaming: el razonamiento en esfuerzo alto cuenta dentro (2/11)
 
 
 def citas_de_la_critica(g: GuionLLM, libros: list[LibroVerificado], textos: list[tuple[FuenteNoticia, str]]) -> list[CitaVerificada]:
@@ -585,8 +586,18 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     while True:
         # El primer guion, con el esfuerzo del guionista; los reintentos y la reescritura para el lector sin contexto
         # son correcciones sobre un guion hecho: mismo modelo, esfuerzo medio (2/11, a petición del usuario, por el gasto)
-        guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", cache_al_final(mensajes, hasta=0), GuionLLM,
-                                            etapa_modelo="guion" if intento == 0 else "guion_correccion")
+        # 2/11: el primer guion de 2026-11-02-9 llegó cortado (JSON sin cerrar a los 1.900 caracteres): el razonamiento
+        # en esfuerzo alto se comió el tope. Tope máximo sin streaming y, si aun así se corta, otra vez en esfuerzo medio.
+        etapa = "guion" if intento == 0 else "guion_correccion"
+        try:
+            guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", cache_al_final(mensajes, hasta=0), GuionLLM,
+                                                etapa_modelo=etapa, max_tokens=MAX_TOKENS_GUION)
+        except RespuestaCortada as exc:
+            if etapa == "guion_correccion":
+                raise
+            avisos.append(f"Intento {intento + 1} cortado ({exc}); se repite con esfuerzo medio")
+            guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}b", cache_al_final(mensajes, hasta=0), GuionLLM,
+                                                etapa_modelo="guion_correccion", max_tokens=MAX_TOKENS_GUION)
         corregido = corregir_mecanico(guion)
         if corregido:
             avisos.append(f"Corregido en código en el intento {intento + 1}: {', '.join(corregido)}")
