@@ -105,11 +105,18 @@ export function VistaFondo() {
       </div>
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <button className="boton" onClick={preparar} disabled={lanzando || !!preparando}>
-          {preparando ? "Preparando una tanda…" : "Preparar una tanda (25 · ~0,30 $)"}
+          {preparando ? "Preparando una tanda…" : "Preparar una tanda (25 · ~1,40 $)"}
         </button>
-        {preparando && <span className="dato">El jefe propone, el evaluador de puentes filtra y se verifican los libros: unos minutos</span>}
+        {preparando && <span className="dato">El jefe propone, el evaluador de puentes filtra y se verifican los libros: unos 15 minutos{datos?.preparando?.etapa ? ` · ${datos.preparando.etapa}` : ""}</span>}
         {aviso && <span className="text-[13px] text-carmesi">{aviso}</span>}
       </div>
+      {datos?.preparando && !preparando && (
+        // Cómo acabó la última tanda (2/11: «le di a preparar tanda pero no ha hecho nada»: la página no lo decía)
+        <div className={`mb-6 rounded-[10px] border px-4 py-3 text-[13px] ${datos.preparando.codigo === 0 ? "border-borde bg-panel" : "border-carmesi bg-papel"}`}>
+          <p className="mb-1 font-semibold">{datos.preparando.codigo === 0 ? "La última tanda terminó" : `La última tanda falló (código ${datos.preparando.codigo ?? "?"})`}</p>
+          <pre className="whitespace-pre-wrap font-mono text-[12px] text-tinta-suave">{datos.preparando.ultimas_lineas.join("\n") || "(sin salida)"}</pre>
+        </div>
+      )}
       <div className="mb-4 flex flex-wrap gap-1.5" role="group" aria-label="Estado">
         {ESTADOS.map((e) => (
           <button key={e.valor} aria-pressed={estado === e.valor} onClick={() => setEstado(e.valor)}

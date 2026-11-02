@@ -21,3 +21,13 @@ def test_el_guionista_y_el_comprobador_ven_la_fecha(cfg):
     assert 'publicado="2024-08-25"' in hechos._bloque_fuentes([(f, "Texto")])
     sin = FuenteNoticia(medio="X", titulo="t", url="https://y", acceso="abierto")
     assert "publicado" not in hechos._bloque_fuentes([(sin, "Texto")])
+
+
+def test_el_guionista_recibe_la_sinopsis_de_la_editorial(cfg):
+    """2/11: «usar el descriptivo de la editorial»: la sinopsis va en la ficha del libro, como dato."""
+    from folio.libros import fuentes
+    assert fuentes._sin_html("<p>Killer App narra la historia de <b>Pavel Durov</b>.</p>") == "Killer App narra la historia de Pavel Durov ."
+    libro = LIBRO.model_copy(update={"sinopsis": "Killer App narra la historia de Pavel Durov, el Zuckerberg ruso."})
+    f = FuenteNoticia(medio="FT", titulo="t", url="https://x", acceso="abierto")
+    p = guion.construir_prompt(cfg, ELECCION, [(f, "Texto")], [libro], fecha="2026-11-02")
+    assert "Sinopsis de la editorial" in p and "el Zuckerberg ruso" in p and "Cómo se habla de un libro" in p

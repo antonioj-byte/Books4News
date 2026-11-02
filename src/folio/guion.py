@@ -76,6 +76,8 @@ def _linea_libro(l: LibroVerificado) -> str:
         f"  Autor(es): {', '.join(l.autores)}\n"
         f"  Primera edición: {original}\n"
         f"  Edición española: {es}"
+        + (f"\n  Sinopsis de la editorial (dato para describir el libro; parafrasea, no la copies): {l.sinopsis}"
+           if l.sinopsis else "")
     )
 
 

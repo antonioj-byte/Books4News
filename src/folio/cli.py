@@ -531,7 +531,7 @@ def fondo_preparar(tandas: int = typer.Option(1, help="Cuántas tandas de 25 (el
                    si_toca: bool = typer.Option(False, "--si-toca", help="Solo el día 1 o si el fondo del mes está vacío; "
                                                 "nunca sale con error (es un paso de la lectura periódica)"),
                    reutilizar_llm: bool = typer.Option(False, "--reutilizar-llm", help="Peticiones idénticas, de la caché")):
-    """Prepara tandas del fondo del mes (cosecha, jefe en Opus, puentes y verificación de libros; ~0,30 $ por tanda)."""
+    """Prepara tandas del fondo del mes (cosecha, jefe en Opus, puentes y verificación de libros; ~1,40 $ por tanda)."""
     from datetime import date
     from folio import fondo
     from folio.almacen import Almacen

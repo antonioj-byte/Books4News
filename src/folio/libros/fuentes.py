@@ -94,6 +94,7 @@ class Obra:
     ediciones: list[Edicion] = field(default_factory=list)
     url: str | None = None
     autores_claves: list[str] = field(default_factory=list)  # paralelo a `autores` (Open Library)
+    descripcion: str | None = None   # sinopsis de la editorial (Google Books)
 
 
 def _reintentar(peticion, intentos: int, espera_s: float) -> httpx.Response:
@@ -183,6 +184,13 @@ class OpenLibrary:
 _CLAVE_EN_URL = re.compile(r"(key=)[^&\s'\"]+")
 
 
+def _sin_html(texto: str | None) -> str | None:
+    if not texto:
+        return None
+    limpio = " ".join(re.sub(r"<[^>]+>", " ", html.unescape(texto)).split())
+    return limpio or None
+
+
 def sin_clave(texto: str) -> str:
     """Oculta el parámetro key= de una URL o de un mensaje de error."""
     return _CLAVE_EN_URL.sub(r"\1***", texto)
@@ -258,6 +266,6 @@ class GoogleBooks:
                 fuente="googlebooks", id=it["id"], titulo=sin_mayusculas(titulo_v),
                 autores=[sin_mayusculas(a) for a in v.get("authors") or []],
                 anio_primera_edicion=None, idiomas=ed.idiomas, ediciones=[ed],
-                url=v.get("infoLink"),
+                url=v.get("infoLink"), descripcion=_sin_html(v.get("description")),
             ))
         return obras

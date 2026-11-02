@@ -133,6 +133,17 @@ class _Consulta:
         return (["openlibrary"] if self.ol else []) + (["googlebooks"] if self.gb_todos else [])
 
 
+MAX_SINOPSIS = 1500
+
+
+def _sinopsis(q: "_Consulta") -> str | None:
+    """La sinopsis de la editorial: la de la edición en español si Google Books la tiene; si no, la de cualquiera."""
+    for o in [*q.gb_es, *q.gb_todos]:
+        if o.descripcion and len(o.descripcion) >= 80:
+            return o.descripcion[:MAX_SINOPSIS]
+    return None
+
+
 class Verificador:
     def __init__(self, cfg: Config, cliente: httpx.Client | None = None):
         self.cfg = cfg
@@ -233,7 +244,7 @@ class Verificador:
             isbn13=sorted({i for e in obra.ediciones for i in e.isbn13})[:20],
             fuentes_verificacion=q.fuentes, url_ficha=obra.url,
             confianza="alta" if (q.gb_todos or len(obra.ediciones) >= 2) else "media",
-            notas=q.notas,
+            notas=q.notas, sinopsis=_sinopsis(q),
         )
 
     # --- Pasos de verificar() ---------------------------------------------------
@@ -347,4 +358,5 @@ class Verificador:
             anio_primera_edicion=None, edicion_es=edicion_es, edicion_es_detalle=detalle,
             google_id=o.id, isbn13=o.ediciones[0].isbn13, fuentes_verificacion=["googlebooks"],
             url_ficha=o.url, confianza="media", notas=q.notas + ["Solo encontrado en Google Books"],
+            sinopsis=_sinopsis(q),
         )

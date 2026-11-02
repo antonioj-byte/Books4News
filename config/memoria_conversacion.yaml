@@ -524,3 +524,10 @@
   patron: "Subió la cubierta de Killer App como material y el editor dijo que no podía ponerla en la diapositiva del libro: «no puede ser tan difícil subir esta portada»."
   propuesta: "Una foto subida puede ir como cubierta de un libro de la pieza (en su diapositiva de libro y en el cierre), por encima de la de los catálogos; el editor no dice que no se puede."
   evidencia: ["Conversación, 2/11: pieza de Killer App, diapositiva 3"]
+
+- clave: como-se-habla-de-un-libro
+  fecha: "2026-11-02"
+  destino: guionista
+  patron: "«Cuando se hable de libros: explicar la tesis principal; compartir una cita destacada e hilarla con el discurso general (como dice X); usar el descriptivo de la editorial.»"
+  propuesta: "Al hablar de un libro: su tesis en una frase; descripción parafraseando la sinopsis de la editorial (que llega con la ficha), sin impresiones de lectura inventadas; y la cita destacada, solo verificada, hilada con la idea («Como dice…»)."
+  evidencia: ["Conversación, 2/11"]

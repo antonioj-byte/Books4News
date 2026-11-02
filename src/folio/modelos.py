@@ -134,6 +134,9 @@ class LibroVerificado(BaseModel):
     url_ficha: str | None = None
     confianza: Literal["alta", "media"]
     notas: list[str] = Field(default_factory=list)
+    # La sinopsis de la editorial (Google Books o el catálogo de las librerías), para que el guionista describa el
+    # libro con ella (2/11, a petición del usuario: «usar el descriptivo de la editorial»)
+    sinopsis: str | None = None
 
 
 class LibroDescartado(BaseModel):

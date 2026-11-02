@@ -368,4 +368,5 @@ def libro_de_ficha(f: Ficha) -> LibroVerificado:
                                            isbn=f.isbn, traductor=", ".join(f.traductores) or None, pais="España"),
         isbn13=[f.isbn], fuentes_verificacion=["todostuslibros"], url_ficha=f.url, confianza="media",
         notas=["Verificado en el catálogo de las librerías (todostuslibros.com): novedad aún sin ficha en Open Library"],
+        sinopsis=f.sinopsis[:1500] or None,
     )

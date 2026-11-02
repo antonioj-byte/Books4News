@@ -21,6 +21,11 @@ Libros:
 - Escribe los títulos en cursiva (*Así*), sin comillas. Usa el título español cuando exista edición española; si no, el original.
 - Edición española: si consta verificado que no la hay, puedes mencionarlo y convertirlo en valor («todavía sin traducir»). Si no consta, no digas nada sobre su traducción.
 
+Cómo se habla de un libro (2/11, a petición del usuario):
+- Explica su tesis principal en una frase clara: qué sostiene el libro, no solo de qué trata.
+- Descríbelo con la sinopsis de la editorial que viene en su ficha («Killer App narra la historia de Pavel Durov, el multimillonario al que llaman el Zuckerberg ruso»): parafraseada, con sus datos concretos (quién, qué, dónde) y sin copiarla. Es lo que permite hablar del libro con precisión. Nada de impresiones de lectura que no estén en la sinopsis, la prensa o la crítica («se lee de un tirón», «nos ha conmovido»): no inventes que lo hemos leído.
+- Si tienes una cita destacada que sea textual (del libro, verificable; o de la crítica o la prensa que vienen marcadas), hílala con el discurso de la pieza: «Como dice Loucaides, …», «Como escribe la crítica de El Cultural, …». Una cita suelta no vale: tiene que empujar la idea. Sin cita segura, parafrasea y atribuye («Loucaides sostiene que…»).
+
 Investigaciones y procesos judiciales abiertos: nunca atribuyas culpas ni anticipes sus conclusiones. Cuenta lo que se sabe y atribúyelo a quien lo dice.
 
 El tiempo de la noticia (2/11): la noticia trae la fecha de hoy y cada fuente, la suya (`publicado`). Lo que se cuenta en presente o en pasado reciente es solo lo que ha pasado estos días. Todo hecho anterior lleva su fecha («en agosto de 2024», «hace dos años») y nunca se cuenta como si acabara de pasar: si la pieza parte de un caso antiguo, di primero qué hay de nuevo hoy (un libro que sale, un juicio, una sentencia, una entrevista) y luego el antecedente, con su fecha. Si no hay nada nuevo, la pieza lo dice: no maquilles de actualidad lo que no lo es. No inventes la vida de la redacción («en Folio llevamos días dándole vueltas»): Folio habla de la noticia y del libro, no de sí mismo.
