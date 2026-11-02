@@ -1,0 +1,282 @@
+<title>Cinco del libro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;700&family=EB+Garamond:ital@0;1&family=Open+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Mesa de pruebas: tres direcciones en filas; cada fila, cuatro diapositivas 4:5 del design system de Folio. */
+:root {
+  --pagina: #ECE6DD; --pagina-texto: #1C1618; --pagina-suave: #5E5457; --pagina-borde: #D2C8BB; --pagina-ficha: #F6F3EE;
+  --papel: #F6F3EE; --tinta: #1C1618; --mesa: #120E0F; --pluma: #D40549; --marcador: #FFF500; --rosado: #F3D9DF;
+  --titular: "Alexandria", "Helvetica Neue", Arial, sans-serif;
+  --remate: "EB Garamond", Garamond, Georgia, serif;
+  --texto: "Open Sans", system-ui, sans-serif;
+  --maquina: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --pagina: #171213; --pagina-texto: #EFE9E3; --pagina-suave: #B3A8A4; --pagina-borde: #3A3133; --pagina-ficha: #211B1C; color-scheme: dark } }
+:root[data-theme="dark"] { --pagina: #171213; --pagina-texto: #EFE9E3; --pagina-suave: #B3A8A4; --pagina-borde: #3A3133; --pagina-ficha: #211B1C; color-scheme: dark }
+body { background: var(--pagina); color: var(--pagina-texto); font: 16px/1.6 var(--texto); }
+.envoltura { max-width: 1180px; margin: 0 auto; padding-block: 36px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.ante { font: 500 12px var(--maquina); letter-spacing: .14em; text-transform: uppercase; color: var(--pluma); }
+h1 { font: 700 clamp(34px, 6vw, 56px)/1 var(--titular); letter-spacing: -.05em; margin: 8px 0 14px; text-wrap: balance; }
+h1 em, h2 em { font-family: var(--remate); font-style: italic; font-weight: 400; letter-spacing: 0; color: var(--pluma); }
+h2 { font: 700 28px/1.1 var(--titular); letter-spacing: -.04em; margin: 0; text-wrap: balance; }
+p { margin: 0 0 10px; max-width: 70ch; }
+.entrada { font-size: 18px; color: var(--pagina-suave); }
+.opcion { margin-top: 48px; padding-top: 22px; border-top: 1px solid var(--pagina-borde); display: grid; gap: 16px; }
+.cabeza { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+.letra { font: 700 15px var(--maquina); color: var(--papel); background: var(--pluma); border-radius: 99px; padding: 3px 12px; }
+.fila { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.fila figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figcaption { font: 12px/1.35 var(--maquina); color: var(--pagina-suave); }
+.pros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; font-size: 15px; }
+.pros div { background: var(--pagina-ficha); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.pros b { display: block; font: 600 12px var(--maquina); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; color: var(--pagina-suave); }
+.comun { margin-top: 48px; padding: 20px 22px; background: var(--pagina-ficha); border-radius: 10px; }
+.comun ul { margin: 6px 0 0; padding-left: 20px; } .comun li { margin: 4px 0; max-width: 75ch; }
+@media (max-width: 860px) { .fila { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pros { grid-template-columns: 1fr; } }
+
+/* --- Diapositiva: 1080×1350 a escala; todo en cqw (1cqw = 10,8 px reales) --- */
+.d { aspect-ratio: 4 / 5; width: 100%; container-type: inline-size; position: relative; overflow: hidden;
+  background: var(--papel); color: var(--tinta); border-radius: 4px; box-shadow: 0 1px 0 rgba(0,0,0,.08), 0 8px 24px -14px rgba(0,0,0,.45); }
+.d * { box-sizing: border-box; }
+.d .pi { display: inline-block; font: 600 2.6cqw/1 var(--texto); letter-spacing: .12em; text-transform: uppercase; border: .25cqw solid currentColor; border-radius: 99px; padding: 1.2cqw 2.6cqw; }
+.d .tit { font: 700 8.6cqw/0.98 var(--titular); letter-spacing: -.05em; margin: 0; text-wrap: balance; }
+.d .tit em { font: italic 400 1.04em/1 var(--remate); letter-spacing: -.01em; }
+.d .sub { font: 400 3.5cqw/1.35 var(--texto); margin: 0; }
+.d .fuente { font: 500 2.3cqw/1 var(--maquina); letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+.d .foto { position: absolute; background: radial-gradient(120% 90% at 30% 25%, #8b8380 0%, #4b4446 45%, #1a1416 100%); }
+.d .foto::after { content: ""; position: absolute; inset: 0; background: var(--grano); mix-blend-mode: overlay; opacity: .9; }
+.d .foto span { position: absolute; left: 3cqw; bottom: 2.4cqw; font: 500 2cqw var(--maquina); color: #F6F3EE; opacity: .8; letter-spacing: .05em; z-index: 1; }
+.d .foto .mesas { position: absolute; inset: 0; background:
+  repeating-linear-gradient(90deg, transparent 0 14cqw, rgba(255,255,255,.06) 14cqw 15cqw),
+  linear-gradient(transparent 62%, rgba(0,0,0,.45) 62% 64%, transparent 64%); }
+.d .cubierta { position: absolute; background: #2E4A43; color: #F6F3EE; padding: 3cqw; display: flex; flex-direction: column; justify-content: space-between;
+  box-shadow: 1.2cqw 1.6cqw 0 rgba(0,0,0,.35); font-family: var(--remate); }
+.d .cubierta b { font: italic 400 5.4cqw/1 var(--remate); }
+.d .cubierta small { font: 600 2.2cqw var(--texto); letter-spacing: .1em; text-transform: uppercase; }
+.d .retrato { position: absolute; border-radius: 50%; background: radial-gradient(circle at 45% 38%, #b9aea9 0 18%, #6d6264 19% 60%, #3a3133 61%); border: .8cqw solid var(--papel); }
+.d .retrato::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--grano); mix-blend-mode: overlay; }
+.d .rasgado { position: absolute; left: 0; right: 0; height: 5cqw; background: var(--papel);
+  clip-path: polygon(0 40%, 6% 70%, 11% 35%, 18% 62%, 24% 30%, 31% 66%, 38% 38%, 45% 70%, 52% 33%, 59% 64%, 66% 36%, 73% 68%, 80% 32%, 87% 62%, 93% 38%, 100% 60%, 100% 100%, 0 100%); }
+
+/* A · Sumario */
+.a-port { padding: 7cqw; display: flex; flex-direction: column; gap: 3.2cqw; }
+.a-port .pi { color: var(--pluma); align-self: flex-start; }
+.a-port .tit { font-size: 10.5cqw; }
+.a-port ol { list-style: none; margin: 1cqw 0 0; padding: 0; display: grid; gap: 2.6cqw; }
+.a-port li { display: grid; grid-template-columns: 8cqw 1fr; gap: 2cqw; align-items: baseline; font: 700 4cqw/1.08 var(--titular); letter-spacing: -.03em;
+  border-top: .25cqw solid rgba(28,22,24,.18); padding-top: 2.2cqw; }
+.a-port li i { font: italic 400 6cqw/1 var(--remate); color: var(--pluma); }
+.a-not { padding: 7cqw; display: flex; flex-direction: column; gap: 3cqw; }
+.a-not .num { font: italic 400 22cqw/0.8 var(--remate); color: var(--pluma); }
+.a-not .caja { position: relative; height: 44cqw; margin: 0 -7cqw; }
+.a-not .caja .foto { inset: 0; }
+.a-not .pie { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+.a-sin .num { font-size: 62cqw; line-height: .72; margin: -2cqw 0 2cqw; }
+
+/* B · A sangre */
+.b { background: var(--mesa); color: var(--papel); }
+.b .foto { inset: 0; filter: grayscale(1); }
+.b .velo { position: absolute; inset: 0; background: linear-gradient(transparent 38%, rgba(18,14,15,.92) 78%); }
+.b .cuerpo { position: absolute; left: 7cqw; right: 7cqw; bottom: 8cqw; display: grid; gap: 3cqw; }
+.b .tit em { background: linear-gradient(transparent 62%, var(--marcador) 62% 92%, transparent 92%); color: var(--papel); padding: 0 .6cqw; }
+.b .contador { position: absolute; top: 6cqw; left: 7cqw; display: flex; gap: 1.2cqw; }
+.b .contador i { width: 7cqw; height: 1.1cqw; background: rgba(246,243,238,.28); border-radius: 99px; }
+.b .contador i.si { background: var(--papel); }
+.b-port .cinco { position: absolute; right: -4cqw; top: -10cqw; font: 700 96cqw/1 var(--titular); letter-spacing: -.08em; color: var(--pluma); opacity: .92; mix-blend-mode: screen; }
+.b-cub .cubierta { left: 26cqw; top: 13cqw; width: 48cqw; height: 66cqw; }
+.b-cub .retrato { width: 22cqw; height: 22cqw; left: 62cqw; top: 58cqw; border-color: var(--mesa); }
+.b-sin .gigante { position: absolute; left: 6cqw; top: 9cqw; font: 700 31cqw/.86 var(--titular); letter-spacing: -.07em; color: var(--pluma); }
+
+/* C · Teletipo */
+.c { background: var(--papel); }
+.c .cinta { background: var(--tinta); color: var(--papel); font: 500 2.5cqw/1 var(--maquina); letter-spacing: .08em; padding: 3cqw 7cqw; display: flex; justify-content: space-between; text-transform: uppercase; }
+.c .cuerpo { padding: 6cqw 7cqw; display: grid; gap: 3cqw; }
+.c .tit { font-size: 8cqw; }
+.c-port { background: var(--pluma); color: var(--papel); }
+.c-port .cinta { background: transparent; border-bottom: .3cqw dashed rgba(246,243,238,.6); }
+.c-port ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2.3cqw; font: 500 3cqw/1.25 var(--maquina); }
+.c-port li { display: grid; grid-template-columns: 15cqw 1fr; gap: 2cqw; }
+.c-port li b { font-weight: 500; opacity: .75; }
+.c .recorte { position: relative; height: 40cqw; margin: 0 7cqw; transform: rotate(-1.4deg); background: var(--papel); padding: 1.6cqw; box-shadow: 0 1.4cqw 2.6cqw -1cqw rgba(0,0,0,.35); }
+.c .recorte .foto { inset: 1.6cqw; filter: grayscale(1); }
+.c .recorte::before { content: ""; position: absolute; top: -2cqw; left: 40%; width: 20cqw; height: 4.4cqw; background: rgba(255,245,0,.75); transform: rotate(3deg); z-index: 2; }
+.c-cub .cubierta { left: 12cqw; top: 15cqw; width: 30cqw; height: 42cqw; transform: rotate(-2deg); }
+.c-cub .retrato { width: 20cqw; height: 20cqw; left: 50cqw; top: 26cqw; }
+.c-sin .cifra { font: 500 20cqw/1 var(--maquina); letter-spacing: -.04em; color: var(--pluma); }
+</style>
+
+<div class="envoltura">
+  <div class="ante">Folio · Mesa de edición · prueba de formato</div>
+  <h1>Cinco del <em>libro</em></h1>
+  <p class="entrada">Las cinco noticias del mundo literario y editorial más importantes del día, en un carrusel de siete diapositivas: portada, cinco noticias y el colofón con las fuentes. Tres direcciones para elegir. En cada una, la portada y tres noticias que ponen a prueba las imágenes: una con foto de archivo, una con cubierta y retrato del autor y una sin foto.</p>
+  <p class="entrada">Los textos son los del ejercicio del 2 de noviembre y sirven de ejemplo; las imágenes están simuladas (en la pieza real, solo con licencia libre, cubiertas reales o ilustración).</p>
+
+  <!-- A -->
+  <section class="opcion" aria-labelledby="a">
+    <div class="cabeza"><span class="letra">A</span><h2 id="a">Sumario: <em>la lista es el gancho</em></h2></div>
+    <p>La portada ya cuenta las cinco: se lee en el feed sin deslizar. Cada noticia lleva su número grande en cursiva y la imagen en una caja a sangre de lado a lado. Sin foto, el número llena media página.</p>
+    <div class="fila">
+      <figure><div class="d a-port">
+        <span class="pi">Cinco del libro · 2 nov</span>
+        <p class="tit">Lo que se movió hoy en el <em>mundo del libro</em></p>
+        <ol>
+          <li><i>1</i>El Cervantes se decide mañana</li>
+          <li><i>2</i>París elige mañana su Goncourt</li>
+          <li><i>3</i>Allende llega con el Planeta</li>
+          <li><i>4</i>Scholastic compra Cottage Door</li>
+          <li><i>5</i>El audiolibro estrena voces sintéticas</li>
+        </ol>
+      </div><figcaption>1 · portada</figcaption></figure>
+
+      <figure><div class="d a-not">
+        <span class="num">2</span>
+        <div class="caja"><div class="foto"><div class="mesas"></div><span>Archivo · el salón del Drouant</span></div></div>
+        <p class="tit" style="font-size:7.6cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p>
+        <p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p>
+        <div class="pie"><span class="fuente">Livres Hebdo</span><span class="fuente">2/5</span></div>
+      </div><figcaption>3 · con foto de archivo</figcaption></figure>
+
+      <figure><div class="d a-not">
+        <span class="num">3</span>
+        <div class="caja" style="background:var(--rosado)">
+          <div class="cubierta" style="left:30cqw;top:4cqw;width:27cqw;height:37cqw"><small>Planeta</small><b>La hora antes del alba</b><small>Isabel Allende</small></div>
+          <div class="retrato" style="width:17cqw;height:17cqw;left:52cqw;top:24cqw"></div>
+        </div>
+        <p class="tit" style="font-size:7.6cqw">Isabel Allende llega a las librerías con <em>el Planeta</em></p>
+        <p class="sub">La novela ganadora sale el 4 de noviembre, el mismo día que la del finalista.</p>
+        <div class="pie"><span class="fuente">Planeta</span><span class="fuente">3/5</span></div>
+      </div><figcaption>4 · cubierta y retrato</figcaption></figure>
+
+      <figure><div class="d a-not a-sin">
+        <span class="num">4</span>
+        <p class="tit" style="font-size:7.6cqw">Scholastic compra Cottage Door Press por <em>71 millones</em></p>
+        <p class="sub">El gigante del libro infantil suma un sello de libros de cartón para los más pequeños.</p>
+        <div class="pie"><span class="fuente">Publishers Weekly</span><span class="fuente">4/5</span></div>
+      </div><figcaption>5 · sin foto</figcaption></figure>
+    </div>
+    <div class="pros">
+      <div><b>A favor</b>La más clara y la más rápida de leer. La portada promete exactamente lo que hay dentro y funciona sola si alguien no desliza. Encaja con el papel claro de Folio.</div>
+      <div><b>En contra</b>La más sobria: se parece a un boletín. La portada no lleva imagen y compite peor en el feed que las de foto a sangre.</div>
+    </div>
+  </section>
+
+  <!-- B -->
+  <section class="opcion" aria-labelledby="b">
+    <div class="cabeza"><span class="letra">B</span><h2 id="b">A sangre: <em>Wired, cinco veces</em></h2></div>
+    <p>Cada noticia es una portada en pequeño: imagen a sangre en blanco y negro, titular grande con el remate en marcador y una barra de progreso arriba (2 de 5). La portada lleva un cinco gigante en pluma sobre la mejor imagen del día. Sin foto, una palabra o una cifra gigante en el color de la pieza.</p>
+    <div class="fila">
+      <figure><div class="d b b-port">
+        <div class="foto"><div class="mesas"></div></div>
+        <span class="cinco" aria-hidden="true">5</span>
+        <div class="velo"></div>
+        <div class="cuerpo">
+          <span class="pi" style="justify-self:start">Cinco del libro · 2 nov</span>
+          <p class="tit">El Cervantes, el Goncourt y <em>tres más</em></p>
+          <p class="sub">Lo que hay que saber hoy del mundo del libro, en cinco diapositivas.</p>
+        </div>
+      </div><figcaption>1 · portada</figcaption></figure>
+
+      <figure><div class="d b">
+        <div class="foto"><div class="mesas"></div><span>Archivo · el salón del Drouant</span></div>
+        <div class="velo"></div>
+        <div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="cuerpo">
+          <p class="tit">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p>
+          <p class="sub">El Médicis hoy, el Goncourt y el Renaudot mañana.</p>
+          <span class="fuente">Livres Hebdo</span>
+        </div>
+      </div><figcaption>3 · con foto de archivo</figcaption></figure>
+
+      <figure><div class="d b b-cub">
+        <div class="contador" aria-label="3 de 5"><i class="si"></i><i class="si"></i><i class="si"></i><i></i><i></i></div>
+        <div class="cubierta"><small>Planeta</small><b>La hora antes del alba</b><small>Isabel Allende</small></div>
+        <div class="retrato"></div>
+        <div class="velo" style="background:linear-gradient(transparent 62%, rgba(18,14,15,.95) 80%)"></div>
+        <div class="cuerpo">
+          <p class="tit" style="font-size:7.6cqw">Allende llega a las librerías con <em>el Planeta</em></p>
+          <span class="fuente">Planeta</span>
+        </div>
+      </div><figcaption>4 · cubierta y retrato</figcaption></figure>
+
+      <figure><div class="d b b-sin">
+        <div class="contador" aria-label="4 de 5"><i class="si"></i><i class="si"></i><i class="si"></i><i class="si"></i><i></i></div>
+        <span class="gigante">71<br>millones</span>
+        <div class="cuerpo">
+          <p class="tit" style="font-size:7.6cqw">Scholastic compra Cottage Door Press por <em>71 millones</em></p>
+          <span class="fuente">Publishers Weekly</span>
+        </div>
+      </div><figcaption>5 · sin foto</figcaption></figure>
+    </div>
+    <div class="pros">
+      <div><b>A favor</b>La más vistosa y la más Folio: es el lenguaje de las portadas que ya usamos, así que se reconoce en el feed. La barra de progreso invita a deslizar.</div>
+      <div><b>En contra</b>Depende de las imágenes: con dos noticias sin foto en cinco, la serie pierde ritmo. Cinco portadas seguidas cansan si el día es flojo.</div>
+    </div>
+  </section>
+
+  <!-- C -->
+  <section class="opcion" aria-labelledby="c">
+    <div class="cabeza"><span class="letra">C</span><h2 id="c">Teletipo: <em>la redacción a primera hora</em></h2></div>
+    <p>El parte de la mañana: la portada en pluma con las cinco en letra de máquina, ciudad y medio. Cada noticia lleva una cinta negra con ciudad, medio y número, y la imagen como un recorte pegado con cinta de marcador. Sin foto, la cifra en letra de máquina.</p>
+    <div class="fila">
+      <figure><div class="d c c-port">
+        <div class="cinta"><span>Folio · teletipo</span><span>02.11 · 07:00</span></div>
+        <div class="cuerpo">
+          <p class="tit" style="font-size:9.4cqw">Cinco del <em>libro</em></p>
+          <ul>
+            <li><b>MADRID</b>El Cervantes se decide mañana</li>
+            <li><b>PARÍS</b>Cuatro finalistas para el Goncourt</li>
+            <li><b>BARCELONA</b>Allende llega con el Planeta</li>
+            <li><b>NUEVA YORK</b>Scholastic compra Cottage Door</li>
+            <li><b>MONTREAL</b>El audiolibro, con voces sintéticas</li>
+          </ul>
+        </div>
+      </div><figcaption>1 · portada</figcaption></figure>
+
+      <figure><div class="d c">
+        <div class="cinta"><span>París · Livres Hebdo</span><span>2/5</span></div>
+        <div class="recorte" style="margin-top:6cqw"><div class="foto"><div class="mesas"></div><span>Archivo · el Drouant</span></div></div>
+        <div class="cuerpo">
+          <p class="tit">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p>
+          <p class="sub">El Médicis hoy, el Goncourt y el Renaudot mañana.</p>
+        </div>
+      </div><figcaption>3 · con foto de archivo</figcaption></figure>
+
+      <figure><div class="d c c-cub">
+        <div class="cinta"><span>Barcelona · Planeta</span><span>3/5</span></div>
+        <div class="cubierta"><small>Planeta</small><b>La hora antes del alba</b><small>Isabel Allende</small></div>
+        <div class="retrato"></div>
+        <div class="cuerpo" style="position:absolute;bottom:0;left:0;right:0">
+          <p class="tit">Allende llega a las librerías con <em>el Planeta</em></p>
+          <p class="sub">La novela ganadora sale el 4 de noviembre.</p>
+        </div>
+      </div><figcaption>4 · cubierta y retrato</figcaption></figure>
+
+      <figure><div class="d c c-sin">
+        <div class="cinta"><span>Nueva York · PW</span><span>4/5</span></div>
+        <div class="cuerpo">
+          <span class="cifra">$71 M</span>
+          <p class="tit">Scholastic compra Cottage Door Press</p>
+          <p class="sub">El gigante del libro infantil suma un sello de libros de cartón para los más pequeños.</p>
+        </div>
+      </div><figcaption>5 · sin foto</figcaption></figure>
+    </div>
+    <div class="pros">
+      <div><b>A favor</b>Es la que mejor resiste los días sin fotos: el recorte es pequeño y la cinta da ritmo aunque falten imágenes. Dice «noticias de hoy» sin decirlo.</div>
+      <div><b>En contra</b>La letra de máquina en la portada se lee peor en el móvil. Se aleja un poco de las portadas a sangre del resto de Folio.</div>
+    </div>
+  </section>
+
+  <div class="comun">
+    <h2 style="font-size:22px">Lo que va igual en las tres</h2>
+    <ul>
+      <li>Siete diapositivas: portada, cinco noticias y el colofón «De dónde sale esta pieza», con las cinco fuentes y su enlace.</li>
+      <li>Cada noticia: titular de hasta 12 palabras y subtítulo de una línea, con el medio que la cuenta. Hechos comprobados contra su fuente, como siempre.</li>
+      <li>Imágenes solo con licencia libre: archivo, cubierta real, retrato de Commons o ilustración de la casa. Nunca la foto de prensa de la noticia.</li>
+      <li>Sin libro recomendado obligatorio: si la noticia trae un libro, sale su cubierta.</li>
+      <li>Para la prueba de cinco días: una pieza más en la mesa, escrita de madrugada, y en la evaluación una pregunta más: «¿sobra alguna de las cinco?».</li>
+    </ul>
+  </div>
+</div>
