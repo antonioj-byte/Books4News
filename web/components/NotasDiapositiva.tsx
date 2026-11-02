@@ -72,10 +72,10 @@ export function NotasDiapositiva({ eid, pid, n, notas, onCambio, onAplicada }: {
           {error && <p className="text-carmesi">{error}</p>}
         </div>
       ) : (
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <span className="dato">Instrucciones para esta diapositiva:</span>
-          <button onClick={() => { setDestino("director_arte"); setAbierto(true); }} className="boton-suave">Al director de arte</button>
-          <button onClick={() => { setDestino("guionista"); setAbierto(true); }} className="boton-suave">Al copy</button>
+        <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+          <span className="dato">Nota para</span>
+          <button onClick={() => { setDestino("director_arte"); setAbierto(true); }} className="boton-suave">Arte</button>
+          <button onClick={() => { setDestino("guionista"); setAbierto(true); }} className="boton-suave">Copy</button>
         </div>
       )}
       {respuesta && <p className="rounded-[10px] bg-papel-hondo px-3 py-2"><span className="dato">Editor · </span>{respuesta}</p>}

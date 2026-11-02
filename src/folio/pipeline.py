@@ -565,7 +565,8 @@ class Pipeline:
                 h = por_id.get(e.historia_id)
                 if h:
                     # Los breves del radar enseñan su noticia y su enlace sin escribir nada (2/11)
-                    fuentes = [FuenteNoticia(medio=a.medio, titulo=a.titulo, url=a.url, acceso=a.acceso, texto_completo=False)
+                    fuentes = [FuenteNoticia(medio=a.medio, titulo=a.titulo, url=a.url, acceso=a.acceso, texto_completo=False,
+                                             publicado=a.publicado_en.date().isoformat() if a.publicado_en else None)
                                for a in h.articulos[:3]]
                     piezas.append(Pieza(id=f"{self.fecha}-{j}", fecha=self.fecha, estado="pendiente", radar=True,
                                         historia_id=h.id, eleccion=e, n_medios=h.n_medios, fuentes=fuentes))

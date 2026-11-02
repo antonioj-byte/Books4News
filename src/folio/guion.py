@@ -79,6 +79,35 @@ def _linea_libro(l: LibroVerificado) -> str:
     )
 
 
+_MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+          "noviembre", "diciembre")
+
+
+def fecha_larga(fecha: str) -> str:
+    """«2026-11-02» → «2 de noviembre de 2026»."""
+    from datetime import date
+    d = date.fromisoformat(fecha)
+    return f"{d.day} de {_MESES[d.month - 1]} de {d.year}"
+
+
+def fecha_de_pieza(pieza_id: str) -> str:
+    """La fecha de la pieza, que empieza su id («2026-11-01-9»); si no, la de hoy."""
+    import re
+    from datetime import date
+    m = re.match(r"\d{4}-\d{2}-\d{2}", pieza_id)
+    return m.group(0) if m else date.today().isoformat()
+
+
+def linea_hoy(fecha: str) -> str:
+    """La fecha de hoy para los modelos, que no la saben (2/11: la detención de Durov, de agosto de 2024, salió como
+    si fuera de ayer)."""
+    return f"Hoy es {fecha_larga(fecha)}."
+
+
+def atributo_publicado(f: FuenteNoticia) -> str:
+    return f' publicado="{f.publicado}"' if f.publicado else ""
+
+
 def instrucciones_formato(cfg: Config, formato: str) -> str:
     """La sección del formato en prompts/formatos.md (lateral, dialogo, edicion)."""
     texto = (cfg.dir_prompts / "formatos.md").read_text(encoding="utf-8")
@@ -89,13 +118,15 @@ def instrucciones_formato(cfg: Config, formato: str) -> str:
 
 
 def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
-                     libros: list[LibroVerificado], voz: bool | str = False) -> str:
+                     libros: list[LibroVerificado], voz: bool | str = False, fecha: str | None = None) -> str:
     fuentes = "\n".join(
-        f'<fuente medio="{f.medio}" url="{f.url}" acceso="{f.acceso}"{" critica=\"si\"" if f.critica else ""}{" prensa_del_libro=\"si\"" if f.prensa else ""}>\n{t}\n</fuente>'
+        f'<fuente medio="{f.medio}" url="{f.url}" acceso="{f.acceso}"{atributo_publicado(f)}{" critica=\"si\"" if f.critica else ""}{" prensa_del_libro=\"si\"" if f.prensa else ""}>\n{t}\n</fuente>'
         for f, t in textos
     )
     noticia = (
         "\n<noticia>\n"
+        + (linea_hoy(fecha) + "\n" if fecha else "")
+        +
         f"Titular: {eleccion.titular}\n"
         f"De qué se está hablando: {eleccion.de_que_se_habla}\n"
         f"Cuestión de fondo (propuesta del jefe de cultura): {eleccion.cuestion_de_fondo}\n"
@@ -525,7 +556,7 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     """
     cfg = llm.cfg
     fuentes = [f for f, _ in textos]
-    prompt = construir_prompt(cfg, eleccion, textos, libros, voz=voz)
+    prompt = construir_prompt(cfg, eleccion, textos, libros, voz=voz, fecha=fecha_de_pieza(pieza_id))
     mensajes = [{"role": "user", "content": con_cache(cfg, "guionista", prompt)}]
     errores: list[str] = []
     avisos: list[str] = []

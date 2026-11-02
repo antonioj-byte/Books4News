@@ -224,7 +224,8 @@ def _restaurar_imagenes(dir_fecha, copia: dict) -> None:
 def _bloque_pieza(p: Pieza) -> str:
     libros = "\n".join(f"- {l.titulo_propuesto} ({', '.join(l.autores)}; edición española: {l.edicion_es})" for l in p.libros)
     citas = "\n".join(f"- «{c.texto}»" for c in p.citas) or "(ninguna)"
-    return (f"<pieza>\nnoticia: {p.eleccion.titular}\nde qué se habla: {p.eleccion.de_que_se_habla}\n"
+    from folio.guion import linea_hoy
+    return (f"<pieza>\n{linea_hoy(p.fecha)} La pieza se publica estos días.\nnoticia: {p.eleccion.titular}\nde qué se habla: {p.eleccion.de_que_se_habla}\n"
             f"libros verificados (los únicos posibles):\n{libros}\ncitas verificadas (las únicas que pueden ir entre comillas):\n{citas}\n"
             f"guion actual (JSON):\n{p.guion.model_dump_json(indent=1)}\n</pieza>")
 

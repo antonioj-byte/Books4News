@@ -79,6 +79,7 @@ def textos_historia(cfg: Config, historia: Historia, puntuaciones: dict[str, flo
     salida = []
     for a, texto in zip(elegidos, completos):
         fuente = FuenteNoticia(medio=a.medio, titulo=a.titulo, url=a.url, acceso=a.acceso,
-                               texto_completo=texto is not None)
+                               texto_completo=texto is not None,
+                               publicado=a.publicado_en.date().isoformat() if a.publicado_en else None)
         salida.append((fuente, texto or f"{a.titulo}\n{a.entradilla}"))
     return salida
