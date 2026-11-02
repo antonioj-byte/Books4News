@@ -357,6 +357,15 @@ class Pipeline:
                 if r is not None:
                     self._preverificados[clave] = r
 
+    def aplicar_politica(self, e: HistoriaElegida, de_la_redaccion: bool) -> None:
+        """Las reglas de libros de una propuesta, en un solo sitio (revisión general, 2/11; decisiones del usuario):
+        - «Tres libros» (perfiles: la obra del autor) y los temas de la redacción no exigen novedad.
+        - Repetir un libro ya usado o uno sin traducir, solo en un tema de la redacción que lo pide expresamente
+          (también los temas «para mañana»), nunca por iniciativa de un agente."""
+        self.sin_novedad = e.formato == "balda" or de_la_redaccion
+        self.permitir_repetidos = de_la_redaccion and e.repetir
+        self.permitir_sin_castellano = de_la_redaccion and e.sin_castellano
+
     def _verificar_libros(self, e: HistoriaElegida, ya_usados: set[str]) -> tuple[list[LibroVerificado], list[LibroDescartado]]:
         if self.verificador is None:
             self.verificador = Verificador(self.cfg)
@@ -581,6 +590,7 @@ class Pipeline:
             piezas.append(pieza)
             progreso(f"Verificando los libros de la propuesta {i} de {len(cola)}")
             log.info("Propuesta %s (%s): %s", pieza.id, e.formato, e.titular)
+            self.aplicar_politica(e, h.carril == "redaccion")
             if self._verificar(pieza, reservados):
                 pieza.estado = "pendiente"
                 self._cubiertas_de(pieza)

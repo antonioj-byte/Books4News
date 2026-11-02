@@ -262,7 +262,8 @@ def verificar_de_nuevo(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     nueva = p.model_copy(deep=True)
     nueva.libros, nueva.libros_descartados, nueva.error = [], [], None
     tuberia = Pipeline(ctx.cfg, p.fecha)
-    tuberia.sin_novedad = p.historia_id.startswith("tema-")
+    # Las mismas reglas que cuando se propuso, también las excepciones que pidió la redacción (revisión general, 2/11)
+    tuberia.aplicar_politica(p.eleccion, p.historia_id.startswith("tema-"))
     ok = tuberia._verificar(nueva, set())
     if ok:
         tuberia._cubiertas_de(nueva)

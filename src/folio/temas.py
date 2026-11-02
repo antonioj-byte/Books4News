@@ -306,8 +306,9 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
     for intento in range(2):
         # Por excepción, un título sin traducir o un libro ya usado si la redacción lo pide expresamente (2/11, reglas
         # del usuario). Dentro del bucle: la segunda propuesta del jefe puede marcarlos y antes no se aplicaban
-        tuberia.permitir_sin_castellano = bool(r.sin_castellano)
-        tuberia.permitir_repetidos = bool(r.repetir)
+        # Las excepciones viajan con la propuesta: «Volver a verificar» las recuerda (revisión general, 2/11)
+        r.propuesta.repetir, r.propuesta.sin_castellano = bool(r.repetir), bool(r.sin_castellano)
+        tuberia.aplicar_politica(r.propuesta, True)
         pieza = Pieza(id=pid, fecha=fecha, estado="fallida", historia_id=h.id, eleccion=r.propuesta, n_medios=h.n_medios,
                       avisos=["Tema propuesto por la redacción", *avisos])
         if tuberia._verificar(pieza, set(reservados)):

@@ -49,3 +49,18 @@ def test_un_catalogo_caido_no_descarta_ni_quema_la_historia(cfg, monkeypatch):
     monkeypatch.setattr(t.historial, "registrar_dia", lambda f, h, l, c=(): registradas.append(h))
     t._registrar_historial([p], [], [], None)
     assert registradas == [[]]
+
+
+def test_politica_de_libros_por_propuesta(cfg):
+    """Decisiones del usuario (2/11): los perfiles de «Tres libros» no exigen novedad en la mesa diaria, y las
+    excepciones de la redacción (repetir, sin castellano) valen también en los temas «para mañana», nunca fuera."""
+    from datos import ELECCION
+    from folio.pipeline import Pipeline
+    t = Pipeline(cfg, "2026-11-02")
+    t.aplicar_politica(ELECCION.model_copy(update={"formato": "balda"}), False)
+    assert t.sin_novedad and not t.permitir_repetidos and not t.permitir_sin_castellano
+    pide = ELECCION.model_copy(update={"repetir": True, "sin_castellano": True})
+    t.aplicar_politica(pide, False)                          # un agente no puede saltarse las reglas por su cuenta
+    assert not t.sin_novedad and not t.permitir_repetidos and not t.permitir_sin_castellano
+    t.aplicar_politica(pide, True)                           # un tema de la redacción que lo pide, sí
+    assert t.sin_novedad and t.permitir_repetidos and t.permitir_sin_castellano
