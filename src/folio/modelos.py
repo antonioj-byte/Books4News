@@ -359,9 +359,9 @@ class Arte(BaseModel):
     esquema: str | None = None           # crédito de la ilustración técnica de Magnific (infografía «esquema»)
     escena: str | None = None            # escena (en inglés) de la ilustración editorial (recurso «ilustracion», portada «panorama»)
     escena_idea: str | None = None       # su metáfora, en español, para enseñarla en la web
-    # «Cinco del libro» (2/11): el remate destacado de cada noticia y el objeto que la representa en la ilustración del día
+    # «Cinco del libro» (2/11): el remate destacado de cada noticia y la escena de su ilustración
     remates_noticias: list[str] = Field(default_factory=list)
-    objetos: list[str] = Field(default_factory=list)
+    escenas_noticias: list[str] = Field(default_factory=list)
     friso: str | None = None             # escena del friso de las tres fichas de libro («Tres libros», 2/11)
     friso_idea: str | None = None        # su metáfora, en español
     # Banda panorámica a sangre sobre tres diapositivas seguidas (2/11, opción B elegida por el usuario en el Artifact

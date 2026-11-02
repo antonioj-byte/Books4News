@@ -109,10 +109,11 @@ class Plantillas:
             **self._base(base_url), **self._texto(pieza, d, n), **self._medios_y_arte(pieza, d, n))
 
     def _cinco(self, pieza: Pieza, d: Diapositiva, n: int, base_url: str | None) -> str:
-        """«Cinco del libro» (2/11): la portada con la mesa del día entera y cada noticia con el zoom a su objeto."""
-        from folio.cinco import POSICIONES
-        img = self.medios.imagen(pieza, "-cinco")
+        """«Cinco del libro» (2/11): cada noticia a sangre con su ilustración; la portada, con la de la primera."""
+        from folio.cinco import SUFIJO_IMAGEN
         a = pieza.arte
+        i = 1 if d.tipo != "noticia" else n - 1
+        img = self.medios.imagen(pieza, f"{SUFIJO_IMAGEN}-{i}")
         datos = {**self._base(base_url), **self._texto(pieza, d, n), "ilustracion": img["src"] if img else None,
                  "imagen": None, "retrato": None, "acento": None, "tono": None, "sin_foto": None, "infografia": None,
                  "panorama": False, "friso": None, "banda": None, "video": False, "portada_estilo": None,
@@ -120,13 +121,11 @@ class Plantillas:
         if d.tipo != "noticia":
             datos["tipo"] = "cinco"
             return self.env.get_template("cinco.html").render(**datos)
-        i = n - 2
-        x = POSICIONES[i] if i < len(POSICIONES) else 0.5
-        remate = a.remates_noticias[i] if a and i < len(a.remates_noticias) else None
-        datos.update(orden=i + 1, zoom_x=round(max(0.0, min(1.0, (x - 0.111) / 0.778)) * 100, 1),
-                     noticia_remate=titular_con_remate(d.texto, remate),
+        k = n - 2
+        remate = a.remates_noticias[k] if a and k < len(a.remates_noticias) else None
+        datos.update(orden=k + 1, noticia_remate=titular_con_remate(d.texto, remate),
                      noticia_subtitulo=texto_html(d.subtitulo) if d.subtitulo else None,
-                     noticia_medio=pieza.fuentes[i].medio if i < len(pieza.fuentes) else None)
+                     noticia_medio=pieza.fuentes[k].medio if k < len(pieza.fuentes) else None)
         return self.env.get_template("noticia.html").render(**datos)
 
     def _base(self, base_url: str | None) -> dict:

@@ -164,9 +164,11 @@ def _prompt_revisor(cfg: Config) -> str:
     return texto.split("\n---\n", 1)[1].strip()
 
 
-def revisar(llm, cfg: Config, pieza_id: str, dibujo: Path) -> str | None:
+def revisar(llm, cfg: Config, pieza_id: str, dibujo: Path, manchas: bool = True) -> str | None:
     """None si la ilustración está limpia; si tiene letras o manchas sueltas, el motivo (y se borra de la caché
-    para que otra petición dibuje otra). Si el revisor falla, la imagen pasa (lo mira después el director)."""
+    para que otra petición dibuje otra). Si el revisor falla, la imagen pasa (lo mira después el director). Con
+    `manchas=False` solo cuentan las letras: en un collage, el papel rasgado y los bloques de color son el estilo
+    (2/11, «Cinco del libro»: el revisor tumbaba collages limpios por «manchas sueltas»)."""
     from folio.llm import ErrorLLM
     with Image.open(dibujo) as im:
         im = im.convert("RGB")
@@ -179,10 +181,11 @@ def revisar(llm, cfg: Config, pieza_id: str, dibujo: Path) -> str | None:
             {"type": "text", "text": _prompt_revisor(cfg)}]}], RevisionLetras, etapa_modelo="arte", max_tokens=500)
     except (ErrorLLM, ValueError):
         return None
-    if not (r.letras or r.manchas):
+    con_manchas = r.manchas and manchas
+    if not (r.letras or con_manchas):
         return None
     dibujo.unlink(missing_ok=True)
-    que = " y ".join(x for x, si in (("letras", r.letras), ("manchas sueltas", r.manchas)) if si)
+    que = " y ".join(x for x, si in (("letras", r.letras), ("manchas sueltas", con_manchas)) if si)
     return f"{que}{f' ({r.donde.strip()})' if r.donde.strip() else ''}"
 
 

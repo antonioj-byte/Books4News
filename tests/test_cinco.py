@@ -15,8 +15,8 @@ def _historias(n=6):
             for i in range(n)]
 
 
-OBJETOS = ["a polished glass trophy", "a sealed envelope with wax", "a stack of tied novels", "a pair of headphones",
-           "an open cardboard box"]
+ESCENAS = [f"A giant golden laurel wreath descends on thin wires toward tiny writers holding open books, scene number {n}"
+           for n in ("one", "two", "three", "four", "five")]
 
 
 def _guion(**cambios):
@@ -24,7 +24,7 @@ def _guion(**cambios):
                  "en cinco diapositivas y con sus fuentes", remate="y tres más",
                  noticias=[cinco.NoticiaCinco(historia=f"e{i}", titular=f"Pasa algo importante en la noticia número {i}",
                                               subtitulo="Una explicación de diez palabras o más que cuenta por qué importa esto hoy",
-                                              remate=f"noticia número {i}", objeto=OBJETOS[i]) for i in range(5)],
+                                              remate=f"noticia número {i}", escena=ESCENAS[i]) for i in range(5)],
                  pie_instagram=" ".join(["palabra"] * 90))
     datos.update(cambios)
     return cinco.GuionCinco(**datos)
@@ -39,30 +39,30 @@ def test_cada_noticia_necesita_subtitulo_y_remate_literal():
     g.noticias[1].subtitulo = "Demasiado corto"
     g.noticias[2].remate = "no está en el titular"
     g.noticias[3].historia = "e0"
-    g.noticias[4].objeto = "the Planeta Prize trophy"
-    g.noticias[0].objeto = "a small gold medal"
+    g.noticias[4].escena = "A tiny writer holds the Planeta trophy high above a crowd of anonymous readers in a big hall"
+    g.noticias[0].escena = "A small gold medal hangs from a ribbon above a crowd of anonymous readers in a big quiet hall"
     errores = " ".join(cinco.validar(g, {f"e{i}" for i in range(6)}))
     assert "Noticia 2: el subtítulo" in errores and "Noticia 3: el remate" in errores
-    assert "repite la historia" in errores and "Noticia 5: el objeto" in errores and "Noticia 1: nada de medallas" in errores
+    assert "repite la historia" in errores and "Noticia 5: la escena no puede llevar nombres propios" in errores
+    assert "Noticia 1: la escena no puede llevar medallas" in errores
 
 
 def test_la_pieza_tiene_portada_cinco_noticias_y_sus_fuentes():
     p = cinco.a_pieza(_guion(), "2026-11-02-9", "2026-11-02", _historias())
     tipos = [d.tipo for d in p.guion.diapositivas]
     assert tipos == ["portada"] + ["noticia"] * 5 and all(d.subtitulo for d in p.guion.diapositivas)
-    assert len(p.fuentes) == 5 and p.eleccion.formato == "cinco" and p.arte.objetos == OBJETOS
+    assert len(p.fuentes) == 5 and p.eleccion.formato == "cinco" and p.arte.escenas_noticias == ESCENAS
 
 
-def test_escenario_por_dia_y_fila_fija(cfg):
-    assert cinco.escenario_del_dia("2026-11-02") == "mesa" and cinco.escenario_del_dia("2026-11-03") == "balda"
-    e = cinco.escena(cfg, "2026-11-04", OBJETOS)
-    assert "bookshop" in e and "(3) a stack of tied novels" in e and "one tenth, three tenths" in e
+def test_estilo_de_la_casa(cfg):
+    e = cinco.estilo(cfg)
+    assert "collage" in e and "no text" in e.lower()
 
 
-def test_no_repite_objetos_de_la_semana(cfg):
-    cinco.guardar_objetos(cfg, "2026-11-01", ["a polished glass trophy"])
-    cinco.guardar_objetos(cfg, "2026-10-20", ["an old brass key"])
-    assert cinco.objetos_recientes(cfg, "2026-11-02") == ["a polished glass trophy"]
+def test_no_repite_ideas_de_la_semana(cfg):
+    cinco.guardar_escenas(cfg, "2026-11-01", ["a laurel crane"])
+    cinco.guardar_escenas(cfg, "2026-10-20", ["an old brass key"])
+    assert cinco.escenas_recientes(cfg, "2026-11-02") == ["a laurel crane"]
 
 
 @pytest.fixture
@@ -71,22 +71,24 @@ def cfg_diseno(cfg):
     return cfg
 
 
-def test_render_portada_y_noticia_con_zoom(cfg_diseno):
+def test_render_portada_y_noticias_con_su_ilustracion(cfg_diseno):
     from io import BytesIO
     from PIL import Image
     from folio.imagenes import libres
     p = cinco.a_pieza(_guion(), "2026-11-02-9", "2026-11-02", _historias())
     d = cfg_diseno.dir_cache(p.fecha)
     libres.dir_imagenes(d).mkdir(parents=True, exist_ok=True)
-    b = BytesIO(); Image.new("RGB", (1440, 810)).save(b, "JPEG")
-    (libres.dir_imagenes(d) / f"{p.id}-cinco.jpg").write_bytes(b.getvalue())
-    libres.guardar_metadatos(libres.ImagenLibre(archivo="magnific:cinco", pagina="", url="", ancho=1440, alto=810, licencia="x",
-                                                licencia_url=None, autor="Folio", descripcion="", libre=True, motivo="",
-                                                local=f"{p.id}-cinco.jpg", fuente=""), p.id + "-cinco", d)
+    for i in (1, 2, 3, 4):                                    # la quinta, sin ilustración
+        clave = cinco.clave_imagen(p.id, i)
+        b = BytesIO(); Image.new("RGB", (1088, 1360)).save(b, "JPEG")
+        (libres.dir_imagenes(d) / f"{clave}.jpg").write_bytes(b.getvalue())
+        libres.guardar_metadatos(libres.ImagenLibre(archivo="magnific:cinco", pagina="", url="", ancho=1088, alto=1360, licencia="x",
+                                                    licencia_url=None, autor="Folio", descripcion="", libre=True, motivo="",
+                                                    local=f"{clave}.jpg", fuente=""), clave, d)
     pl = render.Plantillas(cfg_diseno, url_medio=lambda r: "/api/medios/" + r.name)
     portada = pl.html_diapositiva(p, 1)
-    assert "diapositiva--cinco" in portada and "cinco-mesa" in portada and "Cinco del libro · 2 nov" in portada
-    n1, n5 = pl.html_diapositiva(p, 2), pl.html_diapositiva(p, 6)
-    assert "cinco-zoom" in n1 and "background-position: 0.0% 50%" in n1 and "Una explicación" in n1
-    assert "background-position: 100.0% 50%" in n5 and 'class="remate"' in n5 and "El País" in n5
-    assert pl.total(p) == 7                           # y el colofón
+    assert "diapositiva--cinco" in portada and "2026-11-02-9-cinco-1.jpg" in portada and "Cinco del libro · 2 nov" in portada
+    n2, n6 = pl.html_diapositiva(p, 3), pl.html_diapositiva(p, 6)
+    assert "2026-11-02-9-cinco-2.jpg" in n2 and "Una explicación" in n2 and 'class="remate"' in n2 and "El País" in n2
+    assert "cinco-ilus" not in n6 and "cinco-numero" in n6       # sin ilustración, el número grande
+    assert pl.total(p) == 7                                     # y el colofón

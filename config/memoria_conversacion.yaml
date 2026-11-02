@@ -599,7 +599,7 @@
   fecha: "2026-11-02"
   destino: codigo
   patron: "«Las cinco noticias del mundo literario y editorial más importantes… lo probamos cada día durante los próximos cinco días.» Elegida la dirección «a sangre» con la mesa ilustrada; «cada noticia lleva un subtítulo para que se entienda»."
-  propuesta: "Cada madrugada, una pieza «Cinco del libro»: cinco noticias del carril editorial con titular, subtítulo obligatorio y remate, y una ilustración del día con un objeto por noticia en fila, en un escenario distinto cada día de la semana y sin repetir objetos en siete días."
+  propuesta: "Cada madrugada, una pieza «Cinco del libro»: cinco noticias del carril editorial con titular, subtítulo obligatorio y remate, a sangre al estilo Wired, cada una con su ilustración en collage conceptual («con descaro»), una metáfora visual divertida que escribe el jefe, sin repetir ideas en siete días."
   evidencia: ["Conversación, 2/11: Artifact «Cinco del libro»"]
 
 - clave: ilustracion-sin-medallas
@@ -608,3 +608,10 @@
   patron: "Prueba de «Cinco del libro»: las medallas salieron con letras inventadas grabadas (el revisor descartó dos dibujos y se le escapó otro)."
   propuesta: "En las ilustraciones, nada de medallas, monedas, placas, carteles, periódicos ni pantallas: el modelo les pinta pseudotexto. Un premio es un trofeo de cristal, una corona de laurel o una escarapela."
   evidencia: ["Conversación, 2/11: pruebas de mesa, escaparate y tendedero"]
+
+- clave: ilustracion-con-descaro
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "«¿Por qué no haces más pruebas de ilustraciones en un estilo tipo The Atlantic? Algo que sea divertido, algo que sea sexy. Esto es muy aburrido.» → «Adelante con el descaro.»"
+  propuesta: "Para «Cinco del libro», collage conceptual: papel rasgado, fotos en trama, magenta y amarillo planos y negro, con una metáfora visual con humor por noticia; sin nombrar revistas en el prompt (las palabras de revista hacen pintar letras)."
+  evidencia: ["Conversación, 2/11: pruebas E1–E4 en el Artifact «Cinco del libro»"]

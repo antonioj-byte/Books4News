@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{# «Cinco del libro», cada noticia (2/11): zoom al objeto de la mesa del día, titular con su remate y subtítulo #}
-{% block fondo %}{% if ilustracion %}<div class="cinco-zoom" aria-hidden="true" style="background-image: url('{{ ilustracion }}'); background-position: {{ zoom_x }}% 50%"></div><div class="cinco-velo" aria-hidden="true"></div>
+{# «Cinco del libro», cada noticia (2/11): su ilustración a sangre, el titular con su remate, el subtítulo y el medio #}
+{% block fondo %}{% if ilustracion %}<div class="cinco-ilus" aria-hidden="true" style="background-image: url('{{ ilustracion }}')"></div><div class="cinco-velo" aria-hidden="true"></div>
 {%- else %}<div class="cinco-numero" aria-hidden="true">{{ orden }}</div>{% endif %}
 <div class="cinco-contador" aria-hidden="true">{% for i in range(5) %}<i{% if i < orden %} class="si"{% endif %}></i>{% endfor %}</div>{% endblock %}
 {% block cuerpo %}
