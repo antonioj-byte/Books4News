@@ -10,6 +10,7 @@ borrar la publicación en Buffer).
 from __future__ import annotations
 
 import json
+import threading
 import shutil
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -78,6 +79,7 @@ def programar(cfg, p: Pieza, version: int, fecha: str, cuando: datetime | None, 
         raise NoSePuede("La hora tiene que ser al menos dentro de cinco minutos")
     estable = carpeta_estable(cfg, fecha, p.id)
     previa = estado(cfg, fecha, p.id)
+    ya_borrada = reemplazar                       # lo marcó quien programa («Ya la he borrado»)
     # Desde un borrador se puede programar sin borrarlo antes (2/11, a petición del usuario: el botón «no funcionaba»):
     # un borrador no se publica solo; queda en Buffer y se avisa para que se borre allí
     if previa and previa.get("borrador") and not reemplazar:
@@ -85,6 +87,32 @@ def programar(cfg, p: Pieza, version: int, fecha: str, cuando: datetime | None, 
     if confirmar and previa and not reemplazar:
         raise NoSePuede("La pieza ya está programada en Buffer: sus archivos se descargan al publicar y no se pueden "
                         "cambiar. Borra antes esa publicación en Buffer y vuelve a programarla marcando «reemplazar».")
+    # Revisión general (2/11): si la preparación pasaba de 5 minutos, la web daba error, se volvía a pulsar y Buffer
+    # recibía dos publicaciones. Se marca «en curso» antes de empezar; el segundo intento se rechaza.
+    en_curso = estable.parent / f"{p.id}-buffer.en-curso"
+    if confirmar and en_curso.exists() and not ya_borrada:
+        raise NoSePuede("Ya se está programando esta pieza, o un intento anterior se cortó sin que conste si llegó a "
+                        "Buffer. Espera a que acabe o, si no sigue en marcha, mira en Buffer: si está, no hagas nada; si "
+                        "no, vuelve a programarla marcando «Ya la he borrado».")
+    if confirmar:
+        en_curso.parent.mkdir(parents=True, exist_ok=True)
+        en_curso.write_text(datetime.now().astimezone().isoformat(timespec="seconds"), encoding="utf-8")
+    try:
+        return _programar(cfg, fecha, p, version, cuando, borrador, confirmar, con_video, videos_de, buffer, estable,
+                          previa, en_curso)
+    except BaseException:
+        if confirmar and not (estable / "programada.json").exists() and not getattr(_enviado, "si", False):
+            en_curso.unlink(missing_ok=True)      # no llegó a Buffer: se puede reintentar sin más
+        raise
+    finally:
+        _enviado.si = False
+
+
+_enviado = threading.local()                     # ¿llegó ya a Buffer la publicación de este hilo?
+
+
+def _programar(cfg, fecha, p, version, cuando, borrador, confirmar, con_video, videos_de, buffer, estable, previa,
+               en_curso) -> Programacion:
     b = buffer or Buffer(cfg.buffer_clave)
     lista = preparar(cfg, p, con_video=con_video, videos_de=videos_de)
     resultado = Programacion(pie=lista.pie, diapositivas=len(lista.medios),
@@ -101,6 +129,7 @@ def programar(cfg, p: Pieza, version: int, fecha: str, cuando: datetime | None, 
     medios = [(tipo, enlaces.firmar(cfg.url_publica, cfg.clave_enlaces, f"{fecha}/{p.id}-buffer/{archivo}", segundos))
               for tipo, archivo in lista.medios]
     resultado.post = b.programar(canal["id"], lista.pie, medios, cuando, borrador)
+    _enviado.si = True                            # ya está en Buffer: si algo falla después, el «en curso» se queda
     if previa and previa.get("borrador"):
         resultado.avisos.append("El borrador anterior sigue en Buffer: bórralo allí para no tener dos")
     resultado.carpeta = estable
@@ -108,4 +137,5 @@ def programar(cfg, p: Pieza, version: int, fecha: str, cuando: datetime | None, 
         {"buffer": resultado.post, "version": version, "hora": cuando.isoformat() if cuando else None,
          "borrador": borrador, "canal": canal["name"], "en": datetime.now().astimezone().isoformat(timespec="seconds")},
         ensure_ascii=False), encoding="utf-8")
+    en_curso.unlink(missing_ok=True)
     return resultado

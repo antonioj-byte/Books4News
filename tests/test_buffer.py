@@ -176,3 +176,28 @@ def test_el_boton_de_la_web_programa_la_pieza_aprobada(cfg, monkeypatch):
     assert not r.json()["programada"]["borrador"]
     # Y ya programada a una hora, otra vez hace falta «reemplazar»
     assert c.post(url, json={"borrador": True}).status_code == 409
+
+
+def test_no_se_programa_dos_veces_a_la_vez(cfg, tmp_path, monkeypatch):
+    """Revisión general (2/11): un corte del proxy y un segundo clic mandaban dos publicaciones a Buffer."""
+    from datetime import datetime, timedelta, timezone
+    from datos import ELECCION, guion_valido
+    from folio.modelos import Pieza
+    from folio.publicacion import programar as prog
+    cfg.url_publica, cfg.clave_enlaces = "https://folio.example", "k"
+    p = Pieza(id="2026-11-02-1", fecha="2026-11-02", estado="aprobada", historia_id="h1", eleccion=ELECCION,
+              n_medios=3, guion=guion_valido())
+    estable = prog.carpeta_estable(cfg, p.fecha, p.id)
+    en_curso = estable.parent / f"{p.id}-buffer.en-curso"
+    en_curso.parent.mkdir(parents=True, exist_ok=True)
+    en_curso.write_text("2026-11-02T10:00")
+    cuando = datetime.now(timezone.utc) + timedelta(hours=2)
+    import pytest
+    with pytest.raises(prog.NoSePuede, match="Ya se está programando"):
+        prog.programar(cfg, p, 1, p.fecha, cuando)
+    # Si falla antes de llegar a Buffer, el «en curso» se quita y se puede reintentar
+    en_curso.unlink()
+    monkeypatch.setattr(prog, "preparar", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("chromium")))
+    with pytest.raises(RuntimeError):
+        prog.programar(cfg, p, 1, p.fecha, cuando, buffer=object())
+    assert not en_curso.exists()
