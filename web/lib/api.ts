@@ -21,7 +21,6 @@ export type Material = components["schemas"]["Material"];
 export type Nota = components["schemas"]["Nota"];
 export type EstadoMemoria = components["schemas"]["EstadoMemoria"];
 export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" };
-export type ResultadoMemoria = components["schemas"]["ResultadoMemoria"];
 export type EstadoBuffer = components["schemas"]["EstadoBuffer"];
 export type Fondo = components["schemas"]["Fondo"];
 export type PropuestaDelFondo = components["schemas"]["PropuestaDelFondo"];
@@ -53,7 +52,9 @@ export const api = {
   gastos: (dias: number) => pedir<PanelGasto>(`/api/gastos?dias=${dias}`),
   memoria: () => pedir<Patron[]>("/api/memoria"),
   estadoMemoria: () => pedir<EstadoMemoria>("/api/memoria/estado"),
-  analizarMemoria: (dias: number) => pedir<ResultadoMemoria>(`/api/memoria/analizar?dias=${dias}`, { method: "POST" }),
+  // El análisis va en un proceso aparte (2/11: dentro de la petición, la web cortaba a los 5 minutos)
+  analizarMemoria: (dias: number) => pedir<EstadoEjecucion>(`/api/memoria/analizar?dias=${dias}`, { method: "POST" }),
+  analisisMemoria: () => pedir<EstadoEjecucion | null>("/api/memoria/analisis"),
   decidirPatron: (id: number, estado: Patron["estado"], nota = "") =>
     pedir<unknown>(`/api/memoria/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado, nota }) }),
   lanzarEjecucion: () => pedir<EstadoEjecucion>("/api/ejecuciones/lanzar", { method: "POST" }),

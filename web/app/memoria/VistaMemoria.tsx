@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, type EstadoMemoria, type Patron } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
 
@@ -61,18 +61,33 @@ export function VistaMemoria() {
   const estado = useDatos("memoria-estado", api.estadoMemoria);
   const [analizando, setAnalizando] = useState(false);
   const [resultado, setResultado] = useState("");
+  const recargarEstado = estado.recargar;
+  // Sigue el análisis en marcha (proceso aparte) y, al acabar, enseña su salida y recarga los patrones
+  const seguir = useCallback(async () => {
+    const e = await api.analisisMemoria().catch(() => null);
+    if (!e) return false;
+    if (e.en_marcha) { setAnalizando(true); return true; }
+    setAnalizando(false);
+    const salida = e.ultimas_lineas.join(" · ");
+    setResultado(e.codigo === 0 ? salida : `No se pudo analizar (código ${e.codigo ?? "?"}): ${salida}`);
+    recargar();
+    recargarEstado();
+    return false;
+  }, [recargar, recargarEstado]);
+  // Al entrar, por si hay un análisis en marcha (lanzado antes o por la diaria): se mira tras el primer pintado
+  useEffect(() => { const t = setTimeout(seguir, 0); return () => clearTimeout(t); }, [seguir]);
+  useEffect(() => {
+    if (!analizando) return;
+    const t = setInterval(seguir, 5000);
+    return () => clearInterval(t);
+  }, [analizando, seguir]);
   const analizar = async () => {
-    setAnalizando(true);
     setResultado("");
     try {
-      const r = await api.analizarMemoria(14);
-      setResultado(`${r.piezas} piezas con feedback · ${r.patrones} patrones guardados o reforzados${r.aviso ? ` · ${r.aviso}` : ""}`);
-      recargar();
-      estado.recargar();
+      await api.analizarMemoria(14);
+      setAnalizando(true);
     } catch (e) {
       setResultado(`No se pudo analizar: ${String(e)}`);
-    } finally {
-      setAnalizando(false);
     }
   };
   const decidir = async (p: Patron, estado: Patron["estado"]) => { await api.decidirPatron(p.id, estado); recargar(); };
@@ -86,7 +101,7 @@ export function VistaMemoria() {
       </p>
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <button className="boton" onClick={analizar} disabled={analizando}>{analizando ? "Analizando…" : "Analizar el feedback de los últimos 14 días"}</button>
-        <span className="text-[13px] text-tinta-suave">Una llamada a Opus, unos céntimos.</span>
+        <span className="text-[13px] text-tinta-suave">{analizando ? "Opus está leyendo el feedback; puede tardar varios minutos (puedes salir de la página)." : "Una llamada a Opus, unos céntimos."}</span>
       </div>
       {estado.datos && <Calendario e={estado.datos} />}
       {resultado && <p className="mb-6 text-[14px]">{resultado}</p>}

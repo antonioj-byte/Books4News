@@ -133,7 +133,7 @@ def _analizar(llm: LLM, cfg: Config, almacen: Almacen, dias: int, hoy: date | No
     guardados = almacen.patrones()
     patrones = "\n".join(f"{p.id}. [{p.estado}] {p.patron} → {p.propuesta} ({p.destino}; {p.veces} veces)" for p in guardados) or "(ninguno)"
     prompt = cargar_prompt(cfg, "memoria_feedback", {"[pegar patrones]": patrones, "[pegar feedback]": _bloque_feedback(datos)})
-    r, _ = llm.estructurado("memoria", [{"role": "user", "content": prompt}], MemoriaLLM, etapa_modelo="memoria", max_tokens=8000)
+    r, _ = llm.estructurado("memoria", [{"role": "user", "content": prompt}], MemoriaLLM, etapa_modelo="memoria", max_tokens=16000)
     ids_validos = {p.id for p in guardados}
     ids = [almacen.guardar_patron(p.patron.strip(), [e.strip() for e in p.evidencia if e.strip()], p.propuesta.strip(), p.destino,
                                   p.existente if p.existente in ids_validos else None)

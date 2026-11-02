@@ -527,8 +527,29 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Analizar */
+        /**
+         * Analizar
+         * @description Lanza el análisis en un proceso aparte (2/11: dentro de la petición, la web cortaba a los 5 minutos y salía
+         *     «500 Internal Server Error»); la página sigue su estado con GET /api/memoria/analisis.
+         */
         post: operations["analizar_api_memoria_analizar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/memoria/analisis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analisis */
+        get: operations["analisis_api_memoria_analisis_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1384,6 +1405,8 @@ export interface components {
             confianza: "alta" | "media";
             /** Notas */
             notas: string[];
+            /** Sinopsis */
+            sinopsis: string | null;
         };
         /**
          * Lomo
@@ -1824,15 +1847,6 @@ export interface components {
             version: number;
             /** Avisos */
             avisos: string[];
-        };
-        /** ResultadoMemoria */
-        ResultadoMemoria: {
-            /** Piezas */
-            piezas: number;
-            /** Patrones */
-            patrones: number;
-            /** Aviso */
-            aviso: string;
         };
         /** ResumenDia */
         ResumenDia: {
@@ -2946,7 +2960,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ResultadoMemoria"];
+                    "application/json": components["schemas"]["EstadoEjecucion"];
                 };
             };
             /** @description Validation Error */
@@ -2956,6 +2970,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analisis_api_memoria_analisis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"] | null;
                 };
             };
         };
