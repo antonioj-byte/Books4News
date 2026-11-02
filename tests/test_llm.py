@@ -165,3 +165,28 @@ def test_respuesta_cortada_es_error_del_modelo(cfg, monkeypatch):
     monkeypatch.setattr(llm, "_llamar", cortada)
     with pytest.raises(ErrorLLM, match="incompleta"):
         llm.estructurado("prueba", [{"role": "user", "content": "hola"}], Esquema, etapa_modelo="arte")
+
+
+def test_las_reglas_aceptadas_entran_en_el_prompt_de_su_agente(cfg):
+    """2/11: «cuando dé aceptar, la memoria se regenere»: una regla aceptada cuenta desde ya en el prompt de su agente."""
+    from folio.almacen import Almacen
+    from folio.llm import cargar_prompt
+    a = Almacen(cfg.ruta_db)
+    pid = a.guardar_patron("Siempre la frente", ["x"], "Encuadra las caras enteras.", "director_arte")
+    otra = a.guardar_patron("Titulares", ["y"], "Da cinco titulares alternativos.", "guionista")
+    a.decidir_patron(pid, "aceptada", "")
+    from folio.llm import reglas_aceptadas
+    assert reglas_aceptadas(cfg, "director_arte") == ["Encuadra las caras enteras."]
+    assert reglas_aceptadas(cfg, "guionista") == []                 # la del guionista sigue en «propuesta»
+    a.decidir_patron(otra, "aceptada", "")
+    assert reglas_aceptadas(cfg, "guionista") == ["Da cinco titulares alternativos."]
+    a.decidir_patron(pid, "aplicada", "")                           # ya escrita en el prompt: deja de añadirse
+    assert reglas_aceptadas(cfg, "director_arte") == []
+    # Y el prompt del guionista la lleva al final (comprobado con un prompt sencillo hecho pasar por el del guionista)
+    import folio.llm as m
+    m.DESTINO_DE_PROMPT["comprobador_hechos"] = "guionista"
+    try:
+        texto = cargar_prompt(cfg, "comprobador_hechos", {"[pegar guion]": "g", "[pegar fuentes]": "f"})
+    finally:
+        del m.DESTINO_DE_PROMPT["comprobador_hechos"]
+    assert texto.rstrip().endswith("- Da cinco titulares alternativos.")

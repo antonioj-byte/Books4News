@@ -538,3 +538,10 @@
   patron: "«¿Puedes poner un sistema de notificaciones que permita ver en el navegador cuando una tarea se ha acabado?»"
   propuesta: "La web avisa en todas sus páginas (y con una notificación del sistema si se da permiso) cuando acaba un trabajo en segundo plano: la ejecución del día, un «Proceder», una tanda del fondo o el análisis de la Memoria."
   evidencia: ["Conversación, 2/11: tanda del fondo en marcha"]
+
+- clave: aceptar-es-aplicar
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«Estaría bien que cuando dé aceptar, la memoria se regenere.»"
+  propuesta: "Una regla aceptada en la Memoria entra al momento en el prompt de su agente (jefe de cultura, guionista o director de arte), sin esperar a una sesión de trabajo; las del programa siguen necesitando código."
+  evidencia: ["Conversación, 2/11"]

@@ -45,13 +45,45 @@ def plantilla(cfg: Config, nombre: str) -> str:
     return _INCLUIR.sub(lambda m: (cfg.dir_prompts / f"{m.group(1)}.md").read_text(encoding="utf-8").strip(), texto)
 
 
+# Qué agente lee cada prompt, para darle las reglas que la redacción ha aceptado en la Memoria (2/11, a petición del
+# usuario: «estaría bien que cuando dé aceptar, la memoria se regenere»)
+DESTINO_DE_PROMPT = {
+    "jefe_cultura": "jefe_cultura", "editor_libro": "jefe_cultura", "jefe_tema": "jefe_cultura",
+    "jefe_fondo": "jefe_cultura", "balda_elegir": "jefe_cultura",
+    "guionista": "guionista", "chat_edicion": "guionista",
+    "director_arte": "director_arte", "director_arte_eleccion": "director_arte",
+}
+
+
+def reglas_aceptadas(cfg: Config, destino: str) -> list[str]:
+    """Las reglas aceptadas en la Memoria para un agente que aún no se han pasado a su prompt (estado «aceptada»; las
+    «aplicada» ya están escritas en él). Nunca falla: sin base de datos o sin tabla, ninguna."""
+    import sqlite3
+    try:
+        if not cfg.ruta_db.exists():
+            return []
+        with sqlite3.connect(cfg.ruta_db, timeout=5) as db:
+            destinos = (destino, "formatos") if destino == "guionista" else (destino,)
+            filas = db.execute(f"SELECT propuesta FROM memoria WHERE estado = 'aceptada' AND destino IN "
+                               f"({','.join('?' * len(destinos))}) ORDER BY id", destinos).fetchall()
+        return [" ".join(f[0].split()) for f in filas if f[0].strip()]
+    except sqlite3.Error:
+        return []
+
+
 def cargar_prompt(cfg: Config, nombre: str, reemplazos: dict[str, str]) -> str:
-    """Carga prompts/<nombre>.md (con sus inclusiones) y sustituye cada marcador exacto. Falla si falta alguno."""
+    """Carga prompts/<nombre>.md (con sus inclusiones) y sustituye cada marcador exacto. Falla si falta alguno. Al
+    final añade las reglas que la redacción ha aceptado en la Memoria para ese agente y que aún no están en el prompt:
+    así cuentan desde que se aceptan, sin esperar a pasarlas a mano."""
     texto = plantilla(cfg, nombre)
     for marcador, valor in reemplazos.items():
         if marcador not in texto:
             raise ErrorLLM(f"El prompt {nombre}.md no contiene el marcador {marcador!r}")
         texto = texto.replace(marcador, valor)
+    reglas = reglas_aceptadas(cfg, DESTINO_DE_PROMPT[nombre]) if nombre in DESTINO_DE_PROMPT else []
+    if reglas:
+        texto += ("\n\nReglas que la redacción ha aceptado hace poco (Memoria). Cúmplelas como las de arriba; si alguna "
+                  "choca con una regla de arriba, manda la de arriba:\n" + "\n".join(f"- {r}" for r in reglas))
     return texto
 
 

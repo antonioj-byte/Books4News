@@ -5,14 +5,15 @@ import { api, type EstadoMemoria, type Patron } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
 
 // Memoria del feedback: lo que se repite en las evaluaciones, comentarios, ediciones y peticiones al chat,
-// con una propuesta de regla. Quien edita decide; las aceptadas se pasan a los prompts en una sesión de trabajo.
+// con una propuesta de regla. Quien edita decide; las aceptadas cuentan desde ya en el prompt de su agente (2/11) y
+// luego se escriben en él en una sesión de trabajo.
 const DESTINOS: Record<string, string> = {
   jefe_cultura: "Jefe de cultura", guionista: "Guionista", director_arte: "Director de arte",
   formatos: "Formatos", codigo: "Programa",
 };
 const ESTADOS = [
   { valor: "propuesta", texto: "Propuestas" },
-  { valor: "aceptada", texto: "Aceptadas · pendientes de pasar a las reglas" },
+  { valor: "aceptada", texto: "Aceptadas · ya las cumplen sus agentes (las del programa, pendientes)" },
   { valor: "aplicada", texto: "Ya son reglas" },
   { valor: "rechazada", texto: "Rechazadas" },
 ] as const;
@@ -97,7 +98,7 @@ export function VistaMemoria() {
       <h1 className="titular mb-2 mt-2 text-[40px] sm:text-[48px]">Lo que <em>se repite</em></h1>
       <p className="mb-5 max-w-[62ch] text-[14px] text-tinta-suave">
         Patrones que salen de tus evaluaciones, comentarios, ediciones a mano y peticiones al chat, cada uno con una regla
-        propuesta. Tú decides: las aceptadas se pasan a las instrucciones de los agentes en una sesión de trabajo.
+        propuesta. Tú decides: una regla aceptada la cumple su agente (jefe de cultura, guionista o director de arte) desde la siguiente pieza. Las del programa necesitan cambiar el código y esperan a una sesión de trabajo.
       </p>
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <button className="boton" onClick={analizar} disabled={analizando}>{analizando ? "Analizando…" : "Analizar el feedback de los últimos 14 días"}</button>
