@@ -14,7 +14,7 @@ Los de la balda, encontrados en la web (con su tesis):
 Elige, por orden de preferencia, [pegar cuántos] libros candidatos, de cualquiera de las dos listas, con este criterio:
 1. El vínculo con la historia: que el libro piense justo la cuestión de fondo y el puente se diga en una frase, sin forzar nada. Una asociación por tema genérico («China», «el poder», «la tecnología») no vale.
 2. Que tenga una tesis que dé conversación.
-3. Que esté en castellano y sea de [pegar año mínimo] o después, y que no sea uno de los que Folio ya ha usado en los últimos 60 días (el código los descarta): [pegar usados]
+3. [pegar hoy] Que esté en castellano y sea de [pegar año mínimo] o después, y que no sea uno de los que Folio ya ha usado en los últimos 60 días (el código los descarta): [pegar usados]
 4. Si la noticia trata de un libro concreto (sale, se publica, alguien lo escribe), ese libro va el primero, y los demás solo como reserva con el mismo vínculo. Nunca un éxito genérico del tema de relleno (2/11: en la pieza de *Killer App*, sobre Pavel Durov, entraron *Nexus* y *Tecnofeudalismo*, «que no vienen al caso»). Mejor menos candidatos que uno forzado.
 
 Reescribe el gancho del libro con el primero: una línea, verdad del libro, que deje clarísimo el puente entre la historia y el libro, sin citas literales. Si ninguno de la balda mejora tus candidatos, quédate con los tuyos.

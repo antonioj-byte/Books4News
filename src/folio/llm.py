@@ -101,6 +101,10 @@ def cargar_prompt(cfg: Config, nombre: str, reemplazos: dict[str, str]) -> str:
     final añade las reglas que la redacción ha aceptado en la Memoria para ese agente y que aún no están en el prompt:
     así cuentan desde que se aceptan, sin esperar a pasarlas a mano."""
     texto = plantilla(cfg, nombre)
+    # Y al revés: un marcador del prompt que nadie sustituye llegaría en crudo al modelo (revisión general, 2/11)
+    sueltos = sorted(set(_MARCADOR.findall(texto)) - set(reemplazos))
+    if sueltos:
+        raise ErrorLLM(f"El prompt {nombre}.md tiene marcadores que el código no rellena: {', '.join(sueltos)}")
     for marcador, valor in reemplazos.items():
         if marcador not in texto:
             raise ErrorLLM(f"El prompt {nombre}.md no contiene el marcador {marcador!r}")

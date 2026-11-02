@@ -49,7 +49,7 @@ Antes de devolver el JSON, repasa esta lista; el guion se rechaza si no la cumpl
 - Portada: titular de 12 palabras como máximo, sin acabar en pregunta, y subtítulo de 10 a 22 palabras. El libro o su autor aparecen en el titular o en el subtítulo. Solo la portada lleva subtítulo.
 - Titulares alternativos (`titulares_alternativos`, 2/11): cinco titulares de portada más, con ángulos distintos entre sí y del elegido (la noticia, la tensión, el libro, una pregunta implícita, el dato sorprendente), con las mismas reglas que el titular y para el mismo subtítulo. La redacción elige uno con un clic.
 - Cierre: nombra el libro y a su autor, y termina con la firma Folio.
-- Nada entre comillas salvo títulos de libros verificados y, como mucho, una cita literal del libro que sepas textual. Nada de «en un mundo donde».
+- Nada entre comillas salvo, como mucho, una cita literal del libro que sepas textual y hasta dos frases de la crítica o la prensa marcadas, copiadas letra por letra. Los títulos van en cursiva, sin comillas. Nada de «en un mundo donde».
 - Pie: entre 80 y 150 palabras y nombra el libro. No hace falta citar medios: las fuentes van en el colofón. Atribuye a un medio solo lo que es suyo (una entrevista, una exclusiva, una declaración hecha a ese medio: «le dijo a El Cultural…»); lo que cuentan todos (un premio, un nombramiento, una cifra oficial) se cuenta sin «según recoge…» (2/11).
 - Solo libros de la lista verificada. En `fuentes_noticia`, el medio y la URL exactos de los textos recibidos.
 - Sobre la traducción, nada, salvo que conste verificado que no hay edición española.
@@ -64,7 +64,7 @@ Devuelve JSON:
     {"n": 2, "tipo": "actualidad|libro|idea|cierre", "texto": "...", "subtitulo": null}
   ],
   "justificacion_extra": ["solo si hay más de 5 diapositivas: «n: qué aporta», una por cada diapositiva extra"],
-  "pie_instagram": "texto de 80–150 palabras, con fuente de la noticia",
+  "pie_instagram": "texto de 80–150 palabras que nombra el libro",
   "titulares_alternativos": ["otro titular", "otro", "otro", "otro", "otro"],
   "libros": [
     {"titulo": "...", "autor": "...", "editorial_espanola": "... o null", "traductor": "... o null", "edicion_original": "idioma, editorial, año"}

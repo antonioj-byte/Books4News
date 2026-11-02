@@ -41,3 +41,4 @@ def test_tres_libros_el_subtitulo_anticipa_el_metodo(cfg):
 
     assert "anticipa el método" in errores("Arendt lo explicó hace décadas, y otros dos libros lo confirman hoy")
     assert "anticipa el método" not in errores("Tres ensayos recientes lo cuentan desde la cámara, el algoritmo y el juzgado")
+    assert "anticipa el método" not in errores("Tres de sus novelas cuentan lo mismo desde la cama, la oficina y la iglesia")

@@ -55,8 +55,8 @@ def test_rechazo_lanza_error(cfg):
 
 
 def test_prompts_reales_tienen_sus_marcadores(cfg):
-    assert "<h>" in cargar_prompt(cfg, "jefe_cultura", {"[pegar lista]": "<h>"})
-    p = cargar_prompt(cfg, "guionista", {"[pegar]": "<n>", "[pegar o «propón tú»]": "<l>"})
+    assert "<h>" in cargar_prompt(cfg, "jefe_cultura", {**{"[pegar año mínimo]": "2024", "[pegar lista]": "", "[pegar lista editorial]": "", "[pegar reparto]": "", "[pegar temas]": "", "[pegar usados]": "", "[pegar hoy]": ""}, "[pegar lista]": "<h>"})
+    p = cargar_prompt(cfg, "guionista", {"[pegar]": "<n>", "[pegar o «propón tú»]": "<l>", "[pegar formato]": ""})
     assert "<n>" in p and "<l>" in p
     with pytest.raises(ErrorLLM):
         cargar_prompt(cfg, "guionista", {"[no existe]": ""})
@@ -190,3 +190,9 @@ def test_las_reglas_aceptadas_entran_en_el_prompt_de_su_agente(cfg):
     finally:
         del m.DESTINO_DE_PROMPT["comprobador_hechos"]
     assert texto.rstrip().endswith("- Da cinco titulares alternativos.")
+
+
+def test_un_marcador_sin_rellenar_falla(cfg):
+    """Revisión general (2/11): un marcador del prompt que el código no rellena llegaba en crudo al modelo."""
+    with pytest.raises(ErrorLLM, match="no rellena"):
+        cargar_prompt(cfg, "jefe_cultura", {"[pegar lista]": "<h>"})

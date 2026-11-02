@@ -94,6 +94,13 @@ def texto_reparto(reparto: dict[str, int]) -> str:
 FORMATOS_JEFE = ("lateral", "dialogo")
 
 
+def _hoy(fecha: str) -> str:
+    """«Hoy es 2 de noviembre de 2026.»: los agentes que proponen no sabían qué día era, y sus reglas lo necesitan
+    («hace más de seis meses», «menos de 3 días») (revisión general, 2/11)."""
+    from folio.guion import linea_hoy
+    return linea_hoy(fecha)
+
+
 def libros_usados(cfg, fecha: str) -> str:
     """Los libros que Folio ha usado en los días de la regla de repetición, para que quien propone no los traiga
     (2/11: la pieza de Telegram se quedó sin libro porque sus dos candidatos ya se habían usado)."""
@@ -119,7 +126,8 @@ def criterios(cfg, fecha: str) -> str:
         raise ValueError("prompts/jefe_cultura.md ha cambiado: no encuentro la línea editorial ni las reglas de libros")
     trozo = texto[inicio:fin].replace("`protagonista`, vacío.", "").strip()
     return (trozo.replace("[pegar año mínimo]", str(anio_minimo(fecha, cfg.pipeline.seleccion.antiguedad_libros)))
-            .replace("[pegar usados]", libros_usados(cfg, fecha)))
+            .replace("[pegar usados]", libros_usados(cfg, fecha))
+            .replace("[pegar hoy]", _hoy(fecha)))
 
 
 def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[str, int]) -> tuple[list[str], dict[str, int]]:
@@ -208,6 +216,7 @@ def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[Selecc
         trabajos["jefe"] = ("seleccion", "jefe_cultura", "seleccion", {
             "[pegar año mínimo]": str(anio_minimo(fecha, cfg.antiguedad_libros)),
             "[pegar usados]": libros_usados(llm.cfg, fecha),
+            "[pegar hoy]": _hoy(fecha),
             "[pegar lista]": bloque_historias([h for h in historias if h.carril == "actualidad"]),
             "[pegar lista editorial]": editorial,
             "[pegar temas]": bloque_temas([h for h in historias if h.carril == "redaccion"]),

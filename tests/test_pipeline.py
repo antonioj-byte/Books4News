@@ -334,7 +334,7 @@ def test_el_jefe_recibe_el_anio_minimo(cfg):
     from folio import seleccion
     from folio.llm import cargar_prompt
     assert seleccion.anio_minimo("2026-10-31", 2) == 2024
-    texto = cargar_prompt(cfg, "jefe_cultura", {"[pegar año mínimo]": "2024", "[pegar lista]": "", "[pegar lista editorial]": ""})
+    texto = cargar_prompt(cfg, "jefe_cultura", {"[pegar año mínimo]": "2024", "[pegar lista]": "", "[pegar lista editorial]": "", "[pegar reparto]": "", "[pegar temas]": "", "[pegar usados]": "", "[pegar hoy]": ""})
     assert "publicados en 2024 o después" in texto
 
 

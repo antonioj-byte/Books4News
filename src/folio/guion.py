@@ -300,7 +300,7 @@ def _palabras_por_diapositiva(c: _Guion) -> list[str]:
     return errores
 
 
-_TRES_LIBROS = re.compile(r"\b(tres|3)\s+(\w+\s+)?(libros|ensayos|novelas|obras|lecturas|titulos|autores|autoras|escritores|escritoras|miradas|puertas)\b")
+_TRES_LIBROS = re.compile(r"\b(tres|3)\s+(\w+\s+){0,2}(libros|ensayos|novelas|obras|lecturas|titulos|autores|autoras|escritores|escritoras|miradas|puertas)\b")
 
 
 # El libro está desde la portada (titular o subtítulo), entra pronto y protagoniza el cierre.

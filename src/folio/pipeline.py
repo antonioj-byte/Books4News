@@ -300,7 +300,7 @@ class Pipeline:
         if self.cfg.pipeline.seleccion.buscar_balda and not self.dev:
             sel, avisos = balda.mejorar(self.llm, self.cfg, sel,
                                         seleccion.anio_minimo(self.fecha, self.cfg.pipeline.seleccion.antiguedad_libros),
-                                        seleccion.libros_usados(self.cfg, self.fecha))
+                                        seleccion.libros_usados(self.cfg, self.fecha), seleccion._hoy(self.fecha))
             self.avisos += avisos
         # Un editor escéptico puntúa el vínculo historia-libro de cada propuesta: las forzadas se quedan fuera (2/11)
         sel, self.puentes, avisos = puentes.evaluar(self.llm, sel)
