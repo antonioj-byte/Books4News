@@ -124,7 +124,9 @@ class Plantillas:
         return {
             "tipo": d.tipo, "rotulo": self.tokens["rotulos"].get(d.tipo, ""),
             "formato": pieza.eleccion.formato,
-            "texto": texto_html(FIRMA_FINAL.sub("", d.texto) if d.tipo == "cierre" else d.texto),
+            # El cierre, con su remate en cursiva en el color de la pieza (opción C, 2/11), si sigue siendo literal
+            "texto": (titular_con_remate(FIRMA_FINAL.sub("", d.texto), pieza.arte.remate_cierre if pieza.arte else None)
+                      if d.tipo == "cierre" else texto_html(d.texto)),
             "n": n, "total": len(pieza.guion.diapositivas), "pieza_id": pieza.id,
             "fecha_larga": fecha_larga(pieza.fecha), "anio_hoy": int(pieza.fecha[:4]),
             "titular": texto_html(portada.texto), "titular_remate": titular_con_remate(portada.texto, remate),

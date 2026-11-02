@@ -259,3 +259,34 @@ def test_cierre_de_tres_libros_con_cubiertas(cfg_diseno, pieza):
     cierre = render.Plantillas(cfg_diseno).html_diapositiva(p, 5).split("<body>")[1]
     assert cierre.count("tarjeta--tres") == 3 and cierre.count('class="cubierta cubierta--') == 3 and "tarjeta__cara" not in cierre
     assert "Recomienda" not in cierre
+
+
+def test_cierre_a_tamano_de_titular_con_su_remate(cfg_diseno, pieza):
+    """Opción C de la ronda 5 (2/11): el remate del cierre va en un span .remate; sin remate, la frase sin él."""
+    from folio.modelos import Arte
+    plantillas = render.Plantillas(cfg_diseno)
+    n = len(pieza.guion.diapositivas)
+    pieza.guion.diapositivas[-1].texto = "Arendt explica por qué obedecer sigue siendo elegir, también en una oficina."
+    sin = plantillas.html_diapositiva(pieza, n)
+    assert "diapositiva--cierre" in sin and 'class="remate"' not in sin
+    pieza.arte = Arte(tono="sereno", recurso="grabado", acento="marcador", remate_cierre="también en una oficina")
+    con = plantillas.html_diapositiva(pieza, n)
+    assert '<span class="remate">también en una oficina.</span>' in con and "acento--marcador" in con
+    pieza.guion.diapositivas[-1].texto = "Arendt lo explicó mejor que nadie."           # editado: deja de casar
+    assert 'class="remate"' not in plantillas.html_diapositiva(pieza, n)
+
+
+def test_el_cierre_sin_libro_no_se_encoge_al_minimo(cfg_diseno, pieza, tmp_path, monkeypatch):
+    """2/11: con line-height 1,02 la letra asomaba bajo la última línea y ajuste.js encogía la frase final de las
+    historias editoriales a 32 px («el texto no cabe ni al tamaño mínimo»). Con su padding-bottom, cabe a 92 px."""
+    pytest.importorskip("playwright")
+    from folio.imagenes import cubiertas
+    monkeypatch.setattr(cubiertas, "buscar", lambda *a, **k: None)
+    pieza.libros, pieza.guion.libros = [], []
+    pieza.eleccion = pieza.eleccion.model_copy(update={"formato": "curiosidad"})
+    pieza.guion.diapositivas[-1].texto = "La Biblia malvada costó a sus impresores la licencia y trescientas libras de multa."
+    try:
+        _, avisos = render.renderizar(cfg_diseno, [pieza], tmp_path)
+    except Exception as exc:  # sin navegador en este entorno
+        pytest.skip(f"Chromium no disponible: {exc}")
+    assert not any("diapositiva 5" in a for a in avisos), avisos

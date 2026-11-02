@@ -134,9 +134,19 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 /* Cierre: tarjetas de papel rosado con la ficha del libro (la cubierta ya salió en su diapositiva) y, en la del
    libro principal, la cara de su autor */
 .diapositiva--cierre .cuerpo { justify-content: flex-start; }
-.diapositiva--cierre .texto { font-size: 44px; }
+/* La recomendación, a tamaño de titular, con su final en cursiva en el color de la pieza (opción C de la ronda 5,
+   elegida por el usuario el 2/11: antes iba a cuerpo de texto y dejaba media página vacía). Pluma: el remate en pluma;
+   marcador: subrayado de marcador (el amarillo sobre papel no se lee); graves: cursiva sin color */
+.diapositiva--cierre .texto { font-family: var(--fuentes-titular); font-size: 76px; line-height: 1.03; font-weight: 700; letter-spacing: -0.05em; text-wrap: balance; }
+.acento--marcador.diapositiva--cierre .remate {
+  color: var(--colores-tinta); padding: 0 0.1em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: linear-gradient(100deg, rgba(255, 245, 0, 0) 0.9%, rgba(255, 245, 0, 1) 2.4%, rgba(255, 245, 0, 0.88) 5.8%, rgba(255, 245, 0, 0.78) 93%, rgba(255, 245, 0, 0.95) 96%, rgba(255, 245, 0, 0) 98%);
+  background-size: 100% 78%; background-position: 0 70%; background-repeat: no-repeat;
+}
 /* Sin libro (curiosidad del cajón): la frase final abajo, a tamaño de titular */
-.diapositiva--cierre .texto--final { margin-top: auto; font-family: var(--fuentes-titular); font-size: 92px; line-height: 1.02; font-weight: 700; letter-spacing: -0.05em; text-wrap: balance; }
+/* padding-bottom: con line-height 1,02, la letra asoma ~0,15em por debajo de la última línea; sin él, ajuste.js lo
+   tomaba por desborde y encogía la frase al mínimo (32 px) en todas las historias editoriales (visto el 2/11) */
+.diapositiva--cierre .texto--final { margin-top: auto; font-family: var(--fuentes-titular); font-size: 92px; line-height: 1.02; font-weight: 700; letter-spacing: -0.05em; text-wrap: balance; padding-bottom: 0.16em; }
 .antetitulo--cajon { align-self: flex-start; }
 .diapositiva--cierre .texto--final em { font-family: var(--fuentes-remate); font-weight: 400; color: var(--colores-pluma); }
 .estante { margin-top: auto; display: flex; gap: 28px; align-items: stretch; }

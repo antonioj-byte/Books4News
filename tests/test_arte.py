@@ -136,3 +136,13 @@ def test_nunca_dos_caras(cfg, monkeypatch):
 def test_misma_imagen():
     (_, a), (_, b), (_, copia) = _imagenes_distintas()
     assert arte.misma_imagen(a, copia) and not arte.misma_imagen(a, b)
+
+
+def test_remate_del_cierre_literal_y_sin_cruzar_un_punto():
+    """Opción C de la ronda 5 (2/11): el final del cierre, en cursiva y en el color de la pieza."""
+    c = "Eichmann en Jerusalén, de Hannah Arendt, explica por qué obedecer sigue siendo elegir, también en una oficina. Folio."
+    assert arte.validar_remate_cierre("también en una oficina.", c) == "también en una oficina"   # la firma no cuenta
+    assert arte.validar_remate_cierre("Hannah Arendt. Léelo", "La lectura de Hannah Arendt. Léelo.") is None
+    assert arte.validar_remate_cierre("por qué obedecer", c) is None                           # no es el final
+    assert arte.validar_remate_cierre("*Jerusalén*", "Lee *Eichmann en Jerusalén*") is None    # no corta una cursiva
+    assert arte.validar_remate_cierre(None, c) is None

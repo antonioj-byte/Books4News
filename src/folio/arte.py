@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from pathlib import Path
@@ -115,6 +116,17 @@ def validar_remate(remate: str | None, titular: str, en_cualquier_sitio: bool = 
     r, t = remate.strip().rstrip(".:,;"), titular.strip().rstrip(".")
     esta = r in t if en_cualquier_sitio else t.endswith(r)
     if not r or not esta or t == r or not 1 <= len(r.split()) <= 6 or (not en_cualquier_sitio and len(r.split()) < 2):
+        return None
+    return r
+
+
+def validar_remate_cierre(remate: str | None, texto_cierre: str) -> str | None:
+    """El remate del cierre (opción C de la ronda 5, elegida por el usuario el 2/11): literalmente el final del texto
+    del cierre tal como se pinta (sin la firma de Folio), de 2 a 6 palabras, dentro de la última frase (sin cruzar un
+    punto: en la maqueta salía «Hannah Arendt. Léelo.») y sin cortar una cursiva de título (*…*)."""
+    from folio.render.textos import FIRMA_FINAL
+    r = validar_remate(remate, FIRMA_FINAL.sub("", texto_cierre))
+    if not r or re.search(r"[.!?…:;]", r) or "*" in r:
         return None
     return r
 
@@ -470,6 +482,8 @@ def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte
     arte.pregunta = validar_pregunta(propuesta.pregunta) if a.buscador and hay_sitio and pieza.guion.libros else None
     arte.antetitulo = validar_antetitulo(propuesta.antetitulo)
     arte.remate = validar_remate(propuesta.remate, pieza.guion.diapositivas[0].texto)
+    cierre = next((d.texto for d in reversed(pieza.guion.diapositivas) if d.tipo == "cierre"), "")
+    arte.remate_cierre = validar_remate_cierre(propuesta.remate_cierre, cierre)
     arte.acento = None if propuesta.suceso_con_victimas or propuesta.tono == "grave" else propuesta.acento
     if arte.portada == "neon" and not arte.acento:
         arte.portada = "sangre"

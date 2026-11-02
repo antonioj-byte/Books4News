@@ -11,9 +11,9 @@ las opciones en un Artifact para que el usuario elija.
 | 2 | (b) coste | Caché de la conversación en las correcciones del guionista y en el chat | interna, hecha | sí (tests + llamadas reales a Opus y Haiku) | ~0,08 $ |
 | 3 | (c) fiabilidad | La lectura periódica y la ejecución del día ya no se pisan; `lecturas.json` atómico | interna, hecha | sí (tests + lectura real de los RSS + carrera medida) | 0 $ |
 | 4 | (d) seguridad | Las descargas de URLs de fuera no pueden llegar a la API interna ni a la red privada | interna, hecha | sí (tests + servidor interno real; la redirección por internet, no: 403 del entorno) | 0 $ |
-| 5 | (e) arte y render | El cierre se queda corto: tres opciones para elegir | visible: **opciones en un Artifact, sin implementar** | sí (pintadas con las plantillas reales) | 0 $ |
+| 5 | (e) arte y render | El cierre se queda corto: tres opciones; **elegida la C e implementada** (2/11) | visible: elegida por el usuario | sí (pintadas, tests y una llamada real al director) | 0,0022 $ |
 
-Gasto acumulado del bucle: **~0,08 $** (tope: 3 $). **Bucle cerrado tras 5 rondas.** Pendiente de elegir: el cierre del carrusel (ronda 5, https://claude.ai/artifact/JTGN7MfBwCURAU2jAwQUer).
+Gasto acumulado del bucle: **~0,08 $** (más 0,0022 $ al implementar la C) (tope: 3 $). **Bucle cerrado tras 5 rondas.** Cierre del carrusel: elegida la C el 2/11 e implementada.
 
 ---
 
@@ -304,3 +304,33 @@ Ninguna se desborda. No se ha probado con cubierta real, retrato, «Tres libros�
 
 Avisos del bucle: 403/429 de La Stampa Cultura y The Believer en la lectura de la ronda 3, y 403 de httpbin y El País en
 la ronda 4 (desde este entorno; parado sin reintentar). Ningún despliegue; nada tocado en `main` ni `fase-3-web`.
+
+---
+
+## Ronda 5, después: el usuario elige la C (2/11)
+
+«Vamos con la C.» Implementado:
+
+- **Director de arte**: campo `remate_cierre` en `PropuestaArte` y `Arte` (`src/folio/modelos.py`) y su línea en
+  `prompts/director_arte.md`: el final de la última frase del cierre, literal, de 2 a 6 palabras, que sea el giro.
+- **Validación**: `arte.validar_remate_cierre` (sobre el texto tal como se pinta, sin la firma de Folio): literal al
+  final, sin cruzar un punto (lo que fallaba en la maqueta: «Hannah Arendt. Léelo.») y sin cortar una cursiva de
+  título. Sin remate válido, el cierre sale con la frase a tamaño de titular y sin remate (la opción A).
+- **Render**: la frase en Alexandria 700 a 76 px (`base.css`; `ajuste.js` la encoge si no cabe) y el remate en
+  `<span class="remate">` (`titular_con_remate`, como la portada): pluma en pluma; marcador, subrayado de marcador
+  (el amarillo sobre papel no se lee y la marca solo lo admite como subrayado); graves, cursiva sin color. Si se edita
+  el texto y el remate deja de ser literal, sale sin él.
+- **Bug encontrado al pintarlo**: el cierre de las piezas sin libro (historia editorial y radar) se desbordaba
+  siempre y `ajuste.js` lo encogía al mínimo, 32 px, en vez de sus 92: con `line-height: 1.02`, la letra de
+  Alexandria asoma ~14 px bajo la última línea. Pasaba igual antes de este cambio (comprobado con el código
+  anterior). Arreglado con `padding-bottom: 0.16em`, como ya tenía la idea.
+
+**Cómo se probó**: tests en `tests/test_arte.py` (validación) y `tests/test_render.py` (el remate en el HTML, que
+desaparece al editar el texto; el cierre sin libro pintado de verdad sin desbordarse: falla sin el arreglo). Seis
+cierres pintados: pluma, marcador al máximo, grave, «Tres libros», sin libro y sin remate; todos caben (76 px, y
+92 px el sin libro). Una llamada real al director de arte (Haiku, 0,0022 $, 15 s) sobre una pieza de muestra:
+propuso «también en una oficina», que pasa la validación. `uv run pytest` en verde.
+
+**Pendiente**: no probado con retrato del autor en la tarjeta ni en una ejecución completa; el chat («formato») aún no
+puede cambiar el remate del cierre; las piezas ya hechas salen con la frase grande y sin remate hasta que se relance su
+arte.

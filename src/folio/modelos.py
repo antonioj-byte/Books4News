@@ -269,6 +269,7 @@ class PropuestaArte(_TodoObligatorio):
         description="Composición de la portada (ver el prompt)")
     antetitulo: str | None = Field(default=None, description="De 1 a 3 palabras: el tema de la pieza, en mayúsculas")
     remate: str | None = Field(default=None, description="El final del titular de portada, copiado literalmente (de 2 a 6 palabras), que irá en cursiva")
+    remate_cierre: str | None = Field(default=None, description="El final de la última frase del cierre, copiado literalmente (de 2 a 6 palabras, sin cruzar un punto), que irá en cursiva en el color de la pieza")
     acento: Literal["pluma", "marcador"] | None = Field(default=None, description="Color de la pieza: pluma (magenta) o marcador (amarillo); null si es grave")
     suceso_con_victimas: bool = Field(description="La noticia trata de muertos, heridos o víctimas")
     recurso: Literal["foto", "grabado", "ilustracion"] = Field(description="Foto de archivo, ilustración antigua (grabado, dibujo) o ilustración editorial nueva (ver el prompt)")
@@ -335,6 +336,7 @@ class Arte(BaseModel):
     portada: Literal["sangre", "banda", "caja", "neon", "circulo", "collage", "ilustracion", "panorama"] = "sangre"
     antetitulo: str | None = None
     remate: str | None = None            # final del titular que va en cursiva (marca Alighieria)
+    remate_cierre: str | None = None     # final del cierre en cursiva y en el color de la pieza (opción C, 2/11)
     acento: Literal["pluma", "marcador"] | None = None   # color de la pieza; sin color en las graves
     concepto: str | None = None          # metáfora de la ilustración
     retrato: str | None = None           # crédito del retrato del autor, si lo hay

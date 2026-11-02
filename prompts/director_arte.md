@@ -13,6 +13,8 @@ Varía: las piezas del día no deberían tener la misma composición.
 
 `remate`: el final del titular de portada que irá en cursiva, como el remate de los titulares de la marca («Tres productos. *Un mismo oficio.*»). Cópialo literalmente del titular, de 2 a 6 palabras, y que sea el giro de la frase («*a quien la anotaba*»). Si el titular no tiene un final con giro, null.
 
+`remate_cierre`: lo mismo para el cierre, que va a tamaño de titular: el final de la última frase del texto del cierre, que irá en cursiva en el color de la pieza. Cópialo literalmente, de 2 a 6 palabras, sin cruzar un punto y sin cortar un título en cursiva, y que sea el giro de la recomendación («*también en una oficina*»). Si el cierre no tiene un final con giro, null.
+
 `antetitulo`: de 1 a 3 palabras en mayúsculas que nombran el tema de la pieza, como las etiquetas de sección de una revista («PRENSA Y PODER», «SISTEMAS», «TRABAJO»). Ni el libro ni el autor ni la palabra «Folio».
 
 Cómo elegir la imagen:

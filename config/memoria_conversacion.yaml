@@ -468,3 +468,10 @@
   patron: "«Esto está fatal escrito, bro» (diapositivas con metáfora que hay que traducir, incisos, orden al revés y arranques sin verbo con dos puntos)."
   propuesta: "Que se entienda a la primera: una idea por frase en orden natural, sin incisos ni redundancias, sin titulares sin verbo con dos puntos; metáfora solo si se entiende sin explicarla. El lector sin contexto marca las frases que hay que leer dos veces."
   evidencia: ["Conversación, 2/11: pieza de Pavel Durov, diapositivas 4 y 5"]
+
+- clave: cierre-titular-con-remate
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "El cierre se quedaba corto (la recomendación a cuerpo de texto y media página vacía); de tres opciones, el usuario eligió la C: «Vamos con la C»."
+  propuesta: "El cierre va a tamaño de titular y su final, en cursiva en el color de la pieza (pluma; con marcador, subrayado; en graves, sin color). El director propone el remate_cierre y el código comprueba que es literal, de 2 a 6 palabras y sin cruzar un punto."
+  evidencia: ["Conversación, 2/11: Artifact «El cierre del carrusel», ronda 5 de las rondas de mejora del sistema"]
