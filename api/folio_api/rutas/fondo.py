@@ -90,7 +90,8 @@ def escribir(fid: int, e: Escribir, ctx: Contexto = Depends(contexto)):
         raise HTTPException(409, "Se está preparando la mesa del día; prueba cuando termine")
     tid = ctx.almacen.guardar_tema(fondo_folio.texto_tema(x), [], "ahora")
     r = _resultado(ctx, e.ejecucion, tid)
-    if r.pieza_id:
+    if r.pieza_id and r.estado_pieza == "pendiente":
+        # Solo si llegó a la mesa con libro: una pieza fallida deja la propuesta disponible para reintentar (revisión, 2/11)
         ctx.almacen.actualizar_fondo(fid, estado="usada", tema_id=tid)
     return r
 

@@ -95,7 +95,7 @@ def test_la_web_lista_escribe_y_descarta(cfg, monkeypatch):
     from folio_api.rutas import fondo as ruta
     from folio_api.rutas.temas import TemaCreado
     monkeypatch.setattr(ruta, "_resultado", lambda ctx, eid, tid: textos.append(next(t.texto for t in a.temas() if t.id == tid))
-                        or TemaCreado(tema=next(t for t in a.temas() if t.id == tid), pieza_id="2026-11-02-7"))
+                        or TemaCreado(tema=next(t for t in a.temas() if t.id == tid), pieza_id="2026-11-02-7", estado_pieza="pendiente"))
     r = c.post("/api/fondo/1/escribir", json={"ejecucion": 1})
     assert r.status_code == 200 and r.json()["pieza_id"] == "2026-11-02-7"
     assert "Del fondo del mes" in textos[0] and "Eichmann en Jerusalén" in textos[0] and "con su fecha" in textos[0]

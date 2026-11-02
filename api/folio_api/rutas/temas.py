@@ -38,14 +38,23 @@ class Replica(BaseModel):
     ejecucion: int
 
 
+def _fallido(ctx: Contexto, tid: int, motivo: str) -> None:
+    """Un tema que no llegó a la mesa queda «fallido» con su motivo, no «pendiente» para siempre (revisión, 2/11)."""
+    tema = next((x for x in ctx.almacen.temas() if x.id == tid), None)
+    if tema and tema.estado == "pendiente":
+        ctx.almacen.actualizar_tema(tid, estado="fallido", nota=motivo[:300])
+
+
 def _resultado(ctx: Contexto, eid: int, tid: int, replica: str | None = None) -> TemaCreado:
     if not _un_tema.acquire(blocking=False):
         raise HTTPException(409, "El jefe ya está con otro tema; espera a que responda")
     try:
         r = temas.crear_pieza(ctx.cfg, ctx.almacen, eid, tid, ctx.llm, replica=replica)
     except temas.SinFuentes as exc:
+        _fallido(ctx, tid, str(exc))
         raise HTTPException(422, str(exc))
     except ErrorLLM as exc:
+        _fallido(ctx, tid, str(exc))
         raise HTTPException(502, f"El jefe de cultura no ha podido responder: {exc}")
     except temas.NoSePuede as exc:
         raise HTTPException(409, str(exc))
@@ -71,6 +80,9 @@ def proponer(t: TemaNuevo, ctx: Contexto = Depends(contexto)):
         raise HTTPException(422, "Para proponerlo ahora hace falta la mesa del día: lanza antes la ejecución")
     if t.cuando == "ahora" and ctx.ejecutor.con_pipeline():
         raise HTTPException(409, "Se está preparando la mesa del día; prueba cuando termine o guárdalo para mañana")
+    if t.cuando == "ahora" and _un_tema.locked():
+        # Antes de guardarlo: un 409 dejaba un tema «pendiente» huérfano para siempre (revisión general, 2/11)
+        raise HTTPException(409, "El jefe ya está con otro tema; espera a que responda")
     tid = ctx.almacen.guardar_tema(texto, enlaces, t.cuando)
     if t.cuando == "manana":
         return TemaCreado(tema=next(x for x in ctx.almacen.temas() if x.id == tid))
@@ -83,8 +95,11 @@ def replicar(tid: int, r: Replica, ctx: Contexto = Depends(contexto)):
     Si la pieza del tema aún no está escrita, se rehace en el sitio."""
     if ctx.ejecutor.con_pipeline():
         raise HTTPException(409, "Se está preparando la mesa del día; prueba cuando termine")
-    if not any(x.id == tid for x in ctx.almacen.temas()):
+    tema = next((x for x in ctx.almacen.temas() if x.id == tid), None)
+    if tema is None:
         raise HTTPException(404, "No existe ese tema")
+    if tema.pieza_id and ctx.ejecutor.en_marcha(tema.pieza_id):
+        raise HTTPException(409, "La pieza de este tema se está escribiendo con «Proceder»; espera a que acabe")
     return _resultado(ctx, r.ejecucion, tid, replica=r.texto)
 
 

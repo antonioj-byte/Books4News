@@ -17,6 +17,10 @@ from folio_api.esquemas import (CambioEstado, EdicionDiapositiva, EstadoBuffer, 
 from folio_api.rutas.dias import lomos
 from folio_api.servicio import hechos_ligados
 
+# Mientras «Proceder» escribe una pieza, lo que la cambia espera: si no, el último en guardar pisa al otro (revisión
+# general, 2/11: una réplica o «Volver a verificar» borraban el guion recién escrito)
+ESCRIBIENDOSE = "La pieza se está escribiendo con «Proceder»; espera a que acabe"
+
 router = APIRouter()
 log = logging.getLogger(__name__)
 
@@ -97,6 +101,8 @@ def video_diapositiva(eid: int, pid: str, n: int, ctx: Contexto = Depends(contex
 @router.patch("/api/ejecuciones/{eid}/piezas/{pid}/estado", response_model=CambioEstado)
 def estado(eid: int, pid: str, cambio: CambioEstado, ctx: Contexto = Depends(contexto)):
     ctx.pieza(eid, pid)
+    if ctx.ejecutor.en_marcha(pid) and cambio.estado != "descartada":
+        raise HTTPException(409, ESCRIBIENDOSE)
     ctx.almacen.cambiar_estado(eid, pid, cambio.estado)
     return cambio
 
@@ -257,6 +263,8 @@ def verificar_de_nuevo(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     la mesa pendiente, lista para «Proceder». Las mismas reglas que la mesa (los temas de la redacción, sin novedad)."""
     from folio.pipeline import Pipeline
     p, _ = ctx.pieza(eid, pid)
+    if ctx.ejecutor.en_marcha(pid):
+        raise HTTPException(409, ESCRIBIENDOSE)
     if p.guion or p.estado not in ("fallida", "pendiente"):
         raise HTTPException(409, "Esta pieza ya tiene libro y guion")
     nueva = p.model_copy(deep=True)
