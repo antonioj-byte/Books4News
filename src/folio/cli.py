@@ -520,6 +520,57 @@ def cajon_lista():
         typer.echo(f"[{marca}] {c.id}: {c.titular}")
 
 
+fondo_app = typer.Typer(help="Fondo del mes: propuestas de actualidad lateral que valen unos meses")
+app.add_typer(fondo_app, name="fondo")
+
+
+@fondo_app.command("preparar")
+def fondo_preparar(tandas: int = typer.Option(1, help="Cuántas tandas de 25 (el mes entero son 6)"),
+                   n: int = typer.Option(25, help="Propuestas por tanda"),
+                   fecha: str = typer.Option(None, help="Fecha del fondo (por defecto, hoy)"),
+                   si_toca: bool = typer.Option(False, "--si-toca", help="Solo el día 1 o si el fondo del mes está vacío; "
+                                                "nunca sale con error (es un paso de la lectura periódica)"),
+                   reutilizar_llm: bool = typer.Option(False, "--reutilizar-llm", help="Peticiones idénticas, de la caché")):
+    """Prepara tandas del fondo del mes (cosecha, jefe en Opus, puentes y verificación de libros; ~0,30 $ por tanda)."""
+    from datetime import date
+    from folio import fondo
+    from folio.almacen import Almacen
+    from folio.llm import LLM
+    cfg = config.cargar()
+    almacen = Almacen(cfg.ruta_db)
+    fecha = fecha or date.today().isoformat()
+    if si_toca and almacen.fondo(mes=fecha[:7]):
+        typer.echo(f"Fondo: el de {fecha[:7]} ya está empezado")
+        return
+    llm = LLM(cfg, reutilizar=reutilizar_llm)
+    for i in range(tandas):
+        try:
+            r = fondo.preparar_tanda(cfg, almacen, fecha, llm, n)
+        except Exception as e:                  # noqa: BLE001
+            if not si_toca:
+                raise
+            typer.echo(f"Fondo: no se pudo preparar ({type(e).__name__}: {e})")
+            return
+        for a in r.avisos:
+            typer.echo(a)
+        for f in r.fuera:
+            typer.echo(f"  fuera: {f}")
+        typer.echo(f"Fondo, tanda {i + 1}: {r.guardadas} de {r.pedidas} propuestas guardadas"
+                   f" · {round(sum(t.coste_usd for t in llm.trazas), 4)} $ acumulado")
+        if r.pedidas == 0:
+            break
+
+
+@fondo_app.command("lista")
+def fondo_lista(estado: str = typer.Option("disponible", help="disponible, usada, descartada o todas")):
+    """Las propuestas del fondo."""
+    from folio import fondo
+    from folio.almacen import Almacen
+    cfg = config.cargar()
+    for x in Almacen(cfg.ruta_db).fondo(estado=None if estado == "todas" else estado):
+        typer.echo(fondo.resumen_para_cli(x))
+
+
 memoria_app = typer.Typer(help="Memoria del feedback: patrones de las evaluaciones y ediciones, con propuestas de regla")
 app.add_typer(memoria_app, name="memoria")
 

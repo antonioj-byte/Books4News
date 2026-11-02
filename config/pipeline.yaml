@@ -1,6 +1,7 @@
 modelos:
   ingesta: claude-haiku-5-5     # resumen y clasificación de historias
   seleccion: claude-opus-5-5    # jefe de cultura: lectura lateral y diálogo con la actualidad
+  fondo: claude-opus-5-5        # fondo del mes (2/11): el jefe de cultura propone propuestas que valen unos meses
   seleccion_libro: claude-haiku-5-5   # editor del libro (2/11): mundo del libro, historia editorial y libro recomendado
   guion: claude-opus-5-5        # guionista
   guion_correccion: claude-opus-5-5   # reintentos y reescritura del lector sin contexto: el mismo modelo (2/11)
@@ -24,6 +25,7 @@ esfuerzo:                       # output_config.effort
   ingesta: low
   seleccion: high
   seleccion_libro: medium
+  fondo: medium                   # 2/11: con high, el razonamiento agotaba los 21.000 tokens con seis propuestas
   guion: high
   guion_correccion: medium        # 2/11 (a petición del usuario, por el gasto): las correcciones, con esfuerzo medio
   comprobacion: medium

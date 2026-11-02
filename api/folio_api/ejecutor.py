@@ -79,6 +79,10 @@ class Ejecutor:
         self.diaria = [self.comando, [sys.executable, "-m", "folio.cli", "render", "--video"],
                        [sys.executable, "-m", "folio.cli", "cajon", "buscar"],
                        [sys.executable, "-m", "folio.cli", "memoria", "analizar", "--si-toca"]]
+        # El fondo del mes (2/11): el primer día del mes (o el primero en que esté vacío), después de la mesa, las seis
+        # tandas; nunca hace fallar la diaria
+        self.fondo_mensual = [sys.executable, "-m", "folio.cli", "fondo", "preparar", "--si-toca", "--tandas", "6"]
+        self.diaria.append(self.fondo_mensual)
         self._trabajo: _Trabajo | None = None
         self._desarrollos: dict[str, _Trabajo] = {}
         self._cerrojo = threading.Lock()

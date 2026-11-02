@@ -170,6 +170,21 @@ _MIGRACIONES = [
     );
     CREATE INDEX notas_pieza ON notas (ejecucion_id, pieza_id);
     """,
+    # 9: el fondo del mes (2/11, a petición del usuario): propuestas de actualidad lateral que valen unos meses
+    """
+    CREATE TABLE fondo (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        mes TEXT NOT NULL,                 -- AAAA-MM en que se preparó
+        creado_en TEXT NOT NULL,
+        formato TEXT NOT NULL,
+        titular TEXT NOT NULL,
+        cuestion TEXT NOT NULL,
+        vale_hasta TEXT NOT NULL,          -- AAAA-MM-DD
+        estado TEXT NOT NULL DEFAULT 'disponible',  -- disponible | usada | descartada
+        tema_id INTEGER,                   -- el tema de la redacción con que se escribió
+        datos TEXT NOT NULL                -- JSON: propuesta, libros verificados, puente, tema de la cosecha
+    );
+    """,
 ]
 
 
@@ -399,6 +414,39 @@ class Almacen:
                            (ts, ts, e["patron"], evidencia, e["propuesta"], e["destino"], e["clave"]))
                 nuevas += 1
         return nuevas
+
+    # --- Fondo del mes ----------------------------------------------------------------
+
+    def guardar_fondo(self, mes: str, items: list[dict]) -> None:
+        with self._transaccion() as db:
+            db.executemany("INSERT INTO fondo (mes, creado_en, formato, titular, cuestion, vale_hasta, datos) "
+                           "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                           [(mes, _ahora(), x["formato"], x["titular"], x["cuestion"], x["vale_hasta"],
+                             json.dumps(x["datos"], ensure_ascii=False)) for x in items])
+
+    def fondo(self, mes: str | None = None, estado: str | None = None, hoy: str | None = None) -> list[dict]:
+        """Propuestas del fondo; con `hoy`, sin las caducadas."""
+        donde, args = [], []
+        for campo, valor in (("mes", mes), ("estado", estado)):
+            if valor:
+                donde.append(f"{campo} = ?")
+                args.append(valor)
+        if hoy:
+            donde.append("vale_hasta >= ?")
+            args.append(hoy)
+        filas = self.db.execute("SELECT * FROM fondo" + (" WHERE " + " AND ".join(donde) if donde else "") + " ORDER BY id",
+                                args).fetchall()
+        return [{**{k: f[k] for k in f.keys() if k != "datos"}, "datos": json.loads(f["datos"])} for f in filas]
+
+    def siguiente_fondo(self) -> int:
+        f = self.db.execute("SELECT MAX(id) FROM fondo").fetchone()
+        return (f[0] or 0) + 1
+
+    def actualizar_fondo(self, fid: int, **campos) -> None:
+        if not campos or set(campos) - {"estado", "tema_id"}:
+            raise ValueError(f"campos no válidos: {campos}")
+        with self._transaccion() as db:
+            db.execute(f"UPDATE fondo SET {', '.join(f'{k} = ?' for k in campos)} WHERE id = ?", (*campos.values(), fid))
 
     # --- Temas de la redacción ---------------------------------------------------------
 

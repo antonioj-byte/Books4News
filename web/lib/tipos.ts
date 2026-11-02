@@ -389,6 +389,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/fondo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista
+         * @description Las disponibles que no han caducado, las usadas y las descartadas (las caducadas no se enseñan).
+         */
+        get: operations["lista_api_fondo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/fondo/{fid}/escribir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Escribir
+         * @description La propuesta entra en la mesa como un tema de la redacción: se buscan sus noticias más recientes, el jefe la
+         *     ajusta y se verifican sus libros (uno o dos minutos y unos céntimos).
+         */
+        post: operations["escribir_api_fondo__fid__escribir_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/fondo/{fid}/descartar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Descartar */
+        post: operations["descartar_api_fondo__fid__descartar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/fondo/preparar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preparar
+         * @description Lanza tandas nuevas del fondo en un proceso aparte (~0,30 $ y varios minutos cada una).
+         */
+        post: operations["preparar_api_fondo_preparar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/gastos": {
         parameters: {
             query?: never;
@@ -654,6 +732,8 @@ export interface components {
             antetitulo: string | null;
             /** Remate */
             remate: string | null;
+            /** Remate Cierre */
+            remate_cierre: string | null;
             /** Acento */
             acento: ("pluma" | "marcador") | null;
             /** Concepto */
@@ -676,6 +756,12 @@ export interface components {
             friso: string | null;
             /** Friso Idea */
             friso_idea: string | null;
+            /** Banda */
+            banda: string | null;
+            /** Banda Desde */
+            banda_desde: number | null;
+            /** Banda Credito */
+            banda_credito: string | null;
             /** Pregunta */
             pregunta: string | null;
             /** Registro */
@@ -883,6 +969,11 @@ export interface components {
             /** Url */
             url: string;
         };
+        /** Escribir */
+        Escribir: {
+            /** Ejecucion */
+            ejecucion: number;
+        };
         /**
          * EstadoBuffer
          * @description Lo que la ficha de la pieza enseña junto al botón «Programar en Buffer».
@@ -1004,6 +1095,19 @@ export interface components {
              */
             comentario_arte: string;
         };
+        /** Fondo */
+        Fondo: {
+            /** Propuestas */
+            propuestas: components["schemas"]["PropuestaDelFondo"][];
+            preparando?: components["schemas"]["EstadoEjecucion"] | null;
+            /**
+             * Objetivo
+             * @default {}
+             */
+            objetivo: {
+                [key: string]: number;
+            };
+        };
         /** FuenteNoticia */
         FuenteNoticia: {
             /** Medio */
@@ -1032,6 +1136,8 @@ export interface components {
              * @default false
              */
             prensa: boolean;
+            /** Publicado */
+            publicado: string | null;
         };
         /** GuionLLM */
         GuionLLM: {
@@ -1601,6 +1707,14 @@ export interface components {
              */
             enlaces: components["schemas"]["Enlace"][];
         };
+        /** Preparar */
+        Preparar: {
+            /**
+             * Tandas
+             * @default 1
+             */
+            tandas: number;
+        };
         /** ProgramadaBuffer */
         ProgramadaBuffer: {
             /** Hora */
@@ -1631,6 +1745,62 @@ export interface components {
              * @default false
              */
             reemplazar: boolean;
+        };
+        /** PropuestaDelFondo */
+        PropuestaDelFondo: {
+            /** Id */
+            id: number;
+            /** Mes */
+            mes: string;
+            /** Formato */
+            formato: string;
+            /** Titular */
+            titular: string;
+            /** Cuestion */
+            cuestion: string;
+            /** Vale Hasta */
+            vale_hasta: string;
+            /** Estado */
+            estado: string;
+            /** Tema Id */
+            tema_id?: number | null;
+            /**
+             * De Que Se Habla
+             * @default
+             */
+            de_que_se_habla: string;
+            /**
+             * Gancho Libro
+             * @default
+             */
+            gancho_libro: string;
+            /**
+             * Por Que Dura
+             * @default
+             */
+            por_que_dura: string;
+            /**
+             * Reactivar
+             * @default
+             */
+            reactivar: string;
+            /**
+             * Potencial
+             * @default 5
+             */
+            potencial: number;
+            /** Puente */
+            puente?: number | null;
+            /**
+             * Libros
+             * @default []
+             */
+            libros: string[];
+            /**
+             * Cosecha
+             * @default
+             */
+            cosecha: string;
         };
         /** Replica */
         Replica: {
@@ -2565,6 +2735,125 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstadoProgramada"];
+                };
+            };
+        };
+    };
+    lista_api_fondo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Fondo"];
+                };
+            };
+        };
+    };
+    escribir_api_fondo__fid__escribir_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fid: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Escribir"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemaCreado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    descartar_api_fondo__fid__descartar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropuestaDelFondo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preparar_api_fondo_preparar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Preparar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -157,4 +157,4 @@ def test_con_lectura_periodica_la_diaria_solo_hace_la_mesa(cfg, monkeypatch):
     monkeypatch.setattr(main.Programador, "arrancar", lambda self: None)
     app = main.crear_app(cfg, Almacen(cfg.ruta_db), importar=False)
     diaria = app.state.folio.ejecutor.diaria
-    assert len(diaria) == 2 and diaria[1][-2:] == ["render", "--video"]
+    assert len(diaria) == 3 and diaria[1][-2:] == ["render", "--video"] and "fondo" in diaria[2]

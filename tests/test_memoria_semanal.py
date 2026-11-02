@@ -102,4 +102,5 @@ def test_si_toca_nunca_sale_con_error(cfg, monkeypatch):
 
 def test_la_diaria_acaba_con_el_analisis_semanal(tmp_path):
     from folio_api.ejecutor import Ejecutor
-    assert Ejecutor(tmp_path).diaria[-1][-3:] == ["memoria", "analizar", "--si-toca"]
+    diaria = Ejecutor(tmp_path).diaria
+    assert diaria[-2][-3:] == ["memoria", "analizar", "--si-toca"] and diaria[-1][3:6] == ["fondo", "preparar", "--si-toca"]

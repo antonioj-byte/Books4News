@@ -23,6 +23,8 @@ export type EstadoMemoria = components["schemas"]["EstadoMemoria"];
 export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" };
 export type ResultadoMemoria = components["schemas"]["ResultadoMemoria"];
 export type EstadoBuffer = components["schemas"]["EstadoBuffer"];
+export type Fondo = components["schemas"]["Fondo"];
+export type PropuestaDelFondo = components["schemas"]["PropuestaDelFondo"];
 
 async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
   const r = await fetch(ruta, { cache: "no-store", ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
@@ -64,6 +66,12 @@ export const api = {
     pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),
   chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),
   temas: () => pedir<Tema[]>("/api/temas"),
+  // El fondo del mes (2/11)
+  fondo: () => pedir<Fondo>("/api/fondo"),
+  escribirDelFondo: (id: number, ejecucion: number) =>
+    pedir<TemaCreado>(`/api/fondo/${id}/escribir`, { method: "POST", body: JSON.stringify({ ejecucion }) }),
+  descartarDelFondo: (id: number) => pedir<PropuestaDelFondo>(`/api/fondo/${id}/descartar`, { method: "POST" }),
+  prepararFondo: (tandas: number) => pedir<EstadoEjecucion>("/api/fondo/preparar", { method: "POST", body: JSON.stringify({ tandas }) }),
   proponerTema: (t: TemaNuevo) => pedir<TemaCreado>("/api/temas", { method: "POST", body: JSON.stringify(t) }),
   replicarTema: (id: number, r: { texto: string; ejecucion: number }) =>
     pedir<TemaCreado>(`/api/temas/${id}/replica`, { method: "POST", body: JSON.stringify(r) }),

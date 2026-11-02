@@ -510,3 +510,10 @@
   patron: "El tema de Killer App se negó porque el libro ya se había usado el 1/11: «se ha negado a hacerlo porque ya lo hizo, pero justo quería que lo repitiera»."
   propuesta: "Un libro ya usado en los últimos 60 días puede repetirse si la redacción lo pide expresamente (en un tema, con repetir; en el chat, al cambiar el libro); nunca por iniciativa de un agente."
   evidencia: ["Conversación, 2/11: tema «Killer App», de Darren Loucaides"]
+
+- clave: fondo-del-mes
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«Buena parte de los contenidos son lecturas laterales… temas que admiten una ventana de tiempo de unos 3 meses. Que el jefe planteara una vez al mes una selección de 150 historias reciclables; eso nos permite tener más margen de previsión.»"
+  propuesta: "Cada día 1, el jefe prepara el fondo del mes: 150 propuestas de actualidad lateral que valen de 1 a 3 meses (60 laterales, 35 diálogos, 20 tres libros y perfiles, 20 recomendados, 15 del mundo del libro), con libro verificado y qué noticia las reactivaría; se escriben desde la página Fondo buscando lo último del tema."
+  evidencia: ["Conversación, 2/11: plan del fondo del mes, aprobado"]
