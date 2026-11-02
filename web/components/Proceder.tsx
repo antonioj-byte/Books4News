@@ -15,30 +15,48 @@ export function Proceder({ eid, pid, onHecho, texto = "Proceder" }: {
     e.preventDefault();
     e.stopPropagation();
     setError(null);
+    let enganchada = false;
     try {
       await api.desarrollar(eid, pid);
     } catch (err) {
-      setError(err instanceof Error && err.message.startsWith("409") ? err.message.replace(/^\d+ \S+: /, "") + "." : "No se pudo lanzar.");
-      return;
+      const msg = err instanceof Error ? err.message : "";
+      // Si ya se está escribiendo (se recargó la página a medias), se engancha a ese trabajo en vez de dar error
+      if (msg.startsWith("409") && msg.includes("ya se está escribiendo")) enganchada = true;
+      else {
+        setError(msg.startsWith("409") ? msg.replace(/^\d+ \S+: /, "") + "." : "No se pudo lanzar.");
+        return;
+      }
     }
-    setEtapa("Empezando…");
+    setEtapa(enganchada ? "Siguiendo el trabajo en marcha…" : "Empezando…");
     let avisada = false;
+    let fallos = 0;
     const vigilar = async () => {
       // Cada pieza tiene su proceso (2/11): se sigue el suyo, no la ejecución del día
-      const estado = await api.desarrollo(eid, pid).catch(() => null);
+      let estado;
+      try {
+        estado = await api.desarrollo(eid, pid);
+        fallos = 0;
+      } catch {
+        // Un fallo de red o un reinicio de la API no corta el seguimiento en silencio (revisión general, 2/11)
+        if (++fallos < 6) { setTimeout(vigilar, 5000); return; }
+        setEtapa(null);
+        setError("Se perdió el seguimiento de la pieza. Recarga la página para ver cómo acabó.");
+        return;
+      }
       // En cuanto la pieza está en la mesa con sus PNG se enseña; los vídeos siguen pintándose detrás (2/11)
-      if (estado?.en_marcha && estado.etapa?.startsWith("La pieza ya está en la mesa")) {
+      if (estado.en_marcha && estado.etapa?.startsWith("La pieza ya está en la mesa")) {
         if (!avisada) { avisada = true; setEtapa(null); onHecho(); }
         setTimeout(vigilar, 6000);
         return;
       }
-      if (estado?.en_marcha) {
+      if (estado.en_marcha) {
         setEtapa(estado.etapa ?? "Trabajando…");
         setTimeout(vigilar, 4000);
         return;
       }
       setEtapa(null);
-      if (estado && estado.codigo !== 0 && !avisada) setError(estado.ultimas_lineas.at(-1) ?? "No se pudo escribir la pieza.");
+      // Un trabajo cortado por un despliegue llega como código -1 con su motivo
+      if (estado.codigo !== 0 && !avisada) setError(estado.ultimas_lineas.at(-1) ?? "No se pudo escribir la pieza.");
       onHecho();
     };
     setTimeout(vigilar, 3000);

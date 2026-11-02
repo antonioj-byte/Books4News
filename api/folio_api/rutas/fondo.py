@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from folio import fondo as fondo_folio
 from folio_api.dependencias import Contexto, contexto
-from folio_api.ejecutor import EstadoEjecucion
+from folio_api.ejecutor import YA_EN_MARCHA, EstadoEjecucion
 from folio_api.rutas.temas import TemaCreado, _resultado
 
 router = APIRouter()
@@ -110,5 +110,5 @@ def preparar(p: Preparar, ctx: Contexto = Depends(contexto)):
     motivo = ctx.ejecutor.desarrollar(TRABAJO, [[sys.executable, "-m", "folio.cli", "fondo", "preparar",
                                                  "--tandas", str(p.tandas)]])
     if motivo:
-        raise HTTPException(409, "Ya se está preparando el fondo" if "ya se está" in motivo.lower() else motivo)
+        raise HTTPException(409, "Ya se está preparando el fondo" if motivo == YA_EN_MARCHA else motivo)
     return ctx.ejecutor.estado_desarrollo(TRABAJO)

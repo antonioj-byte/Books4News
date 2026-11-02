@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from folio import memoria
 from folio.almacen import Patron
 from folio_api.dependencias import Contexto, contexto
-from folio_api.ejecutor import EstadoEjecucion
+from folio_api.ejecutor import YA_EN_MARCHA, EstadoEjecucion
 from folio_api.esquemas import DecisionPatron, EstadoMemoria
 
 router = APIRouter()
@@ -36,7 +36,7 @@ def analizar(dias: int = Query(14, ge=1, le=90), ctx: Contexto = Depends(context
     «500 Internal Server Error»); la página sigue su estado con GET /api/memoria/analisis."""
     motivo = ctx.ejecutor.desarrollar(TRABAJO, [[sys.executable, "-m", "folio.cli", "memoria", "analizar", "--dias", str(dias)]])
     if motivo:
-        raise HTTPException(409, "Ya se está analizando" if "ya se está" in motivo.lower() else motivo)
+        raise HTTPException(409, "Ya se está analizando" if motivo == YA_EN_MARCHA else motivo)
     return ctx.ejecutor.estado_desarrollo(TRABAJO)
 
 

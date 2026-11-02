@@ -40,6 +40,11 @@ NOMBRES_TRABAJO = {"diaria": "Ejecución del día", "fondo-del-mes": "Tanda del 
                    "memoria-analisis": "Análisis de la memoria"}
 
 MAX_DESARROLLOS = 3                    # «Proceder» a la vez (2/11): cada uno es un proceso aparte
+YA_EN_MARCHA = "Esta pieza ya se está escribiendo"
+# Cada registro acaba con esta línea al terminar. Uno sin ella es de un trabajo que se cortó (un despliegue reinicia la
+# API y mata sus procesos): así el estado sobrevive al reinicio (revisión general, 2/11: la web lo daba por terminado)
+FIN = "FIN: código "
+INTERRUMPIDO = "Interrumpido: la API se reinició (un despliegue) antes de que terminara. Vuelve a lanzarlo."
 
 
 class _Trabajo:
@@ -61,6 +66,7 @@ class _Trabajo:
                 break
             salida.flush()
             self.proceso = subprocess.Popen(self.pendientes.pop(0), stdout=salida, stderr=subprocess.STDOUT)
+        salida.write(f"\n{FIN}{self.proceso.returncode}\n")
         salida.close()
         self.fin = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -79,7 +85,16 @@ def _estado(registro: Path, en_marcha: bool, inicio, fin, codigo) -> EstadoEjecu
         todas = [l for l in registro.read_text(encoding="utf-8", errors="replace").splitlines()
                  if l.strip() and "Fetching" not in l]
         etapa = next((l.removeprefix("ETAPA: ") for l in reversed(todas) if l.startswith("ETAPA: ")), None)
-        lineas = [l for l in todas if not l.startswith(("ETAPA: ", "TIEMPO: "))][-12:]
+        lineas = [l for l in todas if not l.startswith(("ETAPA: ", "TIEMPO: ", FIN))][-12:]
+        if not en_marcha and codigo is None:
+            # Sin el trabajo en memoria (la API se reinició): el registro dice cómo acabó, o que se cortó
+            final = next((l for l in reversed(todas) if l.startswith(FIN)), None)
+            if final:
+                codigo = int(final.removeprefix(FIN) or 1)
+            else:
+                codigo = -1
+                lineas = [*lineas, INTERRUMPIDO][-12:]
+            fin = fin or datetime.fromtimestamp(registro.stat().st_mtime, timezone.utc).isoformat(timespec="seconds")
     return EstadoEjecucion(en_marcha=en_marcha, inicio=inicio, fin=fin, codigo=codigo, etapa=etapa, ultimas_lineas=lineas)
 
 
@@ -146,19 +161,32 @@ class Ejecutor:
                 return "Se está preparando la mesa del día; prueba cuando termine"
             previo = self._desarrollos.get(pid)
             if previo and previo.vivo():
-                return "Esta pieza ya se está escribiendo"
-            if self.desarrollando() >= MAX_DESARROLLOS:
+                return YA_EN_MARCHA
+            if pid not in NOMBRES_TRABAJO and self.desarrollando() >= MAX_DESARROLLOS:
                 return f"Ya se están escribiendo {MAX_DESARROLLOS} piezas; prueba cuando acabe alguna"
-            nombre = "".join(c if c.isalnum() or c in "-_" else "_" for c in pid)
-            self._desarrollos[pid] = _Trabajo(self.dir_desarrollos / f"{nombre}.log", pasos)
+            self._desarrollos[pid] = _Trabajo(self._registro_de(pid), pasos)
             return None
 
     def desarrollando(self) -> int:
-        return sum(1 for t in self._desarrollos.values() if t.vivo())
+        """Piezas escribiéndose con «Proceder». La tanda del fondo y la Memoria no cuentan: ni ocupan sitio de las
+        piezas ni bloquean la ejecución del día con un mensaje que no es (revisión general, 2/11)."""
+        return sum(1 for k, t in self._desarrollos.items() if t.vivo() and k not in NOMBRES_TRABAJO)
+
+    def en_marcha(self, pid: str) -> bool:
+        t = self._desarrollos.get(pid)
+        return bool(t and t.vivo())
+
+    def _registro_de(self, pid: str) -> Path:
+        return self.dir_desarrollos / ("".join(c if c.isalnum() or c in "-_" else "_" for c in pid) + ".log")
 
     def estado_desarrollo(self, pid: str) -> EstadoEjecucion | None:
+        """El estado de un trabajo aparte; si no es de esta sesión de la API, lo que diga su registro (también
+        «interrumpido» si se cortó en un despliegue). None si nunca se lanzó."""
         t = self._desarrollos.get(pid)
-        return t.estado() if t else None
+        if t:
+            return t.estado()
+        r = self._registro_de(pid)
+        return _estado(r, False, None, None, None) if r.exists() else None
 
     def trabajos(self) -> list[Trabajo]:
         """La ejecución del día y los trabajos aparte («Proceder», fondo, memoria) de esta sesión de la API."""

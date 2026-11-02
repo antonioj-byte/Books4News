@@ -56,11 +56,21 @@ class Programador:
         self._ahora = ahora or (lambda: datetime.now(self.zona))
         self._parar = threading.Event()
 
-    def ultima(self) -> str | None:
+    def _leer(self) -> dict:
         try:
-            return json.loads(self.archivo.read_text(encoding="utf-8")).get("ultima")
+            return json.loads(self.archivo.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            return None
+            return {}
+
+    def ultima(self) -> str | None:
+        return self._leer().get("ultima")
+
+    def _cortada(self, hoy: str) -> bool:
+        """La de hoy se lanzó pero un despliegue la cortó (su registro no tiene línea de fin) y aún no se ha relanzado
+        (revisión general, 2/11: un push de madrugada dejaba el día sin mesa y nadie se enteraba)."""
+        d = self._leer()
+        return (d.get("ultima") == hoy and d.get("relanzada") != hoy and not self.ejecutor.ocupado()
+                and self.ejecutor.estado().codigo == -1)
 
     def comprobar(self) -> bool:
         """Lanza la del día si toca. True si la ha lanzado."""
@@ -69,13 +79,19 @@ class Programador:
         ahora = self._ahora().astimezone(self.zona)
         programada = datetime.combine(ahora.date(), self.hora, self.zona)
         hoy = ahora.date().isoformat()
-        if self.ultima() == hoy or not programada <= ahora < programada + VENTANA:
+        if not programada <= ahora < programada + VENTANA:
+            return False
+        relanzar = self._cortada(hoy)
+        if self.ultima() == hoy and not relanzar:
             return False
         if not self.ejecutor.lanzar(self.ejecutor.diaria):
             return False                   # hay otra en marcha: se reintenta en la próxima vuelta
         self.archivo.parent.mkdir(parents=True, exist_ok=True)
-        self.archivo.write_text(json.dumps({"ultima": hoy, "lanzada": ahora.isoformat(timespec="seconds")}),
-                                encoding="utf-8")
+        datos = {"ultima": hoy, "lanzada": ahora.isoformat(timespec="seconds")}
+        if relanzar:
+            datos["relanzada"] = hoy       # una sola vez: si vuelve a cortarse, queda «interrumpida» a la vista
+            log.warning("La ejecución diaria de hoy se cortó (un despliegue): se relanza")
+        self.archivo.write_text(json.dumps(datos), encoding="utf-8")
         log.info("Ejecución diaria lanzada (%s)", ahora.isoformat(timespec="minutes"))
         return True
 

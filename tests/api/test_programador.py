@@ -11,11 +11,18 @@ MADRID = ZoneInfo("Europe/Madrid")
 class EjecutorFalso:
     diaria = [["run"], ["render", "--video"]]
 
-    def __init__(self, ocupado=False):
-        self.lanzadas, self.ocupado = [], ocupado
+    def __init__(self, ocupado=False, codigo=0):
+        self.lanzadas, self._ocupado, self.codigo = [], ocupado, codigo
+
+    def ocupado(self):
+        return self._ocupado
+
+    def estado(self):
+        from types import SimpleNamespace
+        return SimpleNamespace(codigo=self.codigo)
 
     def lanzar(self, pasos=None):
-        if self.ocupado:
+        if self._ocupado:
             return False
         self.lanzadas.append(pasos)
         return True
@@ -57,7 +64,7 @@ def test_si_hay_otra_en_marcha_espera(tmp_path):
     ej = EjecutorFalso(ocupado=True)
     p = _programador(tmp_path, reloj, ej)
     assert not p.comprobar() and p.ultima() is None
-    ej.ocupado = False
+    ej._ocupado = False
     reloj[0] = datetime(2026, 10, 31, 5, 10, tzinfo=MADRID)
     assert p.comprobar()
 
@@ -90,3 +97,31 @@ def test_ruta_de_la_programada(cfg):
     cliente_api = TestClient(crear_app(cfg, Almacen(cfg.ruta_db), importar=False))
     assert cliente_api.get("/api/ejecuciones/programada").json() == {
         "activa": False, "hora": None, "zona": None, "ultima": None, "proxima": None}
+
+
+def test_si_un_despliegue_la_corta_se_relanza_una_vez(tmp_path):
+    """Revisión general (2/11): un push de madrugada mataba la diaria y no se relanzaba."""
+    reloj = [datetime(2026, 11, 3, 4, 30, tzinfo=MADRID)]
+    ej = EjecutorFalso()
+    p = _programador(tmp_path, reloj, ej)
+    assert p.comprobar()
+    ej.codigo = -1                                   # la API se reinició: el registro no tiene línea de fin
+    reloj[0] = datetime(2026, 11, 3, 4, 50, tzinfo=MADRID)
+    assert p.comprobar() and len(ej.lanzadas) == 2
+    assert not p.comprobar()                         # una sola vez
+    reloj[0] = datetime(2026, 11, 3, 7, 0, tzinfo=MADRID)
+    ej2 = EjecutorFalso(codigo=-1)
+    assert not _programador(tmp_path, reloj, ej2).comprobar()   # fuera de la ventana, no
+
+
+def test_un_registro_sin_linea_de_fin_es_interrumpido(tmp_path):
+    from folio_api.ejecutor import FIN, INTERRUMPIDO
+    ej = Ejecutor(tmp_path)
+    ej.registro.write_text("ETAPA: Guion\nalgo\n", encoding="utf-8")
+    e = ej.estado()
+    assert e.codigo == -1 and e.ultimas_lineas[-1] == INTERRUMPIDO
+    ej.registro.write_text(f"algo\n{FIN}0\n", encoding="utf-8")
+    assert ej.estado().codigo == 0
+    (tmp_path / "desarrollos").mkdir()
+    (tmp_path / "desarrollos" / "2026-11-02-3.log").write_text("ETAPA: Guion\n", encoding="utf-8")
+    assert ej.estado_desarrollo("2026-11-02-3").codigo == -1 and ej.estado_desarrollo("otra") is None
