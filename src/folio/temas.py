@@ -162,6 +162,7 @@ class RespuestaJefeTema(BaseModel):
     preguntas: list[str] = Field(description="Hasta dos preguntas a la redacción si sin ellas la propuesta saldría mal; si propones, vacía")
     propuesta: HistoriaElegida | None = Field(description="La propuesta de pieza; null si antes necesitas preguntar")
     sin_castellano: bool = Field(default=False, description="True solo si la redacción pide expresamente un libro que no tiene edición en castellano")
+    repetir: bool = Field(default=False, description="True solo si la redacción pide expresamente un libro que Folio ya ha usado o rehacer una pieza ya hecha")
 
 
 def _bloque_conversacion(conversacion: list[dict]) -> str:
@@ -303,6 +304,8 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
     tuberia.sin_novedad = True
     # Por excepción, un título sin traducir si la redacción lo pide expresamente (2/11, regla del usuario)
     tuberia.permitir_sin_castellano = bool(r.sin_castellano)
+    # Y un libro ya usado, si la redacción pide repetirlo (2/11, regla del usuario)
+    tuberia.permitir_repetidos = bool(r.repetir)
     pieza = None
     for intento in range(2):
         pieza = Pieza(id=pid, fecha=fecha, estado="fallida", historia_id=h.id, eleccion=r.propuesta, n_medios=h.n_medios,
@@ -315,8 +318,11 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
             break
         # Ningún libro pasó: el jefe ve por qué y propone otros, una vez (2/11: el perfil de Tavares se quedó sin libro)
         motivos = "; ".join(f"«{d.titulo}»: {d.motivo}" for d in pieza.libros_descartados)
+        repetido = any(d.motivo.startswith("ya usado") for d in pieza.libros_descartados)
         conversacion.append({"rol": "verificacion", "texto": f"Ninguno de tus libros pasó la verificación ({motivos}). "
-                             "Propón otros que tengan edición en castellano, con su título exacto (no el de una serie)."})
+                             "Propón otros que tengan edición en castellano, con su título exacto (no el de una serie)."
+                             + (" Si la redacción pidió expresamente el libro ya usado, no lo cambies: vuelve a proponerlo "
+                                "con `repetir` a true." if repetido else "")})
         try:
             otra = proponer(llm, cfg, h, tema.texto, fuentes, fecha, conversacion)
         except ErrorLLM:

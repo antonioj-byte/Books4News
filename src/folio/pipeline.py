@@ -93,6 +93,9 @@ class Pipeline:
         # Excepción que pide expresamente la redacción (2/11, regla del usuario: «que yo pueda dar instrucciones a títulos
         # extranjeros, excepcionalmente»): un libro sin edición en castellano puede entrar
         self.permitir_sin_castellano = False
+        # Por excepción, un libro ya usado si la redacción pide expresamente repetirlo (2/11: «se ha negado a hacerlo porque ya
+        # lo hizo, pero justo quería que lo repitiera»); nunca por iniciativa de un agente
+        self.permitir_repetidos = False
         self._preverificados: dict = {}             # (título, autor) → ficha o NoVerificado (folio.pipeline._preverificar)
         self._embedder: agrupacion.Embedder | None = None
         self._avisos_pieza = threading.Lock()       # hechos y arte de «Proceder» van a la vez y tocan pieza.avisos
@@ -372,6 +375,9 @@ class Pipeline:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=viejo))
                 continue
             clave = clave_libro(c.titulo, c.autor)
+            if self.permitir_repetidos:
+                ok.append(l)
+                continue
             usado = self.historial.libro_usado(self.fecha, dias, c.titulo, c.autor, l.olid)
             if usado:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=f"ya usado el {usado}"))

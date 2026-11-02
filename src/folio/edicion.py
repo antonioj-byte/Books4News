@@ -352,6 +352,7 @@ def _cambiar_libro(cfg: Config, llm: LLM, nueva: Pieza, a: AccionImagen) -> tupl
     tuberia.sin_novedad = True
     # Por excepción, un título sin traducir si quien edita lo pide expresamente (2/11, regla del usuario)
     tuberia.permitir_sin_castellano = a.sin_castellano.strip().lower() in ("si", "sí", "true")
+    tuberia.permitir_repetidos = True        # el libro lo nombra la redacción: puede repetir uno ya usado
     if not tuberia._verificar(prueba, set()):
         motivos = "; ".join(f"{d.titulo}: {d.motivo}" for d in prueba.libros_descartados) or prueba.error or "no aparece en los catálogos"
         pista = (" Si lo quieres igualmente, dímelo expresamente («aunque no tenga edición en castellano») y lo pongo por excepción."

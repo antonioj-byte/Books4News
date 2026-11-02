@@ -144,6 +144,18 @@ def test_la_historia_propuesta_y_no_escrita_tampoco_vuelve(cfg, monkeypatch):
     assert p2.historial.libro_usado("2026-10-30", 60, "Eichmann en Jerusalén", "Hannah Arendt", None) is None
 
 
+def test_la_redaccion_puede_repetir_un_libro_ya_usado(cfg, monkeypatch):
+    """2/11: el tema de *Killer App* se negó a rehacerlo porque el libro ya había salido; si la redacción lo pide, vale."""
+    p, _ = _pipeline(cfg, monkeypatch, [guion_valido()], fecha="2026-10-29")
+    p.ejecutar()
+    p2, _ = _pipeline(cfg, monkeypatch, [], fecha="2026-10-30")
+    ok, descartes = p2._verificar_libros(ELECCION, set())
+    assert not ok and descartes[0].motivo.startswith("ya usado el 2026-10-29")
+    p2.permitir_repetidos = True
+    ok, _ = p2._verificar_libros(ELECCION, set())
+    assert ok and ok[0].titulo_propuesto == "Eichmann en Jerusalén"
+
+
 def test_segunda_pasada_fusiona_grupos_del_mismo_evento():
     """Dos grupos que la primera pasada separa se unen si sus centroides superan el umbral de fusión."""
     ahora = datetime.now(timezone.utc)
