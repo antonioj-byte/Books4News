@@ -31,6 +31,17 @@ _CON_FALLBACK = ("claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude
 _BETA_FALLBACK = "server-side-fallback-2026-07-01"
 
 
+# Esperas extra ante un 5xx de Anthropic, después de los reintentos rápidos del SDK
+ESPERAS_5XX = (20, 60)
+
+
+def _mensaje_api(exc) -> str:
+    cuerpo = getattr(exc, "body", None)
+    if isinstance(cuerpo, dict):
+        return str((cuerpo.get("error") or {}).get("message") or exc.message)[:160]
+    return str(getattr(exc, "message", exc))[:160]
+
+
 class ErrorLLM(RuntimeError):
     pass
 
@@ -186,9 +197,10 @@ class LLM:
         inicio = time.monotonic()
         for _ in range(3):                       # pause_turn: se reenvía tal cual y el servidor sigue
             try:
-                r = self.cliente.messages.create(model=modelo, max_tokens=max_tokens, messages=mensajes,
-                                                 tools=[{"type": tipo, "name": "web_search", "max_uses": max_busquedas}],
-                                                 output_config={"effort": self.cfg.esfuerzo(etapa_modelo)})
+                r = self._con_paciencia(paso, lambda: self.cliente.messages.create(
+                    model=modelo, max_tokens=max_tokens, messages=mensajes,
+                    tools=[{"type": tipo, "name": "web_search", "max_uses": max_busquedas}],
+                    output_config={"effort": self.cfg.esfuerzo(etapa_modelo)}))
             except anthropic.APIConnectionError as exc:
                 raise ErrorLLM(f"{paso}: no se pudo conectar con la API de Anthropic ({exc.__cause__})") from exc
             entrada += r.usage.input_tokens + (getattr(r.usage, "cache_read_input_tokens", 0) or 0)
@@ -240,7 +252,7 @@ class LLM:
             extra = {"fallbacks": "default", "betas": [_BETA_FALLBACK]}
         inicio = time.monotonic()
         try:
-            resp = self._llamar(modelo, max_tokens, mensajes, esquema, esfuerzo, extra)
+            resp = self._con_paciencia(paso, lambda: self._llamar(modelo, max_tokens, mensajes, esquema, esfuerzo, extra))
         except anthropic.APIConnectionError as exc:
             # El SDK resume como «Connection error» fallos muy distintos: red, DNS o una clave con un
             # salto de línea (cabecera inválida). La causa real va en el mensaje.
@@ -253,6 +265,24 @@ class LLM:
             raise ErrorLLM(f"{paso}: la respuesta llegó incompleta o no valida contra {esquema.__name__} "
                            f"({str(exc).splitlines()[1][:160] if len(str(exc).splitlines()) > 1 else exc})") from exc
         return self._procesar(paso, modelo, resp, esquema, ruta_cache, time.monotonic() - inicio)
+
+    def _con_paciencia(self, paso: str, llamada):
+        """Errores pasajeros de Anthropic (500, 503, 529 «overloaded»; 2/11: «Proceder» falló con «Error code: 500 …
+        Unable to complete this request right now»). El SDK ya reintenta 4 veces en pocos segundos; si aun así falla,
+        se espera más (`ESPERAS_5XX`) y se prueba otra vez. Después, un ErrorLLM que dice qué hacer. Un 429 no se
+        reintenta aquí: los límites no se esquivan."""
+        for espera in (*ESPERAS_5XX, None):
+            try:
+                return llamada()
+            except anthropic.APIStatusError as exc:
+                if exc.status_code < 500:
+                    raise
+                if espera is None:
+                    raise ErrorLLM(f"{paso}: la API de Anthropic no respondió ({exc.status_code}: "
+                                   f"{_mensaje_api(exc)}) tras varios intentos. Es un fallo pasajero de Anthropic, "
+                                   "no de la pieza: vuelve a intentarlo en unos minutos.") from exc
+                log.warning("%s: Anthropic respondió %s; reintento en %s s", paso, exc.status_code, espera)
+                time.sleep(espera)
 
     def _llamar(self, modelo, max_tokens, mensajes, esquema, esfuerzo, extra):
         return self.cliente.beta.messages.parse(
