@@ -1,0 +1,149 @@
+<title>Revisión general de Folio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;700&family=EB+Garamond:ital@0;1&family=Open+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Una mesa de edición: columna de lectura, fichas por familia de fallos, píldoras de gravedad. Paleta de Folio. */
+:root {
+  --papel: #F6F3EE; --papel-hondo: #ECE6DD; --tinta: #1C1618; --tinta-suave: #5E5457;
+  --pluma: #D40549; --marcador: #FFF500; --borde: #D9D0C4; --ok: #2F6B4F; --media: #A35F00;
+  --display: "Alexandria", "Helvetica Neue", Arial, sans-serif;
+  --remate: "EB Garamond", Georgia, serif;
+  --texto: "Open Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --papel: #120E0F; --papel-hondo: #1E1819; --tinta: #F1ECE6; --tinta-suave: #B5AAA6;
+  --pluma: #FF4D80; --borde: #3A3133; --ok: #6FC49A; --media: #F0A53C; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --papel: #120E0F; --papel-hondo: #1E1819; --tinta: #F1ECE6; --tinta-suave: #B5AAA6;
+  --pluma: #FF4D80; --borde: #3A3133; --ok: #6FC49A; --media: #F0A53C; color-scheme: dark }
+body { background: var(--papel); color: var(--tinta); font: 16px/1.6 var(--texto); }
+.pagina { max-width: 860px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.ante { font: 12px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--pluma); }
+h1 { font: 700 clamp(32px, 6vw, 52px)/1.02 var(--display); letter-spacing: -.05em; margin: 8px 0 14px; text-wrap: balance; }
+h1 em { font: italic 400 1.05em var(--remate); letter-spacing: 0; color: var(--pluma); }
+h2 { font: 700 26px/1.15 var(--display); letter-spacing: -.04em; margin: 52px 0 6px; text-wrap: balance; }
+h3 { font: 600 17px/1.35 var(--texto); margin: 0; }
+p { margin: 0 0 12px; max-width: 66ch; }
+.entrada { font-size: 18px; color: var(--tinta-suave); }
+.cifras { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 22px 0 0; font: 13px var(--mono); color: var(--tinta-suave); }
+.cifras b { font: 700 22px var(--display); color: var(--tinta); display: block; letter-spacing: -.03em; }
+.lista { display: grid; gap: 10px; margin-top: 16px; }
+.item { display: grid; grid-template-columns: 74px 1fr; gap: 14px; padding: 14px 16px; border: 1px solid var(--borde); border-radius: 8px; background: var(--papel); }
+.item > div { min-width: 0; }
+.item p { margin: 4px 0 0; font-size: 15px; color: var(--tinta-suave); }
+.item code, p code, li code { font: 13px var(--mono); background: var(--papel-hondo); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.g { align-self: start; text-align: center; font: 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: 6px 0; border-radius: 99px; border: 1px solid currentColor; }
+.g.alta { color: var(--pluma); } .g.media { color: var(--media); } .g.baja { color: var(--tinta-suave); }
+.refactor { margin-top: 18px; padding: 20px 22px; background: var(--papel-hondo); border-radius: 10px; }
+.refactor h3 { font: 700 20px/1.2 var(--display); letter-spacing: -.03em; }
+.refactor .meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 8px 0 12px; font: 12px var(--mono); color: var(--tinta-suave); }
+.refactor ul { margin: 8px 0 0; padding-left: 20px; } .refactor li { margin: 3px 0; font-size: 15px; }
+.decision { margin-top: 14px; padding: 16px 18px; border-left: 3px solid var(--pluma); background: var(--papel-hondo); border-radius: 0 8px 8px 0; }
+.decision p { font-size: 15px; margin: 6px 0 0; }
+.orden { counter-reset: paso; list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 12px; }
+.orden li { counter-increment: paso; display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
+.orden li::before { content: counter(paso); font: 700 26px/1 var(--display); color: var(--pluma); }
+.orden p { font-size: 15px; color: var(--tinta-suave); margin: 2px 0 0; }
+.nota { font-size: 14px; color: var(--tinta-suave); margin-top: 40px; border-top: 1px solid var(--borde); padding-top: 16px; }
+mark { background: linear-gradient(transparent 55%, var(--marcador) 55%); color: inherit; padding: 0 2px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) mark { background: linear-gradient(transparent 60%, #6b6500 60%); } }
+:root[data-theme="dark"] mark { background: linear-gradient(transparent 60%, #6b6500 60%); }
+@media (max-width: 520px) { .item { grid-template-columns: 1fr; } .g { justify-self: start; padding: 6px 12px; } }
+</style>
+
+<main class="pagina">
+  <div class="ante">Folio · Mesa de edición · 2 de noviembre de 2026</div>
+  <h1>Revisión general: <em>dónde se rompe</em></h1>
+  <p class="entrada">Tres revisiones independientes del código (servicios externos; la web y los trabajos en segundo plano; prompts frente a código), con lo más grave comprobado a mano. Los fallos de estos días no son mala suerte: caen en cuatro familias que se han ido parcheando una a una.</p>
+  <div class="cifras">
+    <span><b>36</b>defectos encontrados</span>
+    <span><b>8</b>de gravedad alta</span>
+    <span><b>3</b>refactorizaciones de fondo</span>
+    <span><b>3</b>decisiones tuyas</span>
+  </div>
+
+  <h2>Las cuatro familias</h2>
+  <div class="lista">
+    <div class="item"><span class="g alta">1</span><div><h3>Un servicio que falla un momento se toma por un «no» definitivo</h3>
+      <p>Un 503 de Google Books deja el libro en «desconocido» y la pieza de la mesa diaria se descarta. Además, la historia se apunta como usada y no vuelve en una semana. El catálogo de las independientes guarda un 5xx como «sin novedades». Las cubiertas guardan un 403 como «no hay cubierta» para siempre.</p></div></div>
+    <div class="item"><span class="g alta">2</span><div><h3>Reintentos contra la regla de la casa (403/429)</h3>
+      <p>El cliente de Anthropic reintenta los 429 cuatro veces por su cuenta. Commons reintenta los 403 y 429 con esperas sin tope. Open Library y Google Books reintentan los 429 con cuatro hilos a la vez.</p></div></div>
+    <div class="item"><span class="g alta">3</span><div><h3>Trabajo largo dentro de una petición web, y estado que se pierde al desplegar</h3>
+      <p>Los temas, las réplicas, «Escribir pieza» del fondo, el chat y «Programar en Instagram» trabajan mientras la página espera. Un corte del proxy o un despliegue los mata a medias. El estado de «Proceder» y de la tanda solo vive en la memoria de la API: después de un despliegue, la web los da por terminados sin error.</p></div></div>
+    <div class="item"><span class="g media">4</span><div><h3>Lo que el código exige y el prompt no dice (o dice al revés)</h3>
+      <p>La mesa pide perfiles con la obra clásica y luego la descarta por no ser novedad. El fondo no impide repetir un libro entre propuestas. La voz de Folio autoriza «en Folio llevamos…», que el guionista prohíbe. El chat dice que no puede cambiar el libro, aunque ya puede. Los agentes que proponen no saben qué día es.</p></div></div>
+  </div>
+
+  <h2>Lo más urgente</h2>
+  <p>Arreglos pequeños, sin cambio visible para la redacción salvo donde se indica. Se pueden hacer ya, antes de cualquier refactorización.</p>
+  <div class="lista">
+    <div class="item"><span class="g alta">Alta</span><div><h3>Programar en Instagram puede duplicar una publicación</h3>
+      <p>Si la preparación pasa de 5 minutos, la web da error y, al pulsar otra vez, Buffer recibe dos publicaciones. Arreglo: marcar «en curso» antes de llamar a Buffer y rechazar el segundo intento.</p></div></div>
+    <div class="item"><span class="g alta">Alta</span><div><h3>Un despliegue de madrugada deja el día sin mesa, sin aviso</h3>
+      <p>La ejecución diaria se da por hecha al lanzarla. Si la corta un despliegue, no se relanza. Arreglo: apuntar cuándo termina y relanzar si sigue dentro de la ventana; si no, enseñarla como «interrumpida».</p></div></div>
+    <div class="item"><span class="g alta">Alta</span><div><h3>«Proceder» pierde el guion ya pagado si falla el pintado</h3>
+      <p>El guion se guarda después de pintar las diapositivas. Si Chromium falla, se tiran 0,30–0,50 $ de Opus. Arreglo: guardar la versión primero y pintar después.</p></div></div>
+    <div class="item"><span class="g alta">Alta</span><div><h3>Un 429 o un error de Anthropic distinto del 500 tumba la mesa entera</h3>
+      <p>Se escapa como un error que nadie espera y se pierde también la mitad de la mesa que sí había respondido. Arreglo: que el cliente no reintente por su cuenta y convertir cada error en uno de los tipos que ya se manejan.</p></div></div>
+    <div class="item"><span class="g alta">Alta</span><div><h3>Catálogo caído en la mesa diaria</h3>
+      <p>El mismo criterio que ya tiene el fondo: un fallo pasajero no descarta el libro, no se guarda como resultado y no quema la historia una semana. La pieza dice «reintenta».</p></div></div>
+    <div class="item"><span class="g alta">Alta</span><div><h3>Ningún reintento ante 403/429 en Commons, Europeana, Open Library y Google Books</h3>
+      <p>Se para, se recuerda el bloqueo durante toda la ejecución y se avisa.</p></div></div>
+    <div class="item"><span class="g alta">Alta</span><div><h3>El fondo puede repetir un libro en muchas propuestas</h3>
+      <p>Al permitir repetidos se saltaba también el control dentro de la tanda. El jefe del fondo tampoco ve los libros que ya hay en el fondo.</p></div></div>
+    <div class="item"><span class="g media">Media</span><div><h3>Ediciones que se pisan</h3>
+      <p>Una réplica o «Volver a verificar» mientras corre «Proceder» borran el guion recién escrito. Descartar una pieza en marcha queda anulado al terminar. Arreglo: rechazar (409) mientras la pieza se está escribiendo.</p></div></div>
+    <div class="item"><span class="g media">Media</span><div><h3>Seis contradicciones en los prompts</h3>
+      <p>«En Folio llevamos…» en la voz; «cambiar desde el verificador» en el chat; el ejemplo del pie que pide «la fuente de la noticia»; «nada entre comillas salvo una cita del libro», que frena las citas de crítica y prensa; la fecha de hoy para quien propone; y «tres de sus novelas», que hoy la regla del subtítulo rechaza.</p></div></div>
+    <div class="item"><span class="g media">Media</span><div><h3>Temas huérfanos y fondo marcado como usado aunque falle</h3>
+      <p>Un clic repetido o un error deja temas «pendientes» para siempre. Una propuesta del fondo cuya pieza salió fallida ya no se puede reintentar.</p></div></div>
+    <div class="item"><span class="g baja">Baja</span><div><h3>Mensajes engañosos y la Memoria de los lunes</h3>
+      <p>«Ya se está preparando el fondo» cuando en realidad hay tres piezas escribiéndose. La lectura de los lunes corta la Memoria a los 10 minutos y la vuelve a pagar cada 2 horas.</p></div></div>
+  </div>
+
+  <h2>Refactorizaciones de fondo</h2>
+  <p>Cada una quita una familia entera de fallos en vez de parchearlos. Por dentro; la redacción solo nota que las cosas dejan de romperse y que lo largo se sigue con su barra de progreso.</p>
+
+  <div class="refactor">
+    <h3>A · Un solo camino para hablar con servicios externos</h3>
+    <div class="meta"><span>familias 1 y 2</span><span>esfuerzo: medio</span><span>riesgo: bajo, con tests</span></div>
+    <p>Una función común para todas las peticiones, con cuatro respuestas posibles: <b>bloqueo</b> (403/429: se para y se recuerda), <b>pasajero</b> (5xx, red, respuesta rota: reintenta un poco y nunca se guarda como resultado), <b>no existe</b> (404) y <b>definitivo</b>. Lo mismo para Anthropic, y la verificación de libros devuelve «consulta incompleta» en vez de comparar frases.</p>
+    <ul><li>Sustituye 14 maneras distintas de llamar (Open Library, Google Books, Commons, Europeana, cubiertas, catálogo, Magnific, prensa, temas, nevera, RSS).</li>
+      <li>Magnific deja de perder imágenes ya pagadas cuando falla la consulta de estado.</li></ul>
+  </div>
+
+  <div class="refactor">
+    <h3>B · Todo lo largo, como trabajo con estado guardado</h3>
+    <div class="meta"><span>familia 3</span><span>esfuerzo: grande</span><span>riesgo: medio (toca la web)</span></div>
+    <p>Una tabla de trabajos en la base de datos. Temas, réplicas, «Escribir pieza», chat, verificar, descargar y programar devuelven «en marcha» al momento y la página sigue su estado, igual que hoy «Proceder». Un despliegue ya no los pierde: al arrancar, lo que no terminó sale como «interrumpido» y la ejecución diaria se relanza si toca. Y cada versión nueva comprueba que nadie ha guardado otra mientras tanto.</p>
+    <ul><li>Arregla la duplicación en Buffer, las ediciones que se pisan, el estado perdido y los temas huérfanos de una vez.</li>
+      <li>Los avisos de fin de tarea pasan a funcionar también después de un despliegue.</li></ul>
+  </div>
+
+  <div class="refactor">
+    <h3>C · Las reglas de libros, escritas una sola vez</h3>
+    <div class="meta"><span>familia 4</span><span>esfuerzo: pequeño o medio</span><span>riesgo: bajo; necesita una prueba real</span></div>
+    <p>Hoy las reglas de libros están en el código y, copiadas a mano, en seis prompts. Pasan a generarse desde la misma configuración que aplica el código, distinta para cada caso (mesa, tema, fondo, chat): novedad sí o no, castellano, repetidos con la lista de usados, uno o tres libros y la fecha de hoy. Lo mismo para «Tres libros», que hoy está redactado en cinco sitios.</p>
+    <ul><li>Si mañana cambias una regla, cambia para todos los agentes a la vez.</li>
+      <li>«Volver a verificar» recuerda las excepciones que pidió la redacción (repetir, sin castellano).</li></ul>
+  </div>
+
+  <h2>Tres decisiones que son tuyas</h2>
+  <div class="decision"><h3>1. Perfiles en «Tres libros» de la mesa diaria</h3>
+    <p>El jefe propone «los tres libros más sonados» de un autor y el código los descarta porque no son novedad. ¿Los perfiles se libran de la regla de novedad (como ya pasa en los temas y en el fondo), o los quitamos de la mesa diaria y quedan solo para los temas de la redacción?</p></div>
+  <div class="decision"><h3>2. «Libro recomendado» en el fondo del mes</h3>
+    <p>Hay 20 al mes, pero al escribirlos se convierten en un diálogo, y el jefe los propone de memoria, sin pasar por el catálogo de las independientes. ¿Los quitamos del fondo (y repartimos esas 20 entre laterales y diálogos) o los tratamos como su formato con la comprobación del catálogo?</p></div>
+  <div class="decision"><h3>3. Temas «para mañana» con excepciones</h3>
+    <p>«Repetir este libro» y «sin edición en castellano» solo funcionan con «Proponer ahora». En los temas para mañana se pierden y el libro se descarta. ¿Los hacemos valer también para mañana?</p></div>
+
+  <h2>Orden que propongo</h2>
+  <ol class="orden">
+    <li><div><h3>Lo más urgente, ya</h3><p>Los arreglos de la lista de arriba. Pequeños, con un test cada uno, sin coste de API salvo una prueba real de los prompts tocados (~0,20 $).</p></div></li>
+    <li><div><h3>A y C</h3><p>Las dos de riesgo bajo, que se notan en la calidad de la mesa: menos piezas sin libro, menos propuestas descartadas.</p></div></li>
+    <li><div><h3>B</h3><p>La grande, en una sesión aparte y con la web delante, porque cambia cómo se siguen las tareas.</p></div></li>
+  </ol>
+
+  <p class="nota">Lo que está bien: la base de datos (una conexión por hilo, transacciones cortas), las escrituras atómicas de las etapas, los marcadores de los prompts (todos casan con el código), los límites del guion frente a la configuración, y la nevera, la balda y la prensa del libro, que ya degradan por pieza y avisan. Detalle completo de cada defecto, con archivo y línea, en la sesión.</p>
+</main>
