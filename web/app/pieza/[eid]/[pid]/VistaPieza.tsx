@@ -19,6 +19,19 @@ import { useDatos } from "@/lib/useDatos";
 // Vista de pieza en tres columnas: la noticia y sus avisos; el carrusel, con el texto editable sobre la
 // diapositiva; y el chat de edición con la evaluación. En el móvil, una columna: carrusel, chat y
 // evaluación, y la noticia al final.
+function VerificarDeNuevo({ eid, pid, onHecho }: { eid: number; pid: string; onHecho: () => void }) {
+  const [estado, setEstado] = useState<"" | "verificando" | "error">("");
+  return (
+    <span className="flex flex-col items-start gap-1">
+      <button className="boton" disabled={estado === "verificando"}
+              onClick={async () => { setEstado("verificando"); try { await api.verificarDeNuevo(eid, pid); setEstado(""); onHecho(); } catch { setEstado("error"); } }}>
+        {estado === "verificando" ? "Verificando…" : "Volver a verificar los libros →"}
+      </button>
+      {estado === "error" && <span className="text-[13px] text-carmesi">No se pudo verificar ahora. Prueba en un rato.</span>}
+    </span>
+  );
+}
+
 export function VistaPieza() {
   const { eid: eidTexto, pid } = useParams<{ eid: string; pid: string }>();
   const eid = Number(eidTexto);
@@ -132,7 +145,18 @@ export function VistaPieza() {
             <p className="dato">Guion, comprobación de hechos, arte (con retrato 3D si toca), PNG y vídeo · unos minutos y unos 0,30 $</p>
           </div>
         ) : (
-          <p className="text-carmesi">Esta pieza no tiene guion: {d.pieza.error}</p>
+          // Falló sin libro (2/11): los motivos de cada descarte y la forma de reintentar (un catálogo caído de madrugada)
+          <div className="mx-auto flex max-w-[560px] flex-col gap-3">
+            <h2 className="titular text-[28px] leading-tight">{d.pieza.eleccion.titular}</h2>
+            <p className="text-carmesi">{d.pieza.error}</p>
+            {d.pieza.libros_descartados.length > 0 && (
+              <ul className="list-disc pl-5 text-[14px]">
+                {d.pieza.libros_descartados.map((x) => <li key={x.titulo}><i>{x.titulo}</i>, {x.autor}: {x.motivo}</li>)}
+              </ul>
+            )}
+            <VerificarDeNuevo eid={eid} pid={pid} onHecho={cargar} />
+            <p className="dato">Si ningún libro vale, descártala con su motivo o propón el tema de nuevo con el libro que quieras.</p>
+          </div>
         )}
       </section>
 

@@ -74,6 +74,7 @@ export const api = {
     pedir<Nota>(`${pieza(eid, pid)}/notas`, { method: "POST", body: JSON.stringify({ destino, diapositiva, texto }) }),
   borrarNota: (eid: number, pid: string, nid: number) =>
     pedir<{ borrada: number }>(`${pieza(eid, pid)}/notas/${nid}`, { method: "DELETE" }),
+  verificarDeNuevo: (eid: number, pid: string) => pedir<PiezaDetalle>(`${pieza(eid, pid)}/verificar`, { method: "POST" }),
   motivosDescarte: () => pedir<string[]>("/api/motivos-descarte"),
   descartar: (eid: number, pid: string, etiquetas: string[], texto: string) =>
     pedir<Nota | null>(`${pieza(eid, pid)}/descartar`, { method: "POST", body: JSON.stringify({ etiquetas, texto }) }),

@@ -430,7 +430,10 @@ class Pipeline:
                 pieza.avisos.append("Ningún libro candidato se pudo verificar: la pieza sale sin libro")
             return True
         if not libros:
-            pieza.error = "Ningún libro candidato se pudo verificar"
+            # 2/11: dos piezas fallaron de madrugada porque Google Books no respondía; si fue eso, se dice
+            caidos = [d for d in descartes if d.motivo.startswith("no se pudo consultar")]
+            pieza.error = ("No se pudieron consultar los catálogos de libros (" + caidos[0].motivo.removeprefix("no se pudo consultar: ")[:120]
+                           + "): vuelve a verificar los libros más tarde") if caidos else "Ningún libro candidato se pudo verificar"
             return False
         for l in libros:
             if l.edicion_es != "si":

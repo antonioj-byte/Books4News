@@ -209,6 +209,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ejecuciones/{eid}/piezas/{pid}/verificar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verificar De Nuevo
+         * @description Vuelve a verificar los libros candidatos de una pieza que falló sin libro (2/11: dos piezas de la madrugada
+         *     fallaron porque un catálogo no respondía y no había forma de reintentar). Si ahora pasa alguno, la pieza vuelve a
+         *     la mesa pendiente, lista para «Proceder». Las mismas reglas que la mesa (los temas de la redacción, sin novedad).
+         */
+        post: operations["verificar_de_nuevo_api_ejecuciones__eid__piezas__pid__verificar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ejecuciones/{eid}/piezas/{pid}/desarrollo": {
         parameters: {
             query?: never;
@@ -2271,6 +2293,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verificar_de_nuevo_api_ejecuciones__eid__piezas__pid__verificar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PiezaDetalle"];
                 };
             };
             /** @description Validation Error */

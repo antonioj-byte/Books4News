@@ -46,3 +46,17 @@ def test_evaluacion_en_tres_comentarios_y_notas_para_la_memoria(cfg):
     assert fb["2026-11-02-2"]["estado"] == "descartada" and fb["2026-11-02-2"]["notas"][0]["etiquetas"] == ["Puente forzado"]
     nid = c.get(f"{base}/notas").json()[0]["id"]
     assert c.delete(f"{base}/notas/{nid}").status_code == 200 and c.get(f"{base}/notas").json() == []
+
+
+def test_volver_a_verificar_una_pieza_sin_libro(cfg, monkeypatch):
+    """2/11: dos piezas fallaron de madrugada porque un catálogo no respondía; ahora se pueden volver a verificar."""
+    from folio.pipeline import Pipeline
+    from datos import LIBRO
+    c, a = _cliente(cfg)
+    a.cambiar_estado(1, "2026-11-02-2", "fallida")
+    monkeypatch.setattr(Pipeline, "_verificar", lambda self, pieza, reservados: bool(pieza.libros.append(LIBRO)) or True)
+    monkeypatch.setattr(Pipeline, "_cubiertas_de", lambda self, pieza: None)
+    r = c.post("/api/ejecuciones/1/piezas/2026-11-02-2/verificar")
+    assert r.status_code == 200, r.text
+    assert r.json()["pieza"]["estado"] == "pendiente" and r.json()["pieza"]["libros"]
+    assert c.post("/api/ejecuciones/1/piezas/2026-11-02-1/verificar").status_code == 409     # ya escrita

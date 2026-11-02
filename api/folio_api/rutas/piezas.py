@@ -250,6 +250,30 @@ def desarrollar(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     return ctx.ejecutor.estado_desarrollo(pid)
 
 
+@router.post("/api/ejecuciones/{eid}/piezas/{pid}/verificar", response_model=PiezaDetalle)
+def verificar_de_nuevo(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
+    """Vuelve a verificar los libros candidatos de una pieza que falló sin libro (2/11: dos piezas de la madrugada
+    fallaron porque un catálogo no respondía y no había forma de reintentar). Si ahora pasa alguno, la pieza vuelve a
+    la mesa pendiente, lista para «Proceder». Las mismas reglas que la mesa (los temas de la redacción, sin novedad)."""
+    from folio.pipeline import Pipeline
+    p, _ = ctx.pieza(eid, pid)
+    if p.guion or p.estado not in ("fallida", "pendiente"):
+        raise HTTPException(409, "Esta pieza ya tiene libro y guion")
+    nueva = p.model_copy(deep=True)
+    nueva.libros, nueva.libros_descartados, nueva.error = [], [], None
+    tuberia = Pipeline(ctx.cfg, p.fecha)
+    tuberia.sin_novedad = p.historia_id.startswith("tema-")
+    ok = tuberia._verificar(nueva, set())
+    if ok:
+        tuberia._cubiertas_de(nueva)
+        nueva.estado = "pendiente"
+    else:
+        nueva.estado = "fallida"
+    ctx.almacen.guardar_version(eid, pid, nueva, "verificacion", "Libros verificados de nuevo" if ok else "Verificación repetida: sin libro")
+    ctx.almacen.cambiar_estado(eid, pid, nueva.estado)
+    return pieza(eid, pid, ctx)
+
+
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}/desarrollo", response_model=EstadoEjecucion)
 def estado_desarrollo(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
     """Cómo va el «Proceder» de esta pieza (cada pieza tiene su proceso y su registro)."""
