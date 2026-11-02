@@ -482,3 +482,17 @@
   patron: "La historia de Fitzek, propuesta y fallida un día, volvió a la mesa al siguiente: «¿no está un poco caducado? ¿cómo va el filtro de repeticiones?»."
   propuesta: "El filtro de repeticiones cuenta toda historia que llegó a la mesa (escrita, pendiente, fallida o del radar) durante 7 días, no solo las escritas; los libros solo cuentan como usados si la pieza se escribió."
   evidencia: ["Conversación, 2/11: Sebastian Fitzek reenvía su debut con seudónimo, mundo del libro"]
+
+- clave: banda-panoramica-tres-diapositivas
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "«Quiero una ilustración que ocupe las diapos 4, 5 y 6», y el editor no podía; de tres opciones, el usuario eligió la B: «vamos con la B»."
+  propuesta: "Desde el chat o una nota, una banda panorámica a sangre puede cruzar tres diapositivas seguidas (nunca la portada ni el cierre), oscurecida abajo y con el texto en papel en la letra de la idea; en esas tres manda la banda. Nunca en graves."
+  evidencia: ["Conversación, 2/11: pieza de Pavel Durov; Artifact «Banda ilustrada en las diapositivas de texto»"]
+
+- clave: persona-real-en-ilustracion-desde-su-foto
+  fecha: "2026-11-02"
+  destino: director_arte
+  patron: "«Pavel. Foto con licencia a estilo gouache»: que la persona de la noticia aparezca en la ilustración."
+  propuesta: "Una persona real puede ir dentro de una ilustración solo pintada a partir de su foto con licencia libre comprobada (nunca la de prensa, ni una subida, ni desde cero), en el mismo gouache; es obra derivada, la pieza pasa a revisión humana, el pie lleva el crédito de la foto y nunca se hace si su cara ya está en la portada."
+  evidencia: ["Conversación, 2/11: pieza de Pavel Durov"]

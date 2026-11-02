@@ -351,6 +351,11 @@ class Arte(BaseModel):
     escena_idea: str | None = None       # su metáfora, en español, para enseñarla en la web
     friso: str | None = None             # escena del friso de las tres fichas de libro («Tres libros», 2/11)
     friso_idea: str | None = None        # su metáfora, en español
+    # Banda panorámica a sangre sobre tres diapositivas seguidas (2/11, opción B elegida por el usuario en el Artifact
+    # «Banda ilustrada en las diapositivas de texto»): la escena, la primera diapositiva y el crédito para el pie
+    banda: str | None = None
+    banda_desde: int | None = None
+    banda_credito: str | None = None
     pregunta: str | None = None          # la del buscador de la portada (B2)
     # Registro de la imagen de portada, para barajar en el día (31/10): la foto real del autor, su retrato
     # generado con IA, la ilustración editorial o la imagen de archivo

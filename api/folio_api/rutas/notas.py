@@ -42,6 +42,8 @@ def recurso(p: Pieza, n: int) -> str:
             partes.append("con friso")
         elif d.tipo == "idea" and a.infografia:
             partes.append(f"infografía {a.infografia.tipo}")
+        if a.banda and a.banda_desde and a.banda_desde <= n < a.banda_desde + 3:
+            partes.append(f"banda ilustrada {a.banda_desde}–{a.banda_desde + 2}")
         if a.acento:
             partes.append(f"color {a.acento}")
         partes.append(f"tono {a.tono}")

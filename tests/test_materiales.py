@@ -25,7 +25,7 @@ def _png(lado=1200):
 
 def _accion(**k):
     base = dict(tipo="usar_material", enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="",
-                estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", sin_castellano="", editorial="", isbn="")
+                estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", sin_castellano="", editorial="", isbn="", desde=0)
     return edicion.AccionImagen(**{**base, **k})
 
 

@@ -226,7 +226,31 @@ class Plantillas:
             return None
         return {"src": img["src"], "k": de_libro.index(n)}
 
+    def _banda(self, pieza: Pieza, n: int) -> dict | None:
+        """La banda panorámica sobre tres diapositivas seguidas (2/11, opción B): qué tercio le toca a la `n`. Se vuelve
+        a comprobar al pintar: si una edición la deja sobre la portada o el cierre, o fuera del carrusel, no se pinta."""
+        from folio.imagenes import banda
+        a = pieza.arte
+        if not (a and a.banda and a.banda_desde and pieza.guion) or not a.banda_desde <= n < a.banda_desde + 3:
+            return None
+        if banda.diapositivas_validas([x.tipo for x in pieza.guion.diapositivas], a.banda_desde):
+            return None
+        img = self.medios.imagen(pieza, banda.SUFIJO)
+        return {"src": img["src"], "k": n - a.banda_desde} if img else None
+
     def _medios_y_arte(self, pieza: Pieza, d: Diapositiva, n: int) -> dict:
+        datos = self._medios_y_arte_sin_banda(pieza, d, n)
+        banda = self._banda(pieza, n)
+        if banda:
+            # La banda manda en sus tres diapositivas: sin foto propia, cifra, recurso sin foto, infografía ni friso,
+            # y sin vídeo (la imagen tiene que casar en el corte entre una y otra)
+            datos.update(banda=banda, imagen=None, cifra=None, cifra_rotulo=None, sin_foto=None, infografia=None,
+                         panorama=False, friso=None, medios=[], contar=False, video=False, retrato=None)
+        else:
+            datos["banda"] = None
+        return datos
+
+    def _medios_y_arte_sin_banda(self, pieza: Pieza, d: Diapositiva, n: int) -> dict:
         a = pieza.arte
         imagen = self.medios.imagen(pieza)
         libros = ficha_libros(pieza, self.medios.cubierta)

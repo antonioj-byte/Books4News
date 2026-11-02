@@ -38,7 +38,7 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato", "cubierta", "friso", "cambiar_libro"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato", "cubierta", "friso", "banda", "cambiar_libro"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
@@ -48,13 +48,15 @@ class AccionImagen(BaseModel):
                     "formato: destacado del titular, antetítulo o color de la pieza; "
                     "cubierta: la cubierta (y la ficha) de otra edición en castellano de un libro, por su editorial o ISBN; "
                     "friso: dibujar de nuevo (o quitar) la ilustración en banda que cruza las tres fichas de «Tres libros»; "
+                    "banda: una ilustración panorámica a sangre que cruza tres diapositivas seguidas (no la portada ni el cierre), "
+                    "con el texto en blanco encima; puede llevar a una persona real, pintada a partir de su foto libre (o quitarla); "
                     "cambiar_libro: cambiar el libro de la pieza por otro (se verifica) y dejarla lista para reescribirla")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
     consultas: list[str] = Field(description="Solo buscar_archivo: 3 o 4 búsquedas de 1 a 3 palabras, en inglés; si no, vacía")
-    escena: str = Field(description="Solo ilustrar o friso: la escena en inglés, de 12 a 70 palabras, sin nombres propios, cifras ni comillas (en el friso, un paisaje continuo con un motivo por libro de izquierda a derecha; vacía, la escribe el ilustrador; «ninguno», quita el friso); si no, vacío")
-    persona: str = Field(description="Solo buscar_retrato: nombre completo de la persona real (el autor del libro o quien protagoniza la historia); si no, vacío")
+    escena: str = Field(description="Solo ilustrar, friso o banda: la escena en inglés, de 12 a 70 palabras, sin nombres propios, cifras ni comillas (en el friso, un paisaje continuo con un motivo por libro de izquierda a derecha; vacía, la escribe el ilustrador; «ninguno», quita el friso; en la banda, una escena continua con un punto de interés en cada tercio, hasta 95 palabras, y si va una persona real, «the man» o «the woman» sin su nombre; «ninguno», quita la banda); si no, vacío")
+    persona: str = Field(description="Solo buscar_retrato o banda: nombre completo de la persona real (el autor del libro o quien protagoniza la historia); si no, vacío")
     estilo: str = Field(description="Solo retrato_ilustrado: low_poly, voxel, render_2000 o dithering (vacío: el que va con el tono); si no, vacío")
     material: str = Field(description="Solo usar_material: el id del material (la foto subida); si no, vacío")
     como: str = Field(description="Solo usar_material: «portada» (la imagen de la portada) o «retrato» (la foto del autor o protagonista); si no, vacío")
@@ -66,6 +68,7 @@ class AccionImagen(BaseModel):
     sin_castellano: str = Field(description="Solo cambiar_libro: «si» solo si quien edita pide expresamente ese libro aunque no tenga edición en castellano; si no, vacío")
     editorial: str = Field(description="Solo cubierta: la editorial de la edición en castellano que se quiere («Mondadori»); si no, vacío")
     isbn: str = Field(description="Solo cubierta: el ISBN de esa edición, si lo da quien edita; si no, vacío")
+    desde: int = Field(description="Solo banda: la primera de las tres diapositivas seguidas que cruza (la 4 cubre 4, 5 y 6); si no, 0")
 
 
 class RespuestaChat(BaseModel):
@@ -153,6 +156,57 @@ def _retrato_ilustrado(cfg: Config, nueva: Pieza, ar, a: AccionImagen, retrato, 
     if ar.portada == "panorama":
         ar.portada = cfg.pipeline.arte.portadas[0]
     return nueva, f"(Retrato ilustrado en estilo {estilo.replace('_', ' ')}, a partir de la foto libre. Comprueba el parecido.)"
+
+
+def _banda(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
+    """La banda panorámica a sangre sobre tres diapositivas seguidas (2/11, opción B elegida por el usuario). Con una
+    persona real, solo a partir de su foto libre («Pavel. Foto con licencia a estilo gouache»): Commons por Wikidata,
+    nunca la de prensa (la cesión no es para obras derivadas) ni una foto subida; sin foto, no hay cara."""
+    from folio import arte as direccion
+    from folio.imagenes import banda, editorial, friso, libres, retratos
+    if a.escena.strip().lower() in ("ninguno", "ninguna", "quitar", "sin"):
+        if not ar.banda:
+            return None, "(La pieza no lleva banda.)"
+        ar.banda = ar.banda_desde = ar.banda_credito = None
+        return nueva, "(Quitada la banda ilustrada.)"
+    if ar.tono == "grave":
+        return None, "(En piezas graves no va la banda ilustrada.)"
+    if not nueva.guion:
+        return None, "(La pieza aún no tiene guion.)"
+    motivo = banda.diapositivas_validas([d.tipo for d in nueva.guion.diapositivas], a.desde)
+    if motivo:
+        return None, f"(No puedo poner la banda desde la diapositiva {a.desde}: {motivo}.)"
+    persona = " ".join(a.persona.split())
+    prohibidos = editorial.nombres_de_pieza(nueva) | {w.lower() for w in persona.split()}
+    escena, motivo = editorial.validar_escena(a.escena, prohibidos, max_palabras=friso.MAX_PALABRAS)
+    if not escena:
+        return None, f"(La escena de la banda no vale: {motivo}. Escríbela en inglés, sin nombres propios ni cifras.)"
+    foto, credito = None, "generada con IA (Magnific) para Folio"
+    if persona and ar.registro in ("foto_autor", "retrato_ia"):
+        from folio.verificacion_texto import autor_coincide
+        cara = direccion.autor_principal(nueva) or nueva.eleccion.protagonista
+        if cara and autor_coincide(persona, [cara]):
+            return None, (f"(La portada ya lleva la cara de {cara}, y una cara sale una sola vez en la pieza. Cambia antes "
+                          "la portada a la ilustración o al archivo, o pide la banda sin la persona.)")
+    if persona:
+        img, motivo = retratos.buscar_y_fijar(persona, f"{nueva.id}-banda", dir_fecha, cfg.pipeline.arte.retratos_cc_by_sa)
+        if not img or not img.local:
+            return None, (f"(No hay una foto de {persona} con licencia libre: {motivo}. Sin ella no lo pinto: una cara "
+                          "solo se ilustra a partir de una foto con la licencia comprobada.)")
+        foto = (libres.dir_imagenes(dir_fecha) / img.local).read_bytes()
+        credito = (f"generada con IA (Magnific) para Folio a partir de una foto de {persona} ({img.credito}); "
+                   "obra derivada")
+    try:
+        img, descartes = banda.generar_limpio(llm, cfg, nueva.id, dir_fecha, escena, credito, foto)
+    except Exception as exc:
+        return None, f"(No se pudo dibujar la banda: {exc}.)"
+    if not img:
+        return None, f"(La banda salió con {'; '.join(descartes)}: no la pongo. Pide otra.)"
+    ar.banda, ar.banda_desde, ar.banda_credito = escena, a.desde, credito
+    if persona and direccion.AVISO_RETRATO_GENERADO not in nueva.revision_humana:
+        nueva.revision_humana.append(direccion.AVISO_RETRATO_GENERADO)
+    return nueva, (f"(Banda ilustrada en las diapositivas {a.desde}–{a.desde + 2}"
+                   + (f", con {persona} pintado a partir de su foto libre. Comprueba el parecido." if persona else ".") + ")")
 
 
 def _copiar_imagenes(dir_fecha, pid: str) -> dict:
@@ -442,6 +496,8 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return _cubierta(cfg, nueva, a, dir_fecha)
     if a.tipo == "friso":
         return _friso(llm, cfg, nueva, ar, a, dir_fecha)
+    if a.tipo == "banda":
+        return _banda(llm, cfg, nueva, ar, a, dir_fecha)
     if a.tipo == "cambiar_libro":
         return _cambiar_libro(cfg, llm, nueva, a)
     if a.tipo == "encuadre":
