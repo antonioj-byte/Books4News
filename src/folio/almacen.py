@@ -619,8 +619,14 @@ class Almacen:
         with self._transaccion() as db:
             db.execute("UPDATE piezas SET estado = ? WHERE ejecucion_id = ? AND pieza_id = ?", (estado, eid, pid))
 
-    def guardar_version(self, eid: int, pid: str, pieza: Pieza, origen: str, descripcion: str) -> int:
+    def guardar_version(self, eid: int, pid: str, pieza: Pieza, origen: str, descripcion: str,
+                        estado: str | None = None) -> int:
+        """Una versión nueva y, con `estado`, el estado de la pieza en la misma transacción (revisión general, 2/11: en
+        dos pasos, un corte entre ambos dejaba versión y estado sin casar). Una pieza descartada no cambia de estado."""
         with self._transaccion() as db:
+            if estado is not None:
+                db.execute("UPDATE piezas SET estado = ? WHERE ejecucion_id = ? AND pieza_id = ? AND estado != 'descartada'",
+                           (estado, eid, pid))
             n = db.execute("SELECT COALESCE(MAX(n), 0) + 1 FROM versiones WHERE ejecucion_id = ? AND pieza_id = ?",
                                 (eid, pid)).fetchone()[0]
             db.execute("INSERT INTO versiones VALUES (?, ?, ?, ?, ?, ?, ?)",

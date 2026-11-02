@@ -185,28 +185,42 @@ def desarrollar(pieza: str, ejecucion: int = typer.Option(None, help="Por defect
             typer.echo(f"No encuentro la historia {p.historia_id} entre las del día", err=True)
             raise typer.Exit(1)
         al_jefe = [*al_jefe, h]
+    if p.historia_id not in {h.id for h in al_jefe}:
+        # Relanzar el día cambia los ids de las historias: las pendientes de la ejecución anterior ya no las encuentran
+        # (revisión general, 2/11: daba un KeyError con traza)
+        typer.echo("La historia de esta propuesta ya no está entre las del día (se volvió a lanzar la ejecución): "
+                   "escríbela desde la mesa de la ejecución nueva o propón el tema de nuevo", err=True)
+        raise typer.Exit(1)
     otras = [x for x, _ in almacen.piezas(eid) if x.id != pieza]
     tuberia = Pipeline(cfg, fecha)
     tuberia.embedder.liberar = True        # puede haber otros «Proceder» a la vez (2/11): el modelo, solo mientras se usa
     progreso(f"Desarrollando {pieza}")
     hecha = tuberia.desarrollar(p, al_jefe, otras)
     destino = cfg.dir_informes / fecha / "render"
-    if hecha.estado == "propuesta":
-        progreso("Pintando las diapositivas")
-        renderizar(cfg, [hecha], destino)
-        tuberia.historial.anadir_libros(fecha, [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for l in hecha.libros])
-        from folio import cajon
-        if cajon.es_del_cajon(hecha.historia_id):
-            tuberia.historial.anadir_curiosidad(fecha, hecha.historia_id.removeprefix(cajon.PREFIJO))
+    # La versión se guarda antes de pintar: un fallo de Chromium ya no tira el guion pagado (revisión general, 2/11)
     coste = round(sum(t.coste_usd for t in tuberia.llm.trazas), 4)
-    v = almacen.guardar_version(eid, pieza, hecha, "pipeline", f"Desarrollada desde la mesa ({coste} $)")
-    if hecha.estado == "propuesta":
-        from folio.render import marcar_render
-        marcar_render(destino / pieza, eid, v)
-    almacen.cambiar_estado(eid, pieza, hecha.estado)
+    v = almacen.guardar_version(eid, pieza, hecha, "pipeline", f"Desarrollada desde la mesa ({coste} $)", estado=hecha.estado)
+    actual = almacen.pieza(eid, pieza)
+    if actual and actual[0].estado == "descartada":
+        # Se descartó mientras se escribía: no se resucita (revisión general, 2/11)
+        typer.echo(f"{pieza}: se descartó mientras se escribía; queda la versión {v}, descartada")
+        return
     if hecha.estado != "propuesta":
         typer.echo(f"No se pudo escribir: {hecha.error}", err=True)
         raise typer.Exit(1)
+    tuberia.historial.anadir_libros(fecha, [(l.titulo_propuesto, l.autores[0] if l.autores else "", l.olid) for l in hecha.libros])
+    from folio import cajon
+    if cajon.es_del_cajon(hecha.historia_id):
+        tuberia.historial.anadir_curiosidad(fecha, hecha.historia_id.removeprefix(cajon.PREFIJO))
+    progreso("Pintando las diapositivas")
+    try:
+        renderizar(cfg, [hecha], destino)
+    except Exception as exc:
+        typer.echo(f"{pieza}: el guion está guardado (versión {v}), pero no se pudieron pintar las diapositivas "
+                   f"({type(exc).__name__}: {exc}). La web las pinta al abrir la pieza.", err=True)
+        raise typer.Exit(1)
+    from folio.render import marcar_render
+    marcar_render(destino / pieza, eid, v)
     typer.echo(f"{pieza}: versión {v}, {coste} $")
     # La pieza ya está en la mesa con sus PNG (2/11, a petición del usuario: que «Proceder» la enseñe antes); los
     # vídeos, después: la web recarga al ver esta etapa y los enseña cuando estén (render.json ya es de esta versión)
