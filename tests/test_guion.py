@@ -297,8 +297,8 @@ def test_una_balda_de_tres_libros_en_siete_diapositivas_es_valida(cfg):
               LIBRO.model_copy(update={"titulo": "La condición humana", "titulo_propuesto": "La condición humana", "isbn_es": None, "olid": "OL3W"})]
     g = guion_valido(
         diapositivas=[
-            Diapositiva(n=1, tipo="portada", texto="Hannah Arendt, en tres libros",
-                        subtitulo="Eichmann en Jerusalén, Los orígenes del totalitarismo y La condición humana explican por qué vuelve a leerse."),
+            Diapositiva(n=1, tipo="portada", texto="El funcionario que solo firmaba órdenes",
+                        subtitulo="Tres libros de Hannah Arendt explican por qué la obediencia corriente vuelve a juzgarse hoy."),
             Diapositiva(n=2, tipo="actualidad", texto="Un tribunal juzga a un funcionario que firmaba órdenes."),
             Diapositiva(n=3, tipo="libro", texto="En Eichmann en Jerusalén, Arendt vio a un hombre corriente."),
             Diapositiva(n=4, tipo="libro", texto="Los orígenes del totalitarismo explica cómo se fabrica la obediencia."),

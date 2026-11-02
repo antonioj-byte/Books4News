@@ -106,6 +106,35 @@ def linea_hoy(fecha: str) -> str:
     return f"Hoy es {fecha_larga(fecha)}."
 
 
+PAUTAS = {
+    "cita": ("Esta pieza lleva una cita textual destacada: busca una frase verificable del libro, o de la crítica o la "
+             "prensa marcadas, que empuje la idea, e hílala («Como dice…»). Si no tienes ninguna segura, parafrasea: "
+             "nunca inventes una cita para cumplir esta pauta.",
+             "Esta pieza va sin cita destacada: cuenta el libro con tus palabras y atribuye («X sostiene que…»)."),
+    "rompehielos": ("La idea nueva de esta pieza tiene que ser un rompehielos: una frase original y compartible, de las "
+                    "que alguien repite en una cena para abrir conversación; concreta, sorprendente y defendible.",
+                    "La idea nueva de esta pieza puede ser más reposada: no hace falta que sea la frase para repetir en "
+                    "una cena."),
+}
+
+
+def pautas_de_pieza(cfg: Config, pieza_id: str) -> dict[str, bool]:
+    """Qué pautas variables lleva esta pieza (2/11, a petición del usuario: cita textual e idea compartible en un 66 % de
+    las piezas, para romper la aritmética). Sorteo estable por pieza y pauta: relanzarla da lo mismo."""
+    import hashlib
+    salida = {}
+    for nombre, prob in cfg.pipeline.guion.pautas.items():
+        if nombre not in PAUTAS:
+            raise ValueError(f"pauta desconocida en guion.pautas: {nombre}")
+        h = int(hashlib.sha256(f"{pieza_id}:{nombre}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+        salida[nombre] = h < prob
+    return salida
+
+
+def lineas_pautas(pautas: dict[str, bool]) -> str:
+    return "\n".join(PAUTAS[n][0 if si else 1] for n, si in pautas.items())
+
+
 def atributo_publicado(f: FuenteNoticia) -> str:
     return f' publicado="{f.publicado}"' if f.publicado else ""
 
@@ -120,7 +149,8 @@ def instrucciones_formato(cfg: Config, formato: str) -> str:
 
 
 def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
-                     libros: list[LibroVerificado], voz: bool | str = False, fecha: str | None = None) -> str:
+                     libros: list[LibroVerificado], voz: bool | str = False, fecha: str | None = None,
+                     pautas: dict[str, bool] | None = None) -> str:
     fuentes = "\n".join(
         f'<fuente medio="{f.medio}" url="{f.url}" acceso="{f.acceso}"{atributo_publicado(f)}{" critica=\"si\"" if f.critica else ""}{" prensa_del_libro=\"si\"" if f.prensa else ""}>\n{t}\n</fuente>'
         for f, t in textos
@@ -128,6 +158,8 @@ def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[
     noticia = (
         "\n<noticia>\n"
         + (linea_hoy(fecha) + "\n" if fecha else "")
+        + (f"Pautas de esta pieza:\n{lineas_pautas(pautas)}\n"
+           if pautas else "")
         +
         f"Titular: {eleccion.titular}\n"
         f"De qué se está hablando: {eleccion.de_que_se_habla}\n"
@@ -268,6 +300,9 @@ def _palabras_por_diapositiva(c: _Guion) -> list[str]:
     return errores
 
 
+_TRES_LIBROS = re.compile(r"\b(tres|3)\s+(\w+\s+)?(libros|ensayos|novelas|obras|lecturas|titulos|autores|autoras|escritores|escritoras|miradas|puertas)\b")
+
+
 # El libro está desde la portada (titular o subtítulo), entra pronto y protagoniza el cierre.
 def _portada_con_libro(c: _Guion) -> list[str]:
     if c.sin_libro or not c.d or c.d[0].tipo != "portada":
@@ -275,6 +310,13 @@ def _portada_con_libro(c: _Guion) -> list[str]:
     portada = c.d[0]
     if not portada.subtitulo:
         return ["La portada necesita un subtítulo que traiga el libro o a su autor."]
+    if c.formato == "balda" and len(c.libros) >= 3:
+        # 2/11 (a petición del usuario: «tres libros es una patata, no es sticky»): titular de reportaje, que promete una
+        # historia, y el subtítulo anticipa el método: tres libros sobre esa cuestión
+        if not _TRES_LIBROS.search(normalizar(portada.subtitulo)):
+            return ["En «Tres libros», el subtítulo de la portada anticipa el método de la pieza: di que son tres libros "
+                    "(«tres libros», «tres ensayos», «tres novelas»…) sobre la cuestión del titular."]
+        return []
     if not _menciona_libro(f"{portada.texto} {portada.subtitulo}", c.libros):
         return ["Desde la portada tiene que saberse que la pieza va de un libro: nombra el libro o a su autor "
                 "en el titular o en el subtítulo."]
@@ -572,7 +614,8 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
     """
     cfg = llm.cfg
     fuentes = [f for f, _ in textos]
-    prompt = construir_prompt(cfg, eleccion, textos, libros, voz=voz, fecha=fecha_de_pieza(pieza_id))
+    prompt = construir_prompt(cfg, eleccion, textos, libros, voz=voz, fecha=fecha_de_pieza(pieza_id),
+                              pautas=pautas_de_pieza(cfg, pieza_id))
     mensajes = [{"role": "user", "content": con_cache(cfg, "guionista", prompt)}]
     errores: list[str] = []
     avisos: list[str] = []

@@ -129,6 +129,10 @@ guion:
   posicion_max_primer_libro: 3     # el libro entra en la diapositiva 2 o 3
   pie_min_palabras: 80
   pie_max_palabras: 150
+  # 2/11 (a petición del usuario: «que cada pieza contenga una cita textual y una idea original, compartible, que sea un
+  # icebreaker conversacional… en un 66 % de las veces, para que no parezca seriado»). Cada pauta se sortea aparte por
+  # pieza (estable: depende del id), así que hay piezas con las dos, con una o con ninguna.
+  pautas: {cita: 0.66, rompehielos: 0.66}
 
 # Precios de Magnific para el panel de gasto (la API no los devuelve; medidos en su panel el 31/10)
 gasto: {magnific_creditos_imagen: 25, magnific_euros_credito: 0.001, busqueda_web_usd: 0.01}

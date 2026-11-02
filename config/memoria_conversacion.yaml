@@ -291,7 +291,7 @@
   fecha: "2026-11-02"
   destino: guionista
   patron: "«Si vas a citar un libro, intenta meter una cita destacada y compatible»."
-  propuesta: "El guionista intenta que la pieza lleve una cita destacada del libro que sepa textual y que encaje con la idea; sigue verificándose y, si no aparece, parafrasea."
+  propuesta: "En dos de cada tres piezas (sorteo por pieza, ver «pautas-al-66»), el guionista intenta que lleve una cita destacada textual del libro, la crítica o la prensa, hilada con la idea; sigue verificándose y, si no aparece, parafrasea."
   evidencia: ["Conversación, 2/11: petición del usuario"]
 
 - clave: solo-libros-en-castellano
@@ -368,7 +368,7 @@
   fecha: "2026-11-02"
   destino: formatos
   patron: "«Mola que el perfil sea algo así como Gonçalo Tavares, el escritor que lo que sea: un titular de perfil y un contenido de perfil más libros para descubrir al autor»."
-  propuesta: "En «Tres libros», si es un perfil: titular de perfil (el nombre y lo que lo hace único en una aposición, con un rasgo concreto de su obra), la actualidad cuenta quién es, cada libro es una puerta a su mundo, la idea es la obsesión que atraviesa su obra y el cierre dice por cuál empezar."
+  propuesta: "En «Tres libros», si es un perfil: titular de reportaje sobre la persona (una escena o un rasgo concreto de su obra; la aposición «…, el escritor que…» si encaja) y el subtítulo con la percha y los tres libros como método; la actualidad cuenta quién es, cada libro es una puerta a su mundo, la idea es la obsesión que atraviesa su obra y el cierre dice por cuál empezar."
   evidencia: ["Conversación, 2/11: «Gonçalo M. Tavares, Premio Formentor: tres libros para entrar en su Reino»"]
 
 - clave: linea-pro-ia
@@ -544,4 +544,18 @@
   destino: codigo
   patron: "«Estaría bien que cuando dé aceptar, la memoria se regenere.»"
   propuesta: "Una regla aceptada en la Memoria entra al momento en el prompt de su agente (jefe de cultura, guionista o director de arte), sin esperar a una sesión de trabajo; las del programa siguen necesitando código."
+  evidencia: ["Conversación, 2/11"]
+
+- clave: tres-libros-titular-reportaje
+  fecha: "2026-11-02"
+  destino: formatos
+  patron: "«El formato de los tres libros es una patata… no es sticky. Mantén el formato, pero con un titular reportajeado: que dé la sensación de que vamos a asistir a una historia sobre algo, y el subtítulo anticipa el método de la pieza: tres libros que tratan sobre una cuestión en concreto.»"
+  propuesta: "En «Tres libros», el titular promete una historia (una escena, una tensión, un personaje, un dato que pide explicación), nunca «tres libros para entender…»; el subtítulo anticipa el método: son tres libros sobre esa cuestión. El código rechaza el guion si el subtítulo no lo dice."
+  evidencia: ["Conversación, 2/11"]
+
+- clave: pautas-al-66
+  fecha: "2026-11-02"
+  destino: guionista
+  patron: "«Intenta que cada pieza contenga una cita textual y una idea original, compartible, que sea un icebreaker conversacional. Para que no parezca seriado, que estas reglas se apliquen en un 66 % de las veces, de tal forma que se pueda romper la aritmética.»"
+  propuesta: "Cada pieza sortea por separado, con un 66 % cada una, dos pautas: cita textual destacada (verificada; si no hay ninguna segura, se parafrasea) e idea nueva rompehielos (una frase original para repetir en una cena). Hay piezas con las dos, con una o con ninguna."
   evidencia: ["Conversación, 2/11"]
