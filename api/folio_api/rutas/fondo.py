@@ -58,7 +58,8 @@ def _propuesta(x: dict) -> PropuestaDelFondo:
         de_que_se_habla=p.get("de_que_se_habla", ""), gancho_libro=p.get("gancho_libro", ""),
         por_que_dura=p.get("por_que_dura", ""), reactivar=p.get("reactivar", ""), potencial=p.get("potencial", 5),
         puente=(d.get("puente") or [None])[0],
-        libros=[f"{l['titulo_propuesto']} · {', '.join(l['autores'][:2])}" for l in d.get("libros", [])],
+        libros=[f"{l['titulo_propuesto']} · {', '.join(l['autores'][:2])}" for l in d.get("libros", [])]
+               or [f"{c['titulo']} · {c['autor']} (por confirmar: el catálogo no respondió)" for c in d.get("por_verificar", [])[:1]],
         cosecha=f"{c['titular']} ({c['dias']} días, {c['medios']} medios)" if c else "")
 
 

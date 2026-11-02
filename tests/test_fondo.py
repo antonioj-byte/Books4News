@@ -102,3 +102,26 @@ def test_la_web_lista_escribe_y_descarta(cfg, monkeypatch):
     assert a.fondo()[0]["estado"] == "usada" and a.fondo()[0]["tema_id"] == 1
     assert c.post("/api/fondo/1/escribir", json={"ejecucion": 1}).status_code == 409
     assert c.post("/api/fondo/2/descartar").json()["estado"] == "descartada"
+
+
+def test_si_el_catalogo_no_responde_queda_por_confirmar(cfg, monkeypatch):
+    """2/11: Google Books respondía 503 y las propuestas caían por «edición española: desconocido»."""
+    from folio.modelos import LibroDescartado
+    from folio.pipeline import Pipeline
+    monkeypatch.setattr(fondo, "REPARTO_MES", {"lateral": 3})
+    monkeypatch.setattr(Pipeline, "_preverificar", lambda self, e: None)
+    caido = ([], [LibroDescartado(titulo="X", autor="Y", motivo="sin edición en castellano verificada (edición española: desconocido)")])
+    monkeypatch.setattr(Pipeline, "_verificar_libros", lambda self, e, usados: caido)
+    a = Almacen(cfg.ruta_db)
+    llm = LLMFondo(cfg)
+    monkeypatch.setattr(puentes, "evaluar", lambda llm, sel: (sel, {}, []))
+    r = fondo.preparar_tanda(cfg, a, "2026-11-02", llm, n=3)
+    xs = a.fondo(estado="disponible")
+    assert r.guardadas == 3 and all(x["datos"]["por_verificar"] and not x["datos"]["libros"] for x in xs)
+    assert "Eichmann" in fondo.texto_tema(xs[0]) and any("por confirmar" in av for av in r.avisos)
+    # Al reverificar con el catálogo de vuelta, quedan completas; si el libro no está traducido, fuera
+    respuestas = iter([([LIBRO.model_copy()], []), ([], [LibroDescartado(titulo="X", autor="Y", motivo="sin edición en castellano verificada (edición española: no)")]), caido])
+    monkeypatch.setattr(Pipeline, "_verificar_libros", lambda self, e, usados: next(respuestas))
+    avisos = fondo.reverificar(cfg, a, "2026-11-03", llm)
+    assert "1 confirmados, 1 descartados, 1 siguen pendientes" in avisos[0]
+    assert len([x for x in a.fondo(estado="disponible") if x["datos"]["libros"]]) == 1

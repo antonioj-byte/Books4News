@@ -561,6 +561,17 @@ def fondo_preparar(tandas: int = typer.Option(1, help="Cuántas tandas de 25 (el
             break
 
 
+@fondo_app.command("reverificar")
+def fondo_reverificar():
+    """Vuelve a verificar los libros que quedaron por confirmar porque un catálogo no respondió (sin modelo)."""
+    from datetime import date
+    from folio import fondo
+    from folio.almacen import Almacen
+    cfg = config.cargar()
+    for a in fondo.reverificar(cfg, Almacen(cfg.ruta_db), date.today().isoformat()) or ["Nada por confirmar"]:
+        typer.echo(a)
+
+
 @fondo_app.command("lista")
 def fondo_lista(estado: str = typer.Option("disponible", help="disponible, usada, descartada o todas")):
     """Las propuestas del fondo."""

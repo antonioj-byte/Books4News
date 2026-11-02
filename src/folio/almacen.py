@@ -443,8 +443,10 @@ class Almacen:
         return (f[0] or 0) + 1
 
     def actualizar_fondo(self, fid: int, **campos) -> None:
-        if not campos or set(campos) - {"estado", "tema_id"}:
+        if not campos or set(campos) - {"estado", "tema_id", "datos"}:
             raise ValueError(f"campos no válidos: {campos}")
+        if "datos" in campos:
+            campos["datos"] = json.dumps(campos["datos"], ensure_ascii=False)
         with self._transaccion() as db:
             db.execute(f"UPDATE fondo SET {', '.join(f'{k} = ?' for k in campos)} WHERE id = ?", (*campos.values(), fid))
 

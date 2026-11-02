@@ -201,17 +201,17 @@ class ResultadoTanda:
 def preparar_tanda(cfg: Config, almacen, fecha: str, llm: LLM | None = None, n: int = POR_TANDA) -> ResultadoTanda:
     """Una tanda del fondo del mes de `fecha`: cosecha, jefe, puentes y verificación; guarda lo que pasa."""
     from folio import puentes
-    from folio.pipeline import Pipeline
     llm = llm or LLM(cfg)
     mes = fecha[:7]
     del_mes = almacen.fondo(mes=mes)
     reparto = reparto_de_tanda({f: sum(1 for x in del_mes if x["formato"] == f) for f in REPARTO_MES}, n, REPARTO_MES)
     if not reparto:
         return ResultadoTanda(0, 0, [], [f"El fondo de {mes} ya está completo ({len(del_mes)} propuestas)"])
+    avisos_rev = reverificar(cfg, almacen, fecha, llm)
     existentes = almacen.fondo(estado="disponible")
     temas = cosecha(cfg, fecha)
     tanda = proponer(llm, cfg, fecha, reparto, temas, existentes)
-    avisos = [f"Jefe (fondo): {tanda.aviso}"] if tanda.aviso else []
+    avisos = avisos_rev + ([f"Jefe (fondo): {tanda.aviso}"] if tanda.aviso else [])
     base = almacen.siguiente_fondo()
     elegidas = [a_elegida(p, base + i) for i, p in enumerate(tanda.propuestas)]
     por_id = {e.historia_id: p for e, p in zip(elegidas, tanda.propuestas)}
@@ -224,15 +224,26 @@ def preparar_tanda(cfg: Config, almacen, fecha: str, llm: LLM | None = None, n: 
         quedan += sel.elegidas
         notas.update(ns)
         fuera += [a.split("fuera ", 1)[1] for a in av if "fuera «" in a]
-    tuberia = Pipeline(cfg, fecha, llm=llm)
+    tuberia = _tuberia(cfg, fecha, llm)
     tuberia._preverificar(quedan)
-    usados: set[str] = set()
+    # Un libro, en una sola propuesta del fondo; los usados en las piezas de estos días no cuentan (el fondo es para
+    # dentro de semanas: al escribir la propuesta, el tema lo vuelve a comprobar)
+    usados: set[str] = {clave_libro(l["titulo_propuesto"], (l["autores"] or [""])[0])
+                        for x in existentes for l in x["datos"].get("libros", [])}
     guardar = []
+    pendientes = 0
     for e in quedan:
         tuberia.sin_novedad = e.formato == "balda"          # un perfil necesita la obra, no solo novedades
         libros, descartes = tuberia._verificar_libros(e, usados)
         if not libros:
             motivos = "; ".join(f"«{d.titulo}»: {d.motivo}" for d in descartes) or "sin libros"
+            if descartes and _catalogo_caido(descartes[0].motivo):
+                # 2/11: Google Books respondía 503 y 12 de 24 propuestas cayeron por «edición española: desconocido»
+                # con libros que sí están traducidos: se guardan con el libro por confirmar y se reintentan después
+                guardar.append(_entrada(por_id[e.historia_id], fecha, [], notas.get(e.historia_id), temas,
+                                        por_verificar=e.libros_candidatos, motivo=motivos))
+                pendientes += 1
+                continue
             fuera.append(f"«{e.titular}» (ningún libro pasó: {motivos})")
             continue
         primero = e.libros_candidatos[0] if e.libros_candidatos else None
@@ -243,18 +254,67 @@ def preparar_tanda(cfg: Config, almacen, fecha: str, llm: LLM | None = None, n: 
             fuera.append(f"«{e.titular}» (el libro que nombra, «{primero.titulo}», no pasó y la reserva es de otro autor)")
             continue
         usados |= {clave_libro(l.titulo_propuesto, l.autores[0] if l.autores else "") for l in libros}
-        p = por_id[e.historia_id]
-        puente = notas.get(e.historia_id)
-        guardar.append({
-            "formato": p.formato, "titular": p.titular, "cuestion": p.cuestion_de_fondo,
-            "vale_hasta": (date.fromisoformat(fecha) + timedelta(days=30 * max(1, min(3, p.meses)))).isoformat(),
-            "datos": {"propuesta": p.model_dump(), "libros": [l.model_dump(mode="json") for l in libros],
-                      "puente": list(puente) if puente else None,
-                      "cosecha": next(({"titular": t.titular, "dias": len(t.dias), "medios": len(t.medios)}
-                                       for t in temas if t.id == p.historia), None)},
-        })
+        guardar.append(_entrada(por_id[e.historia_id], fecha, libros, notas.get(e.historia_id), temas))
     almacen.guardar_fondo(mes, guardar)
+    if pendientes:
+        avisos.append(f"{pendientes} con el libro por confirmar: un catálogo no respondió; se reintentan en la próxima tanda "
+                      "y al escribirlas")
     return ResultadoTanda(len(guardar), len(tanda.propuestas), fuera, avisos)
+
+
+def _tuberia(cfg: Config, fecha: str, llm: LLM):
+    from folio.pipeline import Pipeline
+    t = Pipeline(cfg, fecha, llm=llm)
+    t.permitir_repetidos = True
+    return t
+
+
+def _catalogo_caido(motivo: str) -> bool:
+    """El libro no se pudo verificar porque un catálogo no respondió, no porque no exista o no esté traducido."""
+    return motivo.startswith("no se pudo consultar") or "edición española: desconocido" in motivo
+
+
+def _entrada(p: PropuestaFondo, fecha: str, libros, puente, temas: list[TemaCosecha],
+             por_verificar: list[LibroCandidato] | None = None, motivo: str = "") -> dict:
+    datos = {"propuesta": p.model_dump(), "libros": [l.model_dump(mode="json") for l in libros],
+             "puente": list(puente) if puente else None,
+             "cosecha": next(({"titular": t.titular, "dias": len(t.dias), "medios": len(t.medios)}
+                              for t in temas if t.id == p.historia), None)}
+    if por_verificar:
+        datos["por_verificar"] = [c.model_dump() for c in por_verificar]
+        datos["motivo"] = motivo
+    return {"formato": p.formato, "titular": p.titular, "cuestion": p.cuestion_de_fondo,
+            "vale_hasta": (date.fromisoformat(fecha) + timedelta(days=30 * max(1, min(3, p.meses)))).isoformat(),
+            "datos": datos}
+
+
+def reverificar(cfg: Config, almacen, fecha: str, llm: LLM | None = None) -> list[str]:
+    """Vuelve a verificar los libros de las propuestas que quedaron por confirmar porque un catálogo no respondió. Las
+    que ya pasan quedan completas; las que fallan por otra razón (sin traducir, inexistente) se descartan."""
+    pendientes = [x for x in almacen.fondo(estado="disponible") if x["datos"].get("por_verificar") and not x["datos"]["libros"]]
+    if not pendientes:
+        return []
+    tuberia = _tuberia(cfg, fecha, llm or LLM(cfg))
+    usados = {clave_libro(l["titulo_propuesto"], (l["autores"] or [""])[0])
+              for x in almacen.fondo(estado="disponible") for l in x["datos"].get("libros", [])}
+    completas = descartadas = 0
+    for x in pendientes:
+        p = PropuestaFondo(**x["datos"]["propuesta"])
+        e = a_elegida(p, x["id"])
+        tuberia.sin_novedad = e.formato == "balda"
+        libros, descartes = tuberia._verificar_libros(e, usados)
+        if libros:
+            usados |= {clave_libro(l.titulo_propuesto, l.autores[0] if l.autores else "") for l in libros}
+            datos = {**x["datos"], "libros": [l.model_dump(mode="json") for l in libros]}
+            datos.pop("por_verificar", None)
+            datos.pop("motivo", None)
+            almacen.actualizar_fondo(x["id"], datos=datos)
+            completas += 1
+        elif descartes and not _catalogo_caido(descartes[0].motivo):
+            almacen.actualizar_fondo(x["id"], estado="descartada")
+            descartadas += 1
+    return [f"Libros por confirmar: {completas} confirmados, {descartadas} descartados, "
+            f"{len(pendientes) - completas - descartadas} siguen pendientes"]
 
 
 def _nombra(e: HistoriaElegida, c: LibroCandidato) -> bool:
@@ -267,7 +327,8 @@ def texto_tema(x: dict) -> str:
     """El texto del tema de la redacción con que se escribe una propuesta del fondo: el jefe lo respeta y busca las
     noticias más recientes del tema."""
     p, libros = x["datos"]["propuesta"], x["datos"]["libros"]
-    libro = "; ".join(f"*{l['titulo_propuesto']}*, de {', '.join(l['autores'][:2])}" for l in libros)
+    libro = "; ".join(f"*{l['titulo_propuesto']}*, de {', '.join(l['autores'][:2])}" for l in libros) or "; ".join(
+        f"*{c['titulo']}*, de {c['autor']}" for c in x["datos"].get("por_verificar", [])[:1])
     return (f"Del fondo del mes ({_NOMBRES.get(p['formato'], p['formato'])}): {p['titular']}. {p['de_que_se_habla']} "
             f"Cuestión de fondo: {p['cuestion_de_fondo']} Gancho: {p['gancho_libro']} Libro: {libro}. "
             "Cuenta lo último que haya pasado sobre el tema, con su fecha.")
@@ -275,5 +336,6 @@ def texto_tema(x: dict) -> str:
 
 def resumen_para_cli(x: dict) -> str:
     p = x["datos"]["propuesta"]
-    libros = ", ".join(l["titulo_propuesto"] for l in x["datos"]["libros"])
+    libros = ", ".join(l["titulo_propuesto"] for l in x["datos"]["libros"]) or "por confirmar: " + ", ".join(
+        c["titulo"] for c in x["datos"].get("por_verificar", [])[:1])
     return f"[{x['id']}] {p['formato']:<11} {p['titular']}  ·  {libros}  ·  hasta {x['vale_hasta']}"
