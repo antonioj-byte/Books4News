@@ -730,7 +730,7 @@ class Pipeline:
         self._guardar_etapa(self.etapas.guardar_piezas, piezas)
         buenas = [p for p in piezas if p.estado == "propuesta"]
         if inicio <= 2 and not self.prueba:
-            self._registrar_historial(buenas, al_jefe, vectores)
+            self._registrar_historial(piezas, buenas, al_jefe, vectores)
         previstas = min(self.cfg.pipeline.seleccion.desarrollar_al_inicio, len(sel.elegidas))
         if self.solo_pieza is None and len(buenas) < previstas:
             self.avisos.append(f"Solo {len(buenas)} piezas escritas de {previstas} previstas")
@@ -739,11 +739,16 @@ class Pipeline:
             self.avisos.append(f"Solo se ha repetido {repetidas}: el coste del informe es solo el de esa etapa")
         return sel, piezas
 
-    def _registrar_historial(self, buenas: list[Pieza], al_jefe: list[Historia], vectores) -> None:
-        """Historias y libros usados hoy, para no repetirlos en los próximos días."""
+    def _registrar_historial(self, piezas: list[Pieza], buenas: list[Pieza], al_jefe: list[Historia], vectores) -> None:
+        """Historias y libros usados hoy, para no repetirlos en los próximos días.
+
+        Cuenta toda historia que ha llegado a la mesa (escrita, pendiente, fallida o del radar), no solo
+        las escritas (2/11: la de Fitzek, fallida un día por falta de libro, volvió a proponerse al
+        siguiente). Los libros, solo los de las piezas escritas."""
         por_id = {h.id: h for h in al_jefe}
-        noticias = [p for p in buenas if not cajon.es_del_cajon(p.historia_id) and not catalogo.es_del_catalogo(p.historia_id)
-                    and not temas.es_tema(p.historia_id) and p.historia_id in por_id]
+        noticias = list({p.historia_id: p for p in piezas
+                         if not cajon.es_del_cajon(p.historia_id) and not catalogo.es_del_catalogo(p.historia_id)
+                         and not temas.es_tema(p.historia_id) and p.historia_id in por_id}.values())
         self.historial.registrar_dia(
             self.fecha,
             [(p.historia_id, p.eleccion.titular, agrupacion.centroide(por_id[p.historia_id], vectores)) for p in noticias],

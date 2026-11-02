@@ -132,6 +132,18 @@ def test_exclusion_de_historias_y_libros_usados(cfg, monkeypatch):
     assert p.historial.libro_usado("2026-10-29", 60, "Eichmann en Jerusalén", "Hannah Arendt", None) is None
 
 
+def test_la_historia_propuesta_y_no_escrita_tampoco_vuelve(cfg, monkeypatch):
+    """Una propuesta que no llegó a escribirse (fallida o pendiente) cuenta como vista: no se repite al día siguiente."""
+    p, _ = _pipeline(cfg, monkeypatch, [], fecha="2026-10-29")  # sin guiones: la pieza falla
+    inf, _ = p.ejecutar()
+    assert all(x.estado != "propuesta" for x in inf.piezas)
+    p2, _ = _pipeline(cfg, monkeypatch, [], fecha="2026-10-30")
+    _, resumidas = p2.historias(_articulos(), _vectores(_articulos()), con_llm=False)
+    assert sum(1 for r in resumidas if r.excluida) == 1
+    # Sus libros no cuentan como usados: no se llegaron a publicar
+    assert p2.historial.libro_usado("2026-10-30", 60, "Eichmann en Jerusalén", "Hannah Arendt", None) is None
+
+
 def test_segunda_pasada_fusiona_grupos_del_mismo_evento():
     """Dos grupos que la primera pasada separa se unen si sus centroides superan el umbral de fusión."""
     ahora = datetime.now(timezone.utc)

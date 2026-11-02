@@ -475,3 +475,10 @@
   patron: "El cierre se quedaba corto (la recomendación a cuerpo de texto y media página vacía); de tres opciones, el usuario eligió la C: «Vamos con la C»."
   propuesta: "El cierre va a tamaño de titular y su final, en cursiva en el color de la pieza (pluma; con marcador, subrayado; en graves, sin color). El director propone el remate_cierre y el código comprueba que es literal, de 2 a 6 palabras y sin cruzar un punto."
   evidencia: ["Conversación, 2/11: Artifact «El cierre del carrusel», ronda 5 de las rondas de mejora del sistema"]
+
+- clave: repeticiones-cuenta-la-mesa
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "La historia de Fitzek, propuesta y fallida un día, volvió a la mesa al siguiente: «¿no está un poco caducado? ¿cómo va el filtro de repeticiones?»."
+  propuesta: "El filtro de repeticiones cuenta toda historia que llegó a la mesa (escrita, pendiente, fallida o del radar) durante 7 días, no solo las escritas; los libros solo cuentan como usados si la pieza se escribió."
+  evidencia: ["Conversación, 2/11: Sebastian Fitzek reenvía su debut con seudónimo, mundo del libro"]

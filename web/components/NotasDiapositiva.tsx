@@ -49,7 +49,7 @@ export function NotasDiapositiva({ eid, pid, n, notas, onCambio, onAplicada }: {
       {abierto ? (
         <div className="flex flex-col gap-2 rounded-[10px] border border-borde bg-panel p-3">
           <textarea id={`nota-${pid}-${n}`} value={texto} onChange={(e) => setTexto(e.target.value)} rows={3}
-                    placeholder="Qué falla o qué funciona en esta diapositiva"
+                    placeholder={destino === "guionista" ? "Qué cambiar del texto de esta diapositiva" : "Qué cambiar de la imagen, la composición o el color de esta diapositiva"}
                     className="resize-none rounded-[8px] border border-borde bg-papel p-2 outline-none focus:border-tinta" />
           <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="A quién va la nota">
             {([["director_arte", "Arte"], ["guionista", "Copy"]] as const).map(([v, t]) => (
@@ -72,9 +72,11 @@ export function NotasDiapositiva({ eid, pid, n, notas, onCambio, onAplicada }: {
           {error && <p className="text-carmesi">{error}</p>}
         </div>
       ) : (
-        <button onClick={() => setAbierto(true)} className="self-center text-tinta-suave underline-offset-2 hover:text-tinta hover:underline">
-          + Comentar esta diapositiva (arte o copy)
-        </button>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="dato">Instrucciones para esta diapositiva:</span>
+          <button onClick={() => { setDestino("director_arte"); setAbierto(true); }} className="boton-suave">Al director de arte</button>
+          <button onClick={() => { setDestino("guionista"); setAbierto(true); }} className="boton-suave">Al copy</button>
+        </div>
       )}
       {respuesta && <p className="rounded-[10px] bg-papel-hondo px-3 py-2"><span className="dato">Editor · </span>{respuesta}</p>}
     </div>
