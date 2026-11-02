@@ -26,7 +26,7 @@ import yaml
 from PIL import Image, ImageDraw, ImageFont
 
 from folio import infografia, sin_foto
-from folio.imagenes import cubiertas, editorial, esquema, friso, ilustracion, libres, prensa, retrato_generado, retratos
+from folio.imagenes import cara, cubiertas, editorial, esquema, friso, ilustracion, libres, prensa, retrato_generado, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
 from folio.modelos import Arte, EleccionIlustracion, EleccionImagen, EscenaFrisoLLM, EscenasLLM, Infografia, Pieza, PropuestaArte
@@ -632,6 +632,52 @@ def _esquema(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
     arte.avisos.append(f"Esquema: {motivo}; {'la infografía pasa a la línea de tiempo' if linea else 'sin infografía'}")
 
 
+def noticia_tiene_imagen(arte: Arte, hay_retrato: bool) -> bool:
+    """Si la diapositiva de la noticia sale con una imagen (foto o ilustración): la panorámica de la portada, la imagen
+    de archivo cuando la portada lleva la cara, o la segunda de archivo cuando la portada lleva la primera."""
+    if arte.portada == "panorama" and arte.imagen:
+        return True
+    if hay_retrato and arte.registro in ("foto_autor", "retrato_ia"):
+        return bool(arte.imagen) or bool(arte.imagen_noticia)
+    return bool(arte.imagen_noticia)
+
+
+def _noticia_con_imagen(llm: LLM, cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte, dir_fecha: Path) -> None:
+    """La diapositiva de la noticia (la 2 o la 3) no se queda solo con texto (2/11, regla aceptada en la Memoria: «las
+    primeras diapositivas tras la portada quedan solo con texto, y la persona pide a mano que se meta una ilustración»):
+    si no tiene foto ni ilustración, se le dibuja una ilustración editorial (<pieza>-noticia). Nunca en graves ni con
+    víctimas; con el tope del día de la ilustración; si no se puede, queda como estaba, con su aviso."""
+    if not any(d.tipo == "actualidad" for d in pieza.guion.diapositivas[1:3]):
+        return
+    hay_retrato = bool(libres.de_pieza(f"{pieza.id}-retrato", dir_fecha))
+    if arte.cifra or noticia_tiene_imagen(arte, hay_retrato):
+        return          # la cifra destacada ocupa la diapositiva (la plantilla no pinta foto con cifra)
+    ie = cfg.pipeline.arte.ilustracion_editorial
+    if arte.tono == "grave" or propuesta.suceso_con_victimas:
+        return
+    if not ie.activo:
+        arte.avisos.append("La noticia sale sin imagen: la ilustración editorial está desactivada")
+        return
+    if _del_dia(editorial.del_dia, cfg, pieza, dir_fecha) >= ie.max_por_dia:
+        arte.avisos.append(f"La noticia sale sin imagen: ya hay {ie.max_por_dia} ilustraciones hoy")
+        return
+    escenas = _escenas(llm, cfg, pieza, None, 1)
+    if not escenas:
+        arte.avisos.append("La noticia sale sin imagen: el ilustrador no propuso una escena válida")
+        return
+    escena, idea = escenas[0]
+    try:
+        img, descartes = editorial.generar_limpia(llm, cfg, f"{pieza.id}{SUFIJO_NOTICIA}", dir_fecha, escena)
+    except Exception as exc:
+        arte.avisos.append(f"La noticia sale sin imagen: no se pudo dibujar ({exc})")
+        return
+    if not img:
+        arte.avisos.append(f"La noticia sale sin imagen: la ilustración salió con {'; '.join(descartes)}")
+        return
+    arte.imagen_noticia, arte.credito_noticia = img.archivo, img.credito
+    arte.avisos.append(f"Ilustración para la noticia (no tenía imagen){': ' + idea if idea else ''}")
+
+
 def _cubiertas(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> None:
     """Deja las cubiertas en la caché: el render y la vista previa de la web las leen de ahí."""
     for libro in pieza.libros:
@@ -682,7 +728,13 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
             arte.registro = "retrato_ia"
     if arte.registro == "archivo" and not arte.imagen:
         arte.registro = None
+    _noticia_con_imagen(llm, cfg, pieza, propuesta, arte, dir_fecha)
     _esquema(cfg, pieza, arte, dir_fecha)
     _friso(llm, cfg, pieza, arte, dir_fecha)
     _cubiertas(cfg, pieza, arte, dir_fecha)
+    # El retrato, encuadrado en la cara (2/11, regla de la Memoria: «solo queda la frente»)
+    if cfg.pipeline.arte.retratos:
+        aviso = cara.encuadrar(llm, cfg, f"{pieza.id}-retrato", dir_fecha)
+        if aviso:
+            arte.avisos.append(aviso)
     return arte

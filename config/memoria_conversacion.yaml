@@ -531,3 +531,10 @@
   patron: "«Cuando se hable de libros: explicar la tesis principal; compartir una cita destacada e hilarla con el discurso general (como dice X); usar el descriptivo de la editorial.»"
   propuesta: "Al hablar de un libro: su tesis en una frase; descripción parafraseando la sinopsis de la editorial (que llega con la ficha), sin impresiones de lectura inventadas; y la cita destacada, solo verificada, hilada con la idea («Como dice…»)."
   evidencia: ["Conversación, 2/11"]
+
+- clave: avisos-fin-de-tarea
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«¿Puedes poner un sistema de notificaciones que permita ver en el navegador cuando una tarea se ha acabado?»"
+  propuesta: "La web avisa en todas sus páginas (y con una notificación del sistema si se da permiso) cuando acaba un trabajo en segundo plano: la ejecución del día, un «Proceder», una tanda del fondo o el análisis de la Memoria."
+  evidencia: ["Conversación, 2/11: tanda del fondo en marcha"]

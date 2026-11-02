@@ -266,6 +266,9 @@ class Plantillas:
             # La imagen de archivo ya va en la portada: la noticia lleva la segunda, distinta, o ninguna (y entonces
             # la cifra o un recurso sin foto). Regla del usuario, 1/11: no se repite imagen de archivo.
             imagen = self.medios.imagen(pieza, "-noticia")
+        elif d.tipo == "actualidad" and not imagen:
+            # Sin imagen de archivo: la ilustración que se le dibujó a la noticia, si la hay (2/11, regla de la Memoria)
+            imagen = self.medios.imagen(pieza, "-noticia")
         if d.tipo == "portada" and cara_en_portada:
             imagen = retrato        # la cara del autor manda en la portada (salvo en la panorámica o si se eligió el archivo)
         estilo, svg = self.medios.portada(pieza, imagen)

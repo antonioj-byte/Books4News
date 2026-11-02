@@ -214,7 +214,7 @@ def test_desde_hechos_reutiliza_los_guiones(cfg, monkeypatch):
     p2, llm2 = _pipeline(cfg, monkeypatch, [], fecha="2026-10-29")  # sin guiones: no puede escribir ninguno
     inf, _ = p2.ejecutar(desde="hechos")
     assert inf.piezas[0].guion and inf.piezas[0].hechos
-    assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["hechos", "arte"]
+    assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["hechos", "arte", "escena"]   # la noticia sin imagen pide una ilustración (2/11)
     assert inf.piezas[0].arte.recurso == "grabado" and any("Sin imagen" in a for a in inf.piezas[0].arte.avisos)
 
 
@@ -223,7 +223,7 @@ def test_desde_arte_no_repite_los_hechos(cfg, monkeypatch):
     p.ejecutar()
     p2, llm2 = _pipeline(cfg, monkeypatch, [], fecha="2026-10-29")
     inf, _ = p2.ejecutar(desde="arte")
-    assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["arte"]
+    assert [paso.split(":")[0] for paso, _ in llm2.llamadas] == ["arte", "escena"]
     assert inf.piezas[0].hechos                      # los de la ejecución anterior, guardados con la pieza
 
 

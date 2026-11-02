@@ -389,6 +389,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/trabajos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Trabajos
+         * @description Los trabajos en segundo plano de esta sesión de la API (la web avisa cuando acaba cada uno).
+         */
+        get: operations["trabajos_api_trabajos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/fondo": {
         parameters: {
             query?: never;
@@ -1180,6 +1200,11 @@ export interface components {
              * @description Texto de 80–150 palabras, con fuente de la noticia
              */
             pie_instagram: string;
+            /**
+             * Titulares Alternativos
+             * @description Cinco titulares de portada alternativos al de la diapositiva 1, con ángulos distintos, de 12 palabras como máximo cada uno y sin acabar en pregunta
+             */
+            titulares_alternativos: string[];
             /** Libros */
             libros: components["schemas"]["LibroGuion"][];
             /**
@@ -1988,6 +2013,30 @@ export interface components {
             /** Ejecucion */
             ejecucion?: number | null;
         };
+        /**
+         * Trabajo
+         * @description Un trabajo en segundo plano, para los avisos del navegador (2/11, a petición del usuario: «un sistema de
+         *     notificaciones que permita ver en el navegador cuando una tarea se ha acabado»).
+         */
+        Trabajo: {
+            /** Clave */
+            clave: string;
+            /** Nombre */
+            nombre: string;
+            /** En Marcha */
+            en_marcha: boolean;
+            /** Codigo */
+            codigo: number | null;
+            /** Inicio */
+            inicio: string | null;
+            /** Fin */
+            fin: string | null;
+            /**
+             * Ultima Linea
+             * @default
+             */
+            ultima_linea: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -2749,6 +2798,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstadoProgramada"];
+                };
+            };
+        };
+    };
+    trabajos_api_trabajos_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Trabajo"][];
                 };
             };
         };

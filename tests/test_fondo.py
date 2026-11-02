@@ -66,8 +66,8 @@ def test_una_tanda_filtra_puentes_y_verifica_libros(cfg, monkeypatch):
     a = Almacen(cfg.ruta_db)
     llm = LLMFondo(cfg)
     r = fondo.preparar_tanda(cfg, a, "2026-11-02", llm, n=7)
-    # Dos llamadas al jefe (6 + 1), una al evaluador; la primera propuesta tiene puente 2 y se queda fuera
-    assert [p for p in llm.llamadas if p.startswith("fondo")] == ["fondo:2026-11-02:0", "fondo:2026-11-02:6"]
+    # Dos llamadas al jefe (5 + 2), una al evaluador; la primera propuesta tiene puente 2 y se queda fuera
+    assert [p for p in llm.llamadas if p.startswith("fondo")] == ["fondo:2026-11-02:0", "fondo:2026-11-02:5"]
     assert r.pedidas == 7 and r.guardadas == 6 and len(r.fuera) == 1
     xs = a.fondo(mes="2026-11")
     assert len(xs) == 6 and xs[0]["vale_hasta"] == "2027-01-31" and xs[0]["datos"]["libros"][0]["titulo_propuesto"]

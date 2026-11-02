@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TypeVar
 
 import anthropic
+import pydantic
 from pydantic import BaseModel
 
 from folio.config import Config
@@ -214,6 +215,11 @@ class LLM:
             causa = exc.__cause__
             raise ErrorLLM(f"{paso}: no se pudo conectar con la API de Anthropic ({type(causa).__name__ if causa else 'sin causa'}: "
                            f"{causa})") from exc
+        except pydantic.ValidationError as exc:
+            # 2/11: el SDK valida al recibir y, si la respuesta llega cortada (JSON sin cerrar), lanza ValidationError en
+            # vez de dejarla en stop_reason «max_tokens»; tumbaba la tanda del fondo entera. Es un fallo del modelo.
+            raise ErrorLLM(f"{paso}: la respuesta llegó incompleta o no valida contra {esquema.__name__} "
+                           f"({str(exc).splitlines()[1][:160] if len(str(exc).splitlines()) > 1 else exc})") from exc
         return self._procesar(paso, modelo, resp, esquema, ruta_cache, time.monotonic() - inicio)
 
     def _llamar(self, modelo, max_tokens, mensajes, esquema, esfuerzo, extra):

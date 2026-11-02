@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Isotipo } from "@/components/Isotipo";
 import "./globals.css";
+import { Avisos } from "@/components/Avisos";
 
 export const metadata: Metadata = {
   title: "Folio · Mesa de edición",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </nav>
         </header>
         <main className="flex-1">{children}</main>
+        <Avisos />
       </body>
     </html>
   );

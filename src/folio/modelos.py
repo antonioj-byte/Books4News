@@ -172,6 +172,8 @@ class GuionLLM(BaseModel):
         description="Solo si usas más de 5 diapositivas: una línea por cada diapositiva extra con lo que aporta",
     )
     pie_instagram: str = Field(description="Texto de 80–150 palabras, con fuente de la noticia")
+    # 2/11, regla aceptada en la Memoria: la redacción pedía al chat «dame cinco titulares alternativos» en cada pieza
+    titulares_alternativos: list[str] = Field(default_factory=list, description="Cinco titulares de portada alternativos al de la diapositiva 1, con ángulos distintos, de 12 palabras como máximo cada uno y sin acabar en pregunta")
     libros: list[LibroGuion]
     fuentes_noticia: list[str] = Field(description="medio + URL")
 

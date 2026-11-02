@@ -149,7 +149,7 @@ _NOMBRES = {"lateral": "lectura lateral", "dialogo": "diálogo con la actualidad
             "recomendado": "libro recomendado", "edicion": "mundo del libro"}
 
 
-POR_LLAMADA = 6                       # 25, y aun 8 con esfuerzo alto, no caben en 21.000 tokens (probado el 2/11)
+POR_LLAMADA = 5                       # 25, y aun 8 con esfuerzo alto, no caben en 21.000 tokens (probado el 2/11)
 
 
 def proponer(llm: LLM, cfg: Config, fecha: str, reparto: dict[str, int], temas: list[TemaCosecha],
@@ -157,6 +157,7 @@ def proponer(llm: LLM, cfg: Config, fecha: str, reparto: dict[str, int], temas: 
     """La tanda, en llamadas de `POR_LLAMADA` propuestas; cada una ve las anteriores para no repetirlas."""
     from folio.seleccion import criterios
     propuestas, avisos = [], []
+    fallos = 0
     ya = list(existentes)
     pendiente = dict(reparto)
     while sum(pendiente.values()) > 0:
@@ -169,10 +170,13 @@ def proponer(llm: LLM, cfg: Config, fecha: str, reparto: dict[str, int], temas: 
             r, _ = llm.estructurado(f"fondo:{fecha}:{len(propuestas)}", [{"role": "user", "content": prompt}], TandaFondo,
                                     etapa_modelo="fondo", max_tokens=21000)
         except ErrorLLM as exc:
-            if not propuestas:
-                raise
-            avisos.append(f"una llamada falló ({exc}); la tanda se queda con {len(propuestas)}")
-            break
+            # 2/11: una respuesta cortada tumbaba la tanda entera; ahora se salta ese trozo y se sigue con el resto
+            avisos.append(f"una llamada falló ({str(exc)[:200]}); se sigue con el resto")
+            fallos += 1
+            for f, k in trozo.items():
+                pendiente[f] -= k
+            pendiente = {f: k for f, k in pendiente.items() if k > 0}
+            continue
         propuestas += r.propuestas
         if r.aviso:
             avisos.append(r.aviso)
@@ -180,6 +184,8 @@ def proponer(llm: LLM, cfg: Config, fecha: str, reparto: dict[str, int], temas: 
         for f, k in trozo.items():
             pendiente[f] -= k
         pendiente = {f: k for f, k in pendiente.items() if k > 0}
+    if not propuestas and fallos:
+        raise ErrorLLM("todas las llamadas al jefe fallaron: " + " | ".join(avisos))
     return TandaFondo(propuestas=propuestas, aviso=" ".join(avisos) or None)
 
 

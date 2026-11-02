@@ -210,6 +210,14 @@ def _banda(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha) 
                    + (f", con {persona} pintado a partir de su foto libre. Comprueba el parecido." if persona else ".") + ")")
 
 
+def _encuadrada(llm, cfg: Config, pid: str, dir_fecha, resultado: tuple[Pieza | None, str]) -> tuple[Pieza | None, str]:
+    """Tras poner un retrato, lo encuadra en la cara (2/11, regla de la Memoria: «solo queda la frente»)."""
+    if resultado[0] is not None:
+        from folio.imagenes import cara
+        cara.encuadrar(llm, cfg, f"{pid}-retrato", dir_fecha)
+    return resultado
+
+
 def _copiar_imagenes(dir_fecha, pid: str) -> dict:
     from folio.imagenes import libres
     carpeta = libres.dir_imagenes(dir_fecha)
@@ -264,6 +272,8 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
         if not errores:
             nueva = p.model_copy(deep=True)
             nueva.guion = r.guion
+            if not nueva.guion.titulares_alternativos and p.guion:      # el chat no los rehace: se quedan los del guion
+                nueva.guion.titulares_alternativos = p.guion.titulares_alternativos
             nueva.discrepancias_edicion = guionista.ajustar_libros(nueva.guion, nueva.libros)
             nueva.revisar_edicion = bool(nueva.discrepancias_edicion)
             if AVISO_CHAT not in nueva.revision_humana:
@@ -559,12 +569,13 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
             ar.portada = cfg.pipeline.arte.portadas[0]
         return nueva, f"(Nueva imagen de archivo: {ar.credito}.)"
     if a.tipo == "buscar_retrato":
-        return _buscar_retrato(cfg, p, nueva, ar, a, dir_fecha)
+        return _encuadrada(llm, cfg, nueva.id, dir_fecha, _buscar_retrato(cfg, p, nueva, ar, a, dir_fecha))
     if a.tipo == "retrato_ilustrado":
-        return _retrato_ilustrado(cfg, nueva, ar, a, retrato, dir_fecha)
+        return _encuadrada(llm, cfg, nueva.id, dir_fecha, _retrato_ilustrado(cfg, nueva, ar, a, retrato, dir_fecha))
     if a.tipo == "usar_material":
         from folio import materiales
-        return materiales.usar(cfg, p, nueva, ar, a.material, a.como, a.libro)
+        r = materiales.usar(cfg, p, nueva, ar, a.material, a.como, a.libro)
+        return _encuadrada(llm, cfg, nueva.id, dir_fecha, r) if a.como.strip().lower() == "retrato" else r
     if a.tipo == "ilustrar":
         escena, motivo = editorial.validar_escena(a.escena, editorial.nombres_de_pieza(p))
         ie = cfg.pipeline.arte.ilustracion_editorial

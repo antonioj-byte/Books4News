@@ -24,6 +24,21 @@ class EstadoEjecucion(BaseModel):
     ultimas_lineas: list[str] = []
 
 
+class Trabajo(BaseModel):
+    """Un trabajo en segundo plano, para los avisos del navegador (2/11, a petición del usuario: «un sistema de
+    notificaciones que permita ver en el navegador cuando una tarea se ha acabado»)."""
+    clave: str                         # «diaria», «fondo-del-mes», «memoria-analisis» o el id de la pieza
+    nombre: str                        # cómo se enseña: «Tanda del fondo», «Pieza 2026-11-02-3»…
+    en_marcha: bool
+    codigo: int | None = None
+    inicio: str | None = None
+    fin: str | None = None
+    ultima_linea: str = ""
+
+
+NOMBRES_TRABAJO = {"diaria": "Ejecución del día", "fondo-del-mes": "Tanda del fondo del mes",
+                   "memoria-analisis": "Análisis de la memoria"}
+
 MAX_DESARROLLOS = 3                    # «Proceder» a la vez (2/11): cada uno es un proceso aparte
 
 
@@ -144,6 +159,16 @@ class Ejecutor:
     def estado_desarrollo(self, pid: str) -> EstadoEjecucion | None:
         t = self._desarrollos.get(pid)
         return t.estado() if t else None
+
+    def trabajos(self) -> list[Trabajo]:
+        """La ejecución del día y los trabajos aparte («Proceder», fondo, memoria) de esta sesión de la API."""
+        def de(clave: str, t: _Trabajo) -> Trabajo:
+            e = t.estado()
+            nombre = NOMBRES_TRABAJO.get(clave) or f"Pieza {clave} escrita («Proceder»)"
+            return Trabajo(clave=clave, nombre=nombre, en_marcha=e.en_marcha, codigo=e.codigo, inicio=e.inicio, fin=e.fin,
+                           ultima_linea=(e.ultimas_lineas or [""])[-1][:200])
+        out = [de("diaria", self._trabajo)] if self._trabajo else []
+        return out + [de(k, t) for k, t in self._desarrollos.items()]
 
     def con_pipeline(self) -> bool:
         """Si lo que corre ahora es el pipeline del día (`folio run`), que reescribe las historias del día. Proceder,

@@ -23,6 +23,7 @@ export type EstadoMemoria = components["schemas"]["EstadoMemoria"];
 export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" };
 export type EstadoBuffer = components["schemas"]["EstadoBuffer"];
 export type Fondo = components["schemas"]["Fondo"];
+export type Trabajo = components["schemas"]["Trabajo"];
 export type PropuestaDelFondo = components["schemas"]["PropuestaDelFondo"];
 
 async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
@@ -67,6 +68,7 @@ export const api = {
     pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),
   chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),
   temas: () => pedir<Tema[]>("/api/temas"),
+  trabajos: () => pedir<Trabajo[]>("/api/trabajos"),
   // El fondo del mes (2/11)
   fondo: () => pedir<Fondo>("/api/fondo"),
   escribirDelFondo: (id: number, ejecucion: number) =>

@@ -55,6 +55,7 @@ class ImagenLibre:
     enfoque: tuple[int, int] = (50, 50)   # punto de interés en %, para recortar sin cortarlo
     generado: dict | None = None          # retrato generado con IA a partir de esta foto (folio.imagenes.retrato_generado)
     persona: str | None = None            # en un retrato, el autor retratado (para no ponerlo junto al libro de otro)
+    cara: tuple[int, int, int, int] | None = None   # caja de la cara en % (x0, y0, x1, y1), si se detectó (folio.imagenes.cara)
 
     @property
     def credito(self) -> str:

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Carrusel } from "@/components/Carrusel";
 import { Descartar } from "@/components/Descartar";
 import { NotasDiapositiva } from "@/components/NotasDiapositiva";
+import { TitularesAlternativos } from "@/components/TitularesAlternativos";
 import { ChatEdicion } from "@/components/ChatEdicion";
 import { FormEvaluacion } from "@/components/FormEvaluacion";
 import { EstadoChip, FormatoChip } from "@/components/Marcas";
@@ -99,7 +100,11 @@ export function VistaPieza() {
                         cargar();
                       }}
                       marcadas={[...new Set((notas ?? []).filter((x) => x.tipo === "diapositiva").map((x) => x.diapositiva ?? 0))]}
-                      extra={(n) => <NotasDiapositiva eid={eid} pid={pid} n={n} notas={notas ?? []} onCambio={recargarNotas} onAplicada={cargar} />} />
+                      extra={(n) => <>
+                        {n === 1 && g && <TitularesAlternativos eid={eid} pid={pid} titulares={g.titulares_alternativos ?? []}
+                                                                subtitulo={g.diapositivas[0]?.subtitulo} actual={g.diapositivas[0]?.texto ?? ""} onCambio={cargar} />}
+                        <NotasDiapositiva eid={eid} pid={pid} n={n} notas={notas ?? []} onCambio={recargarNotas} onAplicada={cargar} />
+                      </>} />
             <p className="mt-3 text-center">
               <a href={api.urlDescarga(eid, pid)} download className="boton-suave">Descargar el carrusel (.zip)</a>
               <span className="dato mt-2 block sm:ml-2 sm:mt-0 sm:inline">JPEG, vídeo de portada y pie · tarda hasta un minuto</span>

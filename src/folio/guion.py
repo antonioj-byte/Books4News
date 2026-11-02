@@ -548,6 +548,19 @@ def _verificar_citas(g: GuionLLM, libros: list[LibroVerificado], verificar_cita,
     return ya
 
 
+def _con_alternativos(g: GuionLLM) -> GuionLLM:
+    """Los titulares alternativos que valen: hasta cinco, de 12 palabras como máximo, sin pregunta ni repetir el titular."""
+    titular = normalizar(g.diapositivas[0].texto) if g.diapositivas else ""
+    vistos, buenos = {titular}, []
+    for t in g.titulares_alternativos:
+        t = " ".join(t.split()).strip()
+        if t and len(t.split()) <= 12 and not t.endswith("?") and normalizar(t) not in vistos:
+            vistos.add(normalizar(t))
+            buenos.append(t)
+    g.titulares_alternativos = buenos[:5]
+    return g
+
+
 def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
              libros: list[LibroVerificado], verificar_cita=None, voz: bool | str = False) -> tuple[GuionLLM, list[str], list[CitaVerificada]]:
     """Devuelve (guion validado, avisos, citas verificadas). Lanza ValueError si no pasa la validación.
@@ -595,7 +608,7 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
             if not problemas:
                 if intento:
                     avisos.append(f"Guion aceptado en el intento {intento + 1}")
-                return aceptado[0], avisos, aceptado[1]
+                return _con_alternativos(aceptado[0]), avisos, aceptado[1]
             respaldo = aceptado
             avisos.append("Lector sin contexto: " + " | ".join(problemas))
             mensajes += [
@@ -612,7 +625,7 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
             # La reescritura para el lector sin contexto rompió alguna regla: vale la versión que las cumplía
             avisos.append(f"Lector sin contexto: la reescritura no cumplía las reglas ({' | '.join(errores)}); "
                           "se queda la versión anterior")
-            return respaldo[0], avisos, respaldo[1]
+            return _con_alternativos(respaldo[0]), avisos, respaldo[1]
         # Se registra por qué se rechaza cada intento: es lo que permite saber qué reglas
         # provocan los reintentos y si conviene reforzarlas en el prompt.
         avisos.append(f"Rechazado en el intento {intento + 1}: " + " | ".join(errores))

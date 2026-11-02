@@ -146,3 +146,22 @@ def test_con_hasta_cero_el_punto_se_queda_en_el_primer_mensaje():
     m = [{"role": "user", "content": "datos"}, {"role": "assistant", "content": "{}"}, {"role": "user", "content": "Corrígelo"}]
     marcados = cache_al_final(m, hasta=0)
     assert marcados[0]["content"][-1]["cache_control"] == {"type": "ephemeral"} and marcados[1:] == m[1:]
+
+
+def test_respuesta_cortada_es_error_del_modelo(cfg, monkeypatch):
+    """2/11: el SDK lanza ValidationError con un JSON sin cerrar; tiene que llegar como ErrorLLM (la tanda del fondo
+    se queda con lo que ya tenía en vez de caerse entera)."""
+    import pydantic
+    import pytest
+    from pydantic import BaseModel
+    from folio.llm import LLM, ErrorLLM
+
+    class Esquema(BaseModel):
+        x: str
+
+    def cortada(*a, **k):
+        Esquema.model_validate_json('{"x": "sin cerr')
+    llm = LLM(cfg, cliente=object())
+    monkeypatch.setattr(llm, "_llamar", cortada)
+    with pytest.raises(ErrorLLM, match="incompleta"):
+        llm.estructurado("prueba", [{"role": "user", "content": "hola"}], Esquema, etapa_modelo="arte")
