@@ -616,6 +616,15 @@ def memoria_analizar(dias: int = typer.Option(14, help="Días de feedback que se
         if not toca:
             typer.echo(f"Memoria: no toca el análisis semanal ({motivo})")
             return
+        # Una vez al día como mucho: si la lectura periódica lo corta a los 10 minutos, no se vuelve a pagar en cada
+        # vuelta de dos horas (revisión general, 2/11). Como la nevera, se marca al empezar.
+        intento = cfg.dir_datos / "memoria_intento.txt"
+        hoy = date.today().isoformat()
+        if intento.exists() and intento.read_text(encoding="utf-8").strip() == hoy:
+            typer.echo("Memoria: el análisis semanal ya se intentó hoy")
+            return
+        intento.parent.mkdir(parents=True, exist_ok=True)
+        intento.write_text(hoy, encoding="utf-8")
         typer.echo(f"Memoria: análisis semanal ({motivo})")
     llm = LLM(cfg)
     try:

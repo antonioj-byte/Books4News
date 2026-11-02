@@ -566,3 +566,24 @@
   patron: "«wtf» (la pieza de Telegram se quedó sin libro: sus dos candidatos, Applebaum y Da Empoli, ya se habían usado)."
   propuesta: "El jefe de cultura, el editor del libro y la balda reciben la lista de libros usados en los últimos 60 días y no los proponen, ni de reserva, salvo que la redacción pida expresamente repetir."
   evidencia: ["Conversación, 2/11: pieza 2026-11-02-7"]
+
+- clave: perfiles-sin-novedad
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«Libramos los perfiles» (revisión general: la mesa pedía la obra clásica de un autor y el código la descartaba por no ser novedad)."
+  propuesta: "«Tres libros» no exige novedad en la mesa diaria: un perfil necesita la obra del autor, aunque no sea reciente."
+  evidencia: ["Conversación, 2/11: revisión general, decisión 1"]
+
+- clave: recomendado-del-fondo-independiente
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«Los arreglamos» (el libro recomendado del fondo se escribía como diálogo y nadie comprobaba la editorial)."
+  propuesta: "El recomendado del fondo es de una editorial independiente de la lista (se comprueba la editorial de la edición española) y se escribe en formato recomendado."
+  evidencia: ["Conversación, 2/11: revisión general, decisión 2"]
+
+- clave: excepciones-temas-para-manana
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«Para mañana, sí» (repetir un libro y admitir uno sin traducir solo funcionaban con «Proponer ahora»)."
+  propuesta: "En los temas para mañana, si la redacción pide expresamente repetir un libro o uno sin traducir, el jefe lo marca (repetir, sin_castellano) y el código lo respeta solo en esos temas."
+  evidencia: ["Conversación, 2/11: revisión general, decisión 3"]
