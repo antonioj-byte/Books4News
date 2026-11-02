@@ -94,6 +94,22 @@ def texto_reparto(reparto: dict[str, int]) -> str:
 FORMATOS_JEFE = ("lateral", "dialogo")
 
 
+def libros_usados(cfg, fecha: str) -> str:
+    """Los libros que Folio ha usado en los días de la regla de repetición, para que quien propone no los traiga
+    (2/11: la pieza de Telegram se quedó sin libro porque sus dos candidatos ya se habían usado)."""
+    from folio.historial import Historial
+    try:
+        filas = Historial(cfg.ruta_db).libros_recientes(fecha, cfg.pipeline.exclusion.dias_libros)
+    except Exception:                       # sin base de datos (pruebas), sin lista: la verificación sigue filtrando
+        return "(ninguno)"
+    vistos, lineas = set(), []
+    for f, t, a in filas:
+        if (t, a) not in vistos:
+            vistos.add((t, a))
+            lineas.append(f"{t} ({a}), {f}")
+    return "; ".join(lineas) if lineas else "(ninguno)"
+
+
 def criterios(cfg, fecha: str) -> str:
     """La línea editorial, los criterios y las reglas de libros del jefe de cultura (prompts/jefe_cultura.md), para
     que el editor del libro y el jefe ante un tema propuesto juzguen con las mismas reglas que la mesa."""
@@ -102,7 +118,8 @@ def criterios(cfg, fecha: str) -> str:
     if inicio < 0 or fin < 0:
         raise ValueError("prompts/jefe_cultura.md ha cambiado: no encuentro la línea editorial ni las reglas de libros")
     trozo = texto[inicio:fin].replace("`protagonista`, vacío.", "").strip()
-    return trozo.replace("[pegar año mínimo]", str(anio_minimo(fecha, cfg.pipeline.seleccion.antiguedad_libros)))
+    return (trozo.replace("[pegar año mínimo]", str(anio_minimo(fecha, cfg.pipeline.seleccion.antiguedad_libros)))
+            .replace("[pegar usados]", libros_usados(cfg, fecha)))
 
 
 def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[str, int]) -> tuple[list[str], dict[str, int]]:
@@ -190,6 +207,7 @@ def seleccionar(llm: LLM, historias: list[Historia], fecha: str) -> tuple[Selecc
     if del_jefe:
         trabajos["jefe"] = ("seleccion", "jefe_cultura", "seleccion", {
             "[pegar año mínimo]": str(anio_minimo(fecha, cfg.antiguedad_libros)),
+            "[pegar usados]": libros_usados(llm.cfg, fecha),
             "[pegar lista]": bloque_historias([h for h in historias if h.carril == "actualidad"]),
             "[pegar lista editorial]": editorial,
             "[pegar temas]": bloque_temas([h for h in historias if h.carril == "redaccion"]),

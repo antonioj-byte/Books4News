@@ -54,6 +54,12 @@ class Historial:
         ).fetchone()
         return fila[0] if fila else None
 
+    def libros_recientes(self, fecha: str, dias: int) -> list[tuple[str, str, str]]:
+        """(fecha, título, autor) de los libros usados en los `dias` anteriores a `fecha`, del más reciente al más antiguo."""
+        filas = self.db.execute("SELECT fecha, titulo, autor FROM libros_usados WHERE fecha >= ? AND fecha < ? "
+                                "ORDER BY fecha DESC", (self._desde(fecha, dias), fecha)).fetchall()
+        return [(f, t or "", a or "") for f, t, a in filas]
+
     def curiosidades_recientes(self, fecha: str, dias: int) -> set[str]:
         """Ids del cajón de curiosidades usados en los `dias` anteriores a `fecha`."""
         filas = self.db.execute("SELECT curiosidad FROM curiosidades_usadas WHERE fecha >= ? AND fecha < ?",

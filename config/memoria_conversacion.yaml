@@ -559,3 +559,10 @@
   patron: "«Intenta que cada pieza contenga una cita textual y una idea original, compartible, que sea un icebreaker conversacional. Para que no parezca seriado, que estas reglas se apliquen en un 66 % de las veces, de tal forma que se pueda romper la aritmética.»"
   propuesta: "Cada pieza sortea por separado, con un 66 % cada una, dos pautas: cita textual destacada (verificada; si no hay ninguna segura, se parafrasea) e idea nueva rompehielos (una frase original para repetir en una cena). Hay piezas con las dos, con una o con ninguna."
   evidencia: ["Conversación, 2/11"]
+
+- clave: jefe-sabe-libros-usados
+  fecha: "2026-11-02"
+  destino: jefe_cultura
+  patron: "«wtf» (la pieza de Telegram se quedó sin libro: sus dos candidatos, Applebaum y Da Empoli, ya se habían usado)."
+  propuesta: "El jefe de cultura, el editor del libro y la balda reciben la lista de libros usados en los últimos 60 días y no los proponen, ni de reserva, salvo que la redacción pida expresamente repetir."
+  evidencia: ["Conversación, 2/11: pieza 2026-11-02-7"]

@@ -43,8 +43,9 @@ def _historia(e: HistoriaElegida) -> str:
     return f"Titular: {e.titular}\nDe qué se habla: {e.de_que_se_habla}\nCuestión de fondo: {e.cuestion_de_fondo}"
 
 
-def buscar(llm: LLM, cfg, e: HistoriaElegida, anio_minimo: int) -> list[LibroBalda]:
-    prompt = cargar_prompt(cfg, "balda_buscar", {"[pegar historia]": _historia(e), "[pegar año mínimo]": str(anio_minimo)})
+def buscar(llm: LLM, cfg, e: HistoriaElegida, anio_minimo: int, usados: str = "(ninguno)") -> list[LibroBalda]:
+    prompt = cargar_prompt(cfg, "balda_buscar", {"[pegar historia]": _historia(e), "[pegar año mínimo]": str(anio_minimo),
+                                                 "[pegar usados]": usados})
     texto, _ = llm.con_busqueda("balda-buscar", prompt, etapa_modelo="nevera", max_busquedas=4)
     if not texto:
         return []
@@ -54,14 +55,15 @@ def buscar(llm: LLM, cfg, e: HistoriaElegida, anio_minimo: int) -> list[LibroBal
     return [l for l in r.libros if l.titulo.strip() and l.autor.strip()][:6]
 
 
-def elegir(llm: LLM, cfg, e: HistoriaElegida, encontrados: list[LibroBalda], anio_minimo: int) -> HistoriaElegida:
+def elegir(llm: LLM, cfg, e: HistoriaElegida, encontrados: list[LibroBalda], anio_minimo: int,
+           usados: str = "(ninguno)") -> HistoriaElegida:
     cuantos = "4 o 5" if e.formato == "balda" else "3 o 4"
     prompt = cargar_prompt(cfg, "balda_elegir", {
         "[pegar propuesta]": _historia(e) + f"\nFormato: {e.formato}\nGancho de ahora: {e.gancho_libro}",
         "[pegar candidatos]": "\n".join(f"- {l.titulo} ({l.autor})" for l in e.libros_candidatos) or "(ninguno)",
         "[pegar balda]": "\n".join(f"- {l.titulo} ({l.autor}{', ' + l.editorial if l.editorial else ''}"
                                    f"{', ' + l.anio if l.anio else ''}): {l.tesis}" for l in encontrados),
-        "[pegar cuántos]": cuantos, "[pegar año mínimo]": str(anio_minimo)})
+        "[pegar cuántos]": cuantos, "[pegar año mínimo]": str(anio_minimo), "[pegar usados]": usados})
     r, _ = llm.estructurado("balda-elegir", [{"role": "user", "content": prompt}], Eleccion,
                             etapa_modelo="seleccion_libro", max_tokens=2000)
     if not r.libros_candidatos:
@@ -70,16 +72,16 @@ def elegir(llm: LLM, cfg, e: HistoriaElegida, encontrados: list[LibroBalda], ani
                                 "gancho_libro": r.gancho_libro.strip() or e.gancho_libro})
 
 
-def mejorar(llm: LLM, cfg, sel: SeleccionJefe, anio_minimo: int) -> tuple[SeleccionJefe, list[str]]:
+def mejorar(llm: LLM, cfg, sel: SeleccionJefe, anio_minimo: int, usados: str = "(ninguno)") -> tuple[SeleccionJefe, list[str]]:
     """Busca la balda de las propuestas de actualidad, a la vez, y deja que el jefe vuelva a elegir los libros."""
     def una(e: HistoriaElegida) -> tuple[HistoriaElegida, str | None]:
         if e.formato not in FORMATOS:
             return e, None
         try:
-            encontrados = buscar(llm, cfg, e, anio_minimo)
+            encontrados = buscar(llm, cfg, e, anio_minimo, usados)
             if not encontrados:
                 return e, f"Balda: nada nuevo para «{e.titular}»; siguen los libros del jefe"
-            nueva = elegir(llm, cfg, e, encontrados, anio_minimo)
+            nueva = elegir(llm, cfg, e, encontrados, anio_minimo, usados)
             antes = {l.titulo for l in e.libros_candidatos}
             nuevos = [l.titulo for l in nueva.libros_candidatos if l.titulo not in antes]
             return nueva, (f"Balda de «{e.titular}»: {len(encontrados)} libros encontrados"
