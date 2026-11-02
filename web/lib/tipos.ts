@@ -793,6 +793,10 @@ export interface components {
             escena: string | null;
             /** Escena Idea */
             escena_idea: string | null;
+            /** Remates Noticias */
+            remates_noticias: string[];
+            /** Objetos */
+            objetos: string[];
             /** Friso */
             friso: string | null;
             /** Friso Idea */
@@ -944,7 +948,7 @@ export interface components {
              * Tipo
              * @enum {string}
              */
-            tipo: "portada" | "actualidad" | "libro" | "idea" | "cierre";
+            tipo: "portada" | "actualidad" | "libro" | "idea" | "cierre" | "noticia";
             /** Texto */
             texto: string;
             /**
@@ -1272,7 +1276,7 @@ export interface components {
              * @default lateral
              * @enum {string}
              */
-            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda";
+            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco";
             /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista

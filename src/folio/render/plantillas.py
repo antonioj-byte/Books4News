@@ -67,6 +67,15 @@ def misma_persona(a: str | None, b: str | None) -> bool:
     corto, largo = sorted((pa, pb), key=len)
     return bool(corto) and corto <= largo
 
+
+_MESES_CORTOS = ("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
+
+
+def fecha_corta(fecha: str) -> str:
+    """«2 nov»: la fecha de la píldora de «Cinco del libro»."""
+    return f"{int(fecha[8:10])} {_MESES_CORTOS[int(fecha[5:7]) - 1]}"
+
+
 @dataclass
 class Plantillas:
     cfg: Config
@@ -94,8 +103,31 @@ class Plantillas:
                 **self._base(base_url), tipo="colofon", n=n, total=self.total(pieza), pieza_id=pieza.id,
                 colofon=self._colofon(pieza), impulsado_por=self.cfg.pipeline.arte.impulsado_por)
         d = pieza.guion.diapositivas[n - 1]
+        if pieza.eleccion.formato == "cinco":
+            return self._cinco(pieza, d, n, base_url)
         return self.env.get_template(f"{d.tipo}.html").render(
             **self._base(base_url), **self._texto(pieza, d, n), **self._medios_y_arte(pieza, d, n))
+
+    def _cinco(self, pieza: Pieza, d: Diapositiva, n: int, base_url: str | None) -> str:
+        """«Cinco del libro» (2/11): la portada con la mesa del día entera y cada noticia con el zoom a su objeto."""
+        from folio.cinco import POSICIONES
+        img = self.medios.imagen(pieza, "-cinco")
+        a = pieza.arte
+        datos = {**self._base(base_url), **self._texto(pieza, d, n), "ilustracion": img["src"] if img else None,
+                 "imagen": None, "retrato": None, "acento": None, "tono": None, "sin_foto": None, "infografia": None,
+                 "panorama": False, "friso": None, "banda": None, "video": False, "portada_estilo": None,
+                 "fecha_corta": fecha_corta(pieza.fecha)}
+        if d.tipo != "noticia":
+            datos["tipo"] = "cinco"
+            return self.env.get_template("cinco.html").render(**datos)
+        i = n - 2
+        x = POSICIONES[i] if i < len(POSICIONES) else 0.5
+        remate = a.remates_noticias[i] if a and i < len(a.remates_noticias) else None
+        datos.update(orden=i + 1, zoom_x=round(max(0.0, min(1.0, (x - 0.111) / 0.778)) * 100, 1),
+                     noticia_remate=titular_con_remate(d.texto, remate),
+                     noticia_subtitulo=texto_html(d.subtitulo) if d.subtitulo else None,
+                     noticia_medio=pieza.fuentes[i].medio if i < len(pieza.fuentes) else None)
+        return self.env.get_template("noticia.html").render(**datos)
 
     def _base(self, base_url: str | None) -> dict:
         logo = self.tokens["logotipo"].strip()

@@ -171,7 +171,7 @@ export function VistaPieza() {
         {g ? <ChatEdicion key={`chat:${eid}/${pid}/${d.version}`} eid={eid} pid={pid} onCambio={cargar} />
            : <p className="text-[13px] text-tinta-suave">Cuando la pieza esté escrita, podrás pedirle cambios aquí.</p>}
         <h3 className="antetitulo mb-2 mt-6 border-t border-borde pt-4">Evaluación</h3>
-        <FormEvaluacion key={`${eid}/${pid}`} eid={eid} pid={pid} inicial={d.evaluacion ?? null} />
+        <FormEvaluacion key={`${eid}/${pid}`} eid={eid} pid={pid} inicial={d.evaluacion ?? null} formato={d.pieza.eleccion.formato} />
         {d.evaluacion_version && d.evaluacion_version !== d.version && (
           <p className="dato mt-2">Evaluaste la versión {d.evaluacion_version}; la actual es la {d.version}.</p>
         )}

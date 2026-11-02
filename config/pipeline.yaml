@@ -16,6 +16,7 @@ modelos:
   puente: claude-haiku-5-5        # evaluador de puentes (2/11): puntúa el vínculo historia-libro de cada propuesta
   claridad: claude-haiku-5-5      # lector sin contexto: señala lo que no se entiende sin conocer la obra ni la noticia
   estilo: claude-opus-5-5         # editor de estilo (2/11, prueba A/B de la voz de Folio)
+  cinco: claude-opus-5-5          # «Cinco del libro» (2/11): las cinco noticias del mundo del libro del día
   juez: claude-sonnet-5-5         # juez a ciegas de las rondas de la voz (2/11): otro modelo que el que escribe
 
 dev:                            # folio run --dev: todas las etapas con este modelo y esfuerzo bajo
@@ -27,6 +28,7 @@ esfuerzo:                       # output_config.effort
   seleccion_libro: medium
   fondo: medium                   # 2/11: con high, el razonamiento agotaba los 21.000 tokens con seis propuestas
   guion: high
+  cinco: medium                   # «Cinco del libro» (2/11): elegir y titular cinco noticias, sin libro que pensar
   guion_correccion: medium        # 2/11 (a petición del usuario, por el gasto): las correcciones, con esfuerzo medio
   comprobacion: medium
   arte: medium
@@ -101,6 +103,11 @@ radar:
   activo: true
   max_temas: 8
   historias: 32                 # historias del carril editorial que se resumen y ve el radar
+
+# «Cinco del libro» (2/11, prueba de cinco días pedida por el usuario): las cinco noticias del mundo del libro del día,
+# escritas de madrugada después de la mesa, con la mesa del día ilustrada (folio.cinco)
+cinco:
+  activo: true
 
 exclusion:
   dias_historias: 7

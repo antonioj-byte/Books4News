@@ -97,6 +97,45 @@ def render(
                 marcar_render(destino / p.id, eid, 1)
 
 
+@app.command("cinco")
+def cinco_del_libro(fecha: str | None = typer.Option(None, help="AAAA-MM-DD; por defecto, hoy"),
+                    sin_dibujo: bool = typer.Option(False, "--sin-dibujo", help="Sin la ilustración del día (gratis en Magnific)"),
+                    quiet: bool = typer.Option(False, "--quiet")):
+    """«Cinco del libro» (2/11, prueba de cinco días) sobre las historias guardadas del día: la escribe, la ilustra, la
+    comprueba, la añade a la última ejecución del día y pinta sus PNG. La madrugada la hace sola."""
+    _logging(quiet)
+    from folio import cinco
+    from folio.almacen import Almacen
+    from folio.etapas import EtapasGuardadas
+    from folio.pipeline import Pipeline, progreso
+    from folio.render import renderizar
+
+    cfg = config.cargar()
+    fecha = fecha or date.today().isoformat()
+    almacen = Almacen(cfg.ruta_db)
+    eid = almacen.ultima_ejecucion(fecha)
+    if not eid:
+        typer.echo(f"No hay ejecución del {fecha}: lanza antes la del día", err=True)
+        raise typer.Exit(1)
+    al_jefe, _, _ = EtapasGuardadas(cfg.dir_cache(fecha)).historias()
+    tuberia = Pipeline(cfg, fecha)
+    tuberia.embedder.liberar = True
+    pid = f"{fecha}-{almacen.siguiente_numero(eid, fecha)}"
+    progreso("Cinco del libro: las cinco noticias del mundo del libro")
+    pieza = cinco.preparar(tuberia, al_jefe, pid, dibujar=not sin_dibujo)
+    almacen.anadir_pieza(eid, pieza, "Cinco del libro")
+    coste = round(sum(t.coste_usd for t in tuberia.llm.trazas), 4)
+    if pieza.estado != "propuesta":
+        typer.echo(f"No se pudo escribir: {pieza.error}", err=True)
+        raise typer.Exit(1)
+    progreso("Pintando las diapositivas")
+    destino = cfg.dir_informes / fecha / "render"
+    renderizar(cfg, [pieza], destino)
+    from folio.render import marcar_render
+    marcar_render(destino / pid, eid, 1)
+    typer.echo(f"{pid}: Cinco del libro, {coste} $" + ("".join(f"\n· {a}" for a in pieza.avisos[1:])))
+
+
 @app.command("fuentes-editoriales")
 def fuentes_editoriales(csv_medios: Path = typer.Argument(..., help="medios.csv de publishing-monitor")):
     """Importa los feeds RSS activos de publishing-monitor a config/fuentes_editoriales.yaml (carril editorial)."""

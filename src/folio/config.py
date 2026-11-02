@@ -89,6 +89,11 @@ class Radar(_Seccion):
     historias: int = 32                 # historias del carril editorial que se resumen y ve el radar
 
 
+class Cinco(_Seccion):
+    """«Cinco del libro» (2/11, prueba de cinco días): las cinco noticias del mundo del libro del día, con la mesa ilustrada."""
+    activo: bool = True
+
+
 class Exclusion(_Seccion):
     dias_historias: int
     dias_libros: int
@@ -244,6 +249,7 @@ class ConfigPipeline(_Seccion):
     seleccion_textos: SeleccionTextos = Field(default_factory=SeleccionTextos)
     catalogo: Catalogo = Field(default_factory=Catalogo)
     radar: Radar = Field(default_factory=Radar)
+    cinco: Cinco = Field(default_factory=Cinco)
     guion: Guion
     arte: Arte = Field(default_factory=Arte)
     gasto: Gasto = Field(default_factory=Gasto)

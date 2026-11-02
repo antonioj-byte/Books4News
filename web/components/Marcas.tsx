@@ -47,6 +47,7 @@ const FORMATOS: Record<string, { texto: string; clase: string }> = {
   curiosidad: { texto: "Historia editorial", clase: "bg-subrayador text-tinta" },
   recomendado: { texto: "Libro recomendado", clase: "bg-verde text-papel" },
   radar: { texto: "Radar del libro", clase: "border border-carmesi text-carmesi" },
+  cinco: { texto: "Cinco del libro", clase: "bg-carmesi text-subrayador" },   // prueba de formato (2/11)
 };
 
 export function FormatoChip({ formato }: { formato: string }) {

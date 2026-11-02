@@ -480,3 +480,32 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .diapositiva.con-banda .texto { font-family: var(--fuentes-titular); font-weight: 700; font-size: calc(var(--tamanos-idea) * 0.82);
   line-height: 1.06; letter-spacing: -0.045em; text-wrap: balance; color: var(--colores-papel); margin-block: 0; padding-bottom: 0.08em; }
 .con-banda .texto em { color: inherit; }
+
+/* «Cinco del libro» (2/11, dirección «a sangre» con la mesa del día): portada con la ilustración entera arriba y cada
+   noticia con el zoom a su objeto, a sangre, el titular con el remate en marcador y una barra de progreso de cinco */
+.diapositiva--cinco, .diapositiva--noticia { background: var(--colores-tinta-honda); color: var(--colores-papel); }
+.cinco-mesa { position: absolute; z-index: -2; left: 0; right: 0; top: 0; height: calc(var(--lienzo-ancho) * 9 / 16);
+  background-size: 100% auto; background-repeat: no-repeat; }
+.cinco-rasgado { position: absolute; z-index: -1; left: 0; right: 0; top: calc(var(--lienzo-ancho) * 9 / 16 - 30px); height: 60px;
+  background: var(--colores-tinta-honda);
+  clip-path: polygon(0 40%, 6% 70%, 11% 35%, 18% 62%, 24% 30%, 31% 66%, 38% 38%, 45% 70%, 52% 33%, 59% 64%, 66% 36%, 73% 68%, 80% 32%, 87% 62%, 93% 38%, 100% 60%, 100% 100%, 0 100%); }
+.diapositiva--cinco .cuerpo { justify-content: flex-end; }
+.diapositiva--cinco .antetitulo, .diapositiva--noticia .antetitulo { background: var(--colores-papel); color: var(--colores-tinta); }
+.diapositiva--cinco .titular { font-size: 96px; }
+.diapositiva--cinco .subtitulo, .diapositiva--noticia .subtitulo { color: var(--colores-papel); font-size: 34px; }
+.diapositiva--cinco .remate, .diapositiva--noticia .remate {
+  color: var(--colores-tinta); padding: 0 0.12em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: linear-gradient(100deg, rgba(255, 245, 0, 0) 0.9%, rgba(255, 245, 0, 1) 2.4%, rgba(255, 245, 0, 0.88) 5.8%, rgba(255, 245, 0, 0.78) 93%, rgba(255, 245, 0, 0.95) 96%, rgba(255, 245, 0, 0) 98%);
+  background-size: 100% 78%; background-position: 0 70%; background-repeat: no-repeat;
+}
+.cinco-zoom { position: absolute; z-index: -2; inset: 0; background-repeat: no-repeat; background-size: calc(4.5 * var(--lienzo-ancho)) auto; }
+.cinco-velo { position: absolute; z-index: -1; inset: 0;
+  background: linear-gradient(rgba(18, 14, 15, 0.55) 0, transparent 13%, transparent 34%, rgba(18, 14, 15, 0.94) 72%); }
+.cinco-numero { position: absolute; z-index: -1; left: 50px; top: 120px; font-family: var(--fuentes-remate); font-style: italic;
+  font-size: 620px; line-height: 0.8; color: var(--colores-pluma); }
+.cinco-contador { position: absolute; top: 64px; left: var(--margenes-lateral); display: flex; gap: 14px; }
+.cinco-contador i { width: 76px; height: 12px; border-radius: 99px; background: var(--colores-papel-64); opacity: 0.45; }
+.cinco-contador i.si { background: var(--colores-papel); opacity: 1; }
+.diapositiva--noticia .cuerpo { justify-content: flex-end; }
+.diapositiva--noticia .titular { font-size: 84px; }
+.cinco-medio { margin-top: 26px; font-family: var(--fuentes-maquina); font-size: 24px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; }

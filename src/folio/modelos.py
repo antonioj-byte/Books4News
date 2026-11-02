@@ -28,14 +28,14 @@ Seccion = Literal[
 ]
 # «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
 EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
-Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda"]
+Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco"]
 # Formatos que pueden salir sin libro: la curiosidad del cajón y los temas del radar del libro
 SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar")
 # «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml); «catalogo»: novedades de
 # las editoriales independientes (formato «recomendado»); «radar»: historias del mundo del libro que no pasan al jefe
 # pero sí a la lista del radar
 Carril = Literal["actualidad", "editorial", "cajon", "catalogo", "radar", "redaccion"]
-TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre"]
+TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre", "noticia"]   # «noticia»: Cinco del libro (2/11)
 
 
 # --- Ingesta -----------------------------------------------------------------
@@ -155,7 +155,7 @@ class Diapositiva(BaseModel):
     n: int
     tipo: TipoDiapositiva
     texto: str
-    subtitulo: str | None = Field(default=None, description="Solo en la portada: el subtítulo, que trae el libro o a su autor")
+    subtitulo: str | None = Field(default=None, description="Solo en la portada: el subtítulo, que trae el libro o a su autor")   # y en cada «noticia» de Cinco del libro
 
 
 class LibroGuion(BaseModel):
@@ -359,6 +359,9 @@ class Arte(BaseModel):
     esquema: str | None = None           # crédito de la ilustración técnica de Magnific (infografía «esquema»)
     escena: str | None = None            # escena (en inglés) de la ilustración editorial (recurso «ilustracion», portada «panorama»)
     escena_idea: str | None = None       # su metáfora, en español, para enseñarla en la web
+    # «Cinco del libro» (2/11): el remate destacado de cada noticia y el objeto que la representa en la ilustración del día
+    remates_noticias: list[str] = Field(default_factory=list)
+    objetos: list[str] = Field(default_factory=list)
     friso: str | None = None             # escena del friso de las tres fichas de libro («Tres libros», 2/11)
     friso_idea: str | None = None        # su metáfora, en español
     # Banda panorámica a sangre sobre tres diapositivas seguidas (2/11, opción B elegida por el usuario en el Artifact

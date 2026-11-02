@@ -22,8 +22,8 @@ const CAJAS: { clave: "comentario_seleccion" | "comentario_copy" | "comentario_a
 
 // Formulario de evaluación: se guarda en la base de datos y en el bloque de informe.md.
 // Quien lo usa le da una `key` por pieza, para que cambiar de pieza lo reinicie.
-export function FormEvaluacion({ eid, pid, inicial, onGuardada }: {
-  eid: number; pid: string; inicial: Evaluacion | null; onGuardada?: () => void;
+export function FormEvaluacion({ eid, pid, inicial, onGuardada, formato }: {
+  eid: number; pid: string; inicial: Evaluacion | null; onGuardada?: () => void; formato?: string;
 }) {
   const [ev, setEv] = useState<Evaluacion>(inicial ?? VACIA);
   const [estado, setEstado] = useState<"" | "guardando" | "guardada" | "error">(inicial ? "guardada" : "");
@@ -71,7 +71,8 @@ export function FormEvaluacion({ eid, pid, inicial, onGuardada }: {
         <label key={c.clave} className="flex flex-col gap-1">
           <span className="flex justify-between gap-2 font-semibold">{c.texto}<span className="dato font-normal">{c.agente}</span></span>
           <textarea id={`ev-${c.clave}-${pid}`} value={ev[c.clave] ?? ""} onChange={(e) => cambiar({ [c.clave]: e.target.value })} rows={2}
-                    placeholder={c.ejemplo}
+                    placeholder={formato === "cinco" && c.clave === "comentario_seleccion"
+                      ? "¿Sobra alguna de las cinco? ¿Cuál falta?" : c.ejemplo}
                     className="resize-none rounded-[12px] border border-borde bg-panel p-2.5 text-[13px] outline-none focus:border-tinta" />
         </label>
       ))}

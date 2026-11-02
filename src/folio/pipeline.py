@@ -12,6 +12,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 import numpy as np
+from folio import cinco
 from folio import guion as guionista
 from folio import arte, balda, cajon, catalogo, hechos, informe, puentes, radar, seleccion, temas, textos
 from folio.imagenes import cubiertas
@@ -649,7 +650,9 @@ class Pipeline:
         """Comprobación de hechos de todas las piezas a la vez (los textos se leen antes, en orden). Con
         `anunciar=False` no escribe etapas: en «Proceder» va a la vez que el arte, que es el que las anuncia."""
         por_id = {h.id: h for h in al_jefe}
-        con_guion = [(p, self.textos_de_historia(por_id[p.historia_id])) for p in piezas if p.guion]
+        # «Cinco del libro» comprueba sus hechos al escribirse, con los textos de sus cinco noticias (folio.cinco)
+        con_guion = [(p, self.textos_de_historia(por_id[p.historia_id])) for p in piezas
+                     if p.guion and p.eleccion.formato != cinco.FORMATO]
         aviso = progreso if anunciar else (lambda etapa: None)
 
         def una(pieza: Pieza, textos_h) -> None:
@@ -678,7 +681,7 @@ class Pipeline:
         que dos piezas del día no lleven la misma imagen (unos 10 s por pieza). Con `solo`, se dirige
         únicamente esas piezas: las demás cuentan para no repetir imagen ni composición."""
         por_id = {h.id: h for h in al_jefe}
-        con_guion = [p for p in piezas if p.guion and p.estado != "fallida"]
+        con_guion = [p for p in piezas if p.guion and p.estado != "fallida" and p.eleccion.formato != cinco.FORMATO]
         usadas: set[str] = {x for p in con_guion if solo and p.id not in solo and p.arte
                             for x in (p.arte.imagen, p.arte.imagen_noticia) if x}
         for i, pieza in enumerate(con_guion):
@@ -767,7 +770,13 @@ class Pipeline:
             self._guardar_etapa(self.etapas.guardar_piezas, piezas)
         self.dirigir_arte(piezas, al_jefe)
         self._guardar_etapa(self.etapas.guardar_piezas, piezas)
-        buenas = [p for p in piezas if p.estado == "propuesta"]
+        if inicio <= 2 and self.cfg.pipeline.cinco.activo and self.solo_pieza is None:
+            # «Cinco del libro» (2/11, prueba de cinco días): las cinco noticias del mundo del libro, ya escritas
+            progreso("Cinco del libro: las cinco noticias del mundo del libro")
+            n = 1 + max((int(p.id.rsplit("-", 1)[1]) for p in piezas if p.id.rsplit("-", 1)[1].isdigit()), default=0)
+            piezas.append(cinco.preparar(self, al_jefe, f"{self.fecha}-{n}", dibujar=not self.dev))
+            self._guardar_etapa(self.etapas.guardar_piezas, piezas)
+        buenas = [p for p in piezas if p.estado == "propuesta" and p.eleccion.formato != cinco.FORMATO]
         if inicio <= 2 and not self.prueba:
             self._registrar_historial(piezas, buenas, al_jefe, vectores)
         previstas = min(self.cfg.pipeline.seleccion.desarrollar_al_inicio, len(sel.elegidas))
