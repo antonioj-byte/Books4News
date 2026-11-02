@@ -696,6 +696,10 @@ class Pipeline:
                     pieza.avisos.append(f"Director de arte: no se pudo ({type(exc).__name__}: {exc}); sale sin imagen")
         if con_guion:
             progreso(f"Dirección de arte ({len(con_guion)} de {len(con_guion)})")
+        from folio.imagenes import libres
+        for motivo in libres.bloqueos():            # 403/429 de Commons o Europeana: se avisa (revisión general, 2/11)
+            if motivo not in self.avisos:
+                self.avisos.append(motivo)
 
     # --- Ejecución completa -------------------------------------------------
 

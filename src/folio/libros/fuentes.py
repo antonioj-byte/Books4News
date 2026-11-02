@@ -98,7 +98,8 @@ class Obra:
 
 
 def _reintentar(peticion, intentos: int, espera_s: float) -> httpx.Response:
-    """Repite la petición ante 429, 5xx o un corte de conexión, con espera creciente."""
+    """Repite la petición ante un 5xx o un corte de conexión, con espera creciente. Un 429 no se repite: los límites no
+    se esquivan (revisión general, 2/11); la consulta queda incompleta y la verificación lo trata como pasajero."""
     for intento in range(intentos):
         ultimo = intento == intentos - 1
         try:
@@ -107,7 +108,7 @@ def _reintentar(peticion, intentos: int, espera_s: float) -> httpx.Response:
             if ultimo:
                 raise
         else:
-            if r.status_code not in (429, 500, 502, 503) or ultimo:
+            if r.status_code not in (500, 502, 503, 504) or ultimo:
                 return r
         time.sleep(espera_s * 2 ** intento)
     raise AssertionError("inalcanzable")
@@ -200,7 +201,7 @@ class GoogleBooks:
     BASE = "https://www.googleapis.com/books/v1/volumes"
     # Sin país, Google Books responde 403 «unknownLocation» desde IPs que no sabe geolocalizar.
     PAIS = "ES"
-    INTENTOS = 4  # da 503 y 429 a menudo
+    INTENTOS = 4  # da 503 a menudo (los 429 ya no se reintentan)
     ESPERA_S = 1.5  # se duplica en cada reintento
 
     def __init__(self, cliente: httpx.Client, clave: str):

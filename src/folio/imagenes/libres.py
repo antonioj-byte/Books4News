@@ -25,11 +25,13 @@ import html
 import json
 import re
 import time
+import logging
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import httpx
 
+log = logging.getLogger(__name__)
 API_COMMONS = "https://commons.wikimedia.org/w/api.php"
 AGENTE = "FolioLateral/0.1 (prototipo editorial; https://github.com/antonioj-byte/Books4News)"
 ANCHO_MINIMO = 1080
@@ -103,16 +105,48 @@ def _candidato(pagina: dict) -> ImagenLibre | None:
     )
 
 
+class ServicioBloqueado(httpx.HTTPError):
+    """Commons o Europeana respondieron 403/429: se para sin reintentar y no se les vuelve a llamar en un rato
+    (revisión general, 2/11: Commons reintentaba los 403/429 con esperas sin tope, contra la regla de la casa).
+    Hereda de httpx.HTTPError para que los llamantes, que ya capturan esos errores, sigan sin la imagen."""
+
+
+BLOQUEO_S = 3600           # la API es un proceso largo: el bloqueo caduca en vez de durar hasta el reinicio
+_bloqueos: dict[str, tuple[float, str]] = {}
+
+
+def bloqueos() -> list[str]:
+    """Los motivos de los bloqueos vigentes, para avisar."""
+    ahora = time.monotonic()
+    return [m for t, m in _bloqueos.values() if ahora - t < BLOQUEO_S]
+
+
+def _comprobar_bloqueo(servicio: str) -> None:
+    t_motivo = _bloqueos.get(servicio)
+    if t_motivo and time.monotonic() - t_motivo[0] < BLOQUEO_S:
+        raise ServicioBloqueado(t_motivo[1])
+
+
+def _parar_si_bloquea(servicio: str, r: httpx.Response) -> None:
+    if r.status_code in (403, 429):
+        motivo = f"{servicio} respondió {r.status_code}; se para sin reintentar durante una hora"
+        _bloqueos[servicio] = (time.monotonic(), motivo)
+        log.warning(motivo)
+        raise ServicioBloqueado(motivo)
+
+
 def _consultar(params: dict, cliente: httpx.Client | None = None) -> dict:
     base = {"action": "query", "format": "json", "prop": "imageinfo",
             "iiprop": "url|size|extmetadata", "iiurlwidth": 1600}
+    _comprobar_bloqueo("Commons")
     c = cliente or httpx.Client(headers={"User-Agent": AGENTE}, timeout=30)
     try:
-        for espera in (5, 15, 45, None):
+        for espera in (5, None):
             r = c.get(API_COMMONS, params=base | params)
-            # Commons limita por IP y a veces responde 403 «robot policy» en vez de 429
-            if r.status_code in (429, 403) and espera:
-                time.sleep(float(r.headers.get("retry-after") or espera))
+            # Commons limita por IP y a veces responde 403 «robot policy» en vez de 429: los dos paran
+            _parar_si_bloquea("Commons", r)
+            if r.status_code >= 500 and espera:
+                time.sleep(espera)
                 continue
             r.raise_for_status()
             return r.json()
@@ -180,9 +214,11 @@ def _de_europeana(item: dict) -> ImagenLibre | None:
 
 
 def _consultar_europeana(params: dict) -> list[dict]:
+    _comprobar_bloqueo("Europeana")
     with httpx.Client(headers={"User-Agent": AGENTE}, timeout=30) as c:
         r = c.get(API_EUROPEANA, params=[("wskey", _clave_europeana()), ("media", "true"),
                                           ("qf", "TYPE:IMAGE"), *params.items()])
+        _parar_si_bloquea("Europeana", r)
         r.raise_for_status()
         return r.json().get("items") or []
 

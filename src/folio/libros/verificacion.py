@@ -254,12 +254,13 @@ class Verificador:
         q = _Consulta(cand)
         try:
             q.ol = self._openlibrary(cand)
-        except httpx.HTTPError as exc:
-            q.errores.append(f"Open Library: {exc}")
+        except (httpx.HTTPError, ValueError, KeyError) as exc:
+            # ValueError/KeyError: un 200 que no es JSON o le falta un campo (revisión general, 2/11: tumbaba la mesa)
+            q.errores.append(f"Open Library: {type(exc).__name__}: {exc}"[:300])
         try:
             q.gb_todos, q.gb_es = self._googlebooks(cand)
-        except httpx.HTTPError as exc:
-            q.errores.append(f"Google Books: {exc}")
+        except (httpx.HTTPError, ValueError, KeyError) as exc:
+            q.errores.append(f"Google Books: {type(exc).__name__}: {exc}"[:300])
         if not q.ol and not q.gb_todos:
             if q.errores:
                 raise NoVerificado("no se pudo consultar: " + "; ".join(q.errores))
