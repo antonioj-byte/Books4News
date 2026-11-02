@@ -64,7 +64,7 @@ def test_chat_que_solo_contesta_no_cambia_nada(app):
     app.state.folio.llm = ChatFalso([edicion.RespuestaChat(respuesta="El titular ya tiene 6 palabras.")])
     c = TestClient(app)
     r = c.post(f"{RUTA}/chat", json={"mensaje": "¿Cuántas palabras tiene el titular?"}).json()
-    assert r == {"respuesta": "El titular ya tiene 6 palabras.", "version": None, "avisos": []}
+    assert r == {"respuesta": "El titular ya tiene 6 palabras.", "version": None, "avisos": [], "opciones": []}
     assert [m["rol"] for m in c.get(f"{RUTA}/chat").json()] == ["usuario", "editor"] and c.get(RUTA).json()["version"] == 1
 
 

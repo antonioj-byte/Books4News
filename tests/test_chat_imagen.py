@@ -262,3 +262,25 @@ def test_titulo_sin_traducir_solo_si_se_pide_expresamente(cfg, monkeypatch):
     assert nada is None and "por excepción" in nota
     nueva, _ = edicion.aplicar_imagen(None, cfg, _pieza(), _accion("cambiar_libro", libro="Killer App", autor="Darren Loucaides", sin_castellano="si"))
     assert nueva and vistos == [False, True]
+
+
+def test_las_opciones_del_editor_se_guardan_y_se_devuelven(cfg):
+    """2/11 («dice "te doy opciones" pero parece que se queda bugueado»): las opciones llegan como botones."""
+    from folio.almacen import Almacen
+    a = Almacen(cfg.ruta_db)
+    a.anadir_mensaje(1, "p", "usuario", "dame opciones")
+    a.anadir_mensaje(1, "p", "editor", "Te propongo dos", None, ["Sí, banda de la 2 a la 4", "Mejor solo la portada"])
+    m = a.chat(1, "p")
+    assert m[0].opciones == [] and m[1].opciones == ["Sí, banda de la 2 a la 4", "Mejor solo la portada"]
+
+
+def test_el_chat_filtra_las_opciones(cfg):
+    class LLM:
+        cfg = None
+
+        def estructurado(self, paso, mensajes, esquema, **k):
+            return esquema(respuesta="Elige", opciones=["Sí, banda de la 2 a la 4", "x", "Mejor solo la portada"]), []
+    LLM.cfg = cfg
+    opciones = []
+    respuesta, nueva, _ = edicion.chat(LLM(), cfg, _pieza(), [], "¿qué hacemos?", opciones)
+    assert respuesta == "Elige" and nueva is None and opciones == ["Sí, banda de la 2 a la 4", "Mejor solo la portada"]

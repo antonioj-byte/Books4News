@@ -75,6 +75,7 @@ class RespuestaChat(BaseModel):
     respuesta: str = Field(description="Lo que contestas a quien edita: breve, en español")
     guion: GuionLLM | None = Field(default=None, description="El guion completo revisado, solo si hay que cambiar algo; null si no")
     imagen: AccionImagen | None = Field(default=None, description="Un cambio en la imagen, solo si lo piden; null si no")
+    opciones: list[str] = Field(default_factory=list, description="De 0 a 4 respuestas que quien edita puede pulsar para seguir (lo que propones hacer a continuación o las alternativas que ofreces), cada una de 2 a 12 palabras y en su voz («Sí, haz la banda de la 2 a la 4»); vacía si no ofreces nada")
 
 
 def _citas_ok(p: Pieza, tipo: str = "libro") -> frozenset[str]:
@@ -239,9 +240,11 @@ def _bloque_pieza(p: Pieza) -> str:
             f"guion actual (JSON):\n{p.guion.model_dump_json(indent=1)}\n</pieza>")
 
 
-def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mensaje: str) -> tuple[str, Pieza | None, list[str]]:
+def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mensaje: str,
+         opciones: list[str] | None = None) -> tuple[str, Pieza | None, list[str]]:
     """Un turno del chat. `historial`: [(rol, texto)] de los turnos anteriores. Devuelve (respuesta,
-    pieza nueva o None si no hay cambios, avisos)."""
+    pieza nueva o None si no hay cambios, avisos). Si se pasa `opciones`, se llena con las respuestas rápidas que
+    ofrece el editor (2/11: «parece que se queda bugueado» cuando daba opciones sin forma de elegirlas)."""
     sistema = cargar_prompt(cfg, "chat_edicion", {"[pegar pieza]": _bloque_pieza(p)})
     mensajes = [{"role": "user" if rol == "usuario" else "assistant", "content": texto} for rol, texto in historial]
     from folio import materiales
@@ -254,6 +257,8 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
     previos = set(validar(cfg, p, p.guion))
     for intento in range(cfg.pipeline.guion.reintentos + 1):
         r, contenido = llm.estructurado(f"chat:{p.id}:{intento + 1}", cache_al_final(mensajes), RespuestaChat, etapa_modelo="chat")
+        if opciones is not None:
+            opciones[:] = [o.strip() for o in r.opciones if 2 <= len(o.split()) <= 14][:4]
         if r.guion is None and _dice_que_cambio_el_texto(r.respuesta) and intento < cfg.pipeline.guion.reintentos:
             # 2/11: el editor describió cambios en el texto, devolvió solo un cambio de imagen y la «versión nueva» no
             # tenía el texto nuevo. Si dice que ha cambiado el texto, tiene que traer el guion

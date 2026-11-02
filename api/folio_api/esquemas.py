@@ -143,6 +143,7 @@ class RespuestaChat(BaseModel):
     respuesta: str
     version: int | None                   # la versión nueva, si el chat cambió la pieza
     avisos: list[str]
+    opciones: list[str] = []              # respuestas rápidas que ofrece el editor (2/11)
 
 
 class CambioEstado(BaseModel):

@@ -587,3 +587,10 @@
   patron: "«Para mañana, sí» (repetir un libro y admitir uno sin traducir solo funcionaban con «Proponer ahora»)."
   propuesta: "En los temas para mañana, si la redacción pide expresamente repetir un libro o uno sin traducir, el jefe lo marca (repetir, sin_castellano) y el código lo respeta solo en esos temas."
   evidencia: ["Conversación, 2/11: revisión general, decisión 3"]
+
+- clave: chat-con-opciones
+  fecha: "2026-11-02"
+  destino: codigo
+  patron: "«Creo que el chat debería dar más opción de que parezca interactivo. Ahora dice "te doy opciones", pero parece que se queda bugueado.»"
+  propuesta: "El editor del chat hace en el turno lo que está claro y ofrece el paso siguiente o las alternativas como botones que se pulsan; nunca termina en «dime cuál» sin opciones."
+  evidencia: ["Conversación, 2/11: captura del chat de la pieza de Durov"]

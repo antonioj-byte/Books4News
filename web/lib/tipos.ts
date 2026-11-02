@@ -1311,6 +1311,18 @@ export interface components {
              */
             protagonista: string;
             /**
+             * Repetir
+             * @description Solo en un tema de la redacción que pide expresamente repetir un libro ya usado; si no, false
+             * @default false
+             */
+            repetir: boolean;
+            /**
+             * Sin Castellano
+             * @description Solo en un tema de la redacción que pide expresamente un libro sin traducir al castellano; si no, false
+             * @default false
+             */
+            sin_castellano: boolean;
+            /**
              * Potencial
              * @description De 1 a 10, cuánto puede circular la propuesta (conversación, ganas de compartir); la mesa se ordena por este número
              * @default 5
@@ -1430,6 +1442,11 @@ export interface components {
             confianza: "alta" | "media";
             /** Notas */
             notas: string[];
+            /**
+             * Consulta Incompleta
+             * @default false
+             */
+            consulta_incompleta: boolean;
             /** Sinopsis */
             sinopsis: string | null;
         };
@@ -1507,6 +1524,11 @@ export interface components {
             version_n: number | null;
             /** Creado En */
             creado_en: string;
+            /**
+             * Opciones
+             * @default []
+             */
+            opciones: string[];
         };
         /** MensajeNuevo */
         MensajeNuevo: {
@@ -1865,6 +1887,11 @@ export interface components {
             version: number | null;
             /** Avisos */
             avisos: string[];
+            /**
+             * Opciones
+             * @default []
+             */
+            opciones: string[];
         };
         /** ResultadoEdicion */
         ResultadoEdicion: {

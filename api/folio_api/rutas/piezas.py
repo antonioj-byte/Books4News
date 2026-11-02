@@ -162,7 +162,8 @@ def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(c
         raise HTTPException(409, "Esta pieza no tiene guion")
     historial = [(x.rol, x.texto) for x in ctx.almacen.chat(eid, pid)]
     try:
-        respuesta, nueva, avisos = edicion.chat(ctx.llm or LLM(ctx.cfg), ctx.cfg, p, historial, m.mensaje.strip())
+        opciones: list[str] = []
+        respuesta, nueva, avisos = edicion.chat(ctx.llm or LLM(ctx.cfg), ctx.cfg, p, historial, m.mensaje.strip(), opciones)
     except ErrorLLM as exc:
         raise HTTPException(502, f"El editor no ha podido responder: {exc}. Prueba otra vez o reformula la petición.")
     except Exception as exc:
@@ -174,8 +175,8 @@ def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(c
         # Cambiar el libro desde el chat (2/11) deja la pieza pendiente, para escribirla de nuevo con «Proceder»
         ctx.almacen.cambiar_estado(eid, pid, nueva.estado)
     ctx.almacen.anadir_mensaje(eid, pid, "usuario", m.mensaje.strip())
-    ctx.almacen.anadir_mensaje(eid, pid, "editor", respuesta, v)
-    return RespuestaChat(respuesta=respuesta, version=v, avisos=avisos)
+    ctx.almacen.anadir_mensaje(eid, pid, "editor", respuesta, v, opciones)
+    return RespuestaChat(respuesta=respuesta, version=v, avisos=avisos, opciones=opciones)
 
 
 # --- Materiales extra (2/11): fotos, PDF o texto que sube quien edita para el chat ---------------------------

@@ -185,6 +185,11 @@ _MIGRACIONES = [
         datos TEXT NOT NULL                -- JSON: propuesta, libros verificados, puente, tema de la cosecha
     );
     """,
+    # 10: respuestas rápidas del chat (2/11, a petición del usuario: «dice "te doy opciones" pero parece que se queda
+    # bugueado»): las opciones que ofrece el editor, para pulsarlas
+    """
+    ALTER TABLE chat_mensajes ADD COLUMN opciones TEXT;
+    """,
 ]
 
 
@@ -265,6 +270,7 @@ class MensajeChat(BaseModel):
     texto: str
     version_n: int | None = None
     creado_en: str
+    opciones: list[str] = []          # respuestas que ofrece el editor, para pulsarlas (2/11)
 
 
 class Version(BaseModel):
@@ -647,15 +653,18 @@ class Almacen:
     # --- Chat de edición ----------------------------------------------------
 
     def chat(self, eid: int, pid: str) -> list[MensajeChat]:
-        return [MensajeChat(**dict(f)) for f in self.db.execute(
-            "SELECT n, rol, texto, version_n, creado_en FROM chat_mensajes WHERE ejecucion_id = ? AND pieza_id = ? ORDER BY n",
-            (eid, pid))]
+        return [MensajeChat(**{**dict(f), "opciones": json.loads(f["opciones"]) if f["opciones"] else []}) for f in self.db.execute(
+            "SELECT n, rol, texto, version_n, creado_en, opciones FROM chat_mensajes WHERE ejecucion_id = ? AND pieza_id = ? "
+            "ORDER BY n", (eid, pid))]
 
-    def anadir_mensaje(self, eid: int, pid: str, rol: str, texto: str, version_n: int | None = None) -> None:
+    def anadir_mensaje(self, eid: int, pid: str, rol: str, texto: str, version_n: int | None = None,
+                       opciones: list[str] | None = None) -> None:
         with self._transaccion() as db:
             n = db.execute("SELECT COALESCE(MAX(n), 0) + 1 FROM chat_mensajes WHERE ejecucion_id = ? AND pieza_id = ?",
                            (eid, pid)).fetchone()[0]
-            db.execute("INSERT INTO chat_mensajes VALUES (?, ?, ?, ?, ?, ?, ?)", (eid, pid, n, rol, texto, version_n, _ahora()))
+            db.execute("INSERT INTO chat_mensajes (ejecucion_id, pieza_id, n, rol, texto, version_n, creado_en, opciones) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (eid, pid, n, rol, texto, version_n, _ahora(),
+                                                           json.dumps(opciones, ensure_ascii=False) if opciones else None))
 
     # --- Evaluaciones -------------------------------------------------------
 

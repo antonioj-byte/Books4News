@@ -54,7 +54,7 @@ def test_recorte_a_tres_diapositivas():
 def test_estilo_con_y_sin_persona():
     from folio.config import cargar
     sin, con = banda.estilo(cargar(), False), banda.estilo(cargar(), True)
-    assert "three equal vertical pictures" in sin and "anonymous" in sin and "reference photo" not in sin
+    assert "one sixth, one half and five sixths" in sin and "cut into" not in sin and "anonymous" in sin and "reference photo" not in sin
     assert "reference photo" in con and banda._ANONIMAS not in con
 
 
