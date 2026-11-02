@@ -151,6 +151,24 @@ figcaption { font: 12px/1.35 var(--maquina); color: var(--pagina-suave); }
 .p-lista li i { font: 700 7cqw/1 var(--titular); color: var(--pluma); font-style: normal; }
 .p-lista .gran { font: 700 13cqw/.9 var(--titular); letter-spacing: -.06em; }
 .p-lista .gran em { font: italic 400 1.04em var(--remate); background: linear-gradient(transparent 62%, var(--marcador) 62% 92%, transparent 92%); color: var(--papel); }
+
+/* Texturas sobre el Wired original (2/11): una capa que envuelve toda la diapositiva, como si estuviera impresa */
+.textura { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.t1 .textura { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='3' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='0 0 0 0 0 0 .9 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.45) 100%); background-size: 46cqw, 100% 100%; mix-blend-mode: screen; opacity: .42; }
+.t1 .foto.bn { filter: grayscale(1) contrast(1.6) brightness(.95); }
+.t2 .textura { background-image: radial-gradient(circle, rgba(0,0,0,.55) 32%, transparent 34%); background-size: 1.5cqw 1.5cqw; mix-blend-mode: multiply; opacity: .55; }
+.t2 .textura::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(246,243,238,.16) 30%, transparent 32%); background-size: 1.5cqw 1.5cqw; background-position: .75cqw .75cqw; }
+.t3 .textura { background:
+   linear-gradient(90deg, transparent 49.6%, rgba(255,255,255,.14) 50%, rgba(0,0,0,.28) 50.4%, transparent 51.5%),
+   linear-gradient(180deg, transparent 33%, rgba(255,255,255,.12) 33.3%, rgba(0,0,0,.25) 33.6%, transparent 35%),
+   linear-gradient(180deg, transparent 66%, rgba(255,255,255,.1) 66.3%, rgba(0,0,0,.22) 66.6%, transparent 68%),
+   url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .35' numOctaves='3' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .45 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 100% 100%, 100% 100%, 100% 100%, 60cqw; mix-blend-mode: soft-light; opacity: .95; }
+.t4 .textura { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.04' numOctaves='4' seed='11'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='0 0 0 0 0 0 0 0 0 .55'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix values='0 0 0 0 .83 0 0 0 0 .02 0 0 0 0 .29 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), var(--grano); background-size: 90cqw, 30cqw; mix-blend-mode: screen; opacity: .5; }
+.t4 .tit { text-shadow: .45cqw .3cqw 0 rgba(212,5,73,.75); }
+.t5 .textura { background:
+   repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 .3cqw, transparent .3cqw .7cqw),
+   repeating-linear-gradient(-45deg, rgba(0,0,0,.25) 0 .3cqw, transparent .3cqw .7cqw); mix-blend-mode: overlay; }
+.t5 .foto.bn { -webkit-mask: radial-gradient(ellipse 120% 90% at 50% 30%, #000 60%, transparent 100%); mask: radial-gradient(ellipse 120% 90% at 50% 30%, #000 60%, transparent 100%); }
 </style>
 
 <div class="envoltura">
@@ -161,6 +179,48 @@ figcaption { font: 12px/1.35 var(--maquina); color: var(--pagina-suave); }
 
 
 
+
+
+  <section class="elegida" aria-labelledby="texturas" style="border-color:var(--pluma)">
+    <div class="cabeza"><span class="letra">T</span><h2 id="texturas">Texturas: <em>que todo parezca impreso</em></h2></div>
+    <p>Sobre el Wired original (N1 de noticia y P3 de portada), una capa que envuelve toda la diapositiva: la foto, los negros y el texto. No es una ilustración que compita con la noticia, es materia: cada día igual, como la marca de la casa. Hechas en código, sin coste ni Magnific; si una gusta, se puede afinar o sustituir por un escaneado de verdad (un papel, una trama) hecho una sola vez.</p>
+    <div class="fila5"><figure><div class="d b t1"><div class="foto bn"><div class="mesas"></div></div><div class="velo"></div>
+        <div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="cuerpo"><p class="tit" style="font-size:7.8cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+        <div class="textura"></div></div><figcaption>T1 · Fotocopia: tóner que salpica, negros que se queman en los bordes, foto más dura</figcaption></figure><figure><div class="d b t2"><div class="foto bn"><div class="mesas"></div></div><div class="velo"></div>
+        <div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="cuerpo"><p class="tit" style="font-size:7.8cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+        <div class="textura"></div></div><figcaption>T2 · Trama: medio tono de periódico sobre todo: la foto y los negros se ven impresos</figcaption></figure><figure><div class="d b t3"><div class="foto bn"><div class="mesas"></div></div><div class="velo"></div>
+        <div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="cuerpo"><p class="tit" style="font-size:7.8cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+        <div class="textura"></div></div><figcaption>T3 · Pliegues: el carrusel doblado en tres, con fibra de papel: un recorte guardado</figcaption></figure><figure><div class="d b t4"><div class="foto bn"><div class="mesas"></div></div><div class="velo"></div>
+        <div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="cuerpo"><p class="tit" style="font-size:7.8cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+        <div class="textura"></div></div><figcaption>T4 · Risografía: manchas de tinta en pluma y el titular un poco descasado, como impreso a dos pasadas</figcaption></figure><figure><div class="d b t5"><div class="foto bn"><div class="mesas"></div></div><div class="velo"></div>
+        <div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="cuerpo"><p class="tit" style="font-size:7.8cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+        <div class="textura"></div></div><figcaption>T5 · Tela de encuadernación: la trama de la tela de un libro en tapa dura sobre los negros</figcaption></figure></div>
+    <div class="fila5"><figure><div class="d p-lista t1"><div class="dentro"><span class="pi">Cinco del libro · 2 nov</span>
+        <p class="gran">Hoy, en el <em>mundo del libro</em></p>
+        <ol><li><i>1</i>El Cervantes se decide mañana</li><li><i>2</i>París elige su Goncourt</li><li><i>3</i>Allende llega con el Planeta</li><li><i>4</i>Scholastic compra Cottage Door</li><li><i>5</i>El audiolibro, con voces sintéticas</li></ol></div>
+        <div class="textura"></div></div><figcaption>T1 · Fotocopia</figcaption></figure><figure><div class="d p-lista t2"><div class="dentro"><span class="pi">Cinco del libro · 2 nov</span>
+        <p class="gran">Hoy, en el <em>mundo del libro</em></p>
+        <ol><li><i>1</i>El Cervantes se decide mañana</li><li><i>2</i>París elige su Goncourt</li><li><i>3</i>Allende llega con el Planeta</li><li><i>4</i>Scholastic compra Cottage Door</li><li><i>5</i>El audiolibro, con voces sintéticas</li></ol></div>
+        <div class="textura"></div></div><figcaption>T2 · Trama</figcaption></figure><figure><div class="d p-lista t3"><div class="dentro"><span class="pi">Cinco del libro · 2 nov</span>
+        <p class="gran">Hoy, en el <em>mundo del libro</em></p>
+        <ol><li><i>1</i>El Cervantes se decide mañana</li><li><i>2</i>París elige su Goncourt</li><li><i>3</i>Allende llega con el Planeta</li><li><i>4</i>Scholastic compra Cottage Door</li><li><i>5</i>El audiolibro, con voces sintéticas</li></ol></div>
+        <div class="textura"></div></div><figcaption>T3 · Pliegues</figcaption></figure><figure><div class="d p-lista t4"><div class="dentro"><span class="pi">Cinco del libro · 2 nov</span>
+        <p class="gran">Hoy, en el <em>mundo del libro</em></p>
+        <ol><li><i>1</i>El Cervantes se decide mañana</li><li><i>2</i>París elige su Goncourt</li><li><i>3</i>Allende llega con el Planeta</li><li><i>4</i>Scholastic compra Cottage Door</li><li><i>5</i>El audiolibro, con voces sintéticas</li></ol></div>
+        <div class="textura"></div></div><figcaption>T4 · Risografía</figcaption></figure><figure><div class="d p-lista t5"><div class="dentro"><span class="pi">Cinco del libro · 2 nov</span>
+        <p class="gran">Hoy, en el <em>mundo del libro</em></p>
+        <ol><li><i>1</i>El Cervantes se decide mañana</li><li><i>2</i>París elige su Goncourt</li><li><i>3</i>Allende llega con el Planeta</li><li><i>4</i>Scholastic compra Cottage Door</li><li><i>5</i>El audiolibro, con voces sintéticas</li></ol></div>
+        <div class="textura"></div></div><figcaption>T5 · Tela de encuadernación</figcaption></figure></div>
+    <div class="pros">
+      <div><b>Mi recomendación</b>T2 (trama) como base de la serie: es la más Wired y la más de prensa, y se nota en la miniatura sin ensuciar el texto. T4 (riso) si queremos más calle y más color; T3 (pliegues) para ocasiones especiales, no a diario.</div>
+      <div><b>Cómo se haría</b>Una capa en la plantilla de «Cinco del libro» (y, si gusta, en todo Folio), con su interruptor y su intensidad en los tokens de diseño. No cambia nada del texto ni de las imágenes, y sale igual en el vídeo y en el JPEG.</div>
+    </div>
+  </section>
 
   <section class="elegida" aria-labelledby="wired" style="border-color:var(--pluma)">
     <div class="cabeza"><span class="letra">B</span><h2 id="wired">Wired original: <em>versiones</em></h2></div>
