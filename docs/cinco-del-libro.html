@@ -88,7 +88,7 @@ figcaption { font: 12px/1.35 var(--maquina); color: var(--pagina-suave); }
 .b-port .cinco { position: absolute; right: -4cqw; top: -10cqw; font: 700 96cqw/1 var(--titular); letter-spacing: -.08em; color: var(--pluma); opacity: .92; mix-blend-mode: screen; }
 .b-cub .cubierta { left: 26cqw; top: 13cqw; width: 48cqw; height: 66cqw; }
 .b-cub .retrato { width: 22cqw; height: 22cqw; left: 62cqw; top: 58cqw; border-color: var(--mesa); }
-.b-sin .gigante { position: absolute; left: 6cqw; top: 9cqw; font: 700 31cqw/.86 var(--titular); letter-spacing: -.07em; color: var(--pluma); }
+.b-sin .gigante { position: absolute; left: 6cqw; top: 9cqw; font: 700 23cqw/.86 var(--titular); letter-spacing: -.07em; color: var(--pluma); }
 
 /* C · Teletipo */
 .c { background: var(--papel); }
@@ -118,6 +118,39 @@ figcaption { font: 12px/1.35 var(--maquina); color: var(--pagina-suave); }
 .fila5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 860px) { .fila5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .original { width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; background-size: cover; }
+
+/* Versiones sobre el Wired original (2/11): sin ilustración; foto de archivo, retrato o cubierta a sangre */
+.d .foto.f2 { background: radial-gradient(110% 80% at 70% 30%, #a39a96 0%, #57504f 40%, #161112 100%); }
+.d .foto.f3 { background: linear-gradient(160deg, #6f6866 0%, #2b2425 55%, #0f0b0c 100%); }
+.d .foto.f4 { background: radial-gradient(90% 70% at 40% 60%, #b8afab 0%, #5d5555 45%, #120e0f 100%); }
+.d .foto.f5 { background: linear-gradient(20deg, #1a1416 0%, #4e4748 50%, #9a918e 100%); }
+.d .foto.bn { filter: grayscale(1) contrast(1.15); }
+.v-num .indice { position: absolute; right: 4cqw; top: 2cqw; font: 700 44cqw/0.8 var(--titular); letter-spacing: -.08em; color: var(--pluma); }
+.v-caja .tarjeta { position: absolute; left: 6cqw; right: 6cqw; bottom: 7cqw; background: var(--papel); color: var(--tinta); padding: 5cqw 5cqw 4cqw; border-radius: 1.4cqw; display: grid; gap: 2.4cqw; }
+.v-caja .tarjeta .tit em { color: var(--pluma); background: none; padding: 0; }
+.v-caja .tarjeta .fuente { color: var(--tinta); }
+.v-banda { background: var(--papel); color: var(--tinta); }
+.v-banda .foto { left: 0; right: 0; top: 0; height: 58%; }
+.v-banda .rasgado { top: 54%; background: var(--papel); }
+.v-banda .cuerpo { position: absolute; left: 7cqw; right: 7cqw; bottom: 7cqw; display: grid; gap: 2.6cqw; }
+.v-banda .tit em { color: var(--pluma); background: none; padding: 0; }
+.v-banda .contador i { background: rgba(246,243,238,.4); } .v-banda .contador i.si { background: var(--papel); }
+.v-neon .tinte { position: absolute; inset: 0; background: var(--pluma); mix-blend-mode: multiply; }
+.v-neon.marc .tinte { background: var(--marcador); }
+.v-neon.marc .tit em { background: none; color: var(--marcador); padding: 0; }
+.p-mosaico .rejilla { position: absolute; left: 0; right: 0; top: 0; height: 58%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: 1fr 1fr; gap: .8cqw; }
+.p-mosaico .rejilla .foto { position: relative; inset: auto; }
+.p-mosaico .rejilla .foto:nth-child(-n+3) { grid-column: span 2; } .p-mosaico .rejilla .foto:nth-child(n+4) { grid-column: span 3; }
+.p-mosaico .rejilla .foto b { position: absolute; left: 2cqw; top: 1.4cqw; z-index: 2; font: 700 6cqw/1 var(--titular); color: var(--papel); }
+.fila5 figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+.p-lista { background: var(--mesa); color: var(--papel); }
+.p-lista .dentro { position: absolute; inset: 0; padding: 7cqw; display: flex; flex-direction: column; gap: 3cqw; }
+.p-lista .pi { align-self: flex-start; }
+.p-lista ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2.4cqw; }
+.p-lista li { display: grid; grid-template-columns: 9cqw 1fr; gap: 2cqw; align-items: baseline; font: 700 5cqw/1.04 var(--titular); letter-spacing: -.04em; border-top: .25cqw solid rgba(246,243,238,.2); padding-top: 2cqw; }
+.p-lista li i { font: 700 7cqw/1 var(--titular); color: var(--pluma); font-style: normal; }
+.p-lista .gran { font: 700 13cqw/.9 var(--titular); letter-spacing: -.06em; }
+.p-lista .gran em { font: italic 400 1.04em var(--remate); background: linear-gradient(transparent 62%, var(--marcador) 62% 92%, transparent 92%); color: var(--papel); }
 </style>
 
 <div class="envoltura">
@@ -127,6 +160,69 @@ figcaption { font: 12px/1.35 var(--maquina); color: var(--pagina-suave); }
   <p class="entrada">Los textos son los del ejercicio del 2 de noviembre y sirven de ejemplo; las imágenes están simuladas (en la pieza real, solo con licencia libre, cubiertas reales o ilustración).</p>
 
 
+
+
+  <section class="elegida" aria-labelledby="wired" style="border-color:var(--pluma)">
+    <div class="cabeza"><span class="letra">B</span><h2 id="wired">Wired original: <em>versiones</em></h2></div>
+    <p>Sin ilustración. Cada noticia lleva su imagen real: foto de archivo con licencia libre, el retrato del autor de Commons o la cubierta, siempre en blanco y negro con grano; si no hay ninguna, la página tipográfica. Las fotos de esta página están simuladas. Primero, cinco maneras de hacer la diapositiva de noticia con la misma noticia; después, la de sin foto y tres portadas.</p>
+    <h3 style="margin:6px 0 0">La noticia</h3>
+    <div class="fila5">
+      <figure><div class="d b"><div class="foto bn"><div class="mesas"></div><span>Archivo · el salón del Drouant</span></div><div class="velo"></div><div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="cuerpo"><p class="tit" style="font-size:7.8cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+      </div><figcaption>N1 · a sangre: la original, con su subtítulo</figcaption></figure>
+
+      <figure><div class="d b v-num"><div class="foto bn"><div class="mesas"></div><span>Archivo · el salón del Drouant</span></div><div class="velo"></div><span class="indice" aria-hidden="true">2</span>
+        <div class="cuerpo"><p class="tit" style="font-size:7.8cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+      </div><figcaption>N2 · número gigante en pluma en lugar de la barra</figcaption></figure>
+
+      <figure><div class="d b v-caja"><div class="foto bn"><div class="mesas"></div><span>Archivo · el salón del Drouant</span></div><div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="tarjeta"><p class="tit" style="font-size:7cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+      </div><figcaption>N3 · caja: tarjeta de papel sobre la foto</figcaption></figure>
+
+      <figure><div class="d v-banda"><div class="foto bn"><div class="mesas"></div><span>Archivo · el salón del Drouant</span></div><div class="rasgado"></div><div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="cuerpo"><p class="tit" style="font-size:7.4cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+      </div><figcaption>N4 · banda: foto arriba, papel rasgado y texto en tinta</figcaption></figure>
+
+      <figure><div class="d b v-neon"><div class="foto bn"><div class="mesas"></div><span>Archivo · el salón del Drouant</span></div><div class="tinte"></div><div class="velo"></div><div class="contador" aria-label="2 de 5"><i class="si"></i><i class="si"></i><i></i><i></i><i></i></div>
+        <div class="cuerpo"><p class="tit" style="font-size:7.8cqw">París elige mañana su Goncourt entre <em>cuatro finalistas</em></p><p class="sub">Semana grande de los premios franceses: el Médicis hoy, el Goncourt y el Renaudot mañana.</p><span class="fuente">Livres Hebdo</span></div>
+      </div><figcaption>N5 · neón: la foto a dos tintas, alternando pluma y marcador</figcaption></figure>
+    </div>
+
+    <h3 style="margin:10px 0 0">Sin foto y portadas</h3>
+    <div class="fila5">
+      <figure><div class="d b b-sin"><div class="contador" aria-label="4 de 5"><i class="si"></i><i class="si"></i><i class="si"></i><i class="si"></i><i></i></div><span class="gigante">71<br>millones</span>
+        <div class="cuerpo"><p class="tit" style="font-size:7.4cqw">Scholastic compra Cottage Door Press por <em>71 millones</em></p><p class="sub">El gigante del libro infantil suma un sello de libros de cartón para los más pequeños.</p><span class="fuente">Publishers Weekly</span></div>
+      </div><figcaption>Sin foto: la cifra o la palabra gigante en pluma</figcaption></figure>
+
+      <figure><div class="d b b-port">
+        <div class="foto bn f2"><div class="mesas"></div></div><span class="cinco" aria-hidden="true">5</span><div class="velo"></div>
+        <div class="cuerpo"><span class="pi" style="justify-self:start">Cinco del libro · 2 nov</span>
+          <p class="tit">El Cervantes, el Goncourt y <em>tres más</em></p><p class="sub">Lo que hay que saber hoy del mundo del libro, en cinco diapositivas.</p></div>
+      </div><figcaption>P1 · la original: el cinco gigante sobre la foto de la primera</figcaption></figure>
+
+      <figure><div class="d b p-mosaico">
+        <div class="rejilla"><div class="foto bn"><b>1</b></div><div class="foto bn f2"><b>2</b></div><div class="foto bn f3"><b>3</b></div><div class="foto bn f4"><b>4</b></div><div class="foto bn f5"><b>5</b></div></div>
+        <div class="cuerpo"><span class="pi" style="justify-self:start">Cinco del libro · 2 nov</span>
+          <p class="tit" style="font-size:8cqw">El Cervantes, el Goncourt y <em>tres más</em></p><p class="sub">Las cinco del día del mundo del libro.</p></div>
+      </div><figcaption>P2 · mosaico: las cinco imágenes del día, numeradas</figcaption></figure>
+
+      <figure><div class="d p-lista"><div class="dentro">
+        <span class="pi">Cinco del libro · 2 nov</span>
+        <p class="gran">Hoy, en el <em>mundo del libro</em></p>
+        <ol><li><i>1</i>El Cervantes se decide mañana</li><li><i>2</i>París elige su Goncourt</li><li><i>3</i>Allende llega con el Planeta</li><li><i>4</i>Scholastic compra Cottage Door</li><li><i>5</i>El audiolibro, con voces sintéticas</li></ol>
+      </div></div><figcaption>P3 · lista: los cinco titulares en negro, sin foto</figcaption></figure>
+
+      <figure><div class="d b b-port v-neon marc">
+        <div class="foto bn f2"><div class="mesas"></div></div><div class="tinte"></div><span class="cinco" aria-hidden="true" style="color:var(--papel);mix-blend-mode:normal;opacity:.95">5</span><div class="velo"></div>
+        <div class="cuerpo"><span class="pi" style="justify-self:start">Cinco del libro · 2 nov</span>
+          <p class="tit">El Cervantes, el Goncourt y <em>tres más</em></p></div>
+      </div><figcaption>P4 · neón en marcador con el cinco en papel</figcaption></figure>
+    </div>
+    <div class="pros">
+      <div><b>Cómo se haría</b>Para cada noticia, la imagen la busca el director de arte como hoy (retrato de Commons, cubierta o archivo de Europeana, con la licencia comprobada), una por noticia y sin repetir en el carrusel. Sin ilustración ni Magnific: más barato, pero más diapositivas tipográficas los días con poco archivo.</div>
+      <div><b>Mi recomendación</b>N1 con el número de N2 solo en la portada, o N1 tal cual con P3 de portada: la lista se lee en la miniatura y cada noticia se queda con su foto a sangre. N5 (neón) como recurso para dar ritmo, alternando, no en todas.</div>
+    </div>
+  </section>
 
   <section class="elegida" aria-labelledby="pruebas" style="border-color:var(--pluma)">
     <div class="cabeza"><span class="letra">✓</span><h2 id="pruebas">Pruebas reales: <em>listo para aprobar</em></h2></div>
