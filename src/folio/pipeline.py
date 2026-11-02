@@ -394,10 +394,9 @@ class Pipeline:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=viejo))
                 continue
             clave = clave_libro(c.titulo, c.autor)
-            if self.permitir_repetidos:
-                ok.append(l)
-                continue
-            usado = self.historial.libro_usado(self.fecha, dias, c.titulo, c.autor, l.olid)
+            # Repetir lo pedido por la redacción salta la regla de los 60 días, pero nunca deja el mismo libro en dos
+            # piezas o propuestas a la vez (revisión general, 2/11: el fondo podía repetir un libro en muchas)
+            usado = None if self.permitir_repetidos else self.historial.libro_usado(self.fecha, dias, c.titulo, c.autor, l.olid)
             if usado:
                 descartes.append(LibroDescartado(titulo=c.titulo, autor=c.autor, motivo=f"ya usado el {usado}"))
             elif clave in ya_usados or (l.olid and l.olid in ya_usados):

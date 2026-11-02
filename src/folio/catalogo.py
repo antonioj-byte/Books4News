@@ -249,6 +249,19 @@ def editoriales(raiz: Path) -> list[Editorial]:
             if not e.excluir]
 
 
+def es_independiente(editorial: str | None, lista: list[Editorial]) -> Editorial | None:
+    """La editorial de la lista que casa con `editorial` (todas las palabras con contenido de una están en la otra), o
+    None. Para el libro recomendado del fondo, que el jefe propone de memoria (decisión del usuario, 2/11)."""
+    if not editorial:
+        return None
+    suya = {w for w in _slug(editorial).split("-") if w and w not in _GENERICAS}
+    for e in lista:
+        clave = {w for w in _slug(e.nombre).split("-") if w and w not in _GENERICAS}
+        if clave and suya and (clave <= suya or suya <= clave):
+            return e
+    return None
+
+
 def meses_atras(hoy: date, mes: str) -> int:
     y, m = map(int, mes.split("-"))
     return (hoy.year - y) * 12 + hoy.month - m

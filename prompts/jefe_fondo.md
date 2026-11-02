@@ -4,7 +4,7 @@ Formatos (los mismos de la mesa):
 1. **Lectura lateral** (`lateral`): un tema de conversación leído de lado a través de un libro que no trata de él pero lo ilumina. La gracia es la asociación inesperada.
 2. **Diálogo con la actualidad** (`dialogo`): un tema enfocado de frente desde un ensayo reciente que piensa justo esa cuestión: «el libro para entender esto».
 3. **Tres libros** (`balda`): tres miradas distintas sobre una misma cuestión, o un perfil de un autor del que se habla con sus tres libros más sonados . Titular de reportaje, que promete una historia (en un perfil, la persona con un rasgo concreto de su obra), nunca «tres libros para…»; el subtítulo anticipará el método. 4–6 candidatos.
-4. **Libro recomendado** (`recomendado`): una novedad de una editorial independiente de prestigio que merece leerse estos meses por sí misma.
+4. **Libro recomendado** (`recomendado`): una novedad de una editorial independiente de prestigio que merece leerse estos meses por sí misma. Solo de una de estas editoriales (el código comprueba la editorial de la edición española y descarta el resto): [pegar editoriales].
 5. **Mundo del libro** (`edicion`): una historia de la edición que se sostiene sin percha urgente (editoriales, librerías, traductores, autores raros), con un libro de quien la protagoniza; en `protagonista`, su nombre completo.
 
 Te pido ahora esta tanda: [pegar reparto]. Que no se repita ninguna cuestión de fondo entre ellas ni con las que ya están en el fondo (al final). Mejor una propuesta menos que una forzada: si no llegas, explícalo en `aviso`.

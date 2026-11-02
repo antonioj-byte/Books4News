@@ -119,9 +119,21 @@ def _bloque_cosecha(temas: list[TemaCosecha]) -> str:
 
 
 def _bloque_fondo(existentes: list[dict]) -> str:
+    """Lo que ya está en el fondo, con sus libros, para que no se repitan cuestiones ni libros (revisión general, 2/11)."""
     if not existentes:
         return "(vacío)"
-    return "\n".join(f"- [{x['formato']}] {x['titular']} — {x['cuestion']}" for x in existentes)
+    def libros(x):
+        d = x.get("datos") or {}
+        ls = ([l["titulo_propuesto"] for l in d.get("libros", [])] or [c["titulo"] for c in d.get("por_verificar", [])[:1]]
+              or [c["titulo"] for c in x.get("libros_candidatos", [])[:1]])
+        return f" · libros: {', '.join(ls)}" if ls else ""
+    return "\n".join(f"- [{x['formato']}] {x['titular']} — {x['cuestion']}{libros(x)}" for x in existentes)
+
+
+def _bloque_editoriales(cfg: Config) -> str:
+    """Las editoriales independientes de referencia, para el libro recomendado (decisión del usuario, 2/11)."""
+    from folio.catalogo import editoriales
+    return ", ".join(e.nombre + (f" ({e.pais})" if e.pais else "") for e in editoriales(cfg.raiz) if e.referencia) or "(ninguna)"
 
 
 # --- Tanda ---------------------------------------------------------------------------------
@@ -165,6 +177,7 @@ def proponer(llm: LLM, cfg: Config, fecha: str, reparto: dict[str, int], temas: 
         texto_reparto = ", ".join(f"{k} de {_NOMBRES[f]} (`{f}`)" for f, k in trozo.items())
         prompt = cargar_prompt(cfg, "jefe_fondo", {
             "[pegar reparto]": texto_reparto, "[pegar criterios]": criterios(cfg, fecha),
+            "[pegar editoriales]": _bloque_editoriales(cfg),
             "[pegar cosecha]": _bloque_cosecha(temas), "[pegar fondo]": _bloque_fondo(ya)})
         try:
             r, _ = llm.estructurado(f"fondo:{fecha}:{len(propuestas)}", [{"role": "user", "content": prompt}], TandaFondo,
@@ -259,6 +272,12 @@ def preparar_tanda(cfg: Config, almacen, fecha: str, llm: LLM | None = None, n: 
             # propuesta: si el titular o el gancho nombran el primer libro, una reserva de otro autor no vale
             fuera.append(f"«{e.titular}» (el libro que nombra, «{primero.titulo}», no pasó y la reserva es de otro autor)")
             continue
+        if e.formato == "recomendado" and not _de_independiente(cfg, libros[0]):
+            # Decisión del usuario (2/11): el recomendado es de una editorial independiente; el jefe lo propone de
+            # memoria, así que se comprueba la editorial de la edición española contra la lista
+            ed = libros[0].edicion_es_detalle.editorial if libros[0].edicion_es_detalle else None
+            fuera.append(f"«{e.titular}» (recomendado de una editorial que no está entre las independientes: {ed or 'no consta'})")
+            continue
         usados |= {clave_libro(l.titulo_propuesto, l.autores[0] if l.autores else "") for l in libros}
         guardar.append(_entrada(por_id[e.historia_id], fecha, libros, notas.get(e.historia_id), temas))
     almacen.guardar_fondo(mes, guardar)
@@ -266,6 +285,12 @@ def preparar_tanda(cfg: Config, almacen, fecha: str, llm: LLM | None = None, n: 
         avisos.append(f"{pendientes} con el libro por confirmar: un catálogo no respondió; se reintentan en la próxima tanda "
                       "y al escribirlas")
     return ResultadoTanda(len(guardar), len(tanda.propuestas), fuera, avisos)
+
+
+def _de_independiente(cfg: Config, libro) -> bool:
+    from folio.catalogo import editoriales, es_independiente
+    ed = libro.edicion_es_detalle.editorial if libro.edicion_es_detalle else None
+    return es_independiente(ed, editoriales(cfg.raiz)) is not None
 
 
 def _tuberia(cfg: Config, fecha: str, llm: LLM):
@@ -338,7 +363,8 @@ def texto_tema(x: dict) -> str:
     p, libros = x["datos"]["propuesta"], x["datos"]["libros"]
     libro = "; ".join(f"*{l['titulo_propuesto']}*, de {', '.join(l['autores'][:2])}" for l in libros) or "; ".join(
         f"*{c['titulo']}*, de {c['autor']}" for c in x["datos"].get("por_verificar", [])[:1])
-    return (f"Del fondo del mes ({_NOMBRES.get(p['formato'], p['formato'])}): {p['titular']}. {p['de_que_se_habla']} "
+    return (f"Del fondo del mes, en formato «{p['formato']}» ({_NOMBRES.get(p['formato'], p['formato'])}): "
+            f"{p['titular']}. {p['de_que_se_habla']} "
             f"Cuestión de fondo: {p['cuestion_de_fondo']} Gancho: {p['gancho_libro']} Libro: {libro}. "
             "Cuenta lo último que haya pasado sobre el tema, con su fecha.")
 

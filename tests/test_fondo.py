@@ -126,3 +126,14 @@ def test_si_el_catalogo_no_responde_queda_por_confirmar(cfg, monkeypatch):
     avisos = fondo.reverificar(cfg, a, "2026-11-03", llm)
     assert "1 confirmados, 1 descartados, 1 siguen pendientes" in avisos[0]
     assert len([x for x in a.fondo(estado="disponible") if x["datos"]["libros"]]) == 1
+
+
+def test_el_recomendado_tiene_que_ser_de_una_independiente(cfg):
+    """Decisión del usuario (2/11): el recomendado del fondo se comprueba contra la lista de independientes."""
+    from folio.catalogo import Editorial, es_independiente
+    lista = [Editorial(nombre="Impedimenta"), Editorial(nombre="Libros del Asteroide"), Editorial(nombre="Pre-Textos")]
+    assert es_independiente("Editorial Impedimenta", lista).nombre == "Impedimenta"
+    assert es_independiente("Libros del Asteroide S.L.", lista).nombre == "Libros del Asteroide"
+    assert es_independiente("Pre-textos", lista) and not es_independiente("Planeta", lista) and not es_independiente(None, lista)
+    assert "«recomendado»" in fondo.texto_tema({"datos": {"propuesta": {"formato": "recomendado", "titular": "T",
+        "de_que_se_habla": "D", "cuestion_de_fondo": "C", "gancho_libro": "G"}, "libros": []}})
