@@ -262,6 +262,37 @@ class ResultadoTema:
     avisos: list[str]
 
 
+REDACCION = "Redacción de Folio"
+MIN_DATOS_REPLICA = 160          # una réplica con al menos esto de texto (sin enlaces) se toma como datos aportados
+_URL_REPLICA = re.compile(r"https?://[^\s<>\"»«]+")
+
+
+def aportes_de_la_replica(tid: int, replica: str, ya: list[FuenteTema], cliente=None) -> tuple[list[FuenteTema], list[str]]:
+    """Lo que la redacción aporta en una réplica pasa a ser material de la pieza (3/11, a petición del usuario: «hemos
+    entrado en un bucle raro»: los datos y las fuentes de las réplicas solo los leía el jefe, que los volvía a pedir).
+    Los enlaces se descargan como las noticias del tema (hasta tres; ante 403/429, se dice y no se reintenta) y un texto
+    con datos queda como fuente «Redacción de Folio», que el guionista usa y el comprobador coteja. Devuelve (fuentes
+    nuevas, avisos)."""
+    nuevas, avisos = [], []
+    urls_ya = {f.url for f in ya}
+    urls = [u.rstrip(".,);") for u in dict.fromkeys(_URL_REPLICA.findall(replica or ""))][:3]
+    pendientes = [u for u in urls if u not in urls_ya]
+    if pendientes:
+        with (cliente or _cliente()) as c:
+            for url in pendientes:
+                f, motivo = descargar(url, c)
+                if f:
+                    nuevas.append(f)
+                else:
+                    avisos.append(f"Enlace sin leer ({url[:60]}…): {motivo}")
+    texto = " ".join(_URL_REPLICA.sub(" ", replica or "").split())
+    if len(texto) >= MIN_DATOS_REPLICA:
+        n = sum(1 for f in ya if f.medio == REDACCION) + 1
+        nuevas.append(FuenteTema(medio=REDACCION, titulo="Datos que aporta la redacción", url=f"redaccion:tema-{tid}:{n}",
+                                 texto=texto))
+    return nuevas, avisos
+
+
 def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None, replica: str | None = None) -> ResultadoTema:
     """«Proponer ahora» (y cada réplica de la redacción): el tema `tid` se convierte en una pieza pendiente de la
     ejecución `eid` (noticias, propuesta del jefe, libros verificados y cubiertas), o el jefe pregunta. Con una
@@ -292,6 +323,12 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
             if not fuentes:
                 raise SinFuentes("No he encontrado noticias que se puedan leer sobre el tema: añade un enlace que lo cuente")
             almacen.actualizar_tema(tid, fuentes=[f.model_dump() for f in fuentes])
+        if replica:
+            aportadas, avisos_r = aportes_de_la_replica(tid, replica, fuentes)
+            avisos += avisos_r
+            if aportadas:
+                fuentes = [*fuentes, *aportadas]
+                almacen.actualizar_tema(tid, fuentes=[f.model_dump() for f in fuentes])
         h = historia(tid, tema.texto, fuentes)
         r = proponer(llm, cfg, h, tema.texto, fuentes, fecha, conversacion, tema.enfoque)
     except (SinFuentes, ErrorLLM) as exc:

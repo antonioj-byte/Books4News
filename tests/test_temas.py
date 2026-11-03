@@ -236,3 +236,18 @@ def test_el_enfoque_del_tema_se_guarda(tmp_path):
     assert next(t for t in a.temas() if t.id == tid).enfoque == "noticia"
     a.cambiar_enfoque_tema(tid, "elige")
     assert next(t for t in a.temas() if t.id == tid).enfoque == "elige"
+
+
+def test_lo_que_aporta_una_replica_pasa_a_la_pieza():
+    """3/11 («hemos entrado en un bucle raro»): los datos y enlaces de una réplica pasan a ser fuentes del tema."""
+    datos = ("Los dos premios se anunciaron hoy, 3 de noviembre, en el restaurante Drouant de París. Goncourt 2026: "
+             "Philippe Jaenada por L'inconnu du quai de Javel (Flammarion), por seis votos contra tres.")
+    nuevas, avisos = temas.aportes_de_la_replica(5, datos + " https://ejemplo.org/goncourt", [], _cliente())
+    medios = [f.medio for f in nuevas]
+    assert temas.REDACCION in medios and len(nuevas) == 2 and avisos == []
+    redaccion = next(f for f in nuevas if f.medio == temas.REDACCION)
+    assert "Jaenada" in redaccion.texto and "https://" not in redaccion.texto and redaccion.url == "redaccion:tema-5:1"
+    # Una réplica corta («vale, adelante») no aporta nada; un enlace ya leído no se descarga otra vez
+    assert temas.aportes_de_la_replica(5, "Vale, adelante", [], _cliente()) == ([], [])
+    ya = [f for f in nuevas if f.medio != temas.REDACCION]
+    assert temas.aportes_de_la_replica(5, "https://ejemplo.org/goncourt", ya, _cliente()) == ([], [])

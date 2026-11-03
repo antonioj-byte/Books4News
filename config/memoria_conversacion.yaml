@@ -687,3 +687,11 @@
   patron: "«Esto no deja de ser una idea de SaaS que tiene que sustituir a una agencia: una serie de roles que entrenamos recursivamente con el feedback, y cada cuenta tiene una memoria. Una vertical y una horizontal.» → «Adelante con todo.»"
   propuesta: "La web enseña la agencia: menú lateral con la cuenta, Archivo con la nevera y la vigencia, Equipo con cada rol, Marca con la memoria de marca, créditos en cada pieza y «Para» en el chat. Cada regla de la memoria tiene capa: oficio, marca o celda."
   evidencia: ["Conversación, 3/11: Artifacts «La agencia de Folio» y «Mesa de edición por dentro»"]
+
+- clave: replica-aporta-datos
+  fecha: "2026-11-03"
+  destino: jefe_cultura
+  capa: oficio
+  patron: "«Aquí hemos entrado en un bucle raro»: la redacción contestaba al jefe con datos y fuentes y el jefe volvía a proponer lo mismo con las mismas salvedades."
+  propuesta: "Lo que la redacción aporta en una réplica (datos, enlaces) es material de la pieza: no se vuelve a pedir. Si la réplica solo confirma o aporta, se contesta en una frase y se da la pieza por lista para escribir."
+  evidencia: ["Conversación, 3/11: tema del Goncourt con réplicas que repetían la misma propuesta"]

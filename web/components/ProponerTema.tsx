@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { api, type Tema } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
@@ -36,12 +37,16 @@ function Conversacion({ tema, eid, onPieza, onCambio }: { tema: Tema; eid?: numb
       <div className="flex gap-2">
         <textarea id={`replica-${tema.id}`} value={texto} onChange={(e) => setTexto(e.target.value)} rows={2} disabled={enviando}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); responder(); } }}
-                  placeholder={tema.estado === "pregunta" ? "Contesta al jefe…" : "Replica a la propuesta: «otro libro», «más perfil y menos noticia»…"}
+                  placeholder={tema.estado === "pregunta" ? "Contesta al jefe…" : "Replica a la propuesta: «otro libro», «más perfil y menos noticia»… Los datos y enlaces que pegues pasan a la pieza"}
                   className="min-w-0 flex-1 resize-none rounded-[10px] border border-borde bg-papel p-2 outline-none focus:border-tinta" />
         <button onClick={() => responder()} disabled={enviando || texto.trim().length < 2 || !eid} className="boton self-end">
           {enviando ? "Pensando…" : "Enviar"}
         </button>
       </div>
+      {tema.estado === "en_mesa" && tema.pieza_id && eid && (
+        // 3/11 («hemos entrado en un bucle raro»): con la propuesta en la mesa, el paso siguiente es escribirla
+        <Link href={`/pieza/${eid}/${tema.pieza_id}`} className="boton self-start">Escribir la pieza →</Link>
+      )}
       {tema.enfoque !== "noticia" && tema.estado !== "pregunta" && (
         // 3/11: si el jefe hizo un ensayo y solo se quería la noticia, un clic lo rehace como «Noticia»
         <button onClick={() => responder("Solo la noticia: cuéntala con su contexto, sin ensayo ni libro ajeno.", "noticia")}
