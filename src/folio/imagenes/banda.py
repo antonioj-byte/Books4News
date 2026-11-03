@@ -3,7 +3,7 @@
 que cruza las tres, oscurecida abajo, con el texto en blanco encima.
 
 Sin persona, Flux 2 Pro la dibuja desde el texto (1440×600). Con una persona real («Pavel. Foto con licencia a estilo
-gouache»), Seedream 4.5 Edit la pinta a partir de su foto libre, que va como referencia: nunca se dibuja una cara
+gouache»), Seedream 4.5 Edit la pasa al estilo de la casa (collage desde el 3/11) a partir de su foto libre, que va como referencia: nunca se dibuja una cara
 desde cero, y el resultado es una obra derivada con el crédito de la foto. En los dos casos se recorta a 12:5 (tres
 diapositivas de 4:5), pasa el revisor de letras y se guarda como <pieza>-banda.jpg. Estilo en
 prompts/ilustracion_editorial.md, con el reparto y la persona de prompts/ilustracion_banda.md.

@@ -164,11 +164,12 @@ def _prompt_revisor(cfg: Config) -> str:
     return texto.split("\n---\n", 1)[1].strip()
 
 
-def revisar(llm, cfg: Config, pieza_id: str, dibujo: Path, manchas: bool = True) -> str | None:
+def revisar(llm, cfg: Config, pieza_id: str, dibujo: Path, manchas: bool = False) -> str | None:
     """None si la ilustración está limpia; si tiene letras o manchas sueltas, el motivo (y se borra de la caché
     para que otra petición dibuje otra). Si el revisor falla, la imagen pasa (lo mira después el director). Con
-    `manchas=False` solo cuentan las letras: en un collage, el papel rasgado y los bloques de color son el estilo
-    (2/11, «Cinco del libro»: el revisor tumbaba collages limpios por «manchas sueltas»)."""
+    `manchas=False` (por defecto desde el 3/11, cuando el collage pasó a ser el estilo de la casa) solo cuentan las
+    letras: en un collage, el papel rasgado y los bloques de color son el estilo (2/11, «Cinco del libro»: el revisor
+    tumbaba collages limpios por «manchas sueltas»)."""
     from folio.llm import ErrorLLM
     with Image.open(dibujo) as im:
         im = im.convert("RGB")

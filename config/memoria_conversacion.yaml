@@ -615,3 +615,10 @@
   patron: "«¿Por qué no haces más pruebas de ilustraciones en un estilo tipo The Atlantic? Algo que sea divertido, algo que sea sexy. Esto es muy aburrido.» → «Adelante con el descaro.»"
   propuesta: "Para «Cinco del libro», collage conceptual: papel rasgado, fotos en trama, magenta y amarillo planos y negro, con una metáfora visual con humor por noticia; sin nombrar revistas en el prompt (las palabras de revista hacen pintar letras)."
   evidencia: ["Conversación, 2/11: pruebas E1–E4 en el Artifact «Cinco del libro»"]
+
+- clave: collage-estilo-de-la-casa
+  fecha: "2026-11-03"
+  destino: director_arte
+  patron: "«Me gusta más el tipo de ilustración de Los cinco del libro que en el resto de noticias.»"
+  propuesta: "Todas las ilustraciones de Folio (portada, noticia, friso y banda) van en el collage conceptual de «Cinco del libro»: papel rasgado, fotos en trama, magenta y amarillo planos y negro, con una metáfora visual con ingenio. El gouache queda retirado."
+  evidencia: ["Conversación, 3/11: prueba apaisada del barco-libro y el móvil-faro"]

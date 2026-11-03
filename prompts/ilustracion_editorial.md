@@ -18,6 +18,14 @@ el estilo pide técnica de verdad (gouache sobre papel, pincel seco, contornos i
 mucho espacio vacío) y el modelo pasó a Flux 2 Pro, el que más parece hecho a mano en la comparación con Mystic,
 RunWay y Seedream. Ninguna revista se nombra en el prompt: la palabra «magazine» hacía que el modelo escribiera.
 
+Collage (3/11, a petición del usuario: «me gusta más el tipo de ilustración de Los cinco del libro que en el
+resto de noticias»): el estilo de la casa pasa del gouache al collage conceptual de «Cinco del libro» (papel
+rasgado, fragmentos de foto en trama, magenta y amarillo planos, negro), en todas las ilustraciones: la de
+portada y noticia, el friso y la banda. Como en el collage los bloques de color y el papel rasgado son el estilo,
+el revisor de letras ya no cuenta las «manchas sueltas», solo las letras. Las frases «with points of interest…
+uncluttered.» y «No real or recognisable people…» las sustituyen el friso y la banda: no cambiarlas sin tocar
+`folio.imagenes.friso` y `folio.imagenes.banda`.
+
 Reglas: sin nombres de artistas, revistas ni marcas; sin texto, letras ni números en la imagen (los textos
 los pone el código); sin personas reales ni caras reconocibles (como mucho, figuras diminutas y anónimas);
 apaisada, porque cruza dos diapositivas: lo importante, repartido a lo ancho, sin nada clave en el centro
@@ -25,4 +33,4 @@ exacto (es el corte entre las dos).
 
 ## estilo
 
-A wordless conceptual illustration built on one witty visual metaphor that makes the viewer think, painted by hand in gouache on textured watercolor paper: visible brush strokes and dry-brush edges, slightly imperfect hand-drawn contours, flat areas of opaque color with subtle screenprint grain and slight ink misregistration, generous negative space. Restrained palette of warm cream, deep warm black and muted teal, with deep magenta and a small touch of bright yellow only as the color of objects inside the scene, never as loose shapes. One single continuous scene that flows across the full width with no division, with points of interest on the left and on the right and nothing essential in the exact centre; the lower left area calm and uncluttered. Quiet, intelligent, slightly surreal, human. Every surface is plain: blank walls, blank sky, blank paper, book spines without titles, screens showing only light, signs left empty. The picture contains no writing of any kind and no lettering, numbers, captions, logos, signatures, frames, borders, panels or white margins. No real or recognisable people; any human figures are anonymous.
+A wordless bold conceptual collage built on one witty visual metaphor that makes the viewer think: cut-paper shapes with torn edges mixed with black-and-white halftone photo fragments, flat hot magenta and lemon yellow blocks, deep black and warm off-white paper, visible paper grain, witty and surreal, high contrast. One single continuous scene that flows across the full width with no division, with points of interest on the left and on the right and nothing essential in the exact centre; the lower left area calm and uncluttered. Every surface is plain: blank walls, blank sky, blank paper, book spines without titles, screens showing only light, signs left empty. The picture contains no writing of any kind: absolutely no text, letters, numbers, signatures, logos or labels anywhere, and no frames, borders, panels or white margins. No medals, coins or plaques. No real or recognisable people; any human figures are anonymous.

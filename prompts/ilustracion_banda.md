@@ -14,8 +14,8 @@ la pieza pasa a revisión humana y el pie lleva el crédito de la foto.
 
 ## reparto
 
-with the same sky, ground and horizon running uninterrupted across the whole width, one single continuous painting with no borders, gutters or dividing lines; its three points of interest sit at one sixth, one half and five sixths of the width, and the lower third stays calm and dark, with nothing important in it.
+with the same sky, ground and horizon running uninterrupted across the whole width, one single continuous collage with no borders, gutters or dividing lines; its three points of interest sit at one sixth, one half and five sixths of the width, and the lower third stays calm and dark, with nothing important in it.
 
 ## persona
 
-The person in the reference photo appears once in the scene, painted in exactly the same gouache technique as everything else, keeping their real likeness (face, hair, build) but not the photo's background, clothes logos or lighting; they are part of the scene, not a pasted cut-out, placed at one of the three points of interest. Nobody else in the picture is recognisable.
+The person in the reference photo appears once in the scene, rendered in exactly the same collage technique as everything else, as a black-and-white halftone photo cut-out with torn edges, keeping their real likeness (face, hair, build) but not the photo's background, clothes logos or lighting; they belong to the composition, placed at one of the three points of interest. Nobody else in the picture is recognisable.
