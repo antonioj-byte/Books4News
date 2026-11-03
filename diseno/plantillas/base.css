@@ -472,7 +472,7 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .banda { position: absolute; z-index: -2; inset: 0; background-repeat: no-repeat;
   background-size: calc(3 * var(--lienzo-ancho)) 100%; background-position: calc(-1 * var(--k) * var(--lienzo-ancho)) 0; }
 .banda::after { content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, transparent 28%, rgba(18, 14, 15, 0.82) 64%, var(--colores-tinta-honda) 100%); }
+  background: linear-gradient(180deg, transparent 46%, rgba(18, 14, 15, 0.78) 74%, var(--colores-tinta-honda) 100%); }
 .diapositiva.con-banda, .acento.diapositiva.con-banda { background: var(--colores-tinta-honda); color: var(--colores-papel); }
 .diapositiva.con-banda .cuerpo { justify-content: flex-end; }
 .con-banda .glifo, .con-banda .escaparate__bloque { display: none; }

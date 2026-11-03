@@ -73,7 +73,7 @@ def dibujar(cfg: Config, pieza_id: str, escena: str, foto: bytes | None = None,
     if not cfg.magnific_api_key:
         raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
     ie = cfg.pipeline.arte.ilustracion_editorial
-    texto = f"{escena} {estilo(cfg, foto is not None)}"
+    texto = editorial.con_estilo(escena, estilo(cfg, foto is not None))
     huella = hashlib.sha256(b"banda\n" + texto.encode() + (foto or b"")).hexdigest()[:20]
     cache = cfg.dir_cache("x").parent / "ilustraciones" / f"banda-{huella}.jpg"
     if not cache.exists():

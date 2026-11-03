@@ -84,7 +84,25 @@ def validar_escena(escena: str | None, prohibidos: set[str] = frozenset(), max_p
     propios = _nombres_propios(e, prohibidos)
     if propios:
         return None, f"la escena no puede llevar nombres propios ({', '.join(propios[:3])})"
+    tecnica = sorted({m.group(0).lower() for m in _TECNICA.finditer(e)})
+    if tecnica:
+        # 3/11 («tenemos un bonito estilo de ilustración, pero está haciendo cosas muy feas»): el chat pedía «luz
+        # cálida», «comedor de época»… y Flux pintaba una ilustración realista que no era el collage de la casa
+        return None, (f"la escena no puede decir la técnica, la luz ni el acabado ({', '.join(tecnica[:3])}): eso lo pone "
+                      "el estilo de la casa (collage); describe solo qué hay, como una metáfora con objetos recortados")
     return e, None
+
+
+# Palabras de técnica, luz o acabado que hacen a Flux ignorar el collage de la casa (3/11)
+_TECNICA = re.compile(r"\b(?:realistic|realism|photo-?realistic|photograph(?:ic)?|cinematic|lighting|warm light|soft light|"
+                      r"golden light|glow(?:ing)?|painting|painted|oil|watercolou?r|gouache|render(?:ed|ing)?|3d|detailed|"
+                      r"sepia|illustration|illustrated|style)\b", re.I)
+
+
+def con_estilo(escena: str, estilo: str) -> str:
+    """El prompt de la imagen: el estilo de la casa primero, y después la escena (3/11: con la escena delante, una
+    escena larga y literal mandaba sobre el estilo y salía una ilustración realista de época, no el collage)."""
+    return f"{estilo} The scene: {escena}"
 
 
 def _pedir(texto: str, clave: str, espera_max_s: float, cliente: httpx.Client | None, modelo: str = "flux_2_pro") -> bytes:
@@ -122,7 +140,7 @@ def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | Non
     if not cfg.magnific_api_key:
         raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
     ie = cfg.pipeline.arte.ilustracion_editorial
-    texto = f"{escena} {estilo(cfg)}"
+    texto = con_estilo(escena, estilo(cfg))
     huella = hashlib.sha256(f"{ie.modelo}\n{texto}".encode()).hexdigest()[:20]
     cache = cfg.dir_cache("x").parent / "ilustraciones" / f"{huella}.jpg"
     if not cache.exists():
