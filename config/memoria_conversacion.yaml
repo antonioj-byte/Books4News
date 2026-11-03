@@ -632,7 +632,7 @@
 
 - clave: foto-persona-desde-la-ficha
   fecha: "2026-11-03"
-  destino: programa
+  destino: codigo
   patron: "«Necesitamos la foto de la autora, pero muchas veces no la encuentra (yo puedo buscar). ¿Cómo permitimos subir fotos al director de arte? Ahora mismo es bastante calvario.»"
   propuesta: "La ficha de la pieza permite subir la foto de la persona con su crédito; va como retrato al momento y el arte no la sustituye al escribir la pieza."
   evidencia: ["Conversación, 3/11: pieza de Josefina Licitra sin foto de la autora"]
