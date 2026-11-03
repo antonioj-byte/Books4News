@@ -193,6 +193,12 @@ class Friso(_Seccion):
     max_por_dia: int = Field(default=3, ge=0)
 
 
+class Recorte(_Seccion):
+    """La foto del autor recortada en collage (3/11, opciones A y C elegidas por el usuario; folio.imagenes.recorte)."""
+    activo: bool = True
+    escena_max_por_dia: int = Field(default=3, ge=0)   # recortes con fondo de Flux (A) al día, ~25 créditos cada uno
+
+
 class Arte(_Seccion):
     # Composiciones de portada que puede elegir el director de arte. La ilustración vectorial
     # dibujada por el modelo se desactivó el 31/10: el resultado parece clip-art.
@@ -205,6 +211,7 @@ class Arte(_Seccion):
     # Si Commons no tiene retrato, la foto de la ficha del autor en la web de su editorial (folio.imagenes.prensa)
     fotos_editoriales: bool = True
     retrato_generado: RetratoGenerado = Field(default_factory=RetratoGenerado)
+    recorte: Recorte = Field(default_factory=lambda: Recorte())
     # Recursos de la diapositiva de actualidad sin foto ni cifra (elegidos el 31/10). Si el que propone
     # el director de arte no está aquí o le faltan datos, se usa el primero de la lista que los tenga.
     sin_foto: list[Literal["golpe", "gigante", "teletipo", "collage"]] = Field(

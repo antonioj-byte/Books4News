@@ -29,7 +29,7 @@ from pydantic import BaseModel, Field
 from folio import guion as guionista
 from folio.config import Config
 from folio.llm import LLM, cache_al_final, cargar_prompt
-from folio.modelos import GuionLLM, Pieza
+from folio.modelos import CARAS, GuionLLM, Pieza
 from folio.verificacion_texto import normalizar
 
 AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto a cotejar con las fuentes)"
@@ -38,12 +38,14 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado", "usar_material", "formato", "cubierta", "friso", "banda", "cambiar_libro"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "recorte", "usar_material", "formato", "cubierta", "friso", "banda", "cambiar_libro"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
                     "buscar_retrato: buscar la foto libre de una persona real (autor o protagonista) para la portada; "
                     "retrato_ilustrado: pasar esa foto a ilustración en un estilo de la casa; "
+                    "recorte: la foto del autor recortada en trama con papel rasgado, en collage, delante de una escena dibujada "
+                    "(estilo «escena») o sobre papel de color (estilo «papel»), sin que la IA toque la cara; "
                     "usar_material: poner en la pieza una foto que ha subido quien edita; "
                     "formato: destacado del titular, antetítulo o color de la pieza; "
                     "cubierta: la cubierta (y la ficha) de otra edición en castellano de un libro, por su editorial o ISBN; "
@@ -55,9 +57,9 @@ class AccionImagen(BaseModel):
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
     consultas: list[str] = Field(description="Solo buscar_archivo: 3 o 4 búsquedas de 1 a 3 palabras, en inglés; si no, vacía")
-    escena: str = Field(description="Solo ilustrar, friso o banda: la escena en inglés, de 12 a 70 palabras, sin nombres propios, cifras ni comillas (en el friso, un paisaje continuo con un motivo por libro de izquierda a derecha; vacía, la escribe el ilustrador; «ninguno», quita el friso; en la banda, una escena continua con un punto de interés en cada tercio, hasta 95 palabras, y si va una persona real, «the man» o «the woman» sin su nombre; «ninguno», quita la banda); si no, vacío")
+    escena: str = Field(description="Solo ilustrar, friso, banda o recorte con estilo «escena» (vacía, la escribe el ilustrador): la escena en inglés, de 12 a 70 palabras, sin nombres propios, cifras ni comillas (en el friso, un paisaje continuo con un motivo por libro de izquierda a derecha; vacía, la escribe el ilustrador; «ninguno», quita el friso; en la banda, una escena continua con un punto de interés en cada tercio, hasta 95 palabras, y si va una persona real, «the man» o «the woman» sin su nombre; «ninguno», quita la banda); si no, vacío")
     persona: str = Field(description="Solo buscar_retrato o banda: nombre completo de la persona real (el autor del libro o quien protagoniza la historia); si no, vacío")
-    estilo: str = Field(description="Solo retrato_ilustrado: low_poly, voxel, render_2000 o dithering (vacío: el que va con el tono); si no, vacío")
+    estilo: str = Field(description="Solo retrato_ilustrado: low_poly, voxel, render_2000 o dithering (vacío: el que va con el tono); solo recorte: «escena» o «papel» (vacío: papel); si no, vacío")
     material: str = Field(description="Solo usar_material: el id del material (la foto subida); si no, vacío")
     como: str = Field(description="Solo usar_material: «portada» (la imagen de la portada), «retrato» (la foto del autor o protagonista) o «cubierta» (la cubierta de un libro de la pieza: pon su título en `libro`); si no, vacío")
     destacado: str = Field(description="Solo formato: el trozo del titular de portada que va destacado (cursiva en el color de la casa, con marcador sobre foto), copiado letra por letra, de 1 a 6 palabras; «ninguno» lo quita; vacío, no se toca")
@@ -159,6 +161,51 @@ def _retrato_ilustrado(cfg: Config, nueva: Pieza, ar, a: AccionImagen, retrato, 
     return nueva, f"(Retrato ilustrado en estilo {estilo.replace('_', ' ')}, a partir de la foto libre. Comprueba el parecido.)"
 
 
+def _recorte(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
+    """La foto del autor recortada en collage (3/11): delante de una escena dibujada o sobre papel de color. La cara
+    es la de la foto; nunca con una de prensa ni con una subida sin permiso para modificarla."""
+    from folio import arte as direccion
+    from folio.imagenes import libres, recorte
+    original = libres.de_pieza(f"{nueva.id}-retrato-original", dir_fecha) or libres.de_pieza(f"{nueva.id}-retrato", dir_fecha)
+    motivo = recorte.se_puede(original)
+    if motivo:
+        return None, f"(No puedo recortarla en collage: {motivo}.)"
+    if ar.tono == "grave":
+        return None, "(En piezas graves la foto va tal cual.)"
+    variante = "escena" if a.estilo.strip().lower() == "escena" else "papel"
+    fondo = None
+    if variante == "escena":
+        ie = cfg.pipeline.arte.ilustracion_editorial
+        if not ie.activo:
+            return None, "(La ilustración está desactivada: pide el recorte sobre papel.)"
+        if recorte.de_dia(dir_fecha, "escena", nueva.id) >= cfg.pipeline.arte.recorte.escena_max_por_dia:
+            return None, "(Ya están todos los recortes con escena del día: pide el recorte sobre papel.)"
+        if a.escena.strip():
+            escena, mot = editorial.validar_escena(a.escena, editorial.nombres_de_pieza(nueva))
+            if not escena:
+                return None, f"(Esa escena no vale: {mot}.)"
+        else:
+            escenas = direccion._escenas(llm, cfg, nueva, None, 1)
+            if not escenas:
+                return None, "(El ilustrador no ha propuesto una escena válida: escríbela tú o pide el recorte sobre papel.)"
+            escena = escenas[0][0]
+        try:
+            fondo = recorte.dibujar_fondo(cfg, nueva.id, escena)
+            fallo = editorial.revisar(llm, cfg, nueva.id, fondo)
+        except Exception as exc:
+            return None, f"(No se pudo dibujar la escena: {exc}.)"
+        if fallo:
+            return None, f"(La escena salió con {fallo}: pide otra o el recorte sobre papel.)"
+    try:
+        img = recorte.aplicar(cfg, nueva.id, dir_fecha, variante, ar.acento, fondo)
+    except Exception as exc:
+        return None, f"(No se pudo hacer el recorte: {exc}.)"
+    ar.registro, ar.retrato, ar.portada = "recorte", img.credito, "sangre"
+    nueva.revision_humana = [r for r in nueva.revision_humana if r != direccion.AVISO_RETRATO_GENERADO]
+    return nueva, ("(La foto del autor va recortada en collage, " + ("delante de una escena dibujada" if fondo else "sobre papel de color")
+                   + ". La cara es la de la foto.)")
+
+
 def _banda(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
     """La banda panorámica a sangre sobre tres diapositivas seguidas (2/11, opción B elegida por el usuario). Con una
     persona real, solo a partir de su foto libre («Pavel. Foto con licencia a estilo gouache»): Commons por Wikidata,
@@ -183,7 +230,7 @@ def _banda(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha) 
     if not escena:
         return None, f"(La escena de la banda no vale: {motivo}. Escríbela en inglés, sin nombres propios ni cifras.)"
     foto, credito = None, "generada con IA (Magnific) para Folio"
-    if persona and ar.registro in ("foto_autor", "retrato_ia"):
+    if persona and ar.registro in CARAS:
         from folio.verificacion_texto import autor_coincide
         cara = direccion.autor_principal(nueva) or nueva.eleccion.protagonista
         if cara and autor_coincide(persona, [cara]):
@@ -520,7 +567,7 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
     if a.tipo == "cambiar_libro":
         return _cambiar_libro(cfg, llm, nueva, a)
     if a.tipo == "encuadre":
-        usa_retrato = retrato and ar.registro in ("foto_autor", "retrato_ia", None) and ar.portada != "panorama"
+        usa_retrato = retrato and ar.registro in (*CARAS, None) and ar.portada != "panorama"
         img, clave = (retrato, f"{p.id}-retrato") if usa_retrato else (archivo, p.id)
         if not img:
             return None, "(No hay imagen que reencuadrar.)"
@@ -537,6 +584,10 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
     if a.tipo == "usar_foto_autor":
         if not retrato:
             return None, "(Esta pieza no tiene foto del autor.)"
+        from folio.imagenes import recorte
+        if ar.registro in ("recorte", "retrato_ia") and recorte.restaurar_original(dir_fecha, nueva.id):
+            ar.retrato = libres.de_pieza(f"{nueva.id}-retrato", dir_fecha).credito
+            nueva.revision_humana = [r for r in nueva.revision_humana if r != direccion.AVISO_RETRATO_GENERADO]
         ar.registro = "foto_autor"
         if ar.portada == "panorama":
             ar.portada = cfg.pipeline.arte.portadas[0]
@@ -575,6 +626,8 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return nueva, f"(Nueva imagen de archivo: {ar.credito}.)"
     if a.tipo == "buscar_retrato":
         return _encuadrada(llm, cfg, nueva.id, dir_fecha, _buscar_retrato(cfg, p, nueva, ar, a, dir_fecha))
+    if a.tipo == "recorte":
+        return _encuadrada(llm, cfg, nueva.id, dir_fecha, _recorte(llm, cfg, nueva, ar, a, dir_fecha))
     if a.tipo == "retrato_ilustrado":
         return _encuadrada(llm, cfg, nueva.id, dir_fecha, _retrato_ilustrado(cfg, nueva, ar, a, retrato, dir_fecha))
     if a.tipo == "usar_material":
@@ -602,3 +655,32 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         ar.recurso, ar.portada, ar.registro = "ilustracion", "panorama", "ilustracion"
         return nueva, "(Nueva ilustración editorial, en panorámica entre la portada y la noticia.)"
     return None, ""
+
+
+def foto_persona(llm: LLM, cfg: Config, p: Pieza, mid: str, modificable: bool, tratamiento: str) -> tuple[Pieza, str]:
+    """La foto del autor o protagonista que sube la redacción desde la ficha (3/11, a petición del usuario: «muchas
+    veces no la encuentra; yo puedo buscar»): va como retrato al momento, sin pasar por el chat, encuadrada en la cara
+    y, si se pide y se puede modificar, recortada en collage («papel» o «escena»). Sin guion (pieza pendiente), queda
+    guardada y el arte la usa al escribirla. Devuelve (pieza nueva, nota); ValueError si no se puede."""
+    from folio import materiales
+    from folio.imagenes import cara
+    from folio.modelos import Arte
+    nueva = p.model_copy(deep=True)
+    ar = nueva.arte or Arte(tono="sereno", recurso="foto")
+    puesta, nota = materiales.usar(cfg, p, nueva, ar, mid, "retrato", modificable=modificable)
+    if puesta is None:
+        raise ValueError(nota.strip("()"))
+    dir_fecha = cfg.dir_cache(p.fecha)
+    cara.encuadrar(llm, cfg, f"{p.id}-retrato", dir_fecha)
+    if not p.arte:
+        return nueva, "Foto guardada: el director de arte la usará al escribir la pieza."
+    nueva.arte = ar
+    if tratamiento in ("papel", "escena"):
+        vacia = {k: (0 if k in ("enfoque_x", "enfoque_y", "desde") else []) if k in ("enfoque_x", "enfoque_y", "desde", "consultas") else ""
+                 for k in AccionImagen.model_fields if k != "tipo"}
+        r, nota_r = _recorte(llm, cfg, nueva, ar, AccionImagen(tipo="recorte", **{**vacia, "estilo": tratamiento}), dir_fecha)
+        if r is None:
+            return nueva, f"Foto puesta tal cual; el collage no se pudo: {nota_r.strip('()')}"
+        cara.encuadrar(llm, cfg, f"{p.id}-retrato", dir_fecha)
+        return nueva, "Foto puesta en la portada, recortada en collage."
+    return nueva, "Foto puesta en la portada."

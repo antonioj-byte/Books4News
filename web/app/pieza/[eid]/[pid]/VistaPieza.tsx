@@ -9,6 +9,7 @@ import { NotasDiapositiva } from "@/components/NotasDiapositiva";
 import { TitularesAlternativos } from "@/components/TitularesAlternativos";
 import { ChatEdicion } from "@/components/ChatEdicion";
 import { FormEvaluacion } from "@/components/FormEvaluacion";
+import { FotoPersona } from "@/components/FotoPersona";
 import { EstadoChip, FormatoChip } from "@/components/Marcas";
 import { Proceder } from "@/components/Proceder";
 import { ProgramarBuffer } from "@/components/ProgramarBuffer";
@@ -81,6 +82,10 @@ export function VistaPieza() {
             <p className="mt-2 font-mono text-[12px] text-tinta-suave">{d.pieza.arte.escena}</p>
             <p className="mt-1 text-[12px] text-tinta-suave">Para otra, pídeselo al chat («dibuja otra ilustración con…»).</p>
           </details>
+        )}
+        {d.persona && (g || d.pieza.libros.length > 0 || d.pieza.eleccion.protagonista) && (
+          <FotoPersona key={`foto:${eid}/${pid}`} eid={eid} pid={pid} persona={d.persona} credito={d.foto_persona ?? null}
+                       escrita={!!d.pieza.arte} onHecho={cargar} />
         )}
         {estiloRetrato && (
           <p className="mx-auto mb-4 max-w-[560px] rounded-[6px] bg-tinta px-4 py-2.5 text-[14px] text-papel">

@@ -171,6 +171,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ejecuciones/{eid}/piezas/{pid}/foto-persona": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Subir Foto Persona
+         * @description La foto del autor o protagonista, subida desde la ficha (3/11, a petición del usuario: «muchas veces no la
+         *     encuentra; yo puedo buscar»). Va como retrato al momento, con su crédito en el pie, sin pasar por el chat.
+         *     `tratamiento`: «foto» (tal cual), «papel» o «escena» (recorte en collage; solo si `modificable`). El archivo va en
+         *     el cuerpo, como en los materiales.
+         */
+        post: operations["subir_foto_persona_api_ejecuciones__eid__piezas__pid__foto_persona_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ejecuciones/{eid}/piezas/{pid}/materiales/{mid}": {
         parameters: {
             query?: never;
@@ -401,6 +424,40 @@ export interface paths {
          * @description Los trabajos en segundo plano de esta sesión de la API (la web avisa cuando acaba cada uno).
          */
         get: operations["trabajos_api_trabajos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cinco/{fecha}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lanzar Cinco */
+        post: operations["lanzar_cinco_api_cinco__fecha__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cinco": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado Cinco */
+        get: operations["estado_cinco_api_cinco_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -795,8 +852,8 @@ export interface components {
             escena_idea: string | null;
             /** Remates Noticias */
             remates_noticias: string[];
-            /** Objetos */
-            objetos: string[];
+            /** Escenas Noticias */
+            escenas_noticias: string[];
             /** Friso */
             friso: string | null;
             /** Friso Idea */
@@ -810,7 +867,7 @@ export interface components {
             /** Pregunta */
             pregunta: string | null;
             /** Registro */
-            registro: ("foto_autor" | "retrato_ia" | "ilustracion" | "archivo") | null;
+            registro: ("foto_autor" | "retrato_ia" | "recorte" | "ilustracion" | "archivo") | null;
             /** Credito */
             credito: string | null;
             /**
@@ -1152,6 +1209,13 @@ export interface components {
             objetivo: {
                 [key: string]: number;
             };
+        };
+        /** FotoPuesta */
+        FotoPuesta: {
+            /** Version */
+            version: number | null;
+            /** Nota */
+            nota: string;
         };
         /** FuenteNoticia */
         FuenteNoticia: {
@@ -1728,6 +1792,10 @@ export interface components {
              * @default []
              */
             lomos: components["schemas"]["Lomo"][];
+            /** Persona */
+            persona: string | null;
+            /** Foto Persona */
+            foto_persona: string | null;
         };
         /** PiezaResumen */
         PiezaResumen: {
@@ -2505,6 +2573,43 @@ export interface operations {
             };
         };
     };
+    subir_foto_persona_api_ejecuciones__eid__piezas__pid__foto_persona_post: {
+        parameters: {
+            query: {
+                nombre: string;
+                credito: string;
+                modificable?: boolean;
+                tratamiento?: string;
+            };
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FotoPuesta"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     borrar_material_api_ejecuciones__eid__piezas__pid__materiales__mid__delete: {
         parameters: {
             query?: never;
@@ -2849,6 +2954,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Trabajo"][];
+                };
+            };
+        };
+    };
+    lanzar_cinco_api_cinco__fecha__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fecha: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estado_cinco_api_cinco_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
                 };
             };
         };

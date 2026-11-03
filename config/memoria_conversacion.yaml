@@ -622,3 +622,17 @@
   patron: "«Me gusta más el tipo de ilustración de Los cinco del libro que en el resto de noticias.»"
   propuesta: "Todas las ilustraciones de Folio (portada, noticia, friso y banda) van en el collage conceptual de «Cinco del libro»: papel rasgado, fotos en trama, magenta y amarillo planos y negro, con una metáfora visual con ingenio. El gouache queda retirado."
   evidencia: ["Conversación, 3/11: prueba apaisada del barco-libro y el móvil-faro"]
+
+- clave: recorte-en-collage
+  fecha: "2026-11-03"
+  destino: director_arte
+  patron: "«¿Es posible combinar la foto de autor en el collage?» → «Usemos delante de la escena y sin fondo generado.»"
+  propuesta: "La foto del autor puede ir recortada en trama con papel rasgado, delante de una escena en collage o sobre papel de color, sin que la IA toque la cara. Las caras del día se turnan: foto real, recorte y retrato 3D. Nunca con fotos de prensa ni en graves."
+  evidencia: ["Conversación, 3/11: Artifact «Foto del autor en collage», opciones A y C"]
+
+- clave: foto-persona-desde-la-ficha
+  fecha: "2026-11-03"
+  destino: programa
+  patron: "«Necesitamos la foto de la autora, pero muchas veces no la encuentra (yo puedo buscar). ¿Cómo permitimos subir fotos al director de arte? Ahora mismo es bastante calvario.»"
+  propuesta: "La ficha de la pieza permite subir la foto de la persona con su crédito; va como retrato al momento y el arte no la sustituye al escribir la pieza."
+  evidencia: ["Conversación, 3/11: pieza de Josefina Licitra sin foto de la autora"]

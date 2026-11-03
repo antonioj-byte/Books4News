@@ -95,6 +95,9 @@ export const api = {
   subirMaterial: (eid: number, pid: string, archivo: File, credito: string, nota: string) =>
     pedir<Material>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales?${new URLSearchParams({ nombre: archivo.name, credito, nota })}`,
       { method: "POST", body: archivo, headers: { "Content-Type": archivo.type || "application/octet-stream" } }),
+  subirFotoPersona: (eid: number, pid: string, archivo: File, credito: string, modificable: boolean, tratamiento: string) =>
+    pedir<{ version: number | null; nota: string }>(`/api/ejecuciones/${eid}/piezas/${pid}/foto-persona?${new URLSearchParams({ nombre: archivo.name, credito, modificable: String(modificable), tratamiento })}`,
+      { method: "POST", body: archivo, headers: { "Content-Type": archivo.type || "application/octet-stream" } }),
   borrarMaterial: (eid: number, pid: string, mid: string) =>
     pedir<unknown>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales/${mid}`, { method: "DELETE" }),
   urlMaterial: (eid: number, pid: string, mid: string) => `/api/ejecuciones/${eid}/piezas/${pid}/materiales/${mid}`,

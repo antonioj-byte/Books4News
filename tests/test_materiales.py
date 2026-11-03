@@ -99,3 +99,82 @@ def test_usar_una_foto_subida_como_cubierta(cfg):
     pl = render.Plantillas(cfg, url_medio=lambda r: "/api/medios/" + r.name)
     n = next(i for i, d in enumerate(nueva.guion.diapositivas, 1) if d.tipo == "libro")
     assert f"{p.id}-cubierta-0.jpg" in pl.html_diapositiva(nueva, n)
+
+
+def test_la_foto_de_la_persona_desde_la_ficha(cfg, monkeypatch):
+    """3/11: la foto del autor que sube la redacción va como retrato al momento y, si se puede modificar, en collage."""
+    from folio.imagenes import cara, recorte
+    monkeypatch.setattr(cara, "encuadrar", lambda *a, **k: None)
+    p = _pieza(acento="pluma")
+    d = cfg.dir_cache(p.fecha)
+    m = materiales.guardar(cfg, p, "autora.png", _png(), "image/png", "Foto: Ana Pérez")
+    nueva, nota = edicion.foto_persona(None, cfg, p, m.id, modificable=False, tratamiento="foto")
+    img = libres.de_pieza(f"{p.id}-retrato", d)
+    assert nueva.arte.registro == "foto_autor" and img.credito == "Foto: Ana Pérez" and not img.modificable
+    assert "portada" in nota
+    # Sin permiso para modificarla, el collage no se hace
+    assert recorte.se_puede(img)
+    # Con permiso, recorte sobre papel (la máscara, simulada: sin modelo ni red)
+    monkeypatch.setattr(recorte, "mascara", lambda cfg, im: _mascara_centro(im))
+    m2 = materiales.guardar(cfg, p, "autora2.png", _png(), "image/png", "Foto: Ana Pérez")
+    nueva, nota = edicion.foto_persona(None, cfg, p, m2.id, modificable=True, tratamiento="papel")
+    img = libres.de_pieza(f"{p.id}-retrato", d)
+    assert nueva.arte.registro == "recorte" and img.archivo == "recorte:papel" and "collage" in nota
+    assert libres.de_pieza(f"{p.id}-retrato-original", d).modificable
+    # Sin guion ni arte (pendiente): solo se guarda, para que el arte la use al escribirla
+    pend = p.model_copy(update={"arte": None})
+    m3 = materiales.guardar(cfg, p, "autora3.png", _png(), "image/png", "Foto: Ana Pérez")
+    _, nota = edicion.foto_persona(None, cfg, pend, m3.id, modificable=False, tratamiento="foto")
+    assert "al escribir" in nota
+
+
+def _mascara_centro(im):
+    m = Image.new("L", im.size, 0)
+    from PIL import ImageDraw
+    ImageDraw.Draw(m).rectangle((im.width // 3, im.height // 5, 2 * im.width // 3, im.height), fill=255)
+    return m
+
+
+def test_el_arte_respeta_la_foto_subida(cfg):
+    """Al escribir la pieza, el arte no borra la foto que subió la redacción para buscar otra en Commons."""
+    from folio import arte as direccion
+    p = _pieza()
+    d = cfg.dir_cache(p.fecha)
+    m = materiales.guardar(cfg, p, "autora.png", _png(), "image/png", "Foto: Ana Pérez")
+    materiales.usar(cfg, p, p.model_copy(deep=True), p.arte.model_copy(), m.id, "retrato")
+    ar = Arte(tono="sereno", recurso="foto")
+    img = direccion._retrato(cfg, p, ar, d)
+    assert img and img.archivo.startswith("material:") and ar.retrato == "Foto: Ana Pérez"
+
+
+def test_la_ruta_de_la_foto_de_la_persona(cfg, monkeypatch):
+    """POST …/foto-persona: crédito obligatorio, collage solo si se puede modificar, versión nueva y la ficha lo enseña."""
+    from datetime import datetime
+    from fastapi.testclient import TestClient
+    from folio import informe
+    from folio.almacen import Almacen
+    from folio.imagenes import cara
+    from folio.modelos import InformeDiario, SeleccionJefe
+    from folio_api.main import crear_app
+    from datos import ELECCION
+    monkeypatch.setattr(cara, "encuadrar", lambda *a, **k: None)
+    p = _pieza()
+    inf = InformeDiario(fecha=p.fecha, generado_en=datetime(2026, 10, 30, 5), stats={}, top_historias=[],
+                        seleccion=SeleccionJefe(elegidas=[ELECCION], reserva=[]), piezas=[p], coste_total_usd=0)
+    informe.escribir(inf, cfg.dir_informes / p.fecha)
+    almacen = Almacen(cfg.ruta_db)
+    almacen.importar_informes(cfg.dir_informes)
+    eid = almacen.ultima_ejecucion(p.fecha)
+    (cfg.raiz / "diseno").symlink_to((type(cfg)(pipeline={}, fuentes=[]).raiz / "diseno").resolve())
+    c = TestClient(crear_app(cfg, almacen))
+    base = f"/api/ejecuciones/{eid}/piezas/{p.id}"
+    antes = c.get(base).json()
+    assert antes["persona"] == LIBRO.autores[0] and antes["foto_persona"] is None
+    cab = {"Content-Type": "image/png"}
+    assert c.post(f"{base}/foto-persona?nombre=a.png&credito=%20", content=_png(), headers=cab).status_code == 422
+    r = c.post(f"{base}/foto-persona?nombre=a.png&credito=Foto%3A%20Ana&tratamiento=papel", content=_png(), headers=cab)
+    assert r.status_code == 422 and "modificar" in r.json()["detail"]
+    r = c.post(f"{base}/foto-persona?nombre=a.png&credito=Foto%3A%20Ana", content=_png(), headers=cab)
+    assert r.status_code == 200, r.text
+    assert r.json()["version"] == antes["version"] + 1
+    assert c.get(base).json()["foto_persona"] == "Foto: Ana"

@@ -192,7 +192,8 @@ def clave_cubierta(pid: str, i: int) -> str:
     return f"{pid}-cubierta-{i}"
 
 
-def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str, libro: str = "") -> tuple[Pieza | None, str]:
+def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str, libro: str = "",
+         modificable: bool = False) -> tuple[Pieza | None, str]:
     """Pone una foto subida en la pieza: en la portada («portada»), como retrato («retrato») del autor del libro
     principal o, sin libro, de quien protagoniza la historia, o como cubierta de un libro de la pieza («cubierta»,
     2/11, a petición del usuario: «no puede ser tan difícil subir esta portada»). Devuelve (pieza nueva o None, nota)."""
@@ -237,8 +238,12 @@ def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str, libro: st
     (carpeta_img / f"{clave}.jpg").write_bytes(ruta(cfg, p, m).read_bytes())
     img = libres.ImagenLibre(archivo=PREFIJO + m.id, pagina="", url="", ancho=m.ancho or 0, alto=m.alto or 0,
                              licencia="", licencia_url=None, autor=m.credito, descripcion=m.nota or m.nombre, libre=True,
-                             motivo="", local=f"{clave}.jpg", fuente="", persona=persona)
+                             motivo="", local=f"{clave}.jpg", fuente="", persona=persona,
+                             modificable=modificable and como == "retrato")
     libres.guardar_metadatos(img, clave, dir_fecha)
+    if como == "retrato":
+        # La foto que sube la redacción sustituye a cualquier original guardado de un retrato anterior
+        libres.olvidar(f"{p.id}-retrato-original", dir_fecha)
     if ar.portada == "panorama":
         ar.portada = cfg.pipeline.arte.portadas[0]
     if como == "retrato":

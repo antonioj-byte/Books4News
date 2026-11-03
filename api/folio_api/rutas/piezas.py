@@ -3,6 +3,7 @@
 import logging
 from pathlib import Path
 
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
@@ -75,7 +76,15 @@ def pieza(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
                         video_portada=f"/api/ejecuciones/{eid}/piezas/{pid}/video.mp4" if hay_video else None,
                         videos=[VideoDiapositiva(n=n, url=f"/api/ejecuciones/{eid}/piezas/{pid}/videos/{n}.mp4") for n in videos],
                         total_diapositivas=ctx.plantillas.total(p),
-                        lomos=lomos(ctx, p))
+                        lomos=lomos(ctx, p), **_persona(ctx, p))
+
+
+def _persona(ctx: Contexto, p) -> dict:
+    from folio.arte import autor_principal
+    from folio.imagenes import libres
+    persona = autor_principal(p) if (p.guion or p.libros or p.eleccion.protagonista) else None
+    img = libres.de_pieza(f"{p.id}-retrato", ctx.cfg.dir_cache(p.fecha)) if persona else None
+    return {"persona": persona, "foto_persona": img.credito if img else None}
 
 
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}/video.mp4", include_in_schema=False)
@@ -197,6 +206,41 @@ async def subir_material(eid: int, pid: str, request: Request, nombre: str = Que
         return materiales.guardar(ctx.cfg, p, nombre, datos, request.headers.get("content-type", ""), credito, nota)
     except materiales.NoValido as exc:
         raise HTTPException(422, str(exc))
+
+
+class FotoPuesta(BaseModel):
+    version: int | None           # la versión nueva, si la pieza ya tenía arte
+    nota: str
+
+
+@router.post("/api/ejecuciones/{eid}/piezas/{pid}/foto-persona", response_model=FotoPuesta)
+async def subir_foto_persona(eid: int, pid: str, request: Request, nombre: str = Query(...), credito: str = Query(...),
+                             modificable: bool = Query(False), tratamiento: str = Query("foto"),
+                             ctx: Contexto = Depends(contexto)):
+    """La foto del autor o protagonista, subida desde la ficha (3/11, a petición del usuario: «muchas veces no la
+    encuentra; yo puedo buscar»). Va como retrato al momento, con su crédito en el pie, sin pasar por el chat.
+    `tratamiento`: «foto» (tal cual), «papel» o «escena» (recorte en collage; solo si `modificable`). El archivo va en
+    el cuerpo, como en los materiales."""
+    p, _ = ctx.pieza(eid, pid)
+    if ctx.ejecutor.en_marcha(pid):
+        raise HTTPException(409, ESCRIBIENDOSE)
+    if not " ".join(credito.split()):
+        raise HTTPException(422, "Falta el crédito de la foto (va en el pie de la publicación)")
+    if tratamiento not in ("foto", "papel", "escena"):
+        raise HTTPException(422, "Tratamiento desconocido: foto, papel o escena")
+    if tratamiento != "foto" and not modificable:
+        raise HTTPException(422, "Para el collage hace falta poder modificar la foto")
+    try:
+        m = materiales.guardar(ctx.cfg, p, nombre, await request.body(), request.headers.get("content-type", ""),
+                               credito, "Foto de la persona, subida desde la ficha")
+        if m.tipo != "imagen":
+            materiales.borrar(ctx.cfg, p, m.id)
+            raise materiales.NoValido("Sube una foto (JPEG, PNG o WebP)")
+        nueva, nota = edicion.foto_persona(ctx.llm or LLM(ctx.cfg), ctx.cfg, p, m.id, modificable, tratamiento)
+    except (materiales.NoValido, ValueError) as exc:
+        raise HTTPException(422, str(exc))
+    v = ctx.almacen.guardar_version(eid, pid, nueva, "foto", f"Foto de la persona subida ({m.credito})") if p.arte else None
+    return FotoPuesta(version=v, nota=nota)
 
 
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}/materiales/{mid}", include_in_schema=False)

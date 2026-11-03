@@ -333,6 +333,10 @@ class IlustracionLLM(BaseModel):
     svg: str = Field(description="El SVG completo, de <svg> a </svg>")
 
 
+# Los registros de portada que llevan la cara de la persona (una sola vez en la pieza)
+CARAS = ("foto_autor", "retrato_ia", "recorte")
+
+
 class Arte(BaseModel):
     """Lo que decidió la etapa de arte para una pieza (trazabilidad; la imagen vive en data/cache)."""
     tono: str
@@ -372,7 +376,7 @@ class Arte(BaseModel):
     pregunta: str | None = None          # la del buscador de la portada (B2)
     # Registro de la imagen de portada, para barajar en el día (31/10): la foto real del autor, su retrato
     # generado con IA, la ilustración editorial o la imagen de archivo
-    registro: Literal["foto_autor", "retrato_ia", "ilustracion", "archivo"] | None = None
+    registro: Literal["foto_autor", "retrato_ia", "recorte", "ilustracion", "archivo"] | None = None
     credito: str | None = None
     por_que: str = ""
     avisos: list[str] = Field(default_factory=list)

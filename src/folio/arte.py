@@ -25,11 +25,11 @@ import httpx
 import yaml
 from PIL import Image, ImageDraw, ImageFont
 
-from folio import infografia, sin_foto
-from folio.imagenes import cara, cubiertas, editorial, esquema, friso, ilustracion, libres, prensa, retrato_generado, retratos
+from folio import infografia, materiales, sin_foto
+from folio.imagenes import cara, cubiertas, editorial, esquema, friso, ilustracion, libres, prensa, recorte, retrato_generado, retratos
 from folio.config import Config
 from folio.llm import LLM, cargar_prompt, con_cache
-from folio.modelos import Arte, EleccionIlustracion, EleccionImagen, EscenaFrisoLLM, EscenasLLM, Infografia, Pieza, PropuestaArte
+from folio.modelos import CARAS, Arte, EleccionIlustracion, EleccionImagen, EscenaFrisoLLM, EscenasLLM, Infografia, Pieza, PropuestaArte
 from folio.verificacion_texto import normalizar
 
 log = logging.getLogger(__name__)
@@ -248,7 +248,7 @@ def _imagen_de_archivo(llm: LLM, cfg: Config, pieza: Pieza, datos: str, propuest
     libres.olvidar(pieza.id + SUFIJO_NOTICIA, dir_fecha)
     arte.imagen_noticia = arte.credito_noticia = None
     en_portada = arte.registro == "archivo"
-    con_cara = arte.registro in ("foto_autor", "retrato_ia")
+    con_cara = arte.registro in CARAS
     cands = candidatas(propuesta, usadas)
     if not cands:
         arte.avisos.append("Sin imagen: ninguna candidata libre y con tamaño suficiente")
@@ -538,11 +538,20 @@ def _retrato(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> libres.I
     """Busca el retrato del autor del libro principal y lo fija: primero en Wikidata y Commons (fotos
     grandes, con licencia libre); si no hay, la foto de prensa de la web de su editorial (pequeña, con el
     crédito del fotógrafo; folio.imagenes.prensa). No genera nada: eso lo decide dirigir()."""
+    from folio.render.plantillas import misma_persona
+    autor = autor_principal(pieza)
+    # La foto que subió la redacción para esa persona (3/11, «muchas veces no la encuentra; yo puedo buscar») manda:
+    # no se borra para buscar otra; si estaba tratada (recorte), se vuelve a partir de ella
+    subida = libres.de_pieza(f"{pieza.id}-retrato-original", dir_fecha) or libres.de_pieza(f"{pieza.id}-retrato", dir_fecha)
+    if subida and materiales.es_material(subida) and autor and subida.persona and misma_persona(subida.persona, autor):
+        recorte.restaurar_original(dir_fecha, pieza.id)
+        img = libres.de_pieza(f"{pieza.id}-retrato", dir_fecha)
+        arte.retrato = img.credito
+        return img
     for viejo in [*libres.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato.*"),
                   *libres.dir_imagenes(dir_fecha).glob(f"{pieza.id}-retrato-original.*")]:
         viejo.unlink()
     pieza.revision_humana = [r for r in pieza.revision_humana if r != AVISO_RETRATO_GENERADO]
-    autor = autor_principal(pieza)
     if not autor:
         return None
     img = None
@@ -577,7 +586,7 @@ def elegir_registro(hay_retrato: bool, quiere_ilustracion: bool, del_dia: list[s
     archivo por barajar."""
     preferido = "foto_autor" if hay_retrato else "ilustracion" if quiere_ilustracion else "archivo"
     anterior = next((r for r in reversed(del_dia) if r), None)
-    if preferido == "foto_autor" and anterior in ("foto_autor", "retrato_ia") and quiere_ilustracion:
+    if preferido == "foto_autor" and anterior in CARAS and quiere_ilustracion:
         return "ilustracion"
     # La vuelta (después de una ilustración, la foto del autor) ya la da el orden: la foto manda. Dos
     # ilustraciones seguidas solo se dan sin foto de autor, y entonces mejor ilustración que archivo.
@@ -588,6 +597,65 @@ def toca_retrato_ia(del_dia: list[str]) -> bool:
     """Foto real y retrato generado se alternan en el día: generado si hoy hay menos generados que reales
     (la primera foto de autor del día va real)."""
     return del_dia.count("retrato_ia") < del_dia.count("foto_autor")
+
+
+CICLO_CARAS = ("foto_autor", "recorte", "retrato_ia")
+
+
+def tratamiento_cara(del_dia: list[str], posibles: set[str]) -> str:
+    """Cómo va la cara en la portada (3/11): foto real, recorte en collage y retrato generado se turnan en el día por
+    este orden (la primera foto de autor del día va real); si al que toca no se le puede, el siguiente que se pueda."""
+    n = sum(del_dia.count(r) for r in CICLO_CARAS)
+    for i in range(len(CICLO_CARAS)):
+        r = CICLO_CARAS[(n + i) % len(CICLO_CARAS)]
+        if r == "foto_autor" or r in posibles:
+            return r
+    return "foto_autor"
+
+
+def _recorte(llm: LLM, cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte, dir_fecha: Path,
+             del_dia: list[str]) -> bool:
+    """La foto del autor recortada en collage (3/11, A y C elegidas por el usuario): delante de una escena de Flux
+    («escena») o sobre papel de color («papel»), alternando en el día; si la escena no se puede, papel. Si falla
+    todo, la pieza se queda con la foto (False)."""
+    rc = cfg.pipeline.arte.recorte
+    variante = "escena" if del_dia.count("recorte") % 2 == 0 else "papel"
+    fondo, motivo = None, ""
+    if variante == "escena":
+        ie = cfg.pipeline.arte.ilustracion_editorial
+        if not ie.activo:
+            motivo = "la ilustración está desactivada"
+        elif propuesta.suceso_con_victimas:
+            motivo = "con víctimas no se ilustra"
+        elif recorte.de_dia(dir_fecha, "escena", pieza.id) >= rc.escena_max_por_dia:
+            motivo = f"ya hay {rc.escena_max_por_dia} hoy (máximo del día)"
+        else:
+            escenas = _escenas(llm, cfg, pieza, propuesta.escena, 1)
+            if not escenas:
+                motivo = "el ilustrador no propuso una escena válida"
+            for _ in range(2 if escenas else 0):
+                try:
+                    dibujo = recorte.dibujar_fondo(cfg, pieza.id, escenas[0][0])
+                except Exception as exc:
+                    motivo = f"no se pudo dibujar ({exc})"
+                    break
+                fallo = editorial.revisar(llm, cfg, pieza.id, dibujo)
+                if not fallo:
+                    fondo = dibujo
+                    arte.escena, arte.escena_idea = escenas[0]
+                    break
+                motivo = f"el fondo salió con {fallo}"
+        if not fondo:
+            arte.avisos.append(f"Recorte sobre escena: {motivo}; va sobre papel")
+            variante = "papel"
+    try:
+        img = recorte.aplicar(cfg, pieza.id, dir_fecha, variante, arte.acento, fondo)
+    except Exception as exc:
+        arte.avisos.append(f"Recorte en collage: no se pudo ({type(exc).__name__}: {exc}); se usa la foto")
+        return False
+    arte.retrato = img.credito
+    arte.portada = "sangre"         # el recorte ya es la composición: a sangre, sin teñir ni partir
+    return True
 
 
 def _retrato_generado(cfg: Config, pieza: Pieza, arte: Arte, dir_fecha: Path) -> bool:
@@ -637,7 +705,7 @@ def noticia_tiene_imagen(arte: Arte, hay_retrato: bool) -> bool:
     de archivo cuando la portada lleva la cara, o la segunda de archivo cuando la portada lleva la primera."""
     if arte.portada == "panorama" and arte.imagen:
         return True
-    if hay_retrato and arte.registro in ("foto_autor", "retrato_ia"):
+    if hay_retrato and arte.registro in CARAS:
         return bool(arte.imagen) or bool(arte.imagen_noticia)
     return bool(arte.imagen_noticia)
 
@@ -722,9 +790,18 @@ def dirigir(llm: LLM, cfg: Config, pieza: Pieza, seccion: str | None, usadas: se
         _ilustracion(llm, cfg, pieza, arte, dir_fecha)
     # El retrato generado (3D) se alterna con la foto real, nunca parte de una foto de prensa (la cesión
     # no permite obras derivadas) y solo cuando la portada es la foto del autor
-    if (arte.registro == "foto_autor" and retrato and not prensa.es_de_prensa(retrato)
-            and cfg.pipeline.arte.retrato_generado.activo and toca_retrato_ia(del_dia)):
-        if _retrato_generado(cfg, pieza, arte, dir_fecha):
+    if arte.registro == "foto_autor" and retrato:
+        grave = propuesta.tono == "grave" or propuesta.suceso_con_victimas
+        posibles = set()
+        if cfg.pipeline.arte.recorte.activo and not grave and not recorte.se_puede(retrato):
+            posibles.add("recorte")
+        if cfg.pipeline.arte.retrato_generado.activo and not prensa.es_de_prensa(retrato) \
+                and not materiales.es_material(retrato):
+            posibles.add("retrato_ia")
+        toca = tratamiento_cara(del_dia, posibles)
+        if toca == "recorte" and _recorte(llm, cfg, pieza, propuesta, arte, dir_fecha, del_dia):
+            arte.registro = "recorte"
+        elif toca == "retrato_ia" and _retrato_generado(cfg, pieza, arte, dir_fecha):
             arte.registro = "retrato_ia"
     if arte.registro == "archivo" and not arte.imagen:
         arte.registro = None

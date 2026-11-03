@@ -123,6 +123,10 @@ class PiezaDetalle(BaseModel):
     # Las del guion y, al final, el colofón (no se edita: lo pinta el código con datos comprobados)
     total_diapositivas: int = 0
     lomos: list[Lomo] = []                # los libros con su cubierta (la propuesta pendiente los enseña)
+    # La persona que retrata la pieza (autor del libro principal o protagonista) y el crédito de su foto, si la hay
+    # (3/11: sin foto, la ficha pide subirla)
+    persona: str | None = None
+    foto_persona: str | None = None
 
 
 class EdicionDiapositiva(BaseModel):
