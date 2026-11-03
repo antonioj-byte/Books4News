@@ -14,11 +14,12 @@ function Conversacion({ tema, eid, onPieza, onCambio }: { tema: Tema; eid?: numb
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const responder = async () => {
-    if (texto.trim().length < 2 || enviando || !eid) return;
+  const responder = async (propio?: string, enfoque?: "noticia") => {
+    const m = (propio ?? texto).trim();
+    if (m.length < 2 || enviando || !eid) return;
     setEnviando(true); setError(null);
     try {
-      const r = await api.replicarTema(tema.id, { texto: texto.trim(), ejecucion: eid });
+      const r = await api.replicarTema(tema.id, { texto: m, ejecucion: eid, ...(enfoque ? { enfoque } : {}) });
       setTexto("");
       if (r.pieza_id) onPieza();
     } catch (e) {
@@ -37,10 +38,17 @@ function Conversacion({ tema, eid, onPieza, onCambio }: { tema: Tema; eid?: numb
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); responder(); } }}
                   placeholder={tema.estado === "pregunta" ? "Contesta al jefe…" : "Replica a la propuesta: «otro libro», «más perfil y menos noticia»…"}
                   className="min-w-0 flex-1 resize-none rounded-[10px] border border-borde bg-papel p-2 outline-none focus:border-tinta" />
-        <button onClick={responder} disabled={enviando || texto.trim().length < 2 || !eid} className="boton self-end">
+        <button onClick={() => responder()} disabled={enviando || texto.trim().length < 2 || !eid} className="boton self-end">
           {enviando ? "Pensando…" : "Enviar"}
         </button>
       </div>
+      {tema.enfoque !== "noticia" && tema.estado !== "pregunta" && (
+        // 3/11: si el jefe hizo un ensayo y solo se quería la noticia, un clic lo rehace como «Noticia»
+        <button onClick={() => responder("Solo la noticia: cuéntala con su contexto, sin ensayo ni libro ajeno.", "noticia")}
+                disabled={enviando || !eid} className="self-start rounded-full border border-carmesi px-3 py-1 text-[12.5px] text-carmesi hover:bg-carmesi hover:text-papel">
+          Solo la noticia
+        </button>
+      )}
       {error && <p className="text-carmesi">{error}</p>}
     </div>
   );
@@ -51,6 +59,8 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
   const [texto, setTexto] = useState("");
   const [enlaces, setEnlaces] = useState("");
   const [enviando, setEnviando] = useState<"ahora" | "manana" | null>(null);
+  // Lo que pide la redacción (3/11, «si lo que le pido es que me cuente una noticia… no me haga un ensayo»)
+  const [enfoque, setEnfoque] = useState<"elige" | "noticia">("elige");
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
   const { datos: temas, recargar } = useDatos("temas", api.temas);
   const [abierto, setAbierto] = useState<number | null>(null);
@@ -59,7 +69,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
     if (texto.trim().length < 8 || enviando) return;
     setEnviando(cuando); setMensaje(null);
     try {
-      const r = await api.proponerTema({ texto: texto.trim(), enlaces: enlaces.split(/\s+/).filter(Boolean), cuando, ejecucion: eid ?? null });
+      const r = await api.proponerTema({ texto: texto.trim(), enlaces: enlaces.split(/\s+/).filter(Boolean), cuando, ejecucion: eid ?? null, enfoque });
       setTexto(""); setEnlaces("");
       setMensaje({ ok: true, texto: cuando === "manana" ? "Guardado: el jefe lo verá en la mesa de mañana."
         : r.preguntas.length ? "El jefe necesita saber algo antes de proponer: contéstale abajo."
@@ -90,11 +100,23 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
                       placeholder="Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las noticias."
                       aria-label="Enlaces (opcional)"
                       className="resize-y rounded-[12px] border border-borde bg-papel p-3 font-mono text-[13px] outline-none focus:border-tinta" />
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Qué le pides al jefe">
+              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"]] as const).map(([v, txt]) => (
+                <button key={v} aria-pressed={enfoque === v} onClick={() => setEnfoque(v)} disabled={!!enviando}
+                        className={`rounded-full border px-3 py-1 text-[13px] ${enfoque === v ? "border-carmesi bg-carmesi text-papel" : "border-borde bg-papel hover:border-tinta"}`}>
+                  {txt}
+                </button>
+              ))}
+              <span className="text-[12.5px] text-tinta-suave">
+                {enfoque === "noticia" ? "Contada con su contexto, sin ensayo ni libro ajeno." : "Lectura lateral, diálogo, tres libros… lo que mejor le vaya."}
+              </span>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <button className="boton" onClick={() => proponer("ahora")} disabled={!!enviando || !eid || texto.trim().length < 8}>
                 {enviando === "ahora" ? "El jefe está pensando… (1–2 min)" : "Proponer ahora"}
               </button>
-              <button className="boton-suave" onClick={() => proponer("manana")} disabled={!!enviando || texto.trim().length < 8}>
+              <button className="boton-suave" onClick={() => proponer("manana")} disabled={!!enviando || texto.trim().length < 8 || enfoque === "noticia"}
+                      title={enfoque === "noticia" ? "La mesa de mañana solo propone piezas con libro" : undefined}>
                 {enviando === "manana" ? "Guardando…" : "Para la mesa de mañana"}
               </button>
             </div>

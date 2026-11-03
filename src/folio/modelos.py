@@ -28,9 +28,9 @@ Seccion = Literal[
 ]
 # «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
 EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
-Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco"]
+Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia"]
 # Formatos que pueden salir sin libro: la curiosidad del cajón y los temas del radar del libro
-SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar")
+SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar", "noticia")   # «noticia»: tema de la redacción contado sin ensayo (3/11)
 # «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml); «catalogo»: novedades de
 # las editoriales independientes (formato «recomendado»); «radar»: historias del mundo del libro que no pasan al jefe
 # pero sí a la lista del radar

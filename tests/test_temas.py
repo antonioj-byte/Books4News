@@ -205,3 +205,34 @@ def test_embedder_suelta_el_modelo_si_se_pide(tmp_path):
     assert e._motor is None
     assert set(e.vectores({"a": "uno"})) == {"a"}                     # de la caché, sin modelo
     assert not [f for f in tmp_path.iterdir() if f.name.endswith(".tmp.npz")]
+
+
+def test_solo_la_noticia_no_hace_ensayo_ni_exige_libro(cfg):
+    """3/11 («si lo que le pido es que me cuente una noticia… no me haga un ensayo»): con el enfoque «noticia», el prompt
+    lo dice, el formato es «noticia» aunque el jefe proponga otro y la propuesta vale sin libros."""
+    vistos = []
+
+    class Jefe:
+        def estructurado(self, paso, mensajes, esquema, **k):
+            vistos.append(mensajes[0]["content"])
+            return temas.RespuestaJefeTema(respuesta="La cuento.", preguntas=[], propuesta=HistoriaElegida(
+                formato="lateral", historia_id="x", titular="Gallimard pasará los manuscritos por un detector de IA",
+                de_que_se_habla="Madrigall usará un detector.", cuestion_de_fondo="La confianza.",
+                libros_candidatos=[], por_que="Lo pide la redacción.")), ""
+
+    f = temas.FuenteTema(medio="Le Monde", titulo="Madrigall", url="https://lemonde.fr/x", texto="Texto. " * 200)
+    h = temas.historia(9, "Cuéntame la noticia del detector de Gallimard", [f])
+    r = temas.proponer(Jefe(), cfg, h, "Cuéntame la noticia del detector de Gallimard", [f], "2026-11-03", enfoque="noticia")
+    assert r.propuesta.formato == "noticia" and r.propuesta.libros_candidatos == []
+    assert "SOLO LA NOTICIA" in vistos[0] and "[pegar" not in vistos[0]
+    # Sin enfoque, una propuesta sin libro de otro formato sigue sin valer
+    with pytest.raises(Exception, match="ningún libro"):
+        temas.proponer(Jefe(), cfg, h, "Cuéntame la noticia", [f], "2026-11-03")
+
+
+def test_el_enfoque_del_tema_se_guarda(tmp_path):
+    a = Almacen(tmp_path / "f.db")
+    tid = a.guardar_tema("Cuéntame la noticia", [], "ahora", "noticia")
+    assert next(t for t in a.temas() if t.id == tid).enfoque == "noticia"
+    a.cambiar_enfoque_tema(tid, "elige")
+    assert next(t for t in a.temas() if t.id == tid).enfoque == "elige"

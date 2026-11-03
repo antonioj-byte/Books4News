@@ -22,6 +22,8 @@ class TemaNuevo(BaseModel):
     enlaces: list[str] = Field(default_factory=list, max_length=temas.MAX_ENLACES)
     cuando: Literal["ahora", "manana"]
     ejecucion: int | None = None          # para «ahora»: la ejecución de la mesa en que entra la pieza
+    # 3/11 (a petición del usuario): «elige», el jefe decide el formato; «noticia», contar la noticia, sin ensayo
+    enfoque: Literal["elige", "noticia"] = "elige"
 
 
 class TemaCreado(BaseModel):
@@ -36,6 +38,7 @@ class TemaCreado(BaseModel):
 class Replica(BaseModel):
     texto: str = Field(min_length=2, max_length=1500)
     ejecucion: int
+    enfoque: Literal["elige", "noticia"] | None = None   # si la réplica cambia lo que se pide (p. ej. «solo la noticia»)
 
 
 def _fallido(ctx: Contexto, tid: int, motivo: str) -> None:
@@ -83,7 +86,10 @@ def proponer(t: TemaNuevo, ctx: Contexto = Depends(contexto)):
     if t.cuando == "ahora" and _un_tema.locked():
         # Antes de guardarlo: un 409 dejaba un tema «pendiente» huérfano para siempre (revisión general, 2/11)
         raise HTTPException(409, "El jefe ya está con otro tema; espera a que responda")
-    tid = ctx.almacen.guardar_tema(texto, enlaces, t.cuando)
+    if t.cuando == "manana" and t.enfoque == "noticia":
+        # La mesa de madrugada no cuenta noticias sueltas: solo propone piezas con libro
+        raise HTTPException(422, "«Solo la noticia» se propone ahora, no para la mesa de mañana")
+    tid = ctx.almacen.guardar_tema(texto, enlaces, t.cuando, t.enfoque)
     if t.cuando == "manana":
         return TemaCreado(tema=next(x for x in ctx.almacen.temas() if x.id == tid))
     return _resultado(ctx, t.ejecucion, tid)
@@ -100,6 +106,8 @@ def replicar(tid: int, r: Replica, ctx: Contexto = Depends(contexto)):
         raise HTTPException(404, "No existe ese tema")
     if tema.pieza_id and ctx.ejecutor.en_marcha(tema.pieza_id):
         raise HTTPException(409, "La pieza de este tema se está escribiendo con «Proceder»; espera a que acabe")
+    if r.enfoque and r.enfoque != tema.enfoque:
+        ctx.almacen.cambiar_enfoque_tema(tid, r.enfoque)
     return _resultado(ctx, r.ejecucion, tid, replica=r.texto)
 
 

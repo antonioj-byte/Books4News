@@ -643,3 +643,10 @@
   patron: "«Tengo la sensación de que se está volviendo demasiado compleja la web. ¿Se te ocurre darle una pensada y simplificar el proceso?» → «Ordena pantallas y llévalo todo al chat.»"
   propuesta: "Un solo sitio para pedir cambios en una pieza (el chat, con adjuntos y comentarios por diapositiva), un botón por momento y un menú de tres. Lo nuevo entra en el chat, no como un formulario más."
   evidencia: ["Conversación, 3/11: Artifact «Folio más simple», niveles A y B"]
+
+- clave: tema-solo-la-noticia
+  fecha: "2026-11-03"
+  destino: jefe_cultura
+  patron: "«Le he pedido que me cuente una noticia y su enfoque ha sido proponerme una lectura lateral a partir de otro libro. Si lo que le pido es que me cuente una noticia sin tener que tener una idea original, no me haga un ensayo a propósito.»"
+  propuesta: "Si la redacción pide contar una noticia (o marca «Solo la noticia»), la pieza es «Noticia»: lo que ha pasado con su contexto, sin ensayo ni lectura lateral, y sin libro salvo el libro del que trata la noticia."
+  evidencia: ["Conversación, 3/11: tema del detector de IA de Gallimard convertido en lectura lateral con un libro de Villoro"]

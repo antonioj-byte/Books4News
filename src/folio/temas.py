@@ -30,7 +30,12 @@ from folio.llm import LLM, ErrorLLM, cargar_prompt
 from folio.modelos import Articulo, Historia, HistoriaElegida
 
 PREFIJO = "tema-"
-FORMATOS = ("lateral", "dialogo", "edicion", "balda", "recomendado")
+FORMATOS = ("lateral", "dialogo", "edicion", "balda", "recomendado", "noticia")
+# Lo que la redacción pide (3/11): que el jefe elija el formato o que cuente la noticia, sin ensayo ni libro ajeno
+ENFOQUES = {
+    "elige": "La redacción no ha dicho el formato: elige tú el que mejor le va. Si su texto pide contar una noticia («cuéntame la noticia», «sin ensayo», «solo lo que ha pasado»), es «noticia».",
+    "noticia": "La redacción pide SOLO LA NOTICIA: el formato es «noticia», sin excepción. No hagas una lectura lateral, un diálogo ni un ensayo, y no busques un libro que la ilumine. Libro, solo si la noticia trata de uno concreto que está en castellano; si no, ninguno.",
+}
 _MIN_CARACTERES = 600
 MAX_ENLACES = 4
 
@@ -173,23 +178,26 @@ def _bloque_conversacion(conversacion: list[dict]) -> str:
 
 
 def proponer(llm: LLM, cfg: Config, h: Historia, texto: str, fuentes: list[FuenteTema], fecha: str,
-             conversacion: list[dict] | None = None) -> RespuestaJefeTema:
+             conversacion: list[dict] | None = None, enfoque: str = "elige") -> RespuestaJefeTema:
     """La respuesta del jefe al tema (Opus): una propuesta o, si le falta algo que solo sabe la redacción, preguntas
     (2/11, a petición del usuario: «¿quizá necesita preguntarme a mí? añadimos la opción de la réplica»).
     ErrorLLM si no devuelve ni una cosa ni otra."""
     bloque = "\n\n".join(f"<noticia medio=\"{f.medio}\">\n{f.titulo}\n{f.texto[:1500]}\n</noticia>" for f in fuentes)
     prompt = cargar_prompt(cfg, "jefe_tema", {"[pegar tema]": texto, "[pegar fuentes]": bloque, "[pegar id]": h.id,
                                               "[pegar criterios]": criterios(cfg, fecha),
-                                              "[pegar conversación]": _bloque_conversacion(conversacion or [])})
+                                              "[pegar conversación]": _bloque_conversacion(conversacion or []),
+                                              "[pegar enfoque]": ENFOQUES.get(enfoque, ENFOQUES["elige"])})
     r, _ = llm.estructurado(f"jefe-tema:{h.id}", [{"role": "user", "content": prompt}], RespuestaJefeTema,
                             etapa_modelo="seleccion", max_tokens=16000)
     r.preguntas = [q.strip() for q in r.preguntas if q.strip()][:2]
     if r.propuesta is not None:
         e = r.propuesta
+        if enfoque == "noticia":
+            e.formato = "noticia"            # lo que pide la redacción manda sobre lo que el jefe proponga
         if e.formato not in FORMATOS:
             e.formato = "dialogo"
         e.historia_id = h.id
-        if not e.libros_candidatos:
+        if not e.libros_candidatos and e.formato != "noticia":
             if r.preguntas:
                 r.propuesta = None
             else:
@@ -285,7 +293,7 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
                 raise SinFuentes("No he encontrado noticias que se puedan leer sobre el tema: añade un enlace que lo cuente")
             almacen.actualizar_tema(tid, fuentes=[f.model_dump() for f in fuentes])
         h = historia(tid, tema.texto, fuentes)
-        r = proponer(llm, cfg, h, tema.texto, fuentes, fecha, conversacion)
+        r = proponer(llm, cfg, h, tema.texto, fuentes, fecha, conversacion, tema.enfoque)
     except (SinFuentes, ErrorLLM) as exc:
         almacen.actualizar_tema(tid, estado="fallido", nota=str(exc)[:300], conversacion=conversacion)
         raise

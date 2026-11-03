@@ -190,6 +190,11 @@ _MIGRACIONES = [
     """
     ALTER TABLE chat_mensajes ADD COLUMN opciones TEXT;
     """,
+    # 11: el enfoque que pide la redacción para un tema (3/11, a petición del usuario: «si lo que le pido es que me cuente
+    # una noticia sin tener que tener una idea original, no me haga un ensayo»): «elige» (el jefe decide) o «noticia»
+    """
+    ALTER TABLE temas ADD COLUMN enfoque TEXT NOT NULL DEFAULT 'elige';
+    """,
 ]
 
 
@@ -237,6 +242,7 @@ class Tema(BaseModel):
     pieza_id: str | None = None
     nota: str = ""
     conversacion: list[dict] = []        # [{"rol": "redaccion" | "jefe", "texto": ...}]
+    enfoque: str = "elige"               # «elige» (el jefe decide el formato) o «noticia» (contar la noticia, sin ensayo)
 
 
 class Gasto(BaseModel):
@@ -458,10 +464,14 @@ class Almacen:
 
     # --- Temas de la redacción ---------------------------------------------------------
 
-    def guardar_tema(self, texto: str, enlaces: list[str], cuando: str) -> int:
+    def guardar_tema(self, texto: str, enlaces: list[str], cuando: str, enfoque: str = "elige") -> int:
         with self._transaccion() as db:
-            return db.execute("INSERT INTO temas (creado_en, texto, enlaces, cuando) VALUES (?, ?, ?, ?)",
-                              (_ahora(), texto, json.dumps(enlaces, ensure_ascii=False), cuando)).lastrowid
+            return db.execute("INSERT INTO temas (creado_en, texto, enlaces, cuando, enfoque) VALUES (?, ?, ?, ?, ?)",
+                              (_ahora(), texto, json.dumps(enlaces, ensure_ascii=False), cuando, enfoque)).lastrowid
+
+    def cambiar_enfoque_tema(self, tid: int, enfoque: str) -> None:
+        with self._transaccion() as db:
+            db.execute("UPDATE temas SET enfoque = ? WHERE id = ?", (enfoque, tid))
 
     def temas(self, estado: str | None = None) -> list[Tema]:
         filas = self.db.execute("SELECT * FROM temas" + (" WHERE estado = ?" if estado else "") + " ORDER BY id DESC",

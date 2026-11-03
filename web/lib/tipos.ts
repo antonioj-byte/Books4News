@@ -1340,7 +1340,7 @@ export interface components {
              * @default lateral
              * @enum {string}
              */
-            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco";
+            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco" | "noticia";
             /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista
@@ -1950,6 +1950,8 @@ export interface components {
             texto: string;
             /** Ejecucion */
             ejecucion: number;
+            /** Enfoque */
+            enfoque?: ("elige" | "noticia") | null;
         };
         /** RespuestaChat */
         RespuestaChat: {
@@ -2074,6 +2076,11 @@ export interface components {
             conversacion: {
                 [key: string]: unknown;
             }[];
+            /**
+             * Enfoque
+             * @default elige
+             */
+            enfoque: string;
         };
         /** TemaCreado */
         TemaCreado: {
@@ -2111,6 +2118,12 @@ export interface components {
             cuando: "ahora" | "manana";
             /** Ejecucion */
             ejecucion?: number | null;
+            /**
+             * Enfoque
+             * @default elige
+             * @enum {string}
+             */
+            enfoque: "elige" | "noticia";
         };
         /**
          * Trabajo

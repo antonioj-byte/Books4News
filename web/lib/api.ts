@@ -78,7 +78,7 @@ export const api = {
   estadoCinco: () => pedir<EstadoEjecucion>("/api/cinco"),
   prepararFondo: (tandas: number) => pedir<EstadoEjecucion>("/api/fondo/preparar", { method: "POST", body: JSON.stringify({ tandas }) }),
   proponerTema: (t: TemaNuevo) => pedir<TemaCreado>("/api/temas", { method: "POST", body: JSON.stringify(t) }),
-  replicarTema: (id: number, r: { texto: string; ejecucion: number }) =>
+  replicarTema: (id: number, r: { texto: string; ejecucion: number; enfoque?: "elige" | "noticia" }) =>
     pedir<TemaCreado>(`/api/temas/${id}/replica`, { method: "POST", body: JSON.stringify(r) }),
   descartarTema: (id: number) => pedir<Tema>(`/api/temas/${id}`, { method: "DELETE" }),
   // Feedback por agente (2/11): notas de diapositiva (arte o copy) y el motivo de un descarte (jefe de cultura)
