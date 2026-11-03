@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 import { Diapositiva } from "@/components/Diapositiva";
-import { Estanteria } from "@/components/Estanteria";
 import { LanzarEjecucion } from "@/components/LanzarEjecucion";
 import { EstadoChip, FormatoChip, Marcas } from "@/components/Marcas";
 import { Descartar } from "@/components/Descartar";
@@ -35,8 +34,6 @@ export function VistaDia() {
   const fechaLarga = new Date(`${fecha}T12:00:00`);
   const diaSemana = fechaLarga.toLocaleDateString("es-ES", { weekday: "long" });
   const diaMes = fechaLarga.toLocaleDateString("es-ES", { day: "numeric", month: "long" });
-  const escritas = (dia?.piezas ?? []).filter((p) => p.estado !== "pendiente");
-  const libros = escritas.flatMap((p) => p.libros);
   // Los temas del radar del libro sin escribir van en una lista aparte, debajo de la mesa; escritos, a la mesa
   const enRadar = (p: { radar: boolean; estado: string }) => p.radar && p.estado === "pendiente";
   const mesa = (dia?.piezas ?? []).filter((p) => !enRadar(p));
@@ -54,22 +51,10 @@ export function VistaDia() {
           <h1 className="titular mt-2 text-[52px]">
             {diaSemana}, <em>{diaMes}</em>
           </h1>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <select value={fecha} onChange={(e) => router.push(`/dia/${e.target.value}`)} className={select} aria-label="Día">
-              {dias.map((d) => <option key={d.fecha} value={d.fecha}>{d.fecha}</option>)}
-            </select>
-            {dia && dia.ejecuciones.length > 1 && (
-              <select value={dia.ejecucion.id} onChange={(e) => router.push(`/dia/${fecha}?ejecucion=${e.target.value}`)}
-                      className={select} aria-label="Ejecución">
-                {dia.ejecuciones.map((e) => (
-                  <option key={e.id} value={e.id}>{hora(e.generado_en)} · {e.piezas} piezas · {e.coste_usd.toFixed(2)} $</option>
-                ))}
-              </select>
-            )}
-          </div>
         </div>
-        <LanzarEjecucion alTerminar={alTerminar} />
       </div>
+
+      <ProponerTema eid={dia?.ejecucion.id} onPieza={recargarDia} />
 
       {error && <p className="text-carmesi">{error}</p>}
       {dia?.aviso_jefe && (
@@ -132,14 +117,14 @@ export function VistaDia() {
 
       {dia && !(dia.piezas ?? []).some((p) => p.formato === "cinco") && <CincoDelLibro fecha={fecha} onHecho={recargarDia} />}
 
-      <ProponerTema eid={dia?.ejecucion.id} onPieza={recargarDia} />
-
       {radar.length > 0 && (
-        <section className="mt-12" aria-labelledby="h-radar">
-          <div className="antetitulo">Radar del libro</div>
-          <h2 id="h-radar" className="titular mb-1 mt-2 text-[30px]">Breves del <em>mundo del libro</em></h2>
-          <p className="mb-4 max-w-[62ch] text-[14px] text-tinta-suave">
-            Noticias con gancho que no necesitan una pieza propia: basta la noticia. Si alguna lo merece, «Escribir pieza» la desarrolla.
+        <details className="mt-10">
+          <summary className="cursor-pointer">
+            <span className="titular text-[24px]">Breves del <em>mundo del libro</em></span>
+            <span className="dato ml-2">{radar.length}</span>
+          </summary>
+          <p className="mb-4 mt-2 max-w-[62ch] text-[14px] text-tinta-suave">
+            Noticias con gancho que no necesitan una pieza propia. Si alguna lo merece, «Escribir pieza» la desarrolla.
           </p>
           <ul className="panel divide-y divide-borde">
             {radar.map((p) => (
@@ -159,21 +144,34 @@ export function VistaDia() {
               </li>
             ))}
           </ul>
-        </section>
-      )}
-
-      {libros.length > 0 && (
-        <div className="mt-12 max-w-xl">
-          <Estanteria libros={libros} pie="Estantería · los libros que recomienda hoy Folio" />
-        </div>
-      )}
-
-      {dia && dia.avisos.length > 0 && (
-        <details className="mt-10 text-sm text-tinta-suave">
-          <summary className="dato cursor-pointer uppercase">Avisos de la ejecución · {dia.avisos.length} · coste {dia.coste_usd.toFixed(2)} $</summary>
-          <ul className="mt-2 list-disc pl-5">{dia.avisos.map((a) => <li key={a}>{a}</li>)}</ul>
         </details>
       )}
+
+      {/* Lo técnico, plegado al pie (3/11, «se está volviendo demasiado compleja»): otro día u otra ejecución, lanzar a mano, avisos y coste */}
+      <details className="mt-10 text-sm">
+        <summary className="dato cursor-pointer uppercase">
+          Detalles{dia ? ` · ejecución de las ${hora(dia.ejecucion.generado_en)} · ${dia.coste_usd.toFixed(2)} $${dia.avisos.length ? ` · ${dia.avisos.length} avisos` : ""}` : ""}
+        </summary>
+        <div className="mt-3 flex flex-col items-start gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <select value={fecha} onChange={(e) => router.push(`/dia/${e.target.value}`)} className={select} aria-label="Día">
+              {dias.map((d) => <option key={d.fecha} value={d.fecha}>{d.fecha}</option>)}
+            </select>
+            {dia && dia.ejecuciones.length > 1 && (
+              <select value={dia.ejecucion.id} onChange={(e) => router.push(`/dia/${fecha}?ejecucion=${e.target.value}`)}
+                      className={select} aria-label="Ejecución">
+                {dia.ejecuciones.map((e) => (
+                  <option key={e.id} value={e.id}>{hora(e.generado_en)} · {e.piezas} piezas · {e.coste_usd.toFixed(2)} $</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <LanzarEjecucion alTerminar={alTerminar} />
+          {dia && dia.avisos.length > 0 && (
+            <ul className="list-disc pl-5 text-tinta-suave">{dia.avisos.map((a) => <li key={a}>{a}</li>)}</ul>
+          )}
+        </div>
+      </details>
     </div>
   );
 }

@@ -25,11 +25,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <span className="antetitulo hidden sm:inline">Mesa de edición</span>
           </Link>
           <nav className="-mx-2 flex flex-wrap gap-x-0.5 text-sm sm:mx-0 sm:gap-1">
-            <Link href="/" className="whitespace-nowrap rounded-full px-2 py-1.5 hover:bg-papel-hondo sm:px-3">Portada del día</Link>
-            <Link href="/evaluacion" className="whitespace-nowrap rounded-full px-2 py-1.5 hover:bg-papel-hondo sm:px-3">Evaluación</Link>
+            <Link href="/" className="whitespace-nowrap rounded-full px-2 py-1.5 hover:bg-papel-hondo sm:px-3">Hoy</Link>
             <Link href="/fondo" className="whitespace-nowrap rounded-full px-2 py-1.5 hover:bg-papel-hondo sm:px-3">Fondo</Link>
-            <Link href="/memoria" className="whitespace-nowrap rounded-full px-2 py-1.5 hover:bg-papel-hondo sm:px-3">Memoria</Link>
-            <Link href="/gasto" className="whitespace-nowrap rounded-full px-2 py-1.5 hover:bg-papel-hondo sm:px-3">Gasto</Link>
+            <Link href="/como-vamos" className="whitespace-nowrap rounded-full px-2 py-1.5 hover:bg-papel-hondo sm:px-3">Cómo vamos</Link>
           </nav>
         </header>
         <main className="flex-1">{children}</main>

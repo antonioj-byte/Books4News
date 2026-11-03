@@ -5,8 +5,6 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Carrusel } from "@/components/Carrusel";
 import { Descartar } from "@/components/Descartar";
-import { NotasDiapositiva } from "@/components/NotasDiapositiva";
-import { TitularesAlternativos } from "@/components/TitularesAlternativos";
 import { ChatEdicion } from "@/components/ChatEdicion";
 import { FormEvaluacion } from "@/components/FormEvaluacion";
 import { FotoPersona } from "@/components/FotoPersona";
@@ -39,7 +37,8 @@ export function VistaPieza() {
   const eid = Number(eidTexto);
   const { datos: d, error, recargar: cargar } = useDatos(`pieza:${eid}:${pid}`, () => api.pieza(eid, pid));
   const [avisosEdicion, setAvisosEdicion] = useState<string[]>([]);
-  const { datos: notas, recargar: recargarNotas } = useDatos(`notas:${eid}:${pid}`, () => api.notas(eid, pid));
+  const [pestana, setPestana] = useState<"chat" | "fuentes" | "evaluacion">("chat");
+  const [borrador, setBorrador] = useState<{ texto: string } | null>(null);
 
   if (error) return <p className="p-6 text-carmesi">{error}</p>;
   if (!d) return <p className="dato p-6">Cargando la pieza…</p>;
@@ -47,45 +46,54 @@ export function VistaPieza() {
   // Retrato del autor generado con IA (folio.imagenes.retrato_generado): el estilo va en su crédito
   const estiloRetrato = d.pieza.arte?.retrato?.match(/retrato (.+?) generado con IA/)?.[1];
 
-  return (
-    <div className="grid grid-cols-1 lg:h-[calc(100vh-61px)] lg:grid-cols-[minmax(300px,370px)_1fr_minmax(300px,350px)]">
-      <aside className="order-3 border-t border-borde px-4 py-5 lg:order-none lg:overflow-y-auto lg:border-r lg:border-t-0 lg:px-6">
-        <Link href={`/dia/${d.fecha}?ejecucion=${eid}`} className="dato hover:text-carmesi">← PORTADA DEL DÍA</Link>
-        <div className="mt-4"><PanelNoticia d={d} /></div>
-      </aside>
+  const estado = d.pieza.estado;
+  const escrita = !!g;
+  const otrosEstados = ESTADOS.filter((e) => e.valor !== "descartada" && e.valor !== estado);
 
-      <section className="order-1 min-w-0 px-4 py-5 lg:order-none lg:overflow-y-auto lg:px-8">
+  // Dos columnas (3/11, «se está volviendo demasiado compleja la web»): el carrusel y, a la derecha, el chat (el único
+  // sitio para pedir cambios), las fuentes y la evaluación en pestañas. Arriba, solo el paso siguiente.
+  return (
+    <div className="grid grid-cols-1 lg:h-[calc(100vh-61px)] lg:grid-cols-[1fr_minmax(340px,440px)]">
+      <section className="min-w-0 px-4 py-5 lg:overflow-y-auto lg:px-8">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <EstadoChip estado={d.pieza.estado} />
+            <Link href={`/dia/${d.fecha}?ejecucion=${eid}`} className="dato hover:text-carmesi">← HOY</Link>
+            <EstadoChip estado={estado} />
             <FormatoChip formato={d.pieza.eleccion.formato ?? "lateral"} />
-            <span className="dato">{d.pieza.id} · versión {d.version}</span>
-            {(d.videos ?? []).length > 0 && (
-              <span className="dato text-carmesi">EN VÍDEO: {(d.videos ?? []).map((v) => v.n).join(", ")}</span>
-            )}
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {ESTADOS.map((e) => e.valor === "descartada" && d.pieza.estado !== "descartada" ? (
-              // Descartar pregunta por qué (2/11): el motivo va al jefe de cultura
-              <Descartar key={e.valor} eid={eid} pid={pid} onHecho={() => { cargar(); recargarNotas(); }} />
-            ) : (
-              <button key={e.valor} onClick={() => api.estado(eid, pid, e.valor).then(cargar)}
-                      aria-pressed={d.pieza.estado === e.valor} className="boton-suave">
-                {e.texto}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {escrita && (estado === "propuesta" || estado === "en_edicion") && (
+              <button onClick={() => api.estado(eid, pid, "aprobada").then(cargar)} className="boton">Aprobar</button>
+            )}
+            {estado === "descartada" && (
+              <button onClick={() => api.estado(eid, pid, "propuesta").then(cargar)} className="boton-suave">Recuperar</button>
+            )}
+            {estado !== "descartada" && <Descartar eid={eid} pid={pid} onHecho={cargar} />}
+            <details className="relative">
+              <summary className="boton-suave cursor-pointer list-none">Más ▾</summary>
+              <div className="absolute right-0 z-20 mt-1.5 flex w-[260px] flex-col gap-2 rounded-[10px] border border-borde bg-panel p-3 text-[13px] shadow-lg">
+                <span className="dato">{d.pieza.id} · versión {d.version}{(d.videos ?? []).length ? ` · vídeo en ${(d.videos ?? []).map((v) => v.n).join(", ")}` : ""}</span>
+                {escrita && <a href={api.urlDescarga(eid, pid)} download className="hover:underline">Descargar el carrusel (.zip) <span className="dato">· hasta un minuto</span></a>}
+                {escrita && otrosEstados.length > 0 && (
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <span className="dato">Pasar a</span>
+                    {otrosEstados.map((e) => (
+                      <button key={e.valor} onClick={() => api.estado(eid, pid, e.valor).then(cargar)} className="rounded-full border border-borde px-2.5 py-0.5 hover:border-tinta">{e.texto}</button>
+                    ))}
+                  </span>
+                )}
+                {d.pieza.arte?.escena && (
+                  <span><b>Ilustración</b>{d.pieza.arte.escena_idea ? ` · ${d.pieza.arte.escena_idea}` : ""}<span className="mt-1 block font-mono text-[11.5px] text-tinta-suave">{d.pieza.arte.escena}</span></span>
+                )}
+              </div>
+            </details>
           </div>
         </div>
-        {d.pieza.arte?.escena && (
-          <details className="mx-auto mb-4 max-w-[560px] rounded-[6px] border border-borde bg-panel px-4 py-2.5 text-[14px]">
-            <summary className="cursor-pointer"><b>Ilustración editorial</b>{d.pieza.arte.escena_idea ? ` · ${d.pieza.arte.escena_idea}` : ""}</summary>
-            <p className="mt-2 font-mono text-[12px] text-tinta-suave">{d.pieza.arte.escena}</p>
-            <p className="mt-1 text-[12px] text-tinta-suave">Para otra, pídeselo al chat («dibuja otra ilustración con…»).</p>
-          </details>
-        )}
-        {d.persona && (g || d.pieza.libros.length > 0 || d.pieza.eleccion.protagonista) && (
-          <FotoPersona key={`foto:${eid}/${pid}`} eid={eid} pid={pid} persona={d.persona} credito={d.foto_persona ?? null}
-                       escrita={!!d.pieza.arte} onHecho={cargar} />
+        {d.hechos_no_verificados.length > 0 && (
+          <button onClick={() => setPestana("fuentes")}
+                  className="mx-auto mb-4 block w-full max-w-[560px] rounded-[6px] border border-carmesi px-4 py-2.5 text-left text-[14px] hover:bg-papel-hondo">
+            <b className="text-carmesi">{d.hechos_no_verificados.length === 1 ? "1 hecho sin verificar" : `${d.hechos_no_verificados.length} hechos sin verificar`}</b> · ver en Fuentes
+          </button>
         )}
         {estiloRetrato && (
           <p className="mx-auto mb-4 max-w-[560px] rounded-[6px] bg-tinta px-4 py-2.5 text-[14px] text-papel">
@@ -104,16 +112,11 @@ export function VistaPieza() {
                         setAvisosEdicion(r.avisos);
                         cargar();
                       }}
-                      marcadas={[...new Set((notas ?? []).filter((x) => x.tipo === "diapositiva").map((x) => x.diapositiva ?? 0))]}
-                      extra={(n) => <>
-                        {n === 1 && g && <TitularesAlternativos eid={eid} pid={pid} titulares={g.titulares_alternativos ?? []}
-                                                                subtitulo={g.diapositivas[0]?.subtitulo} actual={g.diapositivas[0]?.texto ?? ""} onCambio={cargar} />}
-                        <NotasDiapositiva eid={eid} pid={pid} n={n} notas={notas ?? []} onCambio={recargarNotas} onAplicada={cargar} />
-                      </>} />
-            <p className="mt-3 text-center">
-              <a href={api.urlDescarga(eid, pid)} download className="boton-suave">Descargar el carrusel (.zip)</a>
-              <span className="dato mt-2 block sm:ml-2 sm:mt-0 sm:inline">JPEG, vídeo de portada y pie · tarda hasta un minuto</span>
-            </p>
+                      extra={(n) => (
+                        <button onClick={() => { setBorrador({ texto: `Diapositiva ${n}: ` }); setPestana("chat"); }} className="boton-suave">
+                          Comentar
+                        </button>
+                      )} />
             {d.pieza.estado === "aprobada" && <ProgramarBuffer key={`buffer:${eid}/${pid}`} eid={eid} pid={pid} />}
             {avisosEdicion.length > 0 && (
               <div className="mx-auto mt-4 max-w-[560px] rounded-[6px] border border-carmesi px-4 py-2.5 text-[13px]">
@@ -121,13 +124,17 @@ export function VistaPieza() {
                 <ul className="mt-1 list-disc pl-5">{avisosEdicion.map((a) => <li key={a}>{a}</li>)}</ul>
               </div>
             )}
-            <div className="mx-auto mt-8 max-w-[560px]">
-              <h3 className="antetitulo mb-2">Pie de Instagram</h3>
-              <p className="whitespace-pre-line text-[15px] leading-relaxed">{conCursivas(g.pie_instagram)}</p>
+            {/* El pie y la idea, plegados (3/11): en el móvil dejaban el chat al fondo de la página */}
+            <details className="mx-auto mt-6 max-w-[560px]">
+              <summary className="cursor-pointer">
+                <span className="antetitulo">Pie de Instagram e idea nueva</span>
+                <span className="mt-1 block truncate text-[14px] text-tinta-suave">{g.pie_instagram}</span>
+              </summary>
+              <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed">{conCursivas(g.pie_instagram)}</p>
               <h3 className="antetitulo mb-2 mt-7">Idea nueva</h3>
               <p className="titular text-[22px] italic leading-snug" style={{ fontWeight: 400 }}>{conCursivas(g.idea_elegida)}</p>
               <p className="mt-2 text-[13px] text-tinta-suave">{g.por_que}</p>
-            </div>
+            </details>
           </>
         ) : d.pieza.libros.length > 0 || ["curiosidad", "radar"].includes(d.pieza.eleccion.formato) ? (
           // Propuesta de la mesa sin escribir (o cuyo guion falló): se ve la propuesta y se puede proceder
@@ -170,16 +177,38 @@ export function VistaPieza() {
         )}
       </section>
 
-      <aside className="order-2 border-t border-borde px-4 py-5 lg:order-none lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-6">
-        <h3 className="antetitulo mb-1">Chat de edición</h3>
-        <p className="titular mb-3 text-[22px]">Pídele un <em>cambio</em></p>
-        {g ? <ChatEdicion key={`chat:${eid}/${pid}/${d.version}`} eid={eid} pid={pid} onCambio={cargar} />
-           : <p className="text-[13px] text-tinta-suave">Cuando la pieza esté escrita, podrás pedirle cambios aquí.</p>}
-        <h3 className="antetitulo mb-2 mt-6 border-t border-borde pt-4">Evaluación</h3>
-        <FormEvaluacion key={`${eid}/${pid}`} eid={eid} pid={pid} inicial={d.evaluacion ?? null} formato={d.pieza.eleccion.formato} />
-        {d.evaluacion_version && d.evaluacion_version !== d.version && (
-          <p className="dato mt-2">Evaluaste la versión {d.evaluacion_version}; la actual es la {d.version}.</p>
-        )}
+      <aside className="flex min-h-0 flex-col border-t border-borde px-4 py-4 lg:border-l lg:border-t-0 lg:px-5">
+        <nav className="mb-3 flex gap-1.5" aria-label="Panel de la pieza">
+          {([["chat", "Chat"], ["fuentes", "Fuentes"], ["evaluacion", "Evaluación"]] as const).map(([v, t]) => (
+            <button key={v} aria-pressed={pestana === v} onClick={() => setPestana(v)}
+                    className={`rounded-full px-3.5 py-1.5 text-[13px] ${pestana === v ? "bg-tinta text-papel" : "bg-papel-hondo hover:bg-borde"}`}>
+              {t}{v === "fuentes" && d.hechos_no_verificados.length ? ` · ${d.hechos_no_verificados.length}` : ""}{v === "evaluacion" && d.evaluacion ? " ✓" : ""}
+            </button>
+          ))}
+        </nav>
+        <div className={`min-h-0 flex-1 lg:overflow-y-auto ${pestana === "chat" ? "flex flex-col" : ""}`}>
+          {pestana === "chat" && (g
+            ? <ChatEdicion key={`chat:${eid}/${pid}`} eid={eid} pid={pid} onCambio={cargar}
+                           titulares={g.titulares_alternativos ?? []} titularActual={g.diapositivas[0]?.texto ?? ""}
+                           subtitulo={g.diapositivas[0]?.subtitulo ?? null}
+                           persona={d.persona ?? null} fotoPersona={d.foto_persona ?? null} borrador={borrador} />
+            : <div className="flex flex-col gap-3">
+                <p className="text-[13px] text-tinta-suave">Cuando la pieza esté escrita, podrás pedirle cambios aquí.</p>
+                {d.persona && (d.pieza.libros.length > 0 || d.pieza.eleccion.protagonista) && (
+                  <FotoPersona key={`foto:${eid}/${pid}`} eid={eid} pid={pid} persona={d.persona} credito={d.foto_persona ?? null}
+                               escrita={false} onHecho={cargar} />
+                )}
+              </div>)}
+          {pestana === "fuentes" && <PanelNoticia d={d} />}
+          {pestana === "evaluacion" && (
+            <>
+              <FormEvaluacion key={`${eid}/${pid}`} eid={eid} pid={pid} inicial={d.evaluacion ?? null} formato={d.pieza.eleccion.formato} />
+              {d.evaluacion_version && d.evaluacion_version !== d.version && (
+                <p className="dato mt-2">Evaluaste la versión {d.evaluacion_version}; la actual es la {d.version}.</p>
+              )}
+            </>
+          )}
+        </div>
       </aside>
     </div>
   );

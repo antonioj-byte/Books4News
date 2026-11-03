@@ -73,36 +73,39 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
   const descartar = async (t: Tema) => { await api.descartarTema(t.id).catch(() => null); recargar(); };
   const recientes = (temas ?? []).slice(0, 6);
 
+  const abiertoForm = texto.length > 0 || !!enviando || enlaces.length > 0;
+  const pendientes = recientes.filter((t) => t.estado === "pregunta").length;
+
+  // Arriba de la mesa y en compacto (3/11, «se está volviendo demasiado compleja la web»): una línea que se abre al escribir
   return (
-    <section className="mt-12" aria-labelledby="h-tema">
-      <div className="antetitulo">Jefe de cultura</div>
-      <h2 id="h-tema" className="titular mb-1 mt-2 text-[30px]">Proponer <em>un tema</em></h2>
-      <p className="mb-4 max-w-[62ch] text-[14px] text-tinta-suave">
-        Dile al jefe de qué quieres que se hable. Le busca el ángulo y el libro, con las mismas reglas que la mesa.
-        Si no pones enlaces, busca él las noticias.
-      </p>
-      <div className="panel flex flex-col gap-3 p-4">
-        <label htmlFor="tema-texto" className="dato uppercase">El tema</label>
-        <textarea id="tema-texto" value={texto} onChange={(e) => setTexto(e.target.value)} rows={3} disabled={!!enviando}
-                  placeholder="«La huelga de traductores en Francia», «por qué ya nadie lee en el metro»…"
-                  className="resize-y rounded-[12px] border border-borde bg-papel p-3 text-[15px] outline-none focus:border-tinta" />
-        <label htmlFor="tema-enlaces" className="dato uppercase">Enlaces (opcional, uno por línea)</label>
-        <textarea id="tema-enlaces" value={enlaces} onChange={(e) => setEnlaces(e.target.value)} rows={2} disabled={!!enviando}
-                  placeholder="https://…"
-                  className="resize-y rounded-[12px] border border-borde bg-papel p-3 font-mono text-[13px] outline-none focus:border-tinta" />
-        <div className="flex flex-wrap items-center gap-2">
-          <button className="boton" onClick={() => proponer("ahora")} disabled={!!enviando || !eid || texto.trim().length < 8}>
-            {enviando === "ahora" ? "El jefe está pensando… (1–2 min)" : "Proponer ahora"}
-          </button>
-          <button className="boton-suave" onClick={() => proponer("manana")} disabled={!!enviando || texto.trim().length < 8}>
-            {enviando === "manana" ? "Guardando…" : "Para la mesa de mañana"}
-          </button>
-          <span className="text-[13px] text-tinta-suave">Ahora: unos céntimos; la pieza se escribe después con «Proceder».</span>
-        </div>
+    <section aria-labelledby="h-tema" className="mb-8">
+      <div className="panel flex flex-col gap-3 p-3 sm:p-4">
+        <label id="h-tema" htmlFor="tema-texto" className="sr-only">Proponer un tema al jefe de cultura</label>
+        <textarea id="tema-texto" value={texto} onChange={(e) => setTexto(e.target.value)} rows={abiertoForm ? 3 : 1} disabled={!!enviando}
+                  placeholder="¿De qué quieres que hablemos hoy? El jefe de cultura le busca el ángulo y el libro."
+                  className="resize-none rounded-[12px] border border-borde bg-papel px-3 py-2.5 text-[16px] outline-none focus:border-tinta" />
+        {abiertoForm && (
+          <>
+            <textarea id="tema-enlaces" value={enlaces} onChange={(e) => setEnlaces(e.target.value)} rows={2} disabled={!!enviando}
+                      placeholder="Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las noticias."
+                      aria-label="Enlaces (opcional)"
+                      className="resize-y rounded-[12px] border border-borde bg-papel p-3 font-mono text-[13px] outline-none focus:border-tinta" />
+            <div className="flex flex-wrap items-center gap-2">
+              <button className="boton" onClick={() => proponer("ahora")} disabled={!!enviando || !eid || texto.trim().length < 8}>
+                {enviando === "ahora" ? "El jefe está pensando… (1–2 min)" : "Proponer ahora"}
+              </button>
+              <button className="boton-suave" onClick={() => proponer("manana")} disabled={!!enviando || texto.trim().length < 8}>
+                {enviando === "manana" ? "Guardando…" : "Para la mesa de mañana"}
+              </button>
+            </div>
+          </>
+        )}
         {mensaje && <p className={mensaje.ok ? "text-[14px]" : "text-[14px] text-carmesi"}>{mensaje.texto}</p>}
       </div>
       {recientes.length > 0 && (
-        <ul className="mt-3 flex flex-col gap-1.5 text-[13.5px]">
+        <details className="mt-2 text-[13.5px]" open={pendientes > 0 || abierto !== null}>
+        <summary className="dato cursor-pointer uppercase">Temas propuestos · {recientes.length}{pendientes ? ` · ${pendientes} con pregunta del jefe` : ""}</summary>
+        <ul className="mt-2 flex flex-col gap-1.5">
           {recientes.map((t) => (
             <li key={t.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="dato uppercase text-tinta-suave">{ESTADOS[t.estado] ?? t.estado}{t.pieza_id ? ` · ${t.pieza_id}` : ""}</span>
@@ -120,6 +123,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
             </li>
           ))}
         </ul>
+        </details>
       )}
     </section>
   );

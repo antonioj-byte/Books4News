@@ -636,3 +636,10 @@
   patron: "«Necesitamos la foto de la autora, pero muchas veces no la encuentra (yo puedo buscar). ¿Cómo permitimos subir fotos al director de arte? Ahora mismo es bastante calvario.»"
   propuesta: "La ficha de la pieza permite subir la foto de la persona con su crédito; va como retrato al momento y el arte no la sustituye al escribir la pieza."
   evidencia: ["Conversación, 3/11: pieza de Josefina Licitra sin foto de la autora"]
+
+- clave: web-mas-simple
+  fecha: "2026-11-03"
+  destino: codigo
+  patron: "«Tengo la sensación de que se está volviendo demasiado compleja la web. ¿Se te ocurre darle una pensada y simplificar el proceso?» → «Ordena pantallas y llévalo todo al chat.»"
+  propuesta: "Un solo sitio para pedir cambios en una pieza (el chat, con adjuntos y comentarios por diapositiva), un botón por momento y un menú de tres. Lo nuevo entra en el chat, no como un formulario más."
+  evidencia: ["Conversación, 3/11: Artifact «Folio más simple», niveles A y B"]

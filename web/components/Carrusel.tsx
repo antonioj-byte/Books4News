@@ -58,10 +58,14 @@ export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, e
           {anterior}<span className="dato">{actual} / {total}</span>{siguiente}
         </div>
       )}
-      {onEditar && !editando && actual <= (editables ?? total) && (
-        <button onClick={() => setEditando(true)} className="boton-suave">Editar el texto de esta diapositiva</button>
+      {!editando && (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {onEditar && actual <= (editables ?? total) && (
+            <button onClick={() => setEditando(true)} className="boton-suave">Editar el texto</button>
+          )}
+          {extra?.(actual)}
+        </div>
       )}
-      {!editando && extra?.(actual)}
       <div className="mt-2 flex max-w-full gap-2.5 overflow-x-auto px-1 pb-2">
         {Array.from({ length: total }, (_, i) => i + 1).map((k) => (
           <button key={k} onClick={() => setN(k)} disabled={editando} aria-label={`Ir a la diapositiva ${k}`}
