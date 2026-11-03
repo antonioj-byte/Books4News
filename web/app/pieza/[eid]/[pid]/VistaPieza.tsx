@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Carrusel } from "@/components/Carrusel";
 import { Descartar } from "@/components/Descartar";
 import { ChatEdicion } from "@/components/ChatEdicion";
+import { Creditos } from "@/components/Creditos";
 import { FormEvaluacion } from "@/components/FormEvaluacion";
 import { FotoPersona } from "@/components/FotoPersona";
 import { EstadoChip, FormatoChip } from "@/components/Marcas";
@@ -53,7 +54,7 @@ export function VistaPieza() {
   // Dos columnas (3/11, «se está volviendo demasiado compleja la web»): el carrusel y, a la derecha, el chat (el único
   // sitio para pedir cambios), las fuentes y la evaluación en pestañas. Arriba, solo el paso siguiente.
   return (
-    <div className="grid grid-cols-1 lg:h-[calc(100vh-61px)] lg:grid-cols-[1fr_minmax(340px,440px)]">
+    <div className="grid grid-cols-1 lg:h-screen lg:grid-cols-[1fr_minmax(340px,440px)]">
       <section className="min-w-0 px-4 py-5 lg:overflow-y-auto lg:px-8">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -89,6 +90,7 @@ export function VistaPieza() {
             </details>
           </div>
         </div>
+        <Creditos creditos={d.creditos ?? []} />
         {d.hechos_no_verificados.length > 0 && (
           <button onClick={() => setPestana("fuentes")}
                   className="mx-auto mb-4 block w-full max-w-[560px] rounded-[6px] border border-carmesi px-4 py-2.5 text-left text-[14px] hover:bg-papel-hondo">

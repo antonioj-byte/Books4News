@@ -32,6 +32,9 @@ from folio.llm import LLM, cargar_prompt
 from folio.modelos import _TodoObligatorio
 
 Destino = Literal["jefe_cultura", "guionista", "director_arte", "formatos", "codigo"]
+# A quién alcanza una regla (3/11, Folio como agencia): oficio (el rol, para cualquier marca), marca (Folio, todos sus
+# roles) o celda (un rol en Folio)
+Capa = Literal["oficio", "marca", "celda"]
 
 
 class PatronLLM(_TodoObligatorio):
@@ -40,6 +43,7 @@ class PatronLLM(_TodoObligatorio):
     evidencia: list[str] = Field(description="Las piezas en que se ve, una línea cada una («id: qué pasó»)")
     propuesta: str = Field(description="La regla que se propone, como iría en las instrucciones del agente")
     destino: Destino = Field(description="Dónde iría la regla")
+    capa: Capa = Field(description="A quién alcanza: oficio (el rol, para cualquier marca), marca (Folio, todos sus roles) o celda (este rol en Folio); ante la duda, celda")
 
 
 class MemoriaLLM(_TodoObligatorio):
@@ -110,6 +114,7 @@ class EntradaConversacion(BaseModel):
     patron: str = Field(min_length=10)        # lo que pidió el usuario, en una frase
     propuesta: str = Field(min_length=10)     # la regla en que quedó
     evidencia: list[str] = Field(min_length=1)
+    capa: Capa = "celda"
 
 
 def cargar_conversacion(raiz: Path) -> list[dict]:
@@ -131,12 +136,12 @@ def _analizar(llm: LLM, cfg: Config, almacen: Almacen, dias: int, hoy: date | No
     if not datos:
         return [], f"No hay feedback desde el {desde}: ninguna pieza evaluada, editada, comentada ni descartada.", 0
     guardados = almacen.patrones()
-    patrones = "\n".join(f"{p.id}. [{p.estado}] {p.patron} → {p.propuesta} ({p.destino}; {p.veces} veces)" for p in guardados) or "(ninguno)"
+    patrones = "\n".join(f"{p.id}. [{p.estado}] {p.patron} → {p.propuesta} ({p.destino}, {p.capa}; {p.veces} veces)" for p in guardados) or "(ninguno)"
     prompt = cargar_prompt(cfg, "memoria_feedback", {"[pegar patrones]": patrones, "[pegar feedback]": _bloque_feedback(datos)})
     r, _ = llm.estructurado("memoria", [{"role": "user", "content": prompt}], MemoriaLLM, etapa_modelo="memoria", max_tokens=16000)
     ids_validos = {p.id for p in guardados}
     ids = [almacen.guardar_patron(p.patron.strip(), [e.strip() for e in p.evidencia if e.strip()], p.propuesta.strip(), p.destino,
-                                  p.existente if p.existente in ids_validos else None)
+                                  p.existente if p.existente in ids_validos else None, p.capa)
            for p in r.patrones if p.patron.strip() and p.propuesta.strip()]
     return ids, r.aviso, len(datos)
 

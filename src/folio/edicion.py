@@ -287,8 +287,25 @@ def _bloque_pieza(p: Pieza) -> str:
             f"guion actual (JSON):\n{p.guion.model_dump_json(indent=1)}\n</pieza>")
 
 
+# Qué rol hace cada cambio que devuelve el editor (3/11: «cada respuesta dice qué rol la ha hecho»)
+_AGENTE_DE_ACCION = {"cambiar_libro": "jefe_cultura", "ilustrar": "ilustrador", "friso": "ilustrador", "banda": "ilustrador",
+                     "retrato_ilustrado": "ilustrador", "recorte": "ilustrador"}
+# A quién puede dirigirse quien edita, y cómo se le dice al editor
+PARA = {"guionista": "el guionista (el texto)", "director_arte": "el director de arte (la imagen, el color, la composición)",
+        "jefe_cultura": "el jefe de cultura (la historia, el enfoque, el libro)"}
+
+
+def agente_de(r, nueva) -> str:
+    """El rol que hizo el cambio de esta respuesta del editor."""
+    if r.imagen is not None:
+        return _AGENTE_DE_ACCION.get(r.imagen.tipo, "director_arte")
+    if r.guion is not None and nueva is not None:
+        return "guionista"
+    return "editor_chat"
+
+
 def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mensaje: str,
-         opciones: list[str] | None = None) -> tuple[str, Pieza | None, list[str]]:
+         opciones: list[str] | None = None, para: str | None = None, meta: dict | None = None) -> tuple[str, Pieza | None, list[str]]:
     """Un turno del chat. `historial`: [(rol, texto)] de los turnos anteriores. Devuelve (respuesta,
     pieza nueva o None si no hay cambios, avisos). Si se pasa `opciones`, se llena con las respuestas rápidas que
     ofrece el editor (2/11: «parece que se queda bugueado» cuando daba opciones sin forma de elegirlas)."""
@@ -297,6 +314,9 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
     from folio import materiales
     avisos_enlaces = leer_enlaces(cfg, p, mensaje)   # los enlaces del mensaje, como material de texto (2/11)
     extra = materiales.bloques(cfg, p)          # lo que ha subido quien edita (2/11), como datos delimitados
+    if para in PARA:
+        # Quien edita dirige el mensaje a un rol (3/11): el editor lo hace en el papel de ese rol
+        mensaje = f"(Para {PARA[para]}) {mensaje}"
     ultimo = [*extra, {"type": "text", "text": mensaje}] if extra else mensaje
     mensajes = [{"role": "user", "content": sistema}, {"role": "assistant", "content": "Entendido. ¿Qué cambiamos?"},
                 *mensajes, {"role": "user", "content": ultimo}]
@@ -306,6 +326,8 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
         r, contenido = llm.estructurado(f"chat:{p.id}:{intento + 1}", cache_al_final(mensajes), RespuestaChat, etapa_modelo="chat")
         if opciones is not None:
             opciones[:] = [o.strip() for o in r.opciones if 2 <= len(o.split()) <= 14][:4]
+        if meta is not None:
+            meta["agente"] = agente_de(r, r.guion)
         if r.guion is None and _dice_que_cambio_el_texto(r.respuesta) and intento < cfg.pipeline.guion.reintentos:
             # 2/11: el editor describió cambios en el texto, devolvió solo un cambio de imagen y la «versión nueva» no
             # tenía el texto nuevo. Si dice que ha cambiado el texto, tiene que traer el guion

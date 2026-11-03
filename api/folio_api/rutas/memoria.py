@@ -49,5 +49,5 @@ def analisis(ctx: Contexto = Depends(contexto)):
 def decidir(pid: int, d: DecisionPatron, ctx: Contexto = Depends(contexto)):
     if pid not in {p.id for p in ctx.almacen.patrones()}:
         raise HTTPException(404, "No existe ese patrón")
-    ctx.almacen.decidir_patron(pid, d.estado, d.nota)
+    ctx.almacen.decidir_patron(pid, d.estado, d.nota, d.capa)
     return d

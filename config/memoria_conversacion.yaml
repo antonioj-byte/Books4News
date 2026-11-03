@@ -8,6 +8,7 @@
 # patron: lo que pidió o señaló el usuario; propuesta: la regla en que quedó; evidencia: de dónde sale
 
 - clave: libros-uno-o-tres
+  capa: marca
   fecha: "2026-10-31"
   destino: guionista
   patron: "Las piezas con dos libros quedaban flojas; el usuario pidió uno o tres."
@@ -15,6 +16,7 @@
   evidencia: ["Conversación, 31/10: petición del usuario"]
 
 - clave: novedad-dos-anos
+  capa: marca
   fecha: "2026-10-31"
   destino: jefe_cultura
   patron: "«Folio va de novedades»."
@@ -29,6 +31,7 @@
   evidencia: ["Conversación, 31/10 y 1/11: peticiones del usuario"]
 
 - clave: temas-rompehielos
+  capa: marca
   fecha: "2026-10-31"
   destino: jefe_cultura
   patron: "Primero las noticias de las que apetece hablar; las dolorosas, no en caliente."
@@ -36,6 +39,7 @@
   evidencia: ["Conversación, 31/10: petición del usuario"]
 
 - clave: linea-editorial
+  capa: marca
   fecha: "2026-10-31"
   destino: jefe_cultura
   patron: "Definir la línea editorial de Folio."
@@ -64,6 +68,7 @@
   evidencia: ["Conversación, 31/10: petición del usuario"]
 
 - clave: color-de-la-pieza
+  capa: marca
   fecha: "2026-10-31"
   destino: director_arte
   patron: "Más Wired que el brandbook."
@@ -92,6 +97,7 @@
   evidencia: ["Conversación, 31/10: petición del usuario"]
 
 - clave: caras-desde-foto
+  capa: oficio
   fecha: "2026-10-31"
   destino: director_arte
   patron: "Imágenes de personas reales generadas con IA."
@@ -99,6 +105,7 @@
   evidencia: ["Conversación, 31/10: preferencia del usuario"]
 
 - clave: bloqueos-parar
+  capa: oficio
   fecha: "2026-10-30"
   destino: codigo
   patron: "Qué hacer cuando un servicio bloquea."
@@ -141,6 +148,7 @@
   evidencia: ["Conversación, 1/11 y 2/11: peticiones del usuario (75 de referencia aprobadas; Latinoamérica)"]
 
 - clave: citas-de-la-critica
+  capa: oficio
   fecha: "2026-11-01"
   destino: guionista
   patron: "«Admite citas a la crítica»."
@@ -148,6 +156,7 @@
   evidencia: ["Conversación, 1/11: petición del usuario"]
 
 - clave: infografias-con-sentido
+  capa: oficio
   fecha: "2026-11-01"
   destino: director_arte
   patron: "«Está usando infografías de cualquier manera»."
@@ -155,6 +164,7 @@
   evidencia: ["Conversación, 1/11: petición del usuario"]
 
 - clave: archivo-sin-repetir
+  capa: oficio
   fecha: "2026-11-01"
   destino: director_arte
   patron: "«No se puede repetir imagen de archivo: busca otra o créala»."
@@ -162,6 +172,7 @@
   evidencia: ["Conversación, 1/11: regla del usuario"]
 
 - clave: nunca-dos-caras
+  capa: oficio
   fecha: "2026-11-01"
   destino: director_arte
   patron: "«Nunca dos caras: o retrato, o real»."
@@ -211,6 +222,7 @@
   evidencia: ["Conversación, 2/11: petición del usuario"]
 
 - clave: lector-sin-contexto
+  capa: oficio
   fecha: "2026-11-02"
   destino: guionista
   patron: "«No entiendo este copy si no conoces la obra; habría que verificarlo»."
@@ -218,6 +230,7 @@
   evidencia: ["Conversación, 2/11: diapositiva de Dunkelman («escarmentado por Robert Moses y el derribo de Penn Station»)"]
 
 - clave: subtitulos-claros
+  capa: oficio
   fecha: "2026-11-01"
   destino: guionista
   patron: "«Pero y este subtítulo? No se entiende un carajo»."
@@ -225,6 +238,7 @@
   evidencia: ["Conversación, 1/11: captura de una portada en banda"]
 
 - clave: nombre-folio
+  capa: marca
   fecha: "2026-10-30"
   destino: codigo
   patron: "El producto se llama Folio."
@@ -232,6 +246,7 @@
   evidencia: ["Conversación, 30/10: preferencia del usuario"]
 
 - clave: ilustracion-sin-letras
+  capa: oficio
   fecha: "2026-11-02"
   destino: director_arte
   patron: "«Se nota mucho que es IA; es muy feo las letras esas de IA arriba». No quería apagar la ilustración: «quería mejorarla, evitar esas letras»."
@@ -239,6 +254,7 @@
   evidencia: ["Conversación, 2/11: portada de La generación ansiosa con letras falsas («epfal Ediiorial Beslgnes») y cuadros verdes"]
 
 - clave: impulsado-por-alighieria
+  capa: marca
   fecha: "2026-11-02"
   destino: director_arte
   patron: "«En el colofón, en pequeñito, molaría poner un Impulsado por (logo Alighieria), para aprovechar y hacer publi»."
@@ -256,7 +272,7 @@
   fecha: "2026-11-02"
   destino: director_arte
   patron: "«Lo veo muy IA aún: usa el mejor modelo disponible, no escatimes; tiene que parecer Wired, The Atlantic, The New Yorker»."
-  propuesta: "La ilustración se dibuja con Flux 2 Pro y un estilo de gouache sobre papel con trazo imperfecto y grano de serigrafía, sin nombrar revistas en el prompt."
+  propuesta: "La ilustración se dibuja con Flux 2 Pro y un estilo de técnica de verdad (desde el 3/11, el collage de la casa; antes, gouache) con trazo imperfecto y grano de serigrafía, sin nombrar revistas en el prompt."
   evidencia: ["Conversación, 2/11: comparación de Flux 2 Pro, Mystic, RunWay y Seedream con las mismas escenas; elegido Flux 2 Pro"]
 
 - clave: temas-de-la-redaccion
@@ -267,6 +283,7 @@
   evidencia: ["Conversación, 2/11: petición del usuario; prueba real con la huelga de traductores en Francia"]
 
 - clave: portada-con-puente
+  capa: oficio
   fecha: "2026-11-02"
   destino: guionista
   patron: "«Esta pieza no tiene sentido: el titular habla de que el más rápido tiene 41 años; el subtítulo (libro) explica el decaimiento del cuerpo. No veo el link»."
@@ -295,6 +312,7 @@
   evidencia: ["Conversación, 2/11: petición del usuario"]
 
 - clave: solo-libros-en-castellano
+  capa: marca
   fecha: "2026-11-02"
   destino: jefe_cultura
   patron: "«Todos los libros que se propongan tienen que tener necesaria y radicalmente traducción al castellano»."
@@ -372,6 +390,7 @@
   evidencia: ["Conversación, 2/11: «Gonçalo M. Tavares, Premio Formentor: tres libros para entrar en su Reino»"]
 
 - clave: linea-pro-ia
+  capa: marca
   fecha: "2026-11-02"
   destino: guionista
   patron: "«Está bien, pero editorialmente no impulsamos mensajes anti-IA. ¡Somos pro-IA!» (la noticia de Tavares rematada con «delegar el pensamiento en la IA puede atrofiarlo»)."
@@ -393,6 +412,7 @@
   evidencia: ["Conversación, 2/11: pieza de Gonçalo M. Tavares, diapositiva de cierre"]
 
 - clave: cubiertas-en-castellano
+  capa: marca
   fecha: "2026-11-02"
   destino: codigo
   patron: "«Pon la edición de la portada de Random House/Mondadori, en lugar de la extranjera» (salía la cubierta inglesa de un libro con edición española)."
@@ -421,6 +441,7 @@
   evidencia: ["Conversación, 2/11: Artifact «Tríptico de las fichas», opción B, con la pieza de Gonçalo M. Tavares"]
 
 - clave: voz-folio-en-el-guionista
+  capa: marca
   fecha: "2026-11-02"
   destino: guionista
   patron: "«Tengo la sensación de que escribe bastante mal»; la voz de referencia es la de la newsletter de Folio (folioeditorial.substack.com)."
@@ -442,6 +463,7 @@
   evidencia: ["Conversación, 2/11: pieza 2026-11-01-8, Pavel Durov"]
 
 - clave: excepcion-titulos-sin-traducir
+  capa: marca
   fecha: "2026-11-02"
   destino: jefe_cultura
   patron: "«Pon como regla que yo pueda dar instrucciones a títulos extranjeros, excepcionalmente»."
@@ -463,6 +485,7 @@
   evidencia: ["Conversación, 2/11: pieza de Pavel Durov, nota de arte"]
 
 - clave: entender-a-la-primera
+  capa: oficio
   fecha: "2026-11-02"
   destino: guionista
   patron: "«Esto está fatal escrito, bro» (diapositivas con metáfora que hay que traducir, incisos, orden al revés y arranques sin verbo con dos puntos)."
@@ -470,6 +493,7 @@
   evidencia: ["Conversación, 2/11: pieza de Pavel Durov, diapositivas 4 y 5"]
 
 - clave: cierre-titular-con-remate
+  capa: marca
   fecha: "2026-11-02"
   destino: director_arte
   patron: "El cierre se quedaba corto (la recomendación a cuerpo de texto y media página vacía); de tres opciones, el usuario eligió la C: «Vamos con la C»."
@@ -491,6 +515,7 @@
   evidencia: ["Conversación, 2/11: pieza de Pavel Durov; Artifact «Banda ilustrada en las diapositivas de texto»"]
 
 - clave: persona-real-en-ilustracion-desde-su-foto
+  capa: oficio
   fecha: "2026-11-02"
   destino: director_arte
   patron: "«Pavel. Foto con licencia a estilo gouache»: que la persona de la noticia aparezca en la ilustración."
@@ -498,6 +523,7 @@
   evidencia: ["Conversación, 2/11: pieza de Pavel Durov"]
 
 - clave: tiempo-de-la-noticia
+  capa: oficio
   fecha: "2026-11-02"
   destino: guionista
   patron: "«Estamos en noviembre de 2026 y habla de 'fue detenido' (hace dos años). Periodísticamente, queda muy flojo: parece que ha sido hace poco.»"
@@ -505,6 +531,7 @@
   evidencia: ["Conversación, 2/11: pie de Instagram de la pieza de Pavel Durov"]
 
 - clave: repetir-libro-si-lo-pide-la-redaccion
+  capa: marca
   fecha: "2026-11-02"
   destino: jefe_cultura
   patron: "El tema de Killer App se negó porque el libro ya se había usado el 1/11: «se ha negado a hacerlo porque ya lo hizo, pero justo quería que lo repitiera»."
@@ -589,6 +616,7 @@
   evidencia: ["Conversación, 2/11: revisión general, decisión 3"]
 
 - clave: chat-con-opciones
+  capa: oficio
   fecha: "2026-11-02"
   destino: codigo
   patron: "«Creo que el chat debería dar más opción de que parezca interactivo. Ahora dice «te doy opciones», pero parece que se queda bugueado.»"
@@ -603,6 +631,7 @@
   evidencia: ["Conversación, 2/11: Artifact «Cinco del libro»"]
 
 - clave: ilustracion-sin-medallas
+  capa: oficio
   fecha: "2026-11-02"
   destino: director_arte
   patron: "Prueba de «Cinco del libro»: las medallas salieron con letras inventadas grabadas (el revisor descartó dos dibujos y se le escapó otro)."
@@ -617,6 +646,7 @@
   evidencia: ["Conversación, 2/11: pruebas E1–E4 en el Artifact «Cinco del libro»"]
 
 - clave: collage-estilo-de-la-casa
+  capa: marca
   fecha: "2026-11-03"
   destino: director_arte
   patron: "«Me gusta más el tipo de ilustración de Los cinco del libro que en el resto de noticias.»"
@@ -650,3 +680,10 @@
   patron: "«Le he pedido que me cuente una noticia y su enfoque ha sido proponerme una lectura lateral a partir de otro libro. Si lo que le pido es que me cuente una noticia sin tener que tener una idea original, no me haga un ensayo a propósito.»"
   propuesta: "Si la redacción pide contar una noticia (o marca «Solo la noticia»), la pieza es «Noticia»: lo que ha pasado con su contexto, sin ensayo ni lectura lateral, y sin libro salvo el libro del que trata la noticia."
   evidencia: ["Conversación, 3/11: tema del detector de IA de Gallimard convertido en lectura lateral con un libro de Villoro"]
+
+- clave: folio-como-agencia
+  fecha: "2026-11-03"
+  destino: codigo
+  patron: "«Esto no deja de ser una idea de SaaS que tiene que sustituir a una agencia: una serie de roles que entrenamos recursivamente con el feedback, y cada cuenta tiene una memoria. Una vertical y una horizontal.» → «Adelante con todo.»"
+  propuesta: "La web enseña la agencia: menú lateral con la cuenta, Archivo con la nevera y la vigencia, Equipo con cada rol, Marca con la memoria de marca, créditos en cada pieza y «Para» en el chat. Cada regla de la memoria tiene capa: oficio, marca o celda."
+  evidencia: ["Conversación, 3/11: Artifacts «La agencia de Folio» y «Mesa de edición por dentro»"]

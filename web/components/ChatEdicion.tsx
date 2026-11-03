@@ -1,9 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { api, type Material, type MensajeChat } from "@/lib/api";
+import { api, type Material, type MensajeChat, type Para } from "@/lib/api";
 
 type Uso = "foto" | "cubierta" | "leer";
+
+// A quién se dirige quien edita (3/11, la agencia) y el nombre de cada rol que responde
+const DESTINOS: { valor: Para | null; texto: string }[] = [
+  { valor: null, texto: "Que decida el chat" }, { valor: "guionista", texto: "Guionista" },
+  { valor: "director_arte", texto: "Director de arte" }, { valor: "jefe_cultura", texto: "Jefe de cultura" },
+];
+const NOMBRE_ROL: Record<string, string> = {
+  guionista: "Guionista", director_arte: "Director de arte", jefe_cultura: "Jefe de cultura", ilustrador: "Ilustrador",
+  editor_chat: "Editor",
+};
 
 // El único sitio para pedir cambios en una pieza (3/11, «se está volviendo demasiado compleja la web»): se escribe al
 // editor (Opus), que devuelve la pieza revisada; cada cambio es una versión nueva y `onCambio` recarga la pieza.
@@ -19,6 +29,7 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
   const [mensajes, setMensajes] = useState<MensajeChat[]>([]);
   const [locales, setLocales] = useState<string[]>([]);          // avisos de lo que se hizo sin pasar por el editor
   const [texto, setTexto] = useState("");
+  const [para, setPara] = useState<Para | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [segundos, setSegundos] = useState(0);
@@ -65,9 +76,9 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
     const m = (propio ?? texto).trim();
     if (!m || enviando) return;
     setEnviando(true); setError(null); setTexto("");
-    setMensajes((x) => [...x, { n: x.length + 1, rol: "usuario", texto: m, version_n: null, creado_en: "", opciones: [] }]);
+    setMensajes((x) => [...x, { n: x.length + 1, rol: "usuario", texto: m, version_n: null, creado_en: "", opciones: [], para, agente: null }]);
     try {
-      const r = await api.enviarChat(eid, pid, m);
+      const r = await api.enviarChat(eid, pid, m, para);
       setMensajes(await api.chat(eid, pid));
       if (r.version) onCambio();
     } catch (e) {
@@ -163,6 +174,8 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
         {mensajes.map((m, i) => (
           <div key={m.n} className={`flex max-w-[92%] flex-col gap-1.5 ${m.rol === "usuario" ? "self-end" : "self-start"}`}>
             <div className={`rounded-[12px] px-3 py-2 leading-snug ${m.rol === "usuario" ? "bg-tinta text-papel" : "border border-borde bg-panel"}`}>
+              {m.rol === "editor" && m.agente && <span className="dato mb-0.5 block uppercase tracking-[0.12em]">{NOMBRE_ROL[m.agente] ?? m.agente}</span>}
+              {m.rol === "usuario" && m.para && <span className="mb-0.5 block text-[11px] uppercase tracking-[0.12em] opacity-70">Para {NOMBRE_ROL[m.para] ?? m.para}</span>}
               {m.texto}
               {m.version_n && <span className="dato mt-1 block text-carmesi">→ versión {m.version_n}</span>}
             </div>
@@ -235,12 +248,21 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
         </div>
       )}
 
+      <div className="flex flex-wrap items-center gap-1.5 text-[12px]" role="group" aria-label="A quién va el mensaje">
+        <span className="dato uppercase">Para</span>
+        {DESTINOS.map((d) => (
+          <button key={d.texto} aria-pressed={para === d.valor} onClick={() => setPara(d.valor)}
+                  className={`rounded-full border px-2.5 py-0.5 ${para === d.valor ? "border-carmesi text-carmesi" : "border-borde bg-panel hover:border-tinta"}`}>
+            {d.texto}
+          </button>
+        ))}
+      </div>
       <div className="flex items-end gap-2">
         <button onClick={() => entrada.current?.click()} disabled={enviando || subiendo} aria-label="Adjuntar una foto, un PDF o un texto"
                 title="Adjuntar una foto, un PDF o un texto" className="boton-suave px-3">📎</button>
         <textarea ref={caja} id={`chat-${pid}`} value={texto} onChange={(e) => setTexto(e.target.value)} rows={2} disabled={enviando}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(); } }}
-                  placeholder="Escribe al editor… (Intro para enviar)"
+                  placeholder="Escribe al equipo… (Intro para enviar)"
                   className="min-w-0 flex-1 resize-none rounded-[12px] border border-borde bg-panel p-2.5 text-[13.5px] outline-none focus:border-tinta" />
         <button onClick={() => enviar()} disabled={enviando || !texto.trim()} className="boton">→</button>
       </div>

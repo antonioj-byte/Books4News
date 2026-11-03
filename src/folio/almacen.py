@@ -195,6 +195,14 @@ _MIGRACIONES = [
     """
     ALTER TABLE temas ADD COLUMN enfoque TEXT NOT NULL DEFAULT 'elige';
     """,
+    # 12: la agencia (3/11, a petición del usuario: «una agencia… roles que entrenamos con el feedback y una memoria por
+    # marca»): a qué rol va cada mensaje del chat y qué rol respondió; y la capa de cada regla de la memoria: «oficio»
+    # (del rol, para cualquier marca), «marca» (de Folio, para todos sus roles) o «celda» (de un rol en Folio)
+    """
+    ALTER TABLE chat_mensajes ADD COLUMN para TEXT;
+    ALTER TABLE chat_mensajes ADD COLUMN agente TEXT;
+    ALTER TABLE memoria ADD COLUMN capa TEXT NOT NULL DEFAULT 'celda';
+    """,
 ]
 
 
@@ -226,6 +234,8 @@ class Patron(BaseModel):
     propuesta: str
     destino: str
     estado: str
+    capa: str = "celda"                  # oficio | marca | celda (3/11)
+    origen: str = "feedback"
     nota: str = ""
     origen: str = "feedback"           # feedback (análisis de la web) | conversacion (decidido en una sesión)
     clave: str | None = None
@@ -277,6 +287,8 @@ class MensajeChat(BaseModel):
     version_n: int | None = None
     creado_en: str
     opciones: list[str] = []          # respuestas que ofrece el editor, para pulsarlas (2/11)
+    para: str | None = None           # a qué rol dirigió el mensaje quien edita (3/11)
+    agente: str | None = None         # qué rol hizo el cambio que responde el editor (3/11)
 
 
 class Version(BaseModel):
@@ -384,7 +396,8 @@ class Almacen:
         filas = self.db.execute("SELECT * FROM memoria ORDER BY estado = 'propuesta' DESC, veces DESC, creado_en DESC, id DESC").fetchall()
         return [Patron(**{**dict(f), "evidencia": json.loads(f["evidencia"])}) for f in filas]
 
-    def guardar_patron(self, patron: str, evidencia: list[str], propuesta: str, destino: str, existente: int | None = None) -> int:
+    def guardar_patron(self, patron: str, evidencia: list[str], propuesta: str, destino: str, existente: int | None = None,
+                       capa: str = "celda") -> int:
         """Un patrón nuevo, o uno que ya estaba y vuelve a salir (se suma la evidencia y una vez más)."""
         ahora = _ahora()
         with self._transaccion() as db:
@@ -395,13 +408,16 @@ class Almacen:
                     db.execute("UPDATE memoria SET evidencia = ?, veces = ?, actualizado_en = ?, propuesta = ? WHERE id = ?",
                                (json.dumps(todas, ensure_ascii=False), f["veces"] + 1, ahora, propuesta, existente))
                     return existente
-            c = db.execute("INSERT INTO memoria (creado_en, actualizado_en, patron, evidencia, propuesta, destino) VALUES (?, ?, ?, ?, ?, ?)",
-                           (ahora, ahora, patron, json.dumps(evidencia, ensure_ascii=False), propuesta, destino))
+            c = db.execute("INSERT INTO memoria (creado_en, actualizado_en, patron, evidencia, propuesta, destino, capa) "
+                           "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                           (ahora, ahora, patron, json.dumps(evidencia, ensure_ascii=False), propuesta, destino, capa))
             return c.lastrowid
 
-    def decidir_patron(self, pid: int, estado: str, nota: str = "") -> None:
+    def decidir_patron(self, pid: int, estado: str, nota: str = "", capa: str | None = None) -> None:
         with self._transaccion() as db:
             db.execute("UPDATE memoria SET estado = ?, nota = ?, actualizado_en = ? WHERE id = ?", (estado, nota, _ahora(), pid))
+            if capa:
+                db.execute("UPDATE memoria SET capa = ? WHERE id = ?", (capa, pid))
 
     def importar_conversacion(self, entradas: list[dict]) -> int:
         """Lo decidido en las conversaciones de trabajo, como patrones «aplicada» (idempotente por clave: si el
@@ -417,13 +433,13 @@ class Almacen:
                 evidencia = json.dumps(e["evidencia"], ensure_ascii=False)
                 f = db.execute("SELECT id FROM memoria WHERE clave = ?", (e["clave"],)).fetchone()
                 if f:
-                    db.execute("UPDATE memoria SET patron = ?, propuesta = ?, destino = ?, evidencia = ? WHERE id = ?",
-                               (e["patron"], e["propuesta"], e["destino"], evidencia, f["id"]))
+                    db.execute("UPDATE memoria SET patron = ?, propuesta = ?, destino = ?, evidencia = ?, capa = ? WHERE id = ?",
+                               (e["patron"], e["propuesta"], e["destino"], evidencia, e.get("capa") or "celda", f["id"]))
                     continue
                 ts = f"{e['fecha']}T12:00:00+00:00"
                 db.execute("INSERT INTO memoria (creado_en, actualizado_en, patron, evidencia, propuesta, destino, estado, "
-                           "origen, clave) VALUES (?, ?, ?, ?, ?, ?, 'aplicada', 'conversacion', ?)",
-                           (ts, ts, e["patron"], evidencia, e["propuesta"], e["destino"], e["clave"]))
+                           "origen, clave, capa) VALUES (?, ?, ?, ?, ?, ?, 'aplicada', 'conversacion', ?, ?)",
+                           (ts, ts, e["patron"], evidencia, e["propuesta"], e["destino"], e["clave"], e.get("capa") or "celda"))
                 nuevas += 1
         return nuevas
 
@@ -526,7 +542,7 @@ class Almacen:
             versiones = self.db.execute("SELECT n, origen, descripcion, datos FROM versiones WHERE ejecucion_id = ? AND pieza_id = ? ORDER BY n",
                                         (eid, pid)).fetchall()
             ev = self.evaluacion(eid, pid)
-            pedidos = [m.texto for m in self.chat(eid, pid) if m.rol == "usuario"]
+            pedidos = [(f"(para {m.para}) " if m.para else "") + m.texto for m in self.chat(eid, pid) if m.rol == "usuario"]
             ediciones = []
             for anterior, v in zip(versiones, versiones[1:]):
                 if v["origen"] != "manual":
@@ -664,17 +680,45 @@ class Almacen:
 
     def chat(self, eid: int, pid: str) -> list[MensajeChat]:
         return [MensajeChat(**{**dict(f), "opciones": json.loads(f["opciones"]) if f["opciones"] else []}) for f in self.db.execute(
-            "SELECT n, rol, texto, version_n, creado_en, opciones FROM chat_mensajes WHERE ejecucion_id = ? AND pieza_id = ? "
-            "ORDER BY n", (eid, pid))]
+            "SELECT n, rol, texto, version_n, creado_en, opciones, para, agente FROM chat_mensajes "
+            "WHERE ejecucion_id = ? AND pieza_id = ? ORDER BY n", (eid, pid))]
 
     def anadir_mensaje(self, eid: int, pid: str, rol: str, texto: str, version_n: int | None = None,
-                       opciones: list[str] | None = None) -> None:
+                       opciones: list[str] | None = None, para: str | None = None, agente: str | None = None) -> None:
         with self._transaccion() as db:
             n = db.execute("SELECT COALESCE(MAX(n), 0) + 1 FROM chat_mensajes WHERE ejecucion_id = ? AND pieza_id = ?",
                            (eid, pid)).fetchone()[0]
-            db.execute("INSERT INTO chat_mensajes (ejecucion_id, pieza_id, n, rol, texto, version_n, creado_en, opciones) "
-                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (eid, pid, n, rol, texto, version_n, _ahora(),
-                                                           json.dumps(opciones, ensure_ascii=False) if opciones else None))
+            db.execute("INSERT INTO chat_mensajes (ejecucion_id, pieza_id, n, rol, texto, version_n, creado_en, opciones, para, agente) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (eid, pid, n, rol, texto, version_n, _ahora(),
+                                                                 json.dumps(opciones, ensure_ascii=False) if opciones else None,
+                                                                 para, agente))
+
+    def gastos_de_pieza(self, pid: str) -> list[Gasto]:
+        """Los apuntes de una pieza (créditos de la agencia, 3/11): los pasos llevan su id en el detalle
+        («guion:2026-11-03-1:2», «hechos:2026-11-03-1») y las imágenes de Magnific, el id solo o con su estilo."""
+        filas = self.db.execute(
+            "SELECT ts, fecha, servicio, concepto, modelo, unidades, coste, moneda, detalle FROM gastos "
+            "WHERE detalle = ? OR detalle LIKE ? OR detalle LIKE ? OR detalle LIKE ? ORDER BY ts",
+            (pid, pid + " %", "%:" + pid, "%:" + pid + ":%")).fetchall()
+        return [Gasto(**dict(f)) for f in filas]
+
+    def archivo(self) -> list[tuple[str, int, Pieza, int, str]]:
+        """Cada pieza una vez, en la última ejecución que la tiene (fecha, ejecución, pieza en su versión actual con su
+        estado, nº de versión, cuándo se tocó por última vez), de la más reciente a la más antigua (3/11: el Archivo)."""
+        filas = self.db.execute(
+            "SELECT e.fecha, p.ejecucion_id, p.estado, p.version_actual, v.datos, v.creada_en FROM piezas p "
+            "JOIN ejecuciones e ON e.id = p.ejecucion_id "
+            "JOIN versiones v ON v.ejecucion_id = p.ejecucion_id AND v.pieza_id = p.pieza_id AND v.n = p.version_actual "
+            "WHERE p.ejecucion_id = (SELECT MAX(p2.ejecucion_id) FROM piezas p2 WHERE p2.pieza_id = p.pieza_id) "
+            "ORDER BY e.fecha DESC, p.pieza_id").fetchall()
+        return [(f["fecha"], f["ejecucion_id"], Pieza.model_validate_json(f["datos"]).model_copy(update={"estado": f["estado"]}),
+                 f["version_actual"], f["creada_en"]) for f in filas]
+
+    def mensajes_para(self, destino: str, desde: str) -> list[dict]:
+        """Lo que se le ha pedido a un rol en el chat desde `desde` (para la ficha del rol, 3/11)."""
+        return [dict(f) for f in self.db.execute(
+            "SELECT m.pieza_id, m.texto, m.creado_en FROM chat_mensajes m WHERE m.rol = 'usuario' AND m.para = ? "
+            "AND m.creado_en >= ? ORDER BY m.creado_en DESC", (destino, desde))]
 
     # --- Evaluaciones -------------------------------------------------------
 

@@ -50,7 +50,7 @@ class LLMFalso:
 def test_analizar_guarda_y_refuerza_patrones(cfg):
     a = _almacen_con_feedback(cfg)
     patron = {"existente": 0, "patron": "Acorta los titulares", "evidencia": ["2026-11-01-1: quitó «también»"],
-              "propuesta": "Titular de 8 palabras como máximo", "destino": "guionista"}
+              "propuesta": "Titular de 8 palabras como máximo", "destino": "guionista", "capa": "celda"}
     llm = LLMFalso(cfg, {"patrones": [patron], "aviso": ""})
     ids, aviso, n = memoria.analizar(llm, cfg, a, 14, hoy=date(2026, 11, 2))
     assert n == 1 and len(ids) == 1 and "Nunca titulares tan largos" in llm.prompts[0]

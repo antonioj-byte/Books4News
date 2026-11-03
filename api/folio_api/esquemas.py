@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Literal
 
+from folio.equipo import Credito
+
 
 from folio.almacen import Evaluacion, Version
 from folio.modelos import BaseModel, EstadoPieza, HechoComprobado, Pieza
@@ -127,6 +129,8 @@ class PiezaDetalle(BaseModel):
     # (3/11: sin foto, la ficha pide subirla)
     persona: str | None = None
     foto_persona: str | None = None
+    # Quién trabajó en la pieza, qué hizo y cuánto costó (3/11, la agencia)
+    creditos: list[Credito] = []
 
 
 class EdicionDiapositiva(BaseModel):
@@ -141,6 +145,7 @@ class ResultadoEdicion(BaseModel):
 
 class MensajeNuevo(BaseModel):
     mensaje: str
+    para: Literal["guionista", "director_arte", "jefe_cultura"] | None = None   # a qué rol va (3/11)
 
 
 class RespuestaChat(BaseModel):
@@ -226,3 +231,4 @@ class EstadoMemoria(BaseModel):
 class DecisionPatron(BaseModel):
     estado: Literal["propuesta", "aceptada", "rechazada", "aplicada"]
     nota: str = ""
+    capa: Literal["oficio", "marca", "celda"] | None = None   # a quién alcanza la regla, al aceptarla (3/11)

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, type EstadoMemoria, type Patron } from "@/lib/api";
+import { api, type Capa, type EstadoMemoria, type Patron } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
 
 // Memoria del feedback: lo que se repite en las evaluaciones, comentarios, ediciones y peticiones al chat,
@@ -32,7 +32,16 @@ function Calendario({ e }: { e: EstadoMemoria }) {
   );
 }
 
-function Tarjeta({ p, decidir }: { p: Patron; decidir: (estado: Patron["estado"]) => void }) {
+// A quién alcanza la regla (3/11, la agencia): la Memoria la propone y quien edita la confirma al aceptar
+const CAPAS: { valor: Capa; texto: string; ayuda: string }[] = [
+  { valor: "oficio", texto: "Oficio", ayuda: "de este rol, para cualquier marca" },
+  { valor: "marca", texto: "Folio", ayuda: "de Folio, para todos sus roles" },
+  { valor: "celda", texto: "Este rol en Folio", ayuda: "lo más estrecho" },
+];
+
+function Tarjeta({ p, decidir }: { p: Patron; decidir: (estado: Patron["estado"], capa?: Capa) => void }) {
+  const [capa, setCapa] = useState<Capa>((p.capa as Capa) ?? "celda");
+  const decidible = p.origen !== "conversacion";
   return (
     <article className="panel flex flex-col gap-3 p-5">
       <div className="flex flex-wrap items-center gap-2">
@@ -47,8 +56,19 @@ function Tarjeta({ p, decidir }: { p: Patron; decidir: (estado: Patron["estado"]
         {p.evidencia.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
       </ul>
       {p.nota && <p className="text-[13px] italic">Nota: {p.nota}</p>}
-      {p.origen !== "conversacion" && <div className="flex flex-wrap gap-2">
-        {p.estado !== "aceptada" && p.estado !== "aplicada" && <button className="boton" onClick={() => decidir("aceptada")}>Aceptar</button>}
+      <div className="flex flex-wrap items-center gap-1.5 text-[12.5px]" role="group" aria-label="A quién alcanza">
+        <span className="dato uppercase">¿Dónde va?</span>
+        {CAPAS.map((c) => (
+          <button key={c.valor} aria-pressed={capa === c.valor} title={c.ayuda} disabled={!decidible || p.estado === "aplicada"}
+                  onClick={() => setCapa(c.valor)}
+                  className={`rounded-full border px-2.5 py-0.5 ${capa === c.valor ? "border-carmesi text-carmesi" : "border-borde bg-panel hover:border-tinta"} disabled:cursor-default disabled:hover:border-borde`}>
+            {c.texto}
+          </button>
+        ))}
+        <span className="dato">{CAPAS.find((c) => c.valor === capa)?.ayuda}</span>
+      </div>
+      {decidible && <div className="flex flex-wrap gap-2">
+        {p.estado !== "aceptada" && p.estado !== "aplicada" && <button className="boton" onClick={() => decidir("aceptada", capa)}>Aceptar</button>}
         {p.estado !== "rechazada" && p.estado !== "aplicada" && <button className="boton-suave" onClick={() => decidir("rechazada")}>Rechazar</button>}
         {p.estado === "aceptada" && <button className="boton-suave" onClick={() => decidir("aplicada")}>Marcar como ya aplicada</button>}
         {p.estado !== "propuesta" && <button className="boton-suave" onClick={() => decidir("propuesta")}>Volver a propuesta</button>}
@@ -91,7 +111,7 @@ export function VistaMemoria() {
       setResultado(`No se pudo analizar: ${String(e)}`);
     }
   };
-  const decidir = async (p: Patron, estado: Patron["estado"]) => { await api.decidirPatron(p.id, estado); recargar(); };
+  const decidir = async (p: Patron, estado: Patron["estado"], capa?: Capa) => { await api.decidirPatron(p.id, estado, "", capa); recargar(); };
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <div className="antetitulo">Memoria</div>
@@ -114,7 +134,7 @@ export function VistaMemoria() {
         return (
           <section key={e.valor} className="mb-8">
             <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-tinta-suave">{e.texto} · {grupo.length}</h2>
-            <div className="flex flex-col gap-4">{grupo.map((p) => <Tarjeta key={p.id} p={p} decidir={(s) => decidir(p, s)} />)}</div>
+            <div className="flex flex-col gap-4">{grupo.map((p) => <Tarjeta key={p.id} p={p} decidir={(s, c) => decidir(p, s, c)} />)}</div>
           </section>
         );
       })}

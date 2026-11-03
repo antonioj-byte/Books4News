@@ -1,0 +1,38 @@
+# La memoria de marca de Folio (3/11, a petición del usuario: «cada cuenta tiene su memoria… en este caso solo la de
+# marca de Folio, pero mañana pueden ser muchas otras»). Lo que comparten todos los roles cuando trabajan para Folio,
+# resumido para leerlo en la página «Marca». La fuente de verdad sigue estando en los prompts (jefe_cultura.md,
+# voz_folio.md, formatos.md), en diseno/tokens.yaml y en config/pipeline.yaml; aquí va la versión legible y, cuando
+# cambie una de esas reglas, se cambia también aquí. Lo que la página calcula (colores, formatos, fuentes, reglas
+# aprendidas de la marca) no se repite en este archivo.
+
+nombre: Folio
+que_es: Un medio sobre libros e ideas que lee la actualidad a través de los libros, en carruseles de Instagram.
+
+linea_editorial:
+  titulo: Humanista, tecnooptimista, pro-IA
+  texto: >-
+    Progresista y favorable a la iniciativa privada. Lee la actualidad de lado, a través de un libro que la ilumina.
+    Si alguien critica la IA, se cuenta atribuido, nunca como titular, remate ni moraleja. Sin partidismo ni ataques a
+    personas o partidos; las noticias dolorosas, nunca en caliente.
+  fuente: prompts/jefe_cultura.md
+
+voz:
+  titulo: Que se entienda a la primera
+  texto: >-
+    Una idea por frase y en orden natural, sin incisos ni metáforas que haya que traducir. Para quien no ha leído el
+    libro ni sigue la noticia. Tono de sobremesa con criterio; Folio no habla de sí mismo.
+  fuente: prompts/voz_folio.md
+
+diseno:
+  titulo: Wired × Alighieria
+  texto: >-
+    Imagen a sangre, titular grande y apretado con un remate en cursiva, papel rasgado entre claro y oscuro, el
+    marcador solo como subrayado. Las ilustraciones, en collage conceptual.
+  fuente: diseno/tokens.yaml
+
+reglas:
+  - Solo libros con edición en castellano, salvo que la redacción pida otro.
+  - Novedades de los últimos dos años; los perfiles y los temas de la redacción, sin esa exigencia.
+  - Uno o tres libros por pieza, nunca dos; ninguno repetido en 60 días.
+  - Ninguna cita literal sin verificar; ningún dato de edición inventado.
+  - La cara de una persona real, siempre a partir de una foto con licencia; nunca generada desde cero.

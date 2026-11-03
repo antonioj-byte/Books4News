@@ -1,0 +1,119 @@
+# El equipo de la agencia (3/11, a petición del usuario: «lo que estamos construyendo es una agencia donde hay un director
+# de arte, un director creativo, un copy… roles que entrenamos recursivamente con el feedback, y cada cuenta tiene una
+# memoria»). Los roles son de la plataforma, no de Folio: la marca (config/marca.yaml) es lo que cambia de una cuenta a
+# otra. Lo usan la página «Equipo», la ficha de cada rol y los créditos de cada pieza (folio.equipo).
+#
+# Por rol: `etapa`, la clave de `modelos` en pipeline.yaml (modelo y esfuerzo); `conceptos`, los pasos y tipos de imagen
+# que se apuntan en el gasto a su nombre; `destino`, a quién van sus reglas en la Memoria (null si no tiene reglas
+# propias); `criterios`, las notas de la evaluación que le corresponden.
+
+departamentos: [Estrategia, Creatividad, Arte, Calidad]
+
+roles:
+  - id: jefe_cultura
+    nombre: Jefe de cultura
+    departamento: Estrategia
+    que_hace: Elige las historias del día y el libro que las lee de lado; atiende los temas de la redacción y prepara el fondo del mes.
+    etapa: seleccion
+    conceptos: [seleccion, seleccion-completar, jefe-tema, fondo, balda-elegir, cinco]
+    destino: jefe_cultura
+    criterios: [seleccion, libro]
+
+  - id: editor_libro
+    nombre: Editor del libro
+    departamento: Estrategia
+    que_hace: Propone lo que sale de la base de datos del sector, el mundo del libro, la historia editorial, el libro recomendado y los breves.
+    etapa: seleccion_libro
+    conceptos: [seleccion-libro, seleccion-libro-completar, radar]
+    destino: jefe_cultura
+    criterios: []
+
+  - id: documentalista
+    nombre: Documentalista
+    departamento: Estrategia
+    que_hace: Busca en la web noticias, libros de la misma balda y prensa del libro; solo vale lo que salió en la búsqueda y se pudo leer.
+    etapa: nevera
+    conceptos: [balda-buscar, balda-fichas, prensa-libro, prensa-libro-fichas, tema-fuentes, tema-fuentes-fichas, nevera, nevera-fichas]
+    destino: null
+    criterios: []
+
+  - id: evaluador_puentes
+    nombre: Evaluador de puentes
+    departamento: Estrategia
+    que_hace: Puntúa de 1 a 5, con escepticismo, si el libro de verdad ilumina la historia; deja fuera las propuestas forzadas.
+    etapa: puente
+    conceptos: [puentes]
+    destino: null
+    criterios: []
+
+  - id: guionista
+    nombre: Guionista
+    departamento: Creatividad
+    que_hace: Escribe el carrusel, el pie y los titulares alternativos con la voz de la marca.
+    etapa: guion
+    conceptos: [guion, estilo]
+    destino: guionista
+    criterios: [idea, voz]
+
+  - id: lector_sin_contexto
+    nombre: Lector sin contexto
+    departamento: Creatividad
+    que_hace: Lee el guion como alguien que no conoce la noticia ni el libro y señala lo que no se entiende a la primera.
+    etapa: claridad
+    conceptos: [claridad]
+    destino: null
+    criterios: []
+
+  - id: editor_chat
+    nombre: Editor del chat
+    departamento: Creatividad
+    que_hace: Atiende lo que pide la redacción sobre una pieza ya escrita, en el texto, la imagen o el formato.
+    etapa: chat
+    conceptos: [chat]
+    destino: guionista
+    criterios: []
+
+  - id: director_arte
+    nombre: Director de arte
+    departamento: Arte
+    que_hace: Decide el tono, la imagen, la composición y el color de cada pieza, y elige entre las imágenes que le traen.
+    etapa: arte
+    conceptos: [arte, arte-eleccion, arte-ilustracion, cara]
+    destino: director_arte
+    criterios: []
+
+  - id: ilustrador
+    nombre: Ilustrador
+    departamento: Arte
+    que_hace: Escribe la escena de cada ilustración, que dibuja Magnific en el collage de la casa, y los retratos a partir de fotos libres.
+    etapa: escena
+    conceptos: [escena, escena-friso, ilustracion, ilustración, friso, banda, recorte, esquema, retrato]
+    destino: director_arte
+    criterios: []
+
+  - id: comprobador
+    nombre: Comprobador de hechos
+    departamento: Calidad
+    que_hace: Coteja cada cifra, fecha, nombre y hecho del guion con los textos fuente y marca lo que no se sostiene.
+    etapa: comprobacion
+    conceptos: [hechos]
+    destino: null
+    criterios: []
+
+  - id: revisor_letras
+    nombre: Revisor de letras
+    departamento: Calidad
+    que_hace: Mira cada ilustración antes de usarla y descarta la que tenga letras inventadas.
+    etapa: arte
+    conceptos: [letras]
+    destino: null
+    criterios: []
+
+  - id: memoria
+    nombre: Memoria
+    departamento: Calidad
+    que_hace: Cada lunes junta el feedback de la semana, ve lo que se repite y propone reglas para cada rol.
+    etapa: memoria
+    conceptos: [memoria]
+    destino: null
+    criterios: []

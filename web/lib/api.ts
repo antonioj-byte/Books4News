@@ -25,6 +25,15 @@ export type EstadoBuffer = components["schemas"]["EstadoBuffer"];
 export type Fondo = components["schemas"]["Fondo"];
 export type Trabajo = components["schemas"]["Trabajo"];
 export type PropuestaDelFondo = components["schemas"]["PropuestaDelFondo"];
+// La agencia (3/11): Archivo, Equipo, Marca y créditos de cada pieza
+export type PiezaArchivo = components["schemas"]["PiezaArchivo"];
+export type Departamento = components["schemas"]["Departamento"];
+export type ResumenRol = components["schemas"]["ResumenRol"];
+export type DetalleRol = components["schemas"]["DetalleRol"];
+export type Marca = components["schemas"]["Marca"];
+export type Credito = components["schemas"]["Credito"];
+export type Para = "guionista" | "director_arte" | "jefe_cultura";
+export type Capa = "oficio" | "marca" | "celda";
 
 async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
   const r = await fetch(ruta, { cache: "no-store", ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
@@ -56,8 +65,12 @@ export const api = {
   // El análisis va en un proceso aparte (2/11: dentro de la petición, la web cortaba a los 5 minutos)
   analizarMemoria: (dias: number) => pedir<EstadoEjecucion>(`/api/memoria/analizar?dias=${dias}`, { method: "POST" }),
   analisisMemoria: () => pedir<EstadoEjecucion | null>("/api/memoria/analisis"),
-  decidirPatron: (id: number, estado: Patron["estado"], nota = "") =>
-    pedir<unknown>(`/api/memoria/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado, nota }) }),
+  decidirPatron: (id: number, estado: Patron["estado"], nota = "", capa?: Capa) =>
+    pedir<unknown>(`/api/memoria/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado, nota, ...(capa ? { capa } : {}) }) }),
+  archivo: () => pedir<PiezaArchivo[]>("/api/archivo"),
+  equipo: () => pedir<Departamento[]>("/api/equipo"),
+  rol: (id: string) => pedir<DetalleRol>(`/api/equipo/${id}`),
+  marca: () => pedir<Marca>("/api/marca"),
   lanzarEjecucion: () => pedir<EstadoEjecucion>("/api/ejecuciones/lanzar", { method: "POST" }),
   // «Proceder»: escribe una propuesta pendiente de la mesa (unos minutos; se sigue con `desarrollo`). Varias a la vez.
   desarrollar: (eid: number, pid: string) =>
@@ -101,8 +114,8 @@ export const api = {
   borrarMaterial: (eid: number, pid: string, mid: string) =>
     pedir<unknown>(`/api/ejecuciones/${eid}/piezas/${pid}/materiales/${mid}`, { method: "DELETE" }),
   urlMaterial: (eid: number, pid: string, mid: string) => `/api/ejecuciones/${eid}/piezas/${pid}/materiales/${mid}`,
-  enviarChat: (eid: number, pid: string, mensaje: string) =>
-    pedir<RespuestaChat>(`${pieza(eid, pid)}/chat`, { method: "POST", body: JSON.stringify({ mensaje }) }),
+  enviarChat: (eid: number, pid: string, mensaje: string, para?: Para | null) =>
+    pedir<RespuestaChat>(`${pieza(eid, pid)}/chat`, { method: "POST", body: JSON.stringify({ mensaje, ...(para ? { para } : {}) }) }),
   // Programar en Buffer la pieza aprobada (a una hora, a la cola o como borrador)
   buffer: (eid: number, pid: string) => pedir<EstadoBuffer>(`${pieza(eid, pid)}/buffer`),
   programarBuffer: (eid: number, pid: string, cuerpo: { hora: string | null; borrador: boolean; reemplazar: boolean }) =>

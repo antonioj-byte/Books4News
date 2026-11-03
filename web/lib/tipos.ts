@@ -4,6 +4,77 @@
  */
 
 export interface paths {
+    "/api/archivo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver Archivo
+         * @description Todas las piezas, cada una en la última ejecución que la tiene, de la más reciente a la más antigua.
+         */
+        get: operations["ver_archivo_api_archivo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/equipo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ver Equipo */
+        get: operations["ver_equipo_api_equipo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/equipo/{rid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ver Rol */
+        get: operations["ver_rol_api_equipo__rid__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/marca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ver Marca */
+        get: operations["ver_marca_api_marca_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dias": {
         parameters: {
             query?: never;
@@ -782,6 +853,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Apartado */
+        Apartado: {
+            /** Titulo */
+            titulo: string;
+            /** Texto */
+            texto: string;
+            /** Fuente */
+            fuente: string;
+        };
         /** ApunteGasto */
         ApunteGasto: {
             /** Ts */
@@ -914,6 +994,13 @@ export interface components {
             /** Fuente */
             fuente: string | null;
         };
+        /** Color */
+        Color: {
+            /** Nombre */
+            nombre: string;
+            /** Valor */
+            valor: string;
+        };
         /** ConceptoGasto */
         ConceptoGasto: {
             /** Servicio */
@@ -927,6 +1014,35 @@ export interface components {
             /** N */
             n: number;
         };
+        /** Credito */
+        Credito: {
+            /** Rol */
+            rol: string;
+            /** Nombre */
+            nombre: string;
+            /** Que */
+            que: string;
+            /**
+             * Alerta
+             * @default false
+             */
+            alerta: boolean;
+            /**
+             * Coste Usd
+             * @default 0
+             */
+            coste_usd: number;
+            /**
+             * Coste Eur
+             * @default 0
+             */
+            coste_eur: number;
+            /**
+             * Llamadas
+             * @default 0
+             */
+            llamadas: number;
+        };
         /** DecisionPatron */
         "DecisionPatron-Input": {
             /**
@@ -939,6 +1055,8 @@ export interface components {
              * @default
              */
             nota: string;
+            /** Capa */
+            capa?: ("oficio" | "marca" | "celda") | null;
         };
         /** DecisionPatron */
         "DecisionPatron-Output": {
@@ -952,6 +1070,15 @@ export interface components {
              * @default
              */
             nota: string;
+            /** Capa */
+            capa: ("oficio" | "marca" | "celda") | null;
+        };
+        /** Departamento */
+        Departamento: {
+            /** Nombre */
+            nombre: string;
+            /** Roles */
+            roles: components["schemas"]["ResumenRol"][];
         };
         /** Descarte */
         Descarte: {
@@ -962,6 +1089,75 @@ export interface components {
              * @default
              */
             texto: string;
+        };
+        /** DetalleRol */
+        DetalleRol: {
+            /** Id */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Departamento */
+            departamento: string;
+            /** Que Hace */
+            que_hace: string;
+            /** Modelo */
+            modelo?: string | null;
+            /** Esfuerzo */
+            esfuerzo?: string | null;
+            /**
+             * Coste 7D Usd
+             * @default 0
+             */
+            coste_7d_usd: number;
+            /**
+             * Coste 7D Eur
+             * @default 0
+             */
+            coste_7d_eur: number;
+            /**
+             * Llamadas 7D
+             * @default 0
+             */
+            llamadas_7d: number;
+            /** Nota */
+            nota?: number | null;
+            /**
+             * Criterios
+             * @default []
+             */
+            criterios: string[];
+            /**
+             * Reglas
+             * @default {}
+             */
+            reglas: {
+                [key: string]: number;
+            };
+            /**
+             * Pendientes
+             * @default 0
+             */
+            pendientes: number;
+            /**
+             * Pedidos 7D
+             * @default 0
+             */
+            pedidos_7d: number;
+            /**
+             * Reglas Lista
+             * @default []
+             */
+            reglas_lista: components["schemas"]["ReglaRol"][];
+            /**
+             * Pedidos Lista
+             * @default []
+             */
+            pedidos_lista: components["schemas"]["Pedido"][];
+            /**
+             * Comparte Reglas Con
+             * @default []
+             */
+            comparte_reglas_con: string[];
         };
         /** Dia */
         Dia: {
@@ -1209,6 +1405,15 @@ export interface components {
             objetivo: {
                 [key: string]: number;
             };
+        };
+        /** FormatoMarca */
+        FormatoMarca: {
+            /** Id */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Descripcion */
+            descripcion: string;
         };
         /** FotoPuesta */
         FotoPuesta: {
@@ -1530,6 +1735,32 @@ export interface components {
             /** Cubierta */
             cubierta: string | null;
         };
+        /** Marca */
+        Marca: {
+            /** Nombre */
+            nombre: string;
+            /** Que Es */
+            que_es: string;
+            linea_editorial: components["schemas"]["Apartado"];
+            voz: components["schemas"]["Apartado"];
+            diseno: components["schemas"]["Apartado"];
+            /** Colores */
+            colores: components["schemas"]["Color"][];
+            /** Letras */
+            letras: string[];
+            /** Formatos */
+            formatos: components["schemas"]["FormatoMarca"][];
+            /** Reglas */
+            reglas: string[];
+            /** Aprendidas */
+            aprendidas: components["schemas"]["ReglaMarca"][];
+            /** Medios */
+            medios: number;
+            /** Medios Libro */
+            medios_libro: number;
+            /** Editoriales */
+            editoriales: number;
+        };
         /**
          * Marcas
          * @description Avisos que tienen que verse en la portada del día.
@@ -1597,11 +1828,17 @@ export interface components {
              * @default []
              */
             opciones: string[];
+            /** Para */
+            para: string | null;
+            /** Agente */
+            agente: string | null;
         };
         /** MensajeNuevo */
         MensajeNuevo: {
             /** Mensaje */
             mensaje: string;
+            /** Para */
+            para?: ("guionista" | "director_arte" | "jefe_cultura") | null;
         };
         /** Nota */
         Nota: {
@@ -1693,17 +1930,31 @@ export interface components {
             /** Estado */
             estado: string;
             /**
-             * Nota
-             * @default
+             * Capa
+             * @default celda
              */
-            nota: string;
+            capa: string;
             /**
              * Origen
              * @default feedback
              */
             origen: string;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
             /** Clave */
             clave: string | null;
+        };
+        /** Pedido */
+        Pedido: {
+            /** Pieza */
+            pieza: string;
+            /** Texto */
+            texto: string;
+            /** Fecha */
+            fecha: string;
         };
         /** Pieza */
         Pieza: {
@@ -1757,6 +2008,37 @@ export interface components {
             /** Error */
             error: string | null;
         };
+        /** PiezaArchivo */
+        PiezaArchivo: {
+            /** Ejecucion Id */
+            ejecucion_id: number;
+            /** Pieza Id */
+            pieza_id: string;
+            /** Fecha */
+            fecha: string;
+            /** Titular */
+            titular: string;
+            /** Formato */
+            formato: string;
+            /** Estado */
+            estado: string;
+            /** Categoria */
+            categoria: string;
+            /** Version */
+            version: number;
+            /** Tocada */
+            tocada: string;
+            /** Libro */
+            libro?: string | null;
+            /** Autor */
+            autor?: string | null;
+            /** Nota */
+            nota?: number | null;
+            /** Vigencia */
+            vigencia: string;
+            /** Vigencia Texto */
+            vigencia_texto: string;
+        };
         /** PiezaDetalle */
         PiezaDetalle: {
             /** Ejecucion Id */
@@ -1796,6 +2078,11 @@ export interface components {
             persona: string | null;
             /** Foto Persona */
             foto_persona: string | null;
+            /**
+             * Creditos
+             * @default []
+             */
+            creditos: components["schemas"]["Credito"][];
         };
         /** PiezaResumen */
         PiezaResumen: {
@@ -1944,6 +2231,32 @@ export interface components {
              */
             cosecha: string;
         };
+        /** ReglaMarca */
+        ReglaMarca: {
+            /** Patron */
+            patron: string;
+            /** Propuesta */
+            propuesta: string;
+            /** Destino */
+            destino: string;
+        };
+        /** ReglaRol */
+        ReglaRol: {
+            /** Id */
+            id: number;
+            /** Capa */
+            capa: string;
+            /** Estado */
+            estado: string;
+            /** Patron */
+            patron: string;
+            /** Propuesta */
+            propuesta: string;
+            /** Origen */
+            origen: string;
+            /** Fecha */
+            fecha: string;
+        };
         /** Replica */
         Replica: {
             /** Texto */
@@ -1990,6 +2303,60 @@ export interface components {
             voz: number | null;
             /** Publicaria */
             publicaria: number | null;
+        };
+        /** ResumenRol */
+        ResumenRol: {
+            /** Id */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Departamento */
+            departamento: string;
+            /** Que Hace */
+            que_hace: string;
+            /** Modelo */
+            modelo?: string | null;
+            /** Esfuerzo */
+            esfuerzo?: string | null;
+            /**
+             * Coste 7D Usd
+             * @default 0
+             */
+            coste_7d_usd: number;
+            /**
+             * Coste 7D Eur
+             * @default 0
+             */
+            coste_7d_eur: number;
+            /**
+             * Llamadas 7D
+             * @default 0
+             */
+            llamadas_7d: number;
+            /** Nota */
+            nota?: number | null;
+            /**
+             * Criterios
+             * @default []
+             */
+            criterios: string[];
+            /**
+             * Reglas
+             * @default {}
+             */
+            reglas: {
+                [key: string]: number;
+            };
+            /**
+             * Pendientes
+             * @default 0
+             */
+            pendientes: number;
+            /**
+             * Pedidos 7D
+             * @default 0
+             */
+            pedidos_7d: number;
         };
         /**
          * SinFoto
@@ -2189,6 +2556,97 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    ver_archivo_api_archivo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PiezaArchivo"][];
+                };
+            };
+        };
+    };
+    ver_equipo_api_equipo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Departamento"][];
+                };
+            };
+        };
+    };
+    ver_rol_api_equipo__rid__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetalleRol"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ver_marca_api_marca_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Marca"];
+                };
+            };
+        };
+    };
     dias_api_dias_get: {
         parameters: {
             query?: never;

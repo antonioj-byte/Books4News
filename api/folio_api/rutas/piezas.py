@@ -76,7 +76,16 @@ def pieza(eid: int, pid: str, ctx: Contexto = Depends(contexto)):
                         video_portada=f"/api/ejecuciones/{eid}/piezas/{pid}/video.mp4" if hay_video else None,
                         videos=[VideoDiapositiva(n=n, url=f"/api/ejecuciones/{eid}/piezas/{pid}/videos/{n}.mp4") for n in videos],
                         total_diapositivas=ctx.plantillas.total(p),
-                        lomos=lomos(ctx, p), **_persona(ctx, p))
+                        lomos=lomos(ctx, p), creditos=_creditos(ctx, p), **_persona(ctx, p))
+
+
+def _creditos(ctx: Contexto, p) -> list:
+    from folio import equipo
+    try:
+        return equipo.creditos(ctx.cfg, ctx.almacen, p)
+    except Exception:                     # los créditos nunca tumban la ficha
+        log.exception("Créditos de %s", p.id)
+        return []
 
 
 def _persona(ctx: Contexto, p) -> dict:
@@ -172,7 +181,9 @@ def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(c
     historial = [(x.rol, x.texto) for x in ctx.almacen.chat(eid, pid)]
     try:
         opciones: list[str] = []
-        respuesta, nueva, avisos = edicion.chat(ctx.llm or LLM(ctx.cfg), ctx.cfg, p, historial, m.mensaje.strip(), opciones)
+        meta: dict = {}
+        respuesta, nueva, avisos = edicion.chat(ctx.llm or LLM(ctx.cfg), ctx.cfg, p, historial, m.mensaje.strip(), opciones,
+                                                m.para, meta)
     except ErrorLLM as exc:
         raise HTTPException(502, f"El editor no ha podido responder: {exc}. Prueba otra vez o reformula la petición.")
     except Exception as exc:
@@ -183,8 +194,9 @@ def escribir_chat(eid: int, pid: str, m: MensajeNuevo, ctx: Contexto = Depends(c
     if nueva and nueva.estado != p.estado:
         # Cambiar el libro desde el chat (2/11) deja la pieza pendiente, para escribirla de nuevo con «Proceder»
         ctx.almacen.cambiar_estado(eid, pid, nueva.estado)
-    ctx.almacen.anadir_mensaje(eid, pid, "usuario", m.mensaje.strip())
-    ctx.almacen.anadir_mensaje(eid, pid, "editor", respuesta, v, opciones)
+    agente = meta.get("agente") if nueva else "editor_chat"
+    ctx.almacen.anadir_mensaje(eid, pid, "usuario", m.mensaje.strip(), para=m.para)
+    ctx.almacen.anadir_mensaje(eid, pid, "editor", respuesta, v, opciones, agente=agente)
     return RespuestaChat(respuesta=respuesta, version=v, avisos=avisos, opciones=opciones)
 
 
