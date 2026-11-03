@@ -29,7 +29,9 @@ export function FotoPersona({ eid, pid, persona, credito, escrita, onHecho }: {
   };
   const cancelar = () => { setArchivo(null); setVista(null); setError(null); };
   const subir = async () => {
-    if (!archivo || !texto.trim()) return;
+    if (!archivo) return;
+    // Sin crédito no se puede publicar: se dice, en vez de dejar el botón apagado con el cursor de «cargando» (3/11)
+    if (!texto.trim()) { setError("Escribe el crédito de la foto: va en el pie de la publicación."); return; }
     setSubiendo(true); setError(null);
     try {
       const r = await api.subirFotoPersona(eid, pid, archivo, texto.trim(), modificable, modificable ? tratamiento : "foto");
@@ -60,7 +62,8 @@ export function FotoPersona({ eid, pid, persona, credito, escrita, onHecho }: {
             {vista && <img src={vista} alt="" className="h-20 w-16 shrink-0 rounded-[4px] object-cover" />}
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <label htmlFor={`credito-foto-${pid}`} className="font-semibold">Foto de {persona}</label>
-              <input id={`credito-foto-${pid}`} value={texto} onChange={(e) => setTexto(e.target.value)}
+              <input id={`credito-foto-${pid}`} value={texto} onChange={(e) => { setTexto(e.target.value); setError(null); }}
+                     onKeyDown={(e) => { if (e.key === "Enter") subir(); }} autoFocus
                      placeholder="Crédito (obligatorio): «Foto: Ana Pérez · cortesía de Anagrama»"
                      className="rounded-[8px] border border-borde bg-papel px-2 py-1.5 outline-none focus:border-tinta" />
             </div>
@@ -80,7 +83,7 @@ export function FotoPersona({ eid, pid, persona, credito, escrita, onHecho }: {
             </fieldset>
           )}
           <div className="flex gap-2">
-            <button onClick={subir} disabled={subiendo || !texto.trim()} className="boton">
+            <button onClick={subir} disabled={subiendo} className="boton">
               {subiendo ? (tratamiento === "escena" && modificable ? "Dibujando la escena…" : "Subiendo…") : "Poner en la pieza"}
             </button>
             <button onClick={cancelar} disabled={subiendo} className="boton-suave">Cancelar</button>
