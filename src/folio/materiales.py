@@ -192,22 +192,95 @@ def clave_cubierta(pid: str, i: int) -> str:
     return f"{pid}-cubierta-{i}"
 
 
+def poner_credito(cfg: Config, p: Pieza, mid: str, credito: str) -> Material | None:
+    """El crédito que da quien edita en el chat para una foto ya subida (3/11, a petición del usuario: «le estoy pasando
+    fotos de prensa que se pueden usar y se niega»): la palabra de la redacción basta, no se le piden más detalles."""
+    m = buscar(cfg, p, mid)
+    credito = " ".join((credito or "").split())[:200]
+    if not m or not credito:
+        return m
+    m.credito = credito
+    (carpeta(cfg, p) / f"{m.id}.json").write_text(m.model_dump_json(indent=1), encoding="utf-8")
+    return m
+
+
+ALTO_DIPTICO = 1350
+
+
+def diptico(fotos: list[Path]) -> Image.Image:
+    """Dos fotos lado a lado en una sola imagen (para la diapositiva de la noticia: los dos ganadores, dos
+    protagonistas), cada una recortada al centro a la mitad del ancho de la diapositiva, con una raya de tinta entre las
+    dos. 2160×1350: la diapositiva la recorta a su encuadre, que es el de la imagen entera."""
+    ancho_mitad = 1080
+    lienzo = Image.new("RGB", (ancho_mitad * 2, ALTO_DIPTICO), (28, 22, 24))
+    for i, f in enumerate(fotos[:2]):
+        with Image.open(f) as im:
+            im = im.convert("RGB")
+            # Recorte al centro (un poco más arriba en vertical: las caras suelen estar en el tercio superior)
+            escala = max(ancho_mitad / im.width, ALTO_DIPTICO / im.height)
+            im = im.resize((round(im.width * escala), round(im.height * escala)), Image.LANCZOS)
+            x = (im.width - ancho_mitad) // 2
+            y = round((im.height - ALTO_DIPTICO) * 0.3)
+            lienzo.paste(im.crop((x, y, x + ancho_mitad, y + ALTO_DIPTICO)), (i * ancho_mitad, 0))
+    from PIL import ImageDraw
+    ImageDraw.Draw(lienzo).rectangle((ancho_mitad - 6, 0, ancho_mitad + 6, ALTO_DIPTICO), fill=(28, 22, 24))
+    return lienzo
+
+
 def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str, libro: str = "",
-         modificable: bool = False) -> tuple[Pieza | None, str]:
+         modificable: bool = False, credito: str = "") -> tuple[Pieza | None, str]:
     """Pone una foto subida en la pieza: en la portada («portada»), como retrato («retrato») del autor del libro
     principal o, sin libro, de quien protagoniza la historia, o como cubierta de un libro de la pieza («cubierta»,
     2/11, a petición del usuario: «no puede ser tan difícil subir esta portada»). Devuelve (pieza nueva o None, nota)."""
     from folio import arte as direccion
     from folio.imagenes import libres
-    m = buscar(cfg, p, mid)
-    if not m:
-        return None, f"(No encuentro el material «{mid}».)"
-    if m.tipo != "imagen":
-        return None, "(Ese material no es una foto: solo las fotos pueden ir en la pieza.)"
-    if not m.credito:
-        return None, "(Esa foto no tiene crédito: súbela otra vez con el crédito, que va en el pie de la publicación.)"
-    dir_fecha = cfg.dir_cache(p.fecha)
+    ids = [x.strip() for x in mid.replace(";", ",").split(",") if x.strip()]
+    creditos = [c.strip() for c in (credito or "").split("|")]
     como = como.strip().lower() or "portada"
+    if not ids:
+        return None, "(Dime qué foto de los materiales quieres poner.)"
+    if len(ids) > 2 or (len(ids) == 2 and como != "noticia"):
+        return None, "(Dos fotos juntas solo van en la diapositiva de la noticia, en díptico; en lo demás, una.)"
+    ms = []
+    for i, x in enumerate(ids):
+        m = buscar(cfg, p, x)
+        if not m:
+            return None, f"(No encuentro el material «{x}».)"
+        if m.tipo != "imagen":
+            return None, "(Ese material no es una foto: solo las fotos pueden ir en la pieza.)"
+        dado = creditos[i] if i < len(creditos) else (creditos[0] if len(creditos) == 1 and len(ids) == 1 else "")
+        if dado:
+            m = poner_credito(cfg, p, m.id, dado) or m
+        if not m.credito:
+            return None, ("(Me falta el crédito de esa foto: dímelo en una línea —«Foto: Fulano / Flammarion»— y la pongo.)")
+        ms.append(m)
+    m = ms[0]
+    dir_fecha = cfg.dir_cache(p.fecha)
+    if como == "noticia":
+        # 3/11 (a petición del usuario): las fotos de prensa de la redacción, en la diapositiva de la noticia; dos, en díptico
+        from folio.arte import SUFIJO_NOTICIA
+        clave = p.id + SUFIJO_NOTICIA
+        carpeta_img = libres.dir_imagenes(dir_fecha)
+        carpeta_img.mkdir(parents=True, exist_ok=True)
+        libres.olvidar(clave, dir_fecha)
+        if len(ms) == 2:
+            diptico([ruta(cfg, p, x) for x in ms]).save(carpeta_img / f"{clave}.jpg", "JPEG", quality=90)
+            ancho, alto = 2160, ALTO_DIPTICO
+        else:
+            (carpeta_img / f"{clave}.jpg").write_bytes(ruta(cfg, p, m).read_bytes())
+            ancho, alto = m.ancho or 0, m.alto or 0
+        credito_total = " · ".join(x.credito for x in ms)
+        img = libres.ImagenLibre(archivo=PREFIJO + "+".join(x.id for x in ms), pagina="", url="", ancho=ancho, alto=alto,
+                                 licencia="", licencia_url=None, autor=credito_total,
+                                 descripcion=" y ".join(x.nota or x.nombre for x in ms), libre=True, motivo="",
+                                 local=f"{clave}.jpg", fuente="")
+        libres.guardar_metadatos(img, clave, dir_fecha)
+        if ar.portada == "panorama":           # la panorámica cruzaba la noticia: ahora la noticia lleva sus fotos
+            ar.portada = cfg.pipeline.arte.portadas[0]
+        ar.imagen_noticia, ar.credito_noticia = img.archivo, img.credito
+        ar.cifra = None
+        return nueva, (f"(Las dos fotos van juntas, en díptico, en la diapositiva de la noticia. Crédito: {img.credito}.)"
+                       if len(ms) == 2 else f"(La foto va en la diapositiva de la noticia. Crédito: {img.credito}.)")
     if como == "cubierta":
         i = libro_de_la_pieza(p, libro)
         if i is None:
@@ -227,7 +300,7 @@ def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str, libro: st
             fuente=""), clave, dir_fecha)
         return nueva, f"(La cubierta subida va en «{p.libros[i].titulo_propuesto}»: en su diapositiva de libro y en el cierre.)"
     if como not in ("portada", "retrato"):
-        return None, "(Una foto subida va en la portada, como retrato o como cubierta de un libro.)"
+        return None, "(Una foto subida va en la portada, como retrato, en la noticia o como cubierta de un libro.)"
     persona = direccion.autor_principal(p) if como == "retrato" else None
     if como == "retrato" and not persona:
         return None, "(No sé de quién es el retrato: la pieza no tiene autor ni protagonista.)"

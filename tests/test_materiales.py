@@ -25,7 +25,7 @@ def _png(lado=1200):
 
 def _accion(**k):
     base = dict(tipo="usar_material", enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="",
-                estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", sin_castellano="", editorial="", isbn="", desde=0)
+                estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", sin_castellano="", editorial="", isbn="", desde=0, credito="")
     return edicion.AccionImagen(**{**base, **k})
 
 
@@ -71,7 +71,7 @@ def test_usar_una_foto_subida_en_la_portada_o_como_retrato(cfg):
     sin = materiales.guardar(cfg, p, "sin.png", _png(), "image/png")
     con = materiales.guardar(cfg, p, "con.png", _png(), "image/png", "Foto: Ana Pérez · cortesía de Anagrama")
     texto = materiales.guardar(cfg, p, "n.txt", b"hola", "text/plain", "x")
-    assert "no tiene crédito" in edicion.aplicar_imagen(None, cfg, p, _accion(material=sin.id, como="portada"))[1]
+    assert "Me falta el crédito" in edicion.aplicar_imagen(None, cfg, p, _accion(material=sin.id, como="portada"))[1]
     assert "no es una foto" in edicion.aplicar_imagen(None, cfg, p, _accion(material=texto.id, como="portada"))[1]
     nueva, nota = edicion.aplicar_imagen(None, cfg, p, _accion(material=con.id, como="portada"))
     d = cfg.dir_cache(p.fecha)
@@ -197,3 +197,28 @@ def test_la_foto_en_collage_con_escena(cfg, monkeypatch):
     nueva, nota = edicion.foto_persona(None, cfg, p, m.id, modificable=True, tratamiento="escena")
     img = libres.de_pieza(f"{p.id}-retrato", cfg.dir_cache(p.fecha))
     assert img.archivo == "recorte:escena" and "fondo generado con IA" in img.credito, nota
+
+
+def test_fotos_de_prensa_en_la_noticia_con_el_credito_del_chat(cfg):
+    """3/11 («le estoy pasando fotos de prensa que se pueden usar y se niega»): el crédito dicho en el chat basta, y dos
+    fotos van juntas, en díptico, en la diapositiva de la noticia."""
+    from folio import render
+    (cfg.raiz / "diseno").symlink_to(render.dir_diseno(type(cfg)(pipeline={}, fuentes=[])).resolve())
+    p = _pieza(acento="pluma")
+    a = materiales.guardar(cfg, p, "jaenada.png", _png(), "image/png")
+    b = materiales.guardar(cfg, p, "deserable.png", _png(), "image/png")
+    # Sin crédito ni en el material ni en el chat, lo pide en una línea
+    assert "Me falta el crédito" in edicion.aplicar_imagen(None, cfg, p, _accion(material=a.id, como="noticia"))[1]
+    # Dos fotos solo en la noticia
+    assert "díptico" in edicion.aplicar_imagen(None, cfg, p, _accion(material=f"{a.id},{b.id}", como="portada", credito="x | y"))[1]
+    nueva, nota = edicion.aplicar_imagen(None, cfg, p, _accion(material=f"{a.id}, {b.id}", como="noticia",
+                                                              credito="Prensa de Flammarion | Wikimedia Commons"))
+    assert nueva and "díptico" in nota
+    assert nueva.arte.credito_noticia == "Prensa de Flammarion · Wikimedia Commons"
+    assert materiales.buscar(cfg, p, a.id).credito == "Prensa de Flammarion"
+    d = cfg.dir_cache(p.fecha)
+    with Image.open(libres.dir_imagenes(d) / f"{p.id}-noticia.jpg") as im:
+        assert im.size == (2160, materiales.ALTO_DIPTICO)
+    pl = render.Plantillas(cfg, url_medio=lambda r: "/api/medios/" + r.name)
+    n = next(i for i, x in enumerate(nueva.guion.diapositivas, 1) if x.tipo == "actualidad")
+    assert f"{p.id}-noticia.jpg" in pl.html_diapositiva(nueva, n)

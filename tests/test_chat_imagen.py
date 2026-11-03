@@ -14,7 +14,7 @@ from datos import ELECCION, LIBRO, guion_valido
 
 
 def _accion(tipo, **k):
-    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", sin_castellano="", editorial="", isbn="", desde=0)
+    datos = dict(tipo=tipo, enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="", material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", sin_castellano="", editorial="", isbn="", desde=0, credito="")
     return AccionImagen(**(datos | k))
 
 

@@ -300,6 +300,9 @@ class Plantillas:
         elif d.tipo == "actualidad" and not imagen:
             # Sin imagen de archivo: la ilustración que se le dibujó a la noticia, si la hay (2/11, regla de la Memoria)
             imagen = self.medios.imagen(pieza, "-noticia")
+        if d.tipo == "actualidad" and a and (a.imagen_noticia or "").startswith("material:"):
+            # Las fotos que pone la redacción en la noticia (3/11) mandan sobre cualquier otra imagen de esa diapositiva
+            imagen = self.medios.imagen(pieza, "-noticia") or imagen
         if d.tipo == "portada" and cara_en_portada:
             imagen = retrato        # la cara del autor manda en la portada (salvo en la panorámica o si se eligió el archivo)
         estilo, svg = self.medios.portada(pieza, imagen)

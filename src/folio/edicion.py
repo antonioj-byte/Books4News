@@ -60,8 +60,9 @@ class AccionImagen(BaseModel):
     escena: str = Field(description="Solo ilustrar, friso, banda o recorte con estilo «escena» (vacía, la escribe el ilustrador): la escena en inglés, de 12 a 70 palabras, sin nombres propios, cifras ni comillas (en el friso, un paisaje continuo con un motivo por libro de izquierda a derecha; vacía, la escribe el ilustrador; «ninguno», quita el friso; en la banda, una escena continua con un punto de interés en cada tercio, hasta 95 palabras, y si va una persona real, «the man» o «the woman» sin su nombre; «ninguno», quita la banda); si no, vacío")
     persona: str = Field(description="Solo buscar_retrato o banda: nombre completo de la persona real (el autor del libro o quien protagoniza la historia); si no, vacío")
     estilo: str = Field(description="Solo retrato_ilustrado: low_poly, voxel, render_2000 o dithering (vacío: el que va con el tono); solo recorte: «escena» o «papel» (vacío: papel); si no, vacío")
-    material: str = Field(description="Solo usar_material: el id del material (la foto subida); si no, vacío")
-    como: str = Field(description="Solo usar_material: «portada» (la imagen de la portada), «retrato» (la foto del autor o protagonista) o «cubierta» (la cubierta de un libro de la pieza: pon su título en `libro`); si no, vacío")
+    material: str = Field(description="Solo usar_material: el id del material (la foto subida); dos ids separados por coma solo con «noticia» (van juntas, en díptico); si no, vacío")
+    como: str = Field(description="Solo usar_material: «portada» (la imagen de la portada), «retrato» (la foto del autor o protagonista), «noticia» (la foto o las dos fotos de la diapositiva de la noticia) o «cubierta» (la cubierta de un libro de la pieza: pon su título en `libro`); si no, vacío")
+    credito: str = Field(default="", description="Solo usar_material: el crédito de cada foto tal como lo da quien edita en la conversación («Wikimedia Commons», «prensa de Flammarion»), separados por « | » en el orden de `material`; vacío si ya lo tienen en los materiales")
     destacado: str = Field(description="Solo formato: el trozo del titular de portada que va destacado (cursiva en el color de la casa, con marcador sobre foto), copiado letra por letra, de 1 a 6 palabras; «ninguno» lo quita; vacío, no se toca")
     antetitulo: str = Field(description="Solo formato: el antetítulo de la portada, de 1 a 3 palabras; «ninguno» lo quita; vacío, no se toca")
     acento: str = Field(description="Solo formato: el color de la pieza, «pluma» (rojo) o «marcador» (amarillo); «ninguno» lo quita; vacío, no se toca")
@@ -654,7 +655,7 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return _encuadrada(llm, cfg, nueva.id, dir_fecha, _retrato_ilustrado(cfg, nueva, ar, a, retrato, dir_fecha))
     if a.tipo == "usar_material":
         from folio import materiales
-        r = materiales.usar(cfg, p, nueva, ar, a.material, a.como, a.libro)
+        r = materiales.usar(cfg, p, nueva, ar, a.material, a.como, a.libro, credito=a.credito)
         return _encuadrada(llm, cfg, nueva.id, dir_fecha, r) if a.como.strip().lower() == "retrato" else r
     if a.tipo == "ilustrar":
         escena, motivo = editorial.validar_escena(a.escena, editorial.nombres_de_pieza(p))

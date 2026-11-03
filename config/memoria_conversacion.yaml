@@ -703,3 +703,19 @@
   patron: "«Le he pedido un ensayo sin percha de temática literaria pero no sabe hacerlo» (un encargo sobre el Goncourt y el Renaudot con estructura en cinco partes, tono y fuentes)."
   propuesta: "Si la redacción pide un ensayo sobre un tema literario sin noticia ni libro (o marca «Ensayo sin percha»), la pieza es «Ensayo»: su historia y su contexto, con la estructura y el tono del encargo, que llega tal cual al guionista. Lo que las fuentes no traen no se supone."
   evidencia: ["Conversación, 3/11: encargo del Goncourt y el Renaudot"]
+
+- clave: ilustracion-estilo-delante
+  fecha: "2026-11-03"
+  destino: director_arte
+  capa: marca
+  patron: "«Tenemos un bonito estilo de ilustración, pero está haciendo cosas muy feas. ¿Por qué no respeta las ilustraciones que venimos haciendo?» (una banda realista de época con «luz cálida»)."
+  propuesta: "Las escenas que se piden a la ilustración son metáforas con objetos y figuras recortadas, sin técnica, luz ni acabado: el estilo de la casa (collage) lo pone el código, y va delante de la escena."
+  evidencia: ["Conversación, 3/11: banda del Goncourt en las diapositivas 3–5"]
+
+- clave: fotos-de-prensa-de-la-redaccion
+  fecha: "2026-11-03"
+  destino: director_arte
+  capa: oficio
+  patron: "«Le estoy pasando fotos de prensa que se pueden usar y se niega. Arregla para que sea fácil.»"
+  propuesta: "Las fotos que sube quien edita se ponen donde diga (portada, retrato, noticia, cubierta; dos en la noticia, en díptico) con el crédito que dé en la conversación, sin pedir fotógrafo ni licencia: la redacción responde de los derechos."
+  evidencia: ["Conversación, 3/11: fotos de Jaenada y Désérable para la diapositiva 2"]
