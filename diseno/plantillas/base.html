@@ -10,7 +10,7 @@
 </head>
 <body>
 <main class="diapositiva diapositiva--{{ tipo }}{% if imagen %} con-imagen{% endif %}{% if tipo == 'portada' %} portada--{{ portada_estilo }}{% if retrato %} con-retrato{% endif %}{% if buscador %} con-buscador{% endif %}{% endif %}{% if tono == 'grave' %} grave{% endif %}{% if acento %} acento acento--{{ acento }}{% endif %}{% if sin_foto %} sin-foto sin-foto--{{ sin_foto.recurso }}{% endif %}{% if infografia %} con-infografia{% endif %}{% if panorama %} panorama-2{% endif %}{% if friso %} con-friso{% endif %}{% if banda %} con-banda{% endif %}"{% if video %} data-video{% endif %}>
-{% if banda %}<div class="banda" aria-hidden="true" style="--k: {{ banda.k }}; background-image: url('{{ banda.src }}')"></div>{% endif %}
+{% if banda %}<div class="banda-pano" aria-hidden="true" style="--k: {{ banda.k }}; background-image: url('{{ banda.src }}')"></div>{% endif %}
 {% block fondo %}{% endblock %}
   <section class="cuerpo" data-ajustar>
 {% block cuerpo %}

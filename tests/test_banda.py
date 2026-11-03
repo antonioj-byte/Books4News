@@ -126,9 +126,9 @@ def test_cada_diapositiva_ensena_su_tercio(cfg_diseno):
     pl = render.Plantillas(cfg_diseno, url_medio=lambda r: "/api/medios/" + r.name)
     for n, k in ((4, 0), (5, 1), (6, 2)):
         html = pl.html_diapositiva(p, n)
-        assert f"--k: {k};" in html and "2026-11-01-9-banda.jpg" in html and "con-banda" in html
+        assert f"--k: {k};" in html and "2026-11-01-9-banda.jpg" in html and "con-banda" in html and "class=\"banda-pano\"" in html
     for n in (3, 7):
-        assert "class=\"banda\"" not in pl.html_diapositiva(p, n)
+        assert "class=\"banda-pano\"" not in pl.html_diapositiva(p, n)
     # Si una edición la deja sobre el cierre, no se pinta
     p.guion.diapositivas[5].tipo = "cierre"
-    assert "class=\"banda\"" not in pl.html_diapositiva(p, 4)
+    assert "class=\"banda-pano\"" not in pl.html_diapositiva(p, 4)
