@@ -72,7 +72,7 @@ export function VistaDia() {
             </div>
             <Link href={`/pieza/${p.ejecucion_id}/${p.pieza_id}`} className="titular text-[22px] leading-snug hover:text-carmesi">{p.titular}</Link>
             {p.gancho && <p className="font-titular text-[17px] italic leading-snug text-tinta-suave" style={{ fontWeight: 400 }}>{p.gancho}</p>}
-            {!p.libros[0] && (p.formato === "curiosidad" || p.formato === "noticia") && <p className="dato">Sin libro</p>}
+            {!p.libros[0] && ["curiosidad", "noticia", "ensayo"].includes(p.formato) && <p className="dato">Sin libro</p>}
             {p.libros[0] && (
               <div className="flex items-center gap-3">
                 {p.libros[0].cubierta

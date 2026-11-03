@@ -1545,7 +1545,7 @@ export interface components {
              * @default lateral
              * @enum {string}
              */
-            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco" | "noticia";
+            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco" | "noticia" | "ensayo";
             /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista
@@ -2264,7 +2264,7 @@ export interface components {
             /** Ejecucion */
             ejecucion: number;
             /** Enfoque */
-            enfoque?: ("elige" | "noticia") | null;
+            enfoque?: ("elige" | "noticia" | "ensayo") | null;
         };
         /** RespuestaChat */
         RespuestaChat: {
@@ -2490,7 +2490,7 @@ export interface components {
              * @default elige
              * @enum {string}
              */
-            enfoque: "elige" | "noticia";
+            enfoque: "elige" | "noticia" | "ensayo";
         };
         /**
          * Trabajo

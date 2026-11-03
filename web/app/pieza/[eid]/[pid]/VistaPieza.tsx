@@ -138,7 +138,7 @@ export function VistaPieza() {
               <p className="mt-2 text-[13px] text-tinta-suave">{g.por_que}</p>
             </details>
           </>
-        ) : d.pieza.libros.length > 0 || ["curiosidad", "radar", "noticia"].includes(d.pieza.eleccion.formato) ? (
+        ) : d.pieza.libros.length > 0 || ["curiosidad", "radar", "noticia", "ensayo"].includes(d.pieza.eleccion.formato) ? (
           // Propuesta de la mesa sin escribir (o cuyo guion falló): se ve la propuesta y se puede proceder
           <div className="mx-auto flex max-w-[560px] flex-col gap-4">
             <h2 className="titular text-[28px] leading-tight sm:text-[34px]">{d.pieza.eleccion.titular}</h2>

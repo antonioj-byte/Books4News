@@ -89,7 +89,7 @@ def _proponente(p: Pieza) -> list[tuple[str, str, str]]:
     """Quién propuso la pieza: (rol, nombre, qué hizo)."""
     f = p.eleccion.formato
     if p.historia_id.startswith("tema-"):
-        return [("redaccion", "Redacción", "propuso el tema" + (" · solo la noticia" if f == "noticia" else "")),
+        return [("redaccion", "Redacción", "propuso el tema" + (" · solo la noticia" if f == "noticia" else " · ensayo sin percha" if f == "ensayo" else "")),
                 ("jefe_cultura", "Jefe de cultura", f"lo planteó como {_FORMATOS.get(f, f)}")]
     if f == "cinco":
         return [("jefe_cultura", "Jefe de cultura", "eligió y tituló las cinco")]
@@ -100,7 +100,7 @@ def _proponente(p: Pieza) -> list[tuple[str, str, str]]:
 
 _FORMATOS = {"lateral": "una lectura lateral", "dialogo": "un diálogo", "edicion": "una del mundo del libro",
              "curiosidad": "una historia editorial", "recomendado": "un libro recomendado", "radar": "un breve",
-             "balda": "tres libros", "noticia": "una noticia", "cinco": "cinco del libro"}
+             "balda": "tres libros", "noticia": "una noticia", "ensayo": "un ensayo", "cinco": "cinco del libro"}
 
 
 _QUE_HIZO = {"comprobador": "comprobó los hechos", "lector_sin_contexto": "lo leyó sin contexto",

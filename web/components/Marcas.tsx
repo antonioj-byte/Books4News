@@ -47,7 +47,8 @@ const FORMATOS: Record<string, { texto: string; clase: string }> = {
   curiosidad: { texto: "Historia editorial", clase: "bg-subrayador text-tinta" },
   recomendado: { texto: "Libro recomendado", clase: "bg-verde text-papel" },
   radar: { texto: "Radar del libro", clase: "border border-carmesi text-carmesi" },
-  noticia: { texto: "Noticia", clase: "border border-tinta bg-papel-hondo text-tinta" },   // tema contado sin ensayo (3/11)
+  noticia: { texto: "Noticia", clase: "border border-tinta bg-papel-hondo text-tinta" },
+  ensayo: { texto: "Ensayo", clase: "border border-tinta bg-papel-hondo text-tinta" },   // tema literario sin percha (3/11)   // tema contado sin ensayo (3/11)
   cinco: { texto: "Cinco del libro", clase: "bg-carmesi text-subrayador" },   // prueba de formato (2/11)
 };
 

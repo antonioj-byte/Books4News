@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, Literal
 
+from pydantic.json_schema import SkipJsonSchema
 from pydantic import BaseModel as _BaseModel, BeforeValidator, ConfigDict, Field
 
 
@@ -28,9 +29,10 @@ Seccion = Literal[
 ]
 # «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
 EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
-Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia"]
-# Formatos que pueden salir sin libro: la curiosidad del cajón y los temas del radar del libro
-SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar", "noticia")   # «noticia»: tema de la redacción contado sin ensayo (3/11)
+Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia", "ensayo"]
+# Formatos que pueden salir sin libro: la curiosidad del cajón, los temas del radar del libro y, en los temas de la
+# redacción, «noticia» (contada sin ensayo) y «ensayo» (tema literario sin percha), los dos del 3/11
+SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar", "noticia", "ensayo")
 # «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml); «catalogo»: novedades de
 # las editoriales independientes (formato «recomendado»); «radar»: historias del mundo del libro que no pasan al jefe
 # pero sí a la lista del radar
@@ -98,6 +100,10 @@ class HistoriaElegida(BaseModel):
     sin_castellano: bool = Field(default=False, description="Solo en un tema de la redacción que pide expresamente un libro sin traducir al castellano; si no, false")
     potencial: int = Field(default=5, description="De 1 a 10, cuánto puede circular la propuesta (conversación, ganas de compartir); la mesa se ordena por este número")
     por_que: str = Field(description="Por qué esta historia y no otra, en dos líneas")
+    # El encargo de la redacción, tal como lo escribió (3/11: «le he pedido un ensayo sin percha… no sabe hacerlo»:
+    # la estructura y el tono que pedía no llegaban al guionista). Lo pone el código en los temas; fuera del esquema
+    # del modelo.
+    encargo: SkipJsonSchema[str] = ""
 
 
 class SeleccionJefe(BaseModel):

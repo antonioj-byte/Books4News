@@ -15,7 +15,7 @@ router = APIRouter()
 
 NOMBRES_FORMATO = {"lateral": "Lectura lateral", "dialogo": "Diálogo con la actualidad", "balda": "Tres libros",
                    "edicion": "Mundo del libro", "curiosidad": "Historia editorial", "recomendado": "Libro recomendado",
-                   "noticia": "Noticia", "radar": "Breve del mundo del libro", "cinco": "Cinco del libro"}
+                   "noticia": "Noticia", "ensayo": "Ensayo", "radar": "Breve del mundo del libro", "cinco": "Cinco del libro"}
 
 
 # ---------------------------------------------------------------- Archivo

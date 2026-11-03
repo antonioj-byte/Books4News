@@ -251,3 +251,44 @@ def test_lo_que_aporta_una_replica_pasa_a_la_pieza():
     assert temas.aportes_de_la_replica(5, "Vale, adelante", [], _cliente()) == ([], [])
     ya = [f for f in nuevas if f.medio != temas.REDACCION]
     assert temas.aportes_de_la_replica(5, "https://ejemplo.org/goncourt", ya, _cliente()) == ([], [])
+
+
+def test_ensayo_sin_percha_sigue_el_encargo_y_busca_fuentes_de_fondo(cfg):
+    """3/11 («le he pedido un ensayo sin percha de temática literaria pero no sabe hacerlo»): con el enfoque «ensayo»,
+    el formato es «ensayo», vale sin libro, las fuentes se buscan con el prompt de fondo y el encargo (con lo que la
+    redacción añade en sus réplicas) llega literal al guionista."""
+    from folio import guion
+    from folio.modelos import FuenteNoticia, SIN_LIBRO_OBLIGATORIO
+    vistos = []
+
+    class Jefe:
+        def estructurado(self, paso, mensajes, esquema, **k):
+            vistos.append(mensajes[0]["content"])
+            return temas.RespuestaJefeTema(respuesta="Lo planteo como ensayo.", preguntas=[], propuesta=HistoriaElegida(
+                formato="lateral", historia_id="x", titular="El Goncourt y el Renaudot se fallan en la misma mesa",
+                de_que_se_habla="Dos premios rivales.", cuestion_de_fondo="Qué premia Francia.",
+                libros_candidatos=[], por_que="Lo pide la redacción.")), ""
+
+    texto = "Ensayo sobre el Goncourt y el Renaudot. Estructura: 1) ganadores; 2) Drouant; 3) 1926."
+    f = temas.FuenteTema(medio="Le Monde", titulo="Goncourt", url="https://lemonde.fr/x", texto="Texto. " * 200)
+    h = temas.historia(4, texto, [f])
+    conv = [{"rol": "redaccion", "texto": "Sin anécdotas no verificadas."}]
+    r = temas.proponer(Jefe(), cfg, h, texto, [f], "2026-11-03", conv, enfoque="ensayo")
+    e = r.propuesta
+    assert e.formato == "ensayo" and "ensayo" in SIN_LIBRO_OBLIGATORIO and "ENSAYO SIN PERCHA" in vistos[0]
+    assert e.encargo.startswith("Ensayo sobre el Goncourt") and "Sin anécdotas" in e.encargo
+    assert "encargo" not in str(HistoriaElegida.model_json_schema())
+    # El guionista recibe el encargo y la sección del formato
+    p = guion.construir_prompt(cfg, e, [(FuenteNoticia(medio="Le Monde", titulo="t", url="u", acceso="abierto"), "x")], [])
+    assert "<encargo>" in p and "2) Drouant" in p and "Ensayo sin percha." in p
+    # Las fuentes de un ensayo se buscan con el prompt de fondo
+    usadas = []
+    orig = temas.buscar_fuentes
+    try:
+        temas.buscar_fuentes = lambda llm, cfg, texto, c, plantilla="tema_fuentes", **k: (usadas.append(plantilla), ([f], []))[1]
+        temas.fuentes_del_tema(None, cfg, texto, [], cliente=_cliente(), enfoque="ensayo")
+        temas.fuentes_del_tema(None, cfg, texto, [], cliente=_cliente())
+    finally:
+        temas.buscar_fuentes = orig
+    assert usadas == ["tema_fuentes_fondo", "tema_fuentes", "tema_fuentes"]
+    assert "[pegar" not in temas.cargar_prompt(cfg, "tema_fuentes_fondo", {"[pegar tema]": texto})

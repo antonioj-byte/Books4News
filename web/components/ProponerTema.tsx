@@ -76,7 +76,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
   const [enlaces, setEnlaces] = useState("");
   const [enviando, setEnviando] = useState<"ahora" | "manana" | null>(null);
   // Lo que pide la redacción (3/11, «si lo que le pido es que me cuente una noticia… no me haga un ensayo»)
-  const [enfoque, setEnfoque] = useState<"elige" | "noticia">("elige");
+  const [enfoque, setEnfoque] = useState<"elige" | "noticia" | "ensayo">("elige");
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
   const { datos: temas, recargar } = useDatos("temas", api.temas);
   const [abierto, setAbierto] = useState<number | null>(null);
@@ -114,18 +114,20 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
         {abiertoForm && (
           <>
             <textarea id="tema-enlaces" value={enlaces} onChange={(e) => setEnlaces(e.target.value)} rows={2} disabled={!!enviando}
-                      placeholder="Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las noticias."
+                      placeholder={enfoque === "ensayo" ? "Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las fuentes." : "Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las noticias."}
                       aria-label="Enlaces (opcional)"
                       className="resize-y rounded-[12px] border border-borde bg-papel p-3 font-mono text-[13px] outline-none focus:border-tinta" />
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Qué le pides al jefe">
-              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"]] as const).map(([v, txt]) => (
+              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"], ["ensayo", "Ensayo sin percha"]] as const).map(([v, txt]) => (
                 <button key={v} aria-pressed={enfoque === v} onClick={() => setEnfoque(v)} disabled={!!enviando}
                         className={`rounded-full border px-3 py-1 text-[13px] ${enfoque === v ? "border-carmesi bg-carmesi text-papel" : "border-borde bg-papel hover:border-tinta"}`}>
                   {txt}
                 </button>
               ))}
               <span className="text-[12.5px] text-tinta-suave">
-                {enfoque === "noticia" ? "Contada con su contexto, sin ensayo ni libro ajeno." : "Lectura lateral, diálogo, tres libros… lo que mejor le vaya."}
+                {enfoque === "noticia" ? "Contada con su contexto, sin ensayo ni libro ajeno."
+                  : enfoque === "ensayo" ? "Un tema literario con su historia, sin noticia ni libro obligatorio. Sigue tu estructura y tu tono."
+                  : "Lectura lateral, diálogo, tres libros… lo que mejor le vaya."}
               </span>
             </div>
             {texto.length > MAX_TEXTO * 0.8 && (
@@ -135,8 +137,8 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
               <button className="boton" onClick={() => proponer("ahora")} disabled={!!enviando || !eid || texto.trim().length < 8}>
                 {enviando === "ahora" ? "El jefe está pensando… (1–2 min)" : "Proponer ahora"}
               </button>
-              <button className="boton-suave" onClick={() => proponer("manana")} disabled={!!enviando || texto.trim().length < 8 || enfoque === "noticia"}
-                      title={enfoque === "noticia" ? "La mesa de mañana solo propone piezas con libro" : undefined}>
+              <button className="boton-suave" onClick={() => proponer("manana")} disabled={!!enviando || texto.trim().length < 8 || enfoque !== "elige"}
+                      title={enfoque !== "elige" ? "La mesa de mañana solo propone piezas con libro" : undefined}>
                 {enviando === "manana" ? "Guardando…" : "Para la mesa de mañana"}
               </button>
             </div>

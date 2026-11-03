@@ -10,7 +10,7 @@ from folio.modelos import Pieza
 
 # En qué punto está una pieza, para los filtros del Archivo
 CATEGORIAS = ("nevera", "aprobada", "programada", "publicada", "pendiente", "descartada")
-SIN_PERCHA = ("curiosidad", "recomendado")          # no dependen de una noticia: no caducan
+SIN_PERCHA = ("curiosidad", "recomendado", "ensayo")          # no dependen de una noticia: no caducan
 DIAS_VIGENTE, DIAS_REVISAR = 7, 30
 
 

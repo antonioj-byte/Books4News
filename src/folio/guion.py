@@ -165,6 +165,12 @@ def construir_prompt(cfg: Config, eleccion: HistoriaElegida, textos: list[tuple[
         f"De qué se está hablando: {eleccion.de_que_se_habla}\n"
         f"Cuestión de fondo (propuesta del jefe de cultura): {eleccion.cuestion_de_fondo}\n"
         + (f"Gancho del libro para la portada (propuesta del jefe de cultura): {eleccion.gancho_libro}\n" if eleccion.gancho_libro else "")
+        + (f"Encargo de la redacción (lo pide quien edita: sigue su enfoque, su estructura y su tono, repartidos en las "
+           f"diapositivas, dentro de las reglas de Folio; si pide un dato que los textos no traen, no lo supongas: dilo en "
+           f"una frase sin hablar de los textos ni de las crónicas («el fallo aún no se ha hecho público»), y si es una "
+           f"parte de contexto que los textos no cuentan, déjala fuera; la extensión y la lista de fuentes que pida las "
+           f"dan el carrusel y el colofón):\n<encargo>\n"
+           f"{eleccion.encargo.strip()}\n</encargo>\n" if eleccion.encargo.strip() else "")
         + f"Textos de los medios:\n{fuentes}\n"
         "</noticia>"
     )

@@ -695,3 +695,11 @@
   patron: "«Aquí hemos entrado en un bucle raro»: la redacción contestaba al jefe con datos y fuentes y el jefe volvía a proponer lo mismo con las mismas salvedades."
   propuesta: "Lo que la redacción aporta en una réplica (datos, enlaces) es material de la pieza: no se vuelve a pedir. Si la réplica solo confirma o aporta, se contesta en una frase y se da la pieza por lista para escribir."
   evidencia: ["Conversación, 3/11: tema del Goncourt con réplicas que repetían la misma propuesta"]
+
+- clave: tema-ensayo-sin-percha
+  fecha: "2026-11-03"
+  destino: jefe_cultura
+  capa: marca
+  patron: "«Le he pedido un ensayo sin percha de temática literaria pero no sabe hacerlo» (un encargo sobre el Goncourt y el Renaudot con estructura en cinco partes, tono y fuentes)."
+  propuesta: "Si la redacción pide un ensayo sobre un tema literario sin noticia ni libro (o marca «Ensayo sin percha»), la pieza es «Ensayo»: su historia y su contexto, con la estructura y el tono del encargo, que llega tal cual al guionista. Lo que las fuentes no traen no se supone."
+  evidencia: ["Conversación, 3/11: encargo del Goncourt y el Renaudot"]
