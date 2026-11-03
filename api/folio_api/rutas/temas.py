@@ -17,8 +17,12 @@ router = APIRouter()
 _un_tema = threading.Lock()
 
 
+# 3/11: la redacción pega encargos enteros, no solo una línea (el límite de 1.500 se quedaba corto)
+MAX_TEXTO_TEMA = 6000
+
+
 class TemaNuevo(BaseModel):
-    texto: str = Field(min_length=8, max_length=1500)
+    texto: str = Field(min_length=8, max_length=MAX_TEXTO_TEMA)
     enlaces: list[str] = Field(default_factory=list, max_length=temas.MAX_ENLACES)
     cuando: Literal["ahora", "manana"]
     ejecucion: int | None = None          # para «ahora»: la ejecución de la mesa en que entra la pieza
@@ -36,7 +40,7 @@ class TemaCreado(BaseModel):
 
 
 class Replica(BaseModel):
-    texto: str = Field(min_length=2, max_length=1500)
+    texto: str = Field(min_length=2, max_length=MAX_TEXTO_TEMA)
     ejecucion: int
     enfoque: Literal["elige", "noticia"] | None = None   # si la réplica cambia lo que se pide (p. ej. «solo la noticia»)
 

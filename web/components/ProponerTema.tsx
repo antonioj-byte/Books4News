@@ -55,6 +55,17 @@ function Conversacion({ tema, eid, onPieza, onCambio }: { tema: Tema; eid?: numb
 }
 
 // Proponer un tema al jefe de cultura (2/11): ahora (una pieza pendiente en esta mesa) o para la mesa de mañana.
+// Lo que admite la API para el texto de un tema (3/11: subido de 1.500 a 6.000 para encargos enteros)
+const MAX_TEXTO = 6000;
+
+// Un error de validación de la API, en una frase (antes salía el JSON entero)
+function mensajeError(e: unknown): string {
+  const m = e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo proponer";
+  if (m.includes("string_too_long")) return `El texto es demasiado largo: como mucho ${MAX_TEXTO} caracteres.`;
+  if (m.includes("string_too_short")) return "Escribe un poco más: al menos una frase.";
+  return m.length > 300 ? m.slice(0, 300) + "…" : m;
+}
+
 export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => void }) {
   const [texto, setTexto] = useState("");
   const [enlaces, setEnlaces] = useState("");
@@ -77,7 +88,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
         : `El jefe propuso un enfoque, pero ninguno de sus libros pasó la verificación (están en la propuesta ${r.pieza_id}, en la mesa). Replícale abajo con el libro que quieras, o pídele otros.` });
       if (cuando === "ahora") { setAbierto(r.tema.id); if (r.pieza_id) onPieza(); }
     } catch (e) {
-      setMensaje({ ok: false, texto: e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo proponer" });
+      setMensaje({ ok: false, texto: mensajeError(e) });
     } finally { setEnviando(null); recargar(); }
   };
   const descartar = async (t: Tema) => { await api.descartarTema(t.id).catch(() => null); recargar(); };
@@ -92,6 +103,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
       <div className="panel flex flex-col gap-3 p-3 sm:p-4">
         <label id="h-tema" htmlFor="tema-texto" className="sr-only">Proponer un tema al jefe de cultura</label>
         <textarea id="tema-texto" value={texto} onChange={(e) => setTexto(e.target.value)} rows={abiertoForm ? 3 : 1} disabled={!!enviando}
+                  maxLength={MAX_TEXTO}
                   placeholder="¿De qué quieres que hablemos hoy? El jefe de cultura le busca el ángulo y el libro."
                   className="resize-none rounded-[12px] border border-borde bg-papel px-3 py-2.5 text-[16px] outline-none focus:border-tinta" />
         {abiertoForm && (
@@ -111,6 +123,9 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
                 {enfoque === "noticia" ? "Contada con su contexto, sin ensayo ni libro ajeno." : "Lectura lateral, diálogo, tres libros… lo que mejor le vaya."}
               </span>
             </div>
+            {texto.length > MAX_TEXTO * 0.8 && (
+              <span className={`dato ${texto.length >= MAX_TEXTO ? "text-carmesi" : ""}`}>{texto.length} de {MAX_TEXTO} caracteres</span>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               <button className="boton" onClick={() => proponer("ahora")} disabled={!!enviando || !eid || texto.trim().length < 8}>
                 {enviando === "ahora" ? "El jefe está pensando… (1–2 min)" : "Proponer ahora"}
@@ -131,7 +146,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
           {recientes.map((t) => (
             <li key={t.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="dato uppercase text-tinta-suave">{ESTADOS[t.estado] ?? t.estado}{t.pieza_id ? ` · ${t.pieza_id}` : ""}</span>
-              <span className="min-w-0 flex-1">{t.texto}</span>
+              <span className="line-clamp-2 min-w-0 flex-1" title={t.texto}>{t.texto}</span>
               {t.estado === "pendiente" && <button onClick={() => descartar(t)} className="text-tinta-suave hover:text-carmesi">Descartar</button>}
               {(t.estado === "pregunta" || t.estado === "en_mesa" || (t.estado === "fallido" && t.pieza_id)) && t.conversacion.length > 0 && (
                 <button onClick={() => setAbierto(abierto === t.id ? null : t.id)} className="text-tinta-suave underline-offset-2 hover:text-tinta hover:underline">
