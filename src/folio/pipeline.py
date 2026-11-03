@@ -546,8 +546,9 @@ class Pipeline:
         """Guion de una pieza (se ejecuta en paralelo con los de las demás). `anunciar`: en «Proceder», cada paso del
         guionista como etapa de la web (3/11: «Desarrollando…» se quedaba fijo varios minutos)."""
         try:
+            extra = {"anunciar": anunciar} if anunciar else {}
             pieza.guion, avisos, pieza.citas = guionista.escribir(self.llm, pieza.id, pieza.eleccion, textos_h, pieza.libros,
-                                                                  self._verificar_cita, anunciar=anunciar)
+                                                                  self._verificar_cita, **extra)
         except Exception as exc:
             pieza.error = str(exc)
             return
