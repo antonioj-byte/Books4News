@@ -165,7 +165,7 @@ def _recorte(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha
     """La foto del autor recortada en collage (3/11): delante de una escena dibujada o sobre papel de color. La cara
     es la de la foto; nunca con una de prensa ni con una subida sin permiso para modificarla."""
     from folio import arte as direccion
-    from folio.imagenes import libres, recorte
+    from folio.imagenes import editorial, libres, recorte
     original = libres.de_pieza(f"{nueva.id}-retrato-original", dir_fecha) or libres.de_pieza(f"{nueva.id}-retrato", dir_fecha)
     motivo = recorte.se_puede(original)
     if motivo:

@@ -178,3 +178,22 @@ def test_la_ruta_de_la_foto_de_la_persona(cfg, monkeypatch):
     assert r.status_code == 200, r.text
     assert r.json()["version"] == antes["version"] + 1
     assert c.get(base).json()["foto_persona"] == "Foto: Ana"
+
+
+def test_la_foto_en_collage_con_escena(cfg, monkeypatch):
+    """3/11: «name 'editorial' is not defined» al pedir el collage con escena; ahora recorre el camino entero."""
+    from folio import arte as direccion
+    from folio.imagenes import cara, editorial, recorte
+    monkeypatch.setattr(cara, "encuadrar", lambda *a, **k: None)
+    monkeypatch.setattr(recorte, "mascara", lambda cfg, im: _mascara_centro(im))
+    monkeypatch.setattr(direccion, "_escenas", lambda *a, **k: [("A paper boat sails over a sea of letters", "idea")])
+    fondo = cfg.dir_datos / "fondo.jpg"
+    fondo.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (1088, 1360), (200, 10, 80)).save(fondo)
+    monkeypatch.setattr(recorte, "dibujar_fondo", lambda cfg, pid, escena: fondo)
+    monkeypatch.setattr(editorial, "revisar", lambda *a, **k: None)
+    p = _pieza(acento="pluma")
+    m = materiales.guardar(cfg, p, "autora.png", _png(), "image/png", "Foto: Ana Pérez")
+    nueva, nota = edicion.foto_persona(None, cfg, p, m.id, modificable=True, tratamiento="escena")
+    img = libres.de_pieza(f"{p.id}-retrato", cfg.dir_cache(p.fecha))
+    assert img.archivo == "recorte:escena" and "fondo generado con IA" in img.credito, nota
