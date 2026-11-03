@@ -719,3 +719,19 @@
   patron: "«Le estoy pasando fotos de prensa que se pueden usar y se niega. Arregla para que sea fácil.»"
   propuesta: "Las fotos que sube quien edita se ponen donde diga (portada, retrato, noticia, cubierta; dos en la noticia, en díptico) con el crédito que dé en la conversación, sin pedir fotógrafo ni licencia: la redacción responde de los derechos."
   evidencia: ["Conversación, 3/11: fotos de Jaenada y Désérable para la diapositiva 2"]
+
+- clave: buffer-tambien-linkedin
+  fecha: "2026-11-03"
+  destino: codigo
+  capa: marca
+  patron: "«Actualmente solo manda a Buffer Instagram, pero molaría que mandase también a Buffer LinkedIn.»"
+  propuesta: "Programar en Buffer manda a Instagram y a LinkedIn (se eligen en la ficha); en LinkedIn, el carrusel en imágenes y el mismo pie."
+  evidencia: ["Conversación, 3/11"]
+
+- clave: memoria-de-lo-publicado
+  fecha: "2026-11-03"
+  destino: jefe_cultura
+  capa: marca
+  patron: "«Como hemos publicado ahora sobre el Goncourt, mola que lo recuerde para que mañana por la mañana no mande la misma historia.»"
+  propuesta: "Lo que se programa en Buffer o se marca publicado no vuelve a la mesa en los días siguientes: la madrugada aparta las noticias que cuentan lo mismo."
+  evidencia: ["Conversación, 3/11: pieza del Goncourt y el Renaudot"]

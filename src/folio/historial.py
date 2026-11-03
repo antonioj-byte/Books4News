@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS historias_usadas (
 CREATE TABLE IF NOT EXISTS curiosidades_usadas (
     fecha TEXT NOT NULL, curiosidad TEXT NOT NULL, PRIMARY KEY (fecha, curiosidad)
 );
+CREATE TABLE IF NOT EXISTS publicadas (
+    pieza_id TEXT PRIMARY KEY, fecha TEXT NOT NULL, titular TEXT, texto TEXT NOT NULL, redes TEXT, vector BLOB
+);
 CREATE TABLE IF NOT EXISTS libros_usados (
     fecha TEXT NOT NULL, clave TEXT NOT NULL, titulo TEXT, autor TEXT, olid TEXT,
     PRIMARY KEY (fecha, clave)
@@ -45,6 +48,28 @@ class Historial:
             (self._desde(fecha, dias), fecha),
         ).fetchall()
         return [(f, t, np.frombuffer(c, dtype=np.float32)) for f, t, c in filas]
+
+    # --- Memoria de lo publicado (3/11, a petición del usuario: «como hemos publicado ahora sobre el Goncourt, que lo
+    # recuerde para que mañana por la mañana no mande la misma historia») ---------------------------------------
+
+    def anadir_publicada(self, fecha: str, pieza_id: str, titular: str, texto: str, redes: str = "") -> None:
+        """Una pieza que sale (programada en Buffer o marcada «publicada»). El vector lo calcula la madrugada."""
+        with self.db:
+            self.db.execute("INSERT INTO publicadas (pieza_id, fecha, titular, texto, redes) VALUES (?, ?, ?, ?, ?) "
+                            "ON CONFLICT(pieza_id) DO UPDATE SET fecha=excluded.fecha, titular=excluded.titular, "
+                            "texto=excluded.texto, redes=excluded.redes, vector=NULL",
+                            (pieza_id, fecha, titular, texto, redes))
+
+    def publicadas_recientes(self, fecha: str, dias: int) -> list[tuple[str, str, str, str, np.ndarray | None]]:
+        """(pieza, fecha, titular, texto, vector o None) de lo publicado en los `dias` anteriores a `fecha` y en el
+        mismo día: lo de hoy cuenta para la ejecución de mañana y para relanzar hoy."""
+        filas = self.db.execute("SELECT pieza_id, fecha, titular, texto, vector FROM publicadas WHERE fecha >= ? AND fecha <= ? "
+                                "ORDER BY fecha DESC", (self._desde(fecha, dias), fecha)).fetchall()
+        return [(p, f, t or "", x, np.frombuffer(v, dtype=np.float32) if v else None) for p, f, t, x, v in filas]
+
+    def poner_vector(self, pieza_id: str, vector: np.ndarray) -> None:
+        with self.db:
+            self.db.execute("UPDATE publicadas SET vector = ? WHERE pieza_id = ?", (vector.astype(np.float32).tobytes(), pieza_id))
 
     def libro_usado(self, fecha: str, dias: int, titulo: str, autor: str, olid: str | None) -> str | None:
         """Devuelve la fecha en que se usó el libro, o None."""

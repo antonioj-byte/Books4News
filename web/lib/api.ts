@@ -118,7 +118,7 @@ export const api = {
     pedir<RespuestaChat>(`${pieza(eid, pid)}/chat`, { method: "POST", body: JSON.stringify({ mensaje, ...(para ? { para } : {}) }) }),
   // Programar en Buffer la pieza aprobada (a una hora, a la cola o como borrador)
   buffer: (eid: number, pid: string) => pedir<EstadoBuffer>(`${pieza(eid, pid)}/buffer`),
-  programarBuffer: (eid: number, pid: string, cuerpo: { hora: string | null; borrador: boolean; reemplazar: boolean }) =>
+  programarBuffer: (eid: number, pid: string, cuerpo: { hora: string | null; borrador: boolean; reemplazar: boolean; redes: ("instagram" | "linkedin")[] }) =>
     pedir<EstadoBuffer>(`${pieza(eid, pid)}/buffer`, { method: "POST", body: JSON.stringify(cuerpo) }),
   // El carrusel listo para publicar (JPEG, vídeo de portada y pie), de la versión actual
   urlDescarga: (eid: number, pid: string) => `${pieza(eid, pid)}/descarga.zip`,

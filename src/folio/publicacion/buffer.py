@@ -18,6 +18,10 @@ import httpx
 
 URL = "https://api.buffer.com"
 MAX_PIE = 2200            # caracteres del pie que admite Instagram
+MAX_PIE_LINKEDIN = 3000   # y LinkedIn
+MAX_IMAGENES_LINKEDIN = 9 # LinkedIn no mezcla vídeo e imágenes: va el carrusel en imágenes, como mucho nueve
+REDES = ("instagram", "linkedin")
+NOMBRE_RED = {"instagram": "Instagram", "linkedin": "LinkedIn"}
 
 _CANALES = """query Canales($org: OrganizationId!) {
   channels(input: { organizationId: $org }) { id name service }
@@ -73,17 +77,23 @@ class Buffer:
     def canales(self, organizacion: str) -> list[dict]:
         return self.consulta(_CANALES, {"org": organizacion}).get("channels") or []
 
-    def canal_instagram(self, canal: str | None = None) -> dict:
-        """El canal de Instagram: el indicado (BUFFER_CHANNEL_ID) o el único de Instagram de la cuenta."""
+    def canal_de(self, red: str, canal: str | None = None) -> dict:
+        """El canal de una red («instagram» o «linkedin», 3/11): el indicado (BUFFER_CHANNEL_ID,
+        BUFFER_LINKEDIN_CHANNEL_ID) o el único de esa red en la cuenta."""
         todos = [c for o in self.organizaciones() for c in self.canales(o["id"])]
         if canal:
             elegido = [c for c in todos if c["id"] == canal]
         else:
-            elegido = [c for c in todos if str(c.get("service", "")).lower() == "instagram"]
+            elegido = [c for c in todos if str(c.get("service", "")).lower() == red]
         if len(elegido) != 1:
-            raise ErrorBuffer(f"{'No encuentro el canal ' + canal if canal else 'Hay ' + str(len(elegido)) + ' canales de Instagram'}"
-                              " en Buffer: conecta el de Folio o fija BUFFER_CHANNEL_ID")
+            variable = "BUFFER_CHANNEL_ID" if red == "instagram" else "BUFFER_LINKEDIN_CHANNEL_ID"
+            nombre = NOMBRE_RED.get(red, red)
+            raise ErrorBuffer(f"{'No encuentro el canal ' + canal if canal else 'Hay ' + str(len(elegido)) + ' canales de ' + nombre}"
+                              f" en Buffer: conecta el de Folio o fija {variable}")
         return elegido[0]
+
+    def canal_instagram(self, canal: str | None = None) -> dict:
+        return self.canal_de("instagram", canal)
 
     def valores(self, enum: str) -> list[str]:
         """Valores de un enum del esquema (introspección, solo lectura), para comprobar los que usamos."""
@@ -94,18 +104,28 @@ class Buffer:
 
     @staticmethod
     def entrada(canal: str, pie: str, medios: list[tuple[str, str]], cuando: datetime | None,
-                borrador: bool = False) -> dict:
+                borrador: bool = False, red: str = "instagram") -> dict:
         """CreatePostInput del carrusel: `medios` son («imagen» o «video», URL pública) en orden; sin
-        `cuando`, a la cola de Buffer. Con `borrador`, se guarda en los borradores de Buffer y no se publica."""
-        if not 2 <= len(medios) <= 10:
-            raise ErrorBuffer(f"Un carrusel de Instagram lleva de 2 a 10 archivos, no {len(medios)}")
-        if len(pie) > MAX_PIE:
-            raise ErrorBuffer(f"El pie tiene {len(pie)} caracteres; Instagram admite {MAX_PIE}")
+        `cuando`, a la cola de Buffer. Con `borrador`, se guarda en los borradores de Buffer y no se publica.
+        En LinkedIn (3/11), solo imágenes (no mezcla vídeo e imágenes), de 1 a 9, y sin metadatos de Instagram."""
+        if red == "linkedin":
+            if any(t == "video" for t, _ in medios):
+                raise ErrorBuffer("LinkedIn no mezcla vídeo e imágenes: el carrusel va en imágenes")
+            if not 1 <= len(medios) <= MAX_IMAGENES_LINKEDIN:
+                raise ErrorBuffer(f"Una publicación de LinkedIn lleva de 1 a {MAX_IMAGENES_LINKEDIN} imágenes, no {len(medios)}")
+            if len(pie) > MAX_PIE_LINKEDIN:
+                raise ErrorBuffer(f"El pie tiene {len(pie)} caracteres; LinkedIn admite {MAX_PIE_LINKEDIN}")
+        else:
+            if not 2 <= len(medios) <= 10:
+                raise ErrorBuffer(f"Un carrusel de Instagram lleva de 2 a 10 archivos, no {len(medios)}")
+            if len(pie) > MAX_PIE:
+                raise ErrorBuffer(f"El pie tiene {len(pie)} caracteres; Instagram admite {MAX_PIE}")
         entrada = {
             "channelId": canal, "text": pie, "schedulingType": "automatic",
             "assets": [{"video" if tipo == "video" else "image": {"url": url}} for tipo, url in medios],
-            "metadata": {"instagram": {"type": "post", "shouldShareToFeed": True}},
         }
+        if red == "instagram":
+            entrada["metadata"] = {"instagram": {"type": "post", "shouldShareToFeed": True}}
         if cuando:
             if cuando.tzinfo is None:
                 raise ErrorBuffer("La hora tiene que llevar zona horaria")
@@ -118,9 +138,9 @@ class Buffer:
         return entrada
 
     def programar(self, canal: str, pie: str, medios: list[tuple[str, str]], cuando: datetime | None,
-                  borrador: bool = False) -> dict:
+                  borrador: bool = False, red: str = "instagram") -> dict:
         """Programa el carrusel (o lo deja en borradores). Devuelve el post de Buffer ({id, dueAt, assets})."""
-        datos = self.consulta(_CREAR, {"input": self.entrada(canal, pie, medios, cuando, borrador)}).get("createPost") or {}
+        datos = self.consulta(_CREAR, {"input": self.entrada(canal, pie, medios, cuando, borrador, red)}).get("createPost") or {}
         if "post" not in datos:
             raise ErrorBuffer(self._limpio(f"Buffer no programó el carrusel: {datos.get('message', 'sin respuesta')}"))
         return datos["post"]

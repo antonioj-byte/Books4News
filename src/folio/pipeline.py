@@ -158,13 +158,36 @@ class Pipeline:
             if len(elegidas) >= maximo:
                 break
             c = agrupacion.centroide(h, vectores)
-            repetida = next(((f, t) for f, t, cu in usadas
-                             if float(np.dot(c, cu)) >= p.exclusion.umbral_historia_repetida), None)
+            # Lo publicado lleva su propio umbral (un cuarto elemento): su vector sale del texto de la pieza, no de
+            # los mismos artículos, y se parece algo menos a la noticia que lo cuenta otro día
+            repetida = next(((f, t, *u) for f, t, cu, *u in usadas
+                             if float(np.dot(c, cu)) >= (u[0] if u else p.exclusion.umbral_historia_repetida)), None)
             if repetida:
-                excluidas[h.id] = f"ya usada el {repetida[0]} («{repetida[1]}»)"
+                excluidas[h.id] = (f"ya publicada el {repetida[0]} («{repetida[1]}»)" if len(repetida) > 2
+                                   else f"ya usada el {repetida[0]} («{repetida[1]}»)")
             else:
                 elegidas.append(h)
         return elegidas
+
+    def _publicadas(self) -> list[tuple]:
+        """La memoria de lo publicado (3/11): las piezas programadas en Buffer o marcadas «publicada» en los días de
+        la regla de repetición, como un vector más que aparta las noticias que cuentan lo mismo (también las del
+        carril del libro, el radar y «Cinco del libro», que salen de ahí). El vector se calcula una vez y se guarda."""
+        p = self.cfg.pipeline.exclusion
+        try:
+            filas = self.historial.publicadas_recientes(self.fecha, p.dias_historias)
+        except Exception as exc:
+            self.avisos.append(f"No se pudo leer la memoria de lo publicado: {exc}")
+            return []
+        faltan = {pid: texto for pid, _, _, texto, v in filas if v is None}
+        nuevos = self.embedder.vectores({f"publicada:{pid}": t for pid, t in faltan.items()}) if faltan else {}
+        out = []
+        for pid, fecha, titular, _, v in filas:
+            if v is None:
+                v = nuevos[f"publicada:{pid}"]
+                self.historial.poner_vector(pid, v)
+            out.append((fecha, titular, v / (np.linalg.norm(v) or 1.0), p.umbral_publicada))
+        return out
 
     def _del_libro(self, editoriales: list[Articulo], vectores, usadas, excluidas: dict[str, str],
                    con_llm: bool) -> list[Historia]:
@@ -256,6 +279,7 @@ class Pipeline:
         todas = agrupacion.agrupar(actualidad, vectores, p.agrupacion.umbral_similitud, p.agrupacion.umbral_fusion)
         candidatas = [h for h in todas if h.n_medios >= p.agrupacion.min_medios]
         usadas = self.historial.centroides_recientes(self.fecha, p.exclusion.dias_historias)
+        usadas += self._publicadas()
         excluidas: dict[str, str] = {}
         al_jefe = self._no_repetidas(candidatas, vectores, p.seleccion.historias_al_jefe, usadas, excluidas)
 

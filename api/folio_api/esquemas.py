@@ -93,6 +93,7 @@ class EstadoBuffer(BaseModel):
     disponible: bool                      # hay clave de Buffer, URL pública y clave de enlaces
     motivo: str | None = None             # por qué no, si no está disponible
     programada: ProgramadaBuffer | None = None
+    linkedin: ProgramadaBuffer | None = None   # lo programado en LinkedIn (3/11)
     mensaje: str | None = None            # el resultado de la última acción
 
 
@@ -100,6 +101,7 @@ class ProgramarBuffer(BaseModel):
     hora: str | None = None               # «HH:MM» o «AAAA-MM-DD HH:MM» (hora de Madrid); sin ella, a la cola de Buffer
     borrador: bool = False                # lo deja en borradores: no se publica
     reemplazar: bool = False              # ya estaba programada y esa publicación se ha borrado en Buffer
+    redes: list[Literal["instagram", "linkedin"]] = ["instagram"]   # a qué redes se manda (3/11: también LinkedIn)
 
 
 class VideoDiapositiva(BaseModel):

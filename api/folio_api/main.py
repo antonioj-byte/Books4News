@@ -31,6 +31,11 @@ def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importa
             almacen.importar_conversacion(memoria_folio.cargar_conversacion(cfg.raiz))
         except Exception:                       # noqa: BLE001 — un archivo mal escrito no impide arrancar la web
             logging.getLogger(__name__).exception("No se pudo cargar config/memoria_conversacion.yaml")
+        try:                                    # lo programado en Buffer antes de la memoria de lo publicado (3/11)
+            from folio.publicacion import programar as _prog
+            _prog.recordar_programadas(cfg, almacen)
+        except Exception:                       # noqa: BLE001
+            logging.getLogger(__name__).exception("No se pudo recuperar lo programado en Buffer")
     app = FastAPI(title="Folio · web local", version="0.1.0")
     if ejecutor is None:
         ejecutor = Ejecutor(cfg.dir_datos)

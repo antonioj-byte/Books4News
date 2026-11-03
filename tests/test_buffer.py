@@ -145,9 +145,10 @@ def test_el_boton_de_la_web_programa_la_pieza_aprobada(cfg, monkeypatch):
 
     class BufferFalso:
         def __init__(self, clave, cliente=None): pass
-        def canal_instagram(self, canal=None): return {"id": "c1", "name": "folio_editorial"}
-        def programar(self, canal, pie, medios, cuando, borrador):
-            enviados.append((pie, medios, cuando, borrador))
+        def canal_de(self, red, canal=None): return {"id": "c1" if red == "instagram" else "c2",
+                                                     "name": "folio_editorial" if red == "instagram" else "Folio LinkedIn"}
+        def programar(self, canal, pie, medios, cuando, borrador, red="instagram"):
+            enviados.append((pie, medios, cuando, borrador) if red == "instagram" else ("linkedin", medios, cuando, borrador))
             return {"id": "post1", "dueAt": cuando.isoformat() if cuando else None}
     monkeypatch.setattr(prog, "preparar", preparar)
     monkeypatch.setattr(prog, "Buffer", BufferFalso)
@@ -172,7 +173,7 @@ def test_el_boton_de_la_web_programa_la_pieza_aprobada(cfg, monkeypatch):
     # Desde un borrador se programa sin borrarlo antes, con aviso (2/11: «no funciona el botón»)
     r = c.post(url, json={"hora": "2099-01-06 10:00", "borrador": False, "reemplazar": False})
     assert r.status_code == 200, r.text
-    assert "borrador anterior sigue en Buffer" in r.json()["mensaje"] and len(enviados) == 3
+    assert "borrador anterior de Instagram sigue en Buffer" in r.json()["mensaje"] and len(enviados) == 3
     assert not r.json()["programada"]["borrador"]
     # Y ya programada a una hora, otra vez hace falta «reemplazar»
     assert c.post(url, json={"borrador": True}).status_code == 409
@@ -201,3 +202,93 @@ def test_no_se_programa_dos_veces_a_la_vez(cfg, tmp_path, monkeypatch):
     with pytest.raises(RuntimeError):
         prog.programar(cfg, p, 1, p.fecha, cuando, buffer=object())
     assert not en_curso.exists()
+
+
+def test_linkedin_va_en_imagenes_y_sin_metadatos_de_instagram():
+    """3/11 («solo manda a Buffer Instagram; molaría que mandase también a LinkedIn»)."""
+    api = Api()
+    b = _buffer(api)
+    canal = b.canal_de("linkedin")
+    assert canal["id"] == "c-li"
+    imagenes = [("imagen", f"https://f.example/0{i}.jpg") for i in range(1, 4)]
+    b.programar(canal["id"], "Pie", imagenes, None, red="linkedin")
+    entrada = api.peticiones[-1]["variables"]["input"]
+    assert "metadata" not in entrada and [list(a) for a in entrada["assets"]] == [["image"]] * 3
+    with pytest.raises(ErrorBuffer, match="no mezcla"):
+        b.entrada("c-li", "Pie", MEDIOS, None, red="linkedin")
+    with pytest.raises(ErrorBuffer, match="de 1 a 9"):
+        b.entrada("c-li", "Pie", [("imagen", "u")] * 10, None, red="linkedin")
+
+
+def test_programar_en_las_dos_redes_y_recordar_lo_publicado(cfg, monkeypatch):
+    """Instagram con su vídeo, LinkedIn en JPEG; las dos quedan constadas y la pieza pasa a la memoria de lo
+    publicado (3/11: «que lo recuerde para que mañana por la mañana no mande la misma historia»)."""
+    from datetime import timedelta, timezone
+    from datos import ELECCION, guion_valido
+    from folio.historial import Historial
+    from folio.modelos import Pieza
+    from folio.publicacion import programar as prog
+    from folio.publicacion.preparar import Preparada
+    cfg.url_publica, cfg.clave_enlaces = "https://folio.example", "k"
+    p = Pieza(id="2026-11-03-15", fecha="2026-11-03", estado="aprobada", historia_id="tema-4", eleccion=ELECCION,
+              n_medios=3, guion=guion_valido())
+
+    def preparar(cfg_, pieza, con_video=True, videos_de=None):
+        carpeta = cfg_.dir_informes / pieza.fecha / "publicar" / pieza.id
+        carpeta.mkdir(parents=True, exist_ok=True)
+        for n in (1, 2, 3):
+            (carpeta / f"0{n}.jpg").write_bytes(b"j")
+        (carpeta / "01.mp4").write_bytes(b"v")
+        return Preparada(carpeta=carpeta, medios=[("video", "01.mp4"), ("imagen", "02.jpg"), ("imagen", "03.jpg")],
+                         pie="Pie", avisos=[])
+    enviados = []
+
+    class BufferFalso:
+        def canal_de(self, red, canal=None): return {"id": red, "name": red}
+        def programar(self, canal, pie, medios, cuando, borrador, red="instagram"):
+            enviados.append((red, medios))
+            return {"id": f"post-{red}"}
+    monkeypatch.setattr(prog, "preparar", preparar)
+    cuando = datetime.now(timezone.utc) + timedelta(hours=3)
+    r = prog.programar(cfg, p, 1, p.fecha, cuando, buffer=BufferFalso(), redes=["instagram", "linkedin"])
+    assert set(r.posts) == {"instagram", "linkedin"}
+    ig, li = dict(enviados)["instagram"], dict(enviados)["linkedin"]
+    assert ig[0][0] == "video" and all(t == "imagen" and u.split("?")[0].endswith(".jpg") for t, u in li)
+    assert prog.estado(cfg, p.fecha, p.id)["canal"] == "instagram" and prog.estado(cfg, p.fecha, p.id, "linkedin")
+    hoy = datetime.now(MADRID).date().isoformat()
+    memoria = Historial(cfg.ruta_db).publicadas_recientes(hoy, 7)
+    assert memoria[0][0] == p.id and ELECCION.titular in memoria[0][3]
+    # Ya programada en LinkedIn: solo se puede volver a mandar a esa red marcando «reemplazar»
+    with pytest.raises(prog.NoSePuede, match="LinkedIn"):
+        prog.programar(cfg, p, 1, p.fecha, cuando, buffer=BufferFalso(), redes=["linkedin"])
+    # Un borrador no cuenta como publicado
+    p2 = p.model_copy(update={"id": "2026-11-03-16"})
+    prog.programar(cfg, p2, 1, p.fecha, cuando, buffer=BufferFalso(), borrador=True)
+    assert [m[0] for m in Historial(cfg.ruta_db).publicadas_recientes(hoy, 7)] == [p.id]
+
+
+def test_la_memoria_de_lo_publicado_aparta_la_misma_historia(cfg):
+    """La madrugada siguiente, una noticia que se parece a lo publicado no llega a la mesa."""
+    import numpy as np
+    from folio.historial import Historial
+    from folio.pipeline import Pipeline
+    h = Historial(cfg.ruta_db)
+    h.anadir_publicada("2026-11-03", "2026-11-03-15", "Jaenada gana el Goncourt", "Jaenada gana el Goncourt")
+    tuberia = Pipeline(cfg, "2026-11-04")
+
+    class Emb:
+        def vectores(self, textos): return {k: np.array([1.0, 0.0], dtype=np.float32) for k in textos}
+    tuberia._embedder = Emb()
+    publicadas = tuberia._publicadas()
+    assert len(publicadas) == 1 and publicadas[0][3] == cfg.pipeline.exclusion.umbral_publicada
+    assert h.publicadas_recientes("2026-11-04", 7)[0][4] is not None           # el vector queda guardado
+    # Se aparta una historia casi igual y pasa una distinta
+    from folio.modelos import Articulo, Historia
+    def historia(hid, v):
+        a = Articulo(id=hid, medio="m", url="u", titulo="t", entradilla="", idioma="fr", acceso="abierto")
+        return Historia(id=hid, articulos=[a], medios=["m"], n_medios=1), {hid: np.array(v, dtype=np.float32)}
+    igual, v1 = historia("a", [0.99, 0.14])
+    otra, v2 = historia("b", [0.0, 1.0])
+    excluidas = {}
+    quedan = tuberia._no_repetidas([igual, otra], {**v1, **v2}, 5, publicadas, excluidas)
+    assert [x.id for x in quedan] == ["b"] and "ya publicada el 2026-11-03" in excluidas["a"]

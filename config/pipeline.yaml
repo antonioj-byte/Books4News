@@ -113,6 +113,7 @@ exclusion:
   dias_historias: 7
   dias_libros: 60
   umbral_historia_repetida: 0.90  # coseno entre centroides
+  umbral_publicada: 0.86          # contra lo publicado (memoria de lo publicado, 3/11): el vector sale del texto de la pieza
 
 # Qué artículos del grupo lee el guionista: puntuación = media de la similitud con el centro del
 # grupo y con «de qué se habla» (el hecho principal según el jefe), más un extra por acceso.

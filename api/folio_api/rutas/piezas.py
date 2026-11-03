@@ -122,6 +122,9 @@ def estado(eid: int, pid: str, cambio: CambioEstado, ctx: Contexto = Depends(con
     if ctx.ejecutor.en_marcha(pid) and cambio.estado != "descartada":
         raise HTTPException(409, ESCRIBIENDOSE)
     ctx.almacen.cambiar_estado(eid, pid, cambio.estado)
+    if cambio.estado == "publicada":            # memoria de lo publicado (3/11): mañana no vuelve la misma historia
+        from folio.publicacion import programar as _prog
+        _prog.recordar_publicada(ctx.cfg, ctx.pieza(eid, pid)[0], ["a mano"])
     return cambio
 
 
@@ -355,12 +358,13 @@ def _estado_buffer(ctx: Contexto, fecha: str, pid: str, mensaje: str | None = No
     from folio.publicacion import programar
     faltan = [n for n, v in (("BUFFER_API_KEY", ctx.cfg.buffer_clave), ("FOLIO_URL_PUBLICA", ctx.cfg.url_publica),
                              ("FOLIO_CLAVE_ENLACES", ctx.cfg.clave_enlaces)) if not v]
-    hecha = programar.estado(ctx.cfg, fecha, pid)
+    def de(hecha: dict | None) -> ProgramadaBuffer | None:
+        return ProgramadaBuffer(hora=hecha.get("hora"), borrador=bool(hecha.get("borrador")), canal=hecha.get("canal", ""),
+                                en=hecha.get("en"), version=hecha.get("version")) if hecha else None
     return EstadoBuffer(
         disponible=not faltan, motivo=f"Falta configurar {', '.join(faltan)}" if faltan else None,
-        programada=ProgramadaBuffer(hora=hecha.get("hora"), borrador=bool(hecha.get("borrador")), canal=hecha.get("canal", ""),
-                                    en=hecha.get("en"), version=hecha.get("version")) if hecha else None,
-        mensaje=mensaje)
+        programada=de(programar.estado(ctx.cfg, fecha, pid)),
+        linkedin=de(programar.estado(ctx.cfg, fecha, pid, "linkedin")), mensaje=mensaje)
 
 
 @router.get("/api/ejecuciones/{eid}/piezas/{pid}/buffer", response_model=EstadoBuffer)
@@ -388,7 +392,7 @@ def programar_buffer(eid: int, pid: str, cuerpo: ProgramarBuffer, ctx: Contexto 
     reutilizar = _render_vigente(ctx, eid, fecha, pid, v) and bool(_videos(ctx, fecha, pid, p))
     try:
         r = programar.programar(ctx.cfg, p, v, fecha, cuando, borrador=cuerpo.borrador, reemplazar=cuerpo.reemplazar,
-                                videos_de=render if reutilizar else None)
+                                videos_de=render if reutilizar else None, redes=cuerpo.redes)
     except programar.NoSePuede as e:
         raise HTTPException(409, str(e))
     except ErrorBuffer as e:

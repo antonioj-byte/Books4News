@@ -1282,6 +1282,7 @@ export interface components {
             /** Motivo */
             motivo: string | null;
             programada: components["schemas"]["ProgramadaBuffer"] | null;
+            linkedin: components["schemas"]["ProgramadaBuffer"] | null;
             /** Mensaje */
             mensaje: string | null;
         };
@@ -2174,6 +2175,13 @@ export interface components {
              * @default false
              */
             reemplazar: boolean;
+            /**
+             * Redes
+             * @default [
+             *       "instagram"
+             *     ]
+             */
+            redes: ("instagram" | "linkedin")[];
         };
         /** PropuestaDelFondo */
         PropuestaDelFondo: {

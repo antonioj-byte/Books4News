@@ -98,6 +98,7 @@ class Exclusion(_Seccion):
     dias_historias: int
     dias_libros: int
     umbral_historia_repetida: float
+    umbral_publicada: float = 0.86     # contra la memoria de lo publicado (3/11)
 
 
 class SeleccionTextos(_Seccion):
@@ -302,6 +303,7 @@ class Config:
     # Instagram en la cuenta, el id del de Folio
     buffer_clave: str | None = field(default=None, repr=False)   # secreto: fuera del repr (salidas de pytest, registros)
     buffer_canal: str | None = None
+    buffer_canal_linkedin: str | None = None     # BUFFER_LINKEDIN_CHANNEL_ID (3/11); sin ella, el único de LinkedIn
     extra: dict = field(default_factory=dict)
     prompts_ab: Path | None = None   # prueba A/B: carpeta con los prompts de una variante (folio.ab._cfg_variante)
 
@@ -399,4 +401,5 @@ def cargar(raiz: Path = RAIZ) -> Config:
         clave_enlaces=_limpia("FOLIO_CLAVE_ENLACES"),
         buffer_clave=_limpia("BUFFER_API_KEY"),
         buffer_canal=_limpia("BUFFER_CHANNEL_ID"),
+        buffer_canal_linkedin=_limpia("BUFFER_LINKEDIN_CHANNEL_ID"),
     )

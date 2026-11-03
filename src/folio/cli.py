@@ -430,7 +430,12 @@ def buffer_comprobar():
             for c in b.canales(o["id"]):
                 typer.echo(f"  canal {c['service']}: {c['name']} ({c['id']})")
         canal = b.canal_instagram(cfg.buffer_canal)
-        typer.echo(f"Se programará en: {canal['name']} ({canal['id']})")
+        typer.echo(f"Instagram: {canal['name']} ({canal['id']})")
+        try:
+            li = b.canal_de("linkedin", cfg.buffer_canal_linkedin)
+            typer.echo(f"LinkedIn: {li['name']} ({li['id']})")
+        except ErrorBuffer as e:
+            typer.echo(f"LinkedIn: {e}")
         typer.echo(f"Tipos de publicación que admite: {', '.join(b.valores('PostType')) or 'no se pudo leer'}")
     except ErrorBuffer as e:
         typer.echo(f"No se pudo: {e}", err=True)
@@ -447,7 +452,8 @@ def buffer_programar(pieza: str,
                      confirmar: bool = typer.Option(False, "--confirmar", help="Programar de verdad; sin él, solo prepara y comprueba"),
                      borrador: bool = typer.Option(False, "--borrador", help="Con --confirmar, lo deja en los borradores de Buffer: no se publica"),
                      reemplazar: bool = typer.Option(False, "--reemplazar", help="La pieza ya estaba programada y esa publicación se ha borrado en Buffer"),
-                     sin_video: bool = typer.Option(False, "--sin-video", help="Todas las diapositivas en imagen, sin vídeo")):
+                     sin_video: bool = typer.Option(False, "--sin-video", help="Todas las diapositivas en imagen, sin vídeo"),
+                     redes: str = typer.Option("instagram", "--redes", help="instagram, linkedin o instagram,linkedin (3/11)")):
     """Programa en Buffer una pieza «aprobada» (en su versión actual de la web) como carrusel de Instagram.
 
     Sin --confirmar no programa nada: prepara los archivos, enseña el pie y comprueba el canal."""
@@ -462,7 +468,8 @@ def buffer_programar(pieza: str,
     cuando = hora_de_publicacion(a, os.getenv("FOLIO_ZONA") or "Europe/Madrid") if a else None
     try:
         r = prog.programar(cfg, p, version, fecha, cuando, borrador=borrador, reemplazar=reemplazar,
-                           confirmar=confirmar, con_video=not sin_video, buffer=_buffer(cfg))
+                           confirmar=confirmar, con_video=not sin_video, buffer=_buffer(cfg),
+                           redes=[x.strip() for x in redes.split(",") if x.strip()])
     except (prog.NoSePuede, ErrorBuffer) as e:
         typer.echo(f"No se pudo: {e}", err=True)
         raise typer.Exit(1)
