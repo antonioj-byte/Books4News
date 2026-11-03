@@ -10,6 +10,7 @@ import { EstadoChip, FormatoChip, Marcas } from "@/components/Marcas";
 import { Descartar } from "@/components/Descartar";
 import { Proceder } from "@/components/Proceder";
 import { ProponerTema } from "@/components/ProponerTema";
+import { CincoDelLibro } from "@/components/CincoDelLibro";
 import { api } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
 
@@ -128,6 +129,8 @@ export function VistaDia() {
           </Link>
         ))}
       </div>
+
+      {dia && !(dia.piezas ?? []).some((p) => p.formato === "cinco") && <CincoDelLibro fecha={fecha} onHecho={recargarDia} />}
 
       <ProponerTema eid={dia?.ejecucion.id} onPieza={recargarDia} />
 

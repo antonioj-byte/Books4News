@@ -74,6 +74,8 @@ export const api = {
   escribirDelFondo: (id: number, ejecucion: number) =>
     pedir<TemaCreado>(`/api/fondo/${id}/escribir`, { method: "POST", body: JSON.stringify({ ejecucion }) }),
   descartarDelFondo: (id: number) => pedir<PropuestaDelFondo>(`/api/fondo/${id}/descartar`, { method: "POST" }),
+  lanzarCinco: (fecha: string) => pedir<EstadoEjecucion>(`/api/cinco/${fecha}`, { method: "POST" }),
+  estadoCinco: () => pedir<EstadoEjecucion>("/api/cinco"),
   prepararFondo: (tandas: number) => pedir<EstadoEjecucion>("/api/fondo/preparar", { method: "POST", body: JSON.stringify({ tandas }) }),
   proponerTema: (t: TemaNuevo) => pedir<TemaCreado>("/api/temas", { method: "POST", body: JSON.stringify(t) }),
   replicarTema: (id: number, r: { texto: string; ejecucion: number }) =>

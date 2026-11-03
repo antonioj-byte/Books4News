@@ -1,9 +1,12 @@
 """Lanzar la ejecución del día y seguir su progreso."""
 
+import re
+import sys
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from folio_api.dependencias import Contexto, contexto
-from folio_api.ejecutor import EstadoEjecucion, Trabajo
+from folio_api.ejecutor import YA_EN_MARCHA, EstadoEjecucion, Trabajo
 from folio_api.programador import EstadoProgramada
 
 router = APIRouter()
@@ -34,3 +37,23 @@ def programada(ctx: Contexto = Depends(contexto)):
 def trabajos(ctx: Contexto = Depends(contexto)):
     """Los trabajos en segundo plano de esta sesión de la API (la web avisa cuando acaba cada uno)."""
     return ctx.ejecutor.trabajos()
+
+
+# «Cinco del libro» a mano (3/11, a petición del usuario: «se me olvidó mergear y son las 6 a.m.»): solo esa pieza, sobre
+# las noticias que ya leyó la ejecución del día, sin rehacer la mesa (~0,15 $ y ~125 créditos)
+TRABAJO_CINCO = "cinco-del-libro"
+
+
+@router.post("/api/cinco/{fecha}", response_model=EstadoEjecucion, status_code=202)
+def lanzar_cinco(fecha: str, ctx: Contexto = Depends(contexto)):
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", fecha):
+        raise HTTPException(422, "Fecha no válida")
+    motivo = ctx.ejecutor.desarrollar(TRABAJO_CINCO, [[sys.executable, "-m", "folio.cli", "cinco", "--fecha", fecha, "--quiet"]])
+    if motivo:
+        raise HTTPException(409, "Ya se está escribiendo «Cinco del libro»" if motivo == YA_EN_MARCHA else motivo)
+    return ctx.ejecutor.estado_desarrollo(TRABAJO_CINCO) or EstadoEjecucion(en_marcha=True)
+
+
+@router.get("/api/cinco", response_model=EstadoEjecucion)
+def estado_cinco(ctx: Contexto = Depends(contexto)):
+    return ctx.ejecutor.estado_desarrollo(TRABAJO_CINCO) or EstadoEjecucion(en_marcha=False)

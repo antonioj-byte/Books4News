@@ -92,3 +92,19 @@ def test_render_portada_y_noticias_con_su_ilustracion(cfg_diseno):
     assert "2026-11-02-9-cinco-2.jpg" in n2 and "Una explicación" in n2 and 'class="remate"' in n2 and "El País" in n2
     assert "cinco-ilus" not in n6 and "cinco-numero" in n6       # sin ilustración, el número grande
     assert pl.total(p) == 7                                     # y el colofón
+
+
+def test_el_boton_lanza_solo_cinco_del_libro(cfg_diseno, monkeypatch):
+    """3/11: «Cinco del libro» a mano sobre las noticias del día, sin rehacer la mesa."""
+    from fastapi.testclient import TestClient
+    from folio.almacen import Almacen
+    from folio_api import ejecutor
+    from folio_api.main import crear_app
+    lanzados = []
+    monkeypatch.setattr(ejecutor.Ejecutor, "desarrollar", lambda self, clave, pasos: lanzados.append((clave, pasos)) or None)
+    c = TestClient(crear_app(cfg_diseno, Almacen(cfg_diseno.ruta_db), importar=False))
+    assert c.get("/api/cinco").json()["en_marcha"] is False
+    assert c.post("/api/cinco/no-es-fecha").status_code == 422
+    assert c.post("/api/cinco/2026-11-03").status_code == 202
+    clave, pasos = lanzados[0]
+    assert clave == "cinco-del-libro" and pasos[0][-4:] == ["cinco", "--fecha", "2026-11-03", "--quiet"]

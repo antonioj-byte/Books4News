@@ -37,7 +37,7 @@ class Trabajo(BaseModel):
 
 
 NOMBRES_TRABAJO = {"diaria": "Ejecución del día", "fondo-del-mes": "Tanda del fondo del mes",
-                   "memoria-analisis": "Análisis de la memoria"}
+                   "memoria-analisis": "Análisis de la memoria", "cinco-del-libro": "Cinco del libro"}
 
 MAX_DESARROLLOS = 3                    # «Proceder» a la vez (2/11): cada uno es un proceso aparte
 YA_EN_MARCHA = "Esta pieza ya se está escribiendo"
