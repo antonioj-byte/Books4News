@@ -103,6 +103,56 @@
   }
   .boton:hover:not(:disabled) { transform: translateY(-1px); background: var(--noche); }
   .boton:disabled { opacity: 0.55; cursor: progress; box-shadow: none; }
+  /* Trabajando (3/11: «me pone nervioso que el botón esté gris»): píldora en tinta, una franja de pluma que
+     avanza, un punto que late, el paso en marcha que respira y unos puntos suspensivos que se escriben solos */
+  .trabajando {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.7em 1.3em;
+    border-radius: var(--radio-boton);
+    background: var(--tinta);
+    color: var(--papel);
+    font-family: var(--fuente-texto);
+    font-weight: 600;
+    box-shadow: var(--sombra-boton);
+    isolation: isolate;
+  }
+  .trabajando::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--carmesi) 55%, transparent) 50%, transparent 80%);
+    transform: translateX(-100%);
+    animation: folio-barrido 2.2s ease-in-out infinite;
+  }
+  .trabajando__punto {
+    width: 0.55em;
+    height: 0.55em;
+    border-radius: 999px;
+    background: var(--subrayador);
+    animation: folio-latido 1.1s ease-in-out infinite;
+  }
+  .paso-vivo { animation: folio-respira 1.6s ease-in-out infinite; }
+  .puntos-vivos::after {
+    content: "";
+    display: inline-block;
+    width: 1.2em;
+    text-align: left;
+    animation: folio-puntos 1.4s steps(4, end) infinite;
+  }
+  @keyframes folio-barrido { to { transform: translateX(100%); } }
+  @keyframes folio-latido { 0%, 100% { transform: scale(0.7); opacity: 0.55; } 50% { transform: scale(1.15); opacity: 1; } }
+  @keyframes folio-respira { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  @keyframes folio-puntos { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75%, 100% { content: "..."; } }
+  @media (prefers-reduced-motion: reduce) {
+    .trabajando::before, .trabajando__punto, .paso-vivo { animation: none; }
+    .trabajando::before { transform: none; opacity: 0.25; }
+    .puntos-vivos::after { animation: none; content: "…"; }
+  }
   .boton-suave {
     display: inline-flex;
     align-items: center;

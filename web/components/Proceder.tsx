@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { PASOS_PIEZA, Trabajando } from "@/components/Trabajando";
 
 // «Proceder»: escribe una propuesta pendiente de la mesa (guion, hechos, arte, PNG y vídeo). Tarda unos
 // minutos; mientras, enseña la etapa en curso y, al terminar, avisa con `onHecho` para recargar.
@@ -64,10 +65,9 @@ export function Proceder({ eid, pid, onHecho, texto = "Proceder" }: {
 
   return (
     <span className="flex flex-col items-start gap-1">
-      <button onClick={lanzar} disabled={etapa !== null} className="boton">
-        {etapa ? "Escribiendo…" : `${texto} →`}
-      </button>
-      {etapa && <span className="dato">{etapa} · unos minutos</span>}
+      {etapa ? <Trabajando etapa={etapa} pasos={PASOS_PIEZA} /> : (
+        <button onClick={lanzar} className="boton">{`${texto} →`}</button>
+      )}
       {error && <span className="text-[13px] text-carmesi">{error}</span>}
     </span>
   );

@@ -611,7 +611,8 @@ def _con_alternativos(g: GuionLLM) -> GuionLLM:
 
 
 def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tuple[FuenteNoticia, str]],
-             libros: list[LibroVerificado], verificar_cita=None, voz: bool | str = False) -> tuple[GuionLLM, list[str], list[CitaVerificada]]:
+             libros: list[LibroVerificado], verificar_cita=None, voz: bool | str = False,
+             anunciar=None) -> tuple[GuionLLM, list[str], list[CitaVerificada]]:
     """Devuelve (guion validado, avisos, citas verificadas). Lanza ValueError si no pasa la validación.
 
     `verificar_cita` (folio.libros.citas) busca cada cita literal en el texto del libro; sin él, ninguna
@@ -638,6 +639,8 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
         # 2/11: el primer guion de 2026-11-02-9 llegó cortado (JSON sin cerrar a los 1.900 caracteres): el razonamiento
         # en esfuerzo alto se comió el tope. Tope máximo sin streaming y, si aun así se corta, otra vez en esfuerzo medio.
         etapa = "guion" if intento == 0 else "guion_correccion"
+        if anunciar:
+            anunciar("El guionista escribe el guion" if intento == 0 else f"El guionista corrige el guion (intento {intento + 1})")
         try:
             guion, contenido = llm.estructurado(f"guion:{pieza_id}:{intento + 1}", cache_al_final(mensajes, hasta=0), GuionLLM,
                                                 etapa_modelo=etapa, max_tokens=MAX_TOKENS_GUION)
@@ -662,6 +665,8 @@ def escribir(llm: LLM, pieza_id: str, eleccion: HistoriaElegida, textos: list[tu
                 claridad_pendiente = False
                 try:
                     from folio import claridad
+                    if anunciar:
+                        anunciar("Un lector sin contexto revisa el guion")
                     problemas = claridad.revisar(llm, cfg, pieza_id, guion)
                 except Exception as exc:          # el lector nunca para el guion
                     avisos.append(f"Lector sin contexto: no se pudo ({type(exc).__name__})")

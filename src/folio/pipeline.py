@@ -542,11 +542,12 @@ class Pipeline:
             self.verificador = Verificador(self.cfg)
         return citas.verificador_google_books(self.verificador.gb) if self.verificador.gb else None
 
-    def _escribir(self, pieza: Pieza, textos_h: list[tuple[FuenteNoticia, str]]) -> None:
-        """Guion de una pieza (se ejecuta en paralelo con los de las demás)."""
+    def _escribir(self, pieza: Pieza, textos_h: list[tuple[FuenteNoticia, str]], anunciar=None) -> None:
+        """Guion de una pieza (se ejecuta en paralelo con los de las demás). `anunciar`: en «Proceder», cada paso del
+        guionista como etapa de la web (3/11: «Desarrollando…» se quedaba fijo varios minutos)."""
         try:
             pieza.guion, avisos, pieza.citas = guionista.escribir(self.llm, pieza.id, pieza.eleccion, textos_h, pieza.libros,
-                                                                  self._verificar_cita)
+                                                                  self._verificar_cita, anunciar=anunciar)
         except Exception as exc:
             pieza.error = str(exc)
             return
@@ -629,7 +630,10 @@ class Pipeline:
         pieza.error = None
         # Las propuestas verificadas antes del 2/11 traían todos los candidatos: el guionista solo recibe el principal
         pieza.libros = pieza.libros[:libros_del_formato(pieza.eleccion.formato)]
-        self._escribir(pieza, self._textos(pieza, h))
+        progreso("Leyendo las fuentes de la pieza")
+        textos_h = self._textos(pieza, h)
+        self._escribir(pieza, textos_h, anunciar=progreso)
+        progreso("Comprobando los hechos y eligiendo la imagen")
         if pieza.estado != "propuesta":
             pieza.estado = "fallida"
             return pieza

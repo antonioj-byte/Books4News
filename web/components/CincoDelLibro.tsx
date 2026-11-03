@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { PASOS_CINCO, Trabajando } from "@/components/Trabajando";
 
 // «Cinco del libro» a mano (3/11): solo esa pieza, sobre las noticias que ya leyó la ejecución del día, sin rehacer la
 // mesa. Lanza `folio cinco` en un proceso aparte y lo sigue como «Proceder»; al acabar, recarga la mesa.
@@ -44,8 +45,9 @@ export function CincoDelLibro({ fecha, onHecho }: { fecha: string; onHecho: () =
     <div className="mt-10 flex flex-col items-start gap-1.5 rounded-[12px] border border-borde bg-panel p-5">
       <div className="antetitulo">Cinco del libro</div>
       <p className="text-[14px] text-tinta-suave">Las cinco noticias del mundo del libro de hoy, cada una con su ilustración. Se hace sobre las noticias que ya leyó la madrugada, sin rehacer la mesa (unos 5 minutos).</p>
-      <button className="boton" onClick={lanzar} disabled={etapa !== null}>{etapa ? "Escribiendo…" : "Escribir «Cinco del libro» →"}</button>
-      {etapa && <span className="dato">{etapa}</span>}
+      {etapa ? <Trabajando etapa={etapa} pasos={PASOS_CINCO} /> : (
+        <button className="boton" onClick={lanzar}>Escribir «Cinco del libro» →</button>
+      )}
       {error && <span className="text-[13px] text-carmesi">{error}</span>}
     </div>
   );
