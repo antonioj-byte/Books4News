@@ -25,6 +25,7 @@ import httpx
 import yaml
 from PIL import Image, ImageDraw, ImageFont
 
+from folio import formatos
 from folio import infografia, materiales, sin_foto
 from folio.imagenes import cara, cubiertas, editorial, esquema, friso, ilustracion, libres, prensa, recorte, retrato_generado, retratos
 from folio.config import Config
@@ -316,7 +317,7 @@ def diapositivas_de_libro(pieza: Pieza) -> list:
 def lleva_friso(cfg: Config, pieza: Pieza, tono: str | None) -> bool:
     """El friso de las tres fichas (2/11, opción B elegida por el usuario): solo en «Tres libros» con sus tres
     diapositivas de libro y nunca en las graves."""
-    return (cfg.pipeline.arte.friso.activo and pieza.eleccion.formato == "balda" and tono != "grave"
+    return (cfg.pipeline.arte.friso.activo and formatos.de(pieza.eleccion.formato).friso and tono != "grave"
             and len(diapositivas_de_libro(pieza)) == 3)
 
 
@@ -498,7 +499,7 @@ def _composicion(cfg: Config, pieza: Pieza, propuesta: PropuestaArte, arte: Arte
                                              propuesta.suceso_con_victimas)
     arte.avisos += avisos
     tipos = [t for t in cfg.pipeline.arte.infografias if not grave or t == "linea"]     # en graves, solo la línea
-    if pieza.eleccion.formato == "balda":
+    if not formatos.de(pieza.eleccion.formato).infografia:
         tipos = []          # tres libros: la infografía no cuenta nada que no cuenten ellos (2/11, feedback de Tavares)
     arte.infografia, avisos = infografia.validar(propuesta.infografia, pieza, tipos, bool(arte.imagen))
     arte.avisos += avisos

@@ -25,6 +25,7 @@ from markupsafe import Markup
 
 import re
 
+from folio import formatos
 from folio import infografia as infografias
 from folio.verificacion_texto import sin_subtitulo
 from folio import sin_foto as recursos_sin_foto
@@ -116,10 +117,9 @@ class Plantillas:
                 **self._base(base_url), tipo="colofon", n=n, total=self.total(pieza), pieza_id=pieza.id,
                 colofon=self._colofon(pieza), impulsado_por=self.cfg.pipeline.arte.impulsado_por)
         d = pieza.guion.diapositivas[n - 1]
-        if pieza.eleccion.formato == "cinco":
-            return self._cinco(pieza, d, n, base_url)
-        if pieza.eleccion.formato == "newsletter":
-            return self._newsletter(pieza, d, n, base_url)
+        propio = formatos.de(pieza.eleccion.formato).propio
+        if propio:                                  # «Cinco del libro», la newsletter: sus plantillas (_cinco, _newsletter)
+            return getattr(self, f"_{propio}")(pieza, d, n, base_url)
         return self.env.get_template(f"{d.tipo}.html").render(
             **self._base(base_url), **self._texto(pieza, d, n), **self._medios_y_arte(pieza, d, n))
 
@@ -391,7 +391,7 @@ class Plantillas:
             "sello": bool(self.cfg.pipeline.arte.sello_verificacion and libro and libro.get("verificado")),
             "medios": (list(dict.fromkeys(f.medio for f in pieza.fuentes))[:4]
                        if d.tipo == "actualidad" and self.cfg.pipeline.arte.medios_en_noticia
-                       and pieza.eleccion.formato != "recomendado"           # no hay noticia: la ficha y su crítica
+                       and formatos.de(pieza.eleccion.formato).noticia       # el recomendado no tiene noticia: la ficha y su crítica
                        and not (sin_foto and sin_foto["recurso"] == "teletipo") else []),
             "video": (d.tipo == "portada" and ((bool(imagen) and estilo != "panorama") or interferencia or bool(buscador)))
                      or (d.tipo == "actualidad" and (contar or bool(sin_foto and sin_foto["recurso"] == "gigante")))

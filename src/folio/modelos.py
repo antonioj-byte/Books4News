@@ -32,7 +32,7 @@ EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "desca
 Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia", "ensayo", "newsletter"]
 # Formatos que pueden salir sin libro: la curiosidad del cajón, los temas del radar del libro y, en los temas de la
 # redacción, «noticia» (contada sin ensayo) y «ensayo» (tema literario sin percha), los dos del 3/11
-SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar", "noticia", "ensayo", "newsletter")
+from folio.formatos import SIN_LIBRO_OBLIGATORIO  # noqa: E402,F401  (el registro de formatos, 4/11)
 # «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml); «catalogo»: novedades de
 # las editoriales independientes (formato «recomendado»); «radar»: historias del mundo del libro que no pasan al jefe
 # pero sí a la lista del radar

@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from folio import formatos
 from folio.config import Config
 from folio.config import Guion as ConfigGuion
 from folio.llm import LLM, RespuestaCortada, bloque_reenviable, cache_al_final, cargar_prompt, con_cache
@@ -316,7 +317,7 @@ def _portada_con_libro(c: _Guion) -> list[str]:
     portada = c.d[0]
     if not portada.subtitulo:
         return ["La portada necesita un subtítulo que traiga el libro o a su autor."]
-    if c.formato == "balda" and len(c.libros) >= 3:
+    if formatos.de(c.formato).libros == 3 and len(c.libros) >= 3:
         # 2/11 (a petición del usuario: «tres libros es una patata, no es sticky»): titular de reportaje, que promete una
         # historia, y el subtítulo anticipa el método: tres libros sobre esa cuestión
         if not _TRES_LIBROS.search(normalizar(portada.subtitulo)):

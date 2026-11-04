@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from folio import formatos
 from folio.llm import LLM, ErrorLLM
 from folio.modelos import HistoriaElegida, SeleccionJefe
 
@@ -55,7 +56,7 @@ def evaluar(llm: LLM, sel: SeleccionJefe) -> tuple[SeleccionJefe, dict[str, tupl
     notas, quedan, avisos = {}, [], []
     for i, e in enumerate(sel.elegidas, 1):
         n = por_numero.get(i)
-        if n is None or e.formato == "curiosidad" and not e.libros_candidatos:
+        if n is None or not formatos.de(e.formato).libro_obligatorio and not e.libros_candidatos:
             quedan.append(e)
             continue
         puntos = max(1, min(5, n.puntuacion))

@@ -12,6 +12,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 import numpy as np
+from folio import formatos
 from folio import cinco
 from folio import guion as guionista
 from folio import arte, balda, cajon, catalogo, hechos, informe, puentes, radar, seleccion, temas, textos
@@ -65,7 +66,7 @@ def fuera_de_novedad(l: LibroVerificado, desde: int) -> str | None:
 
 def libros_del_formato(formato: str | None) -> int:
     """Cuántos libros verificados lleva una pieza: tres en «Tres libros», uno en los demás (2/11)."""
-    return 3 if formato == "balda" else 1
+    return max(1, formatos.de(formato).libros)
 
 
 
@@ -393,7 +394,7 @@ class Pipeline:
         - «Tres libros» (perfiles: la obra del autor) y los temas de la redacción no exigen novedad.
         - Repetir un libro ya usado o uno sin traducir, solo en un tema de la redacción que lo pide expresamente
           (también los temas «para mañana»), nunca por iniciativa de un agente."""
-        self.sin_novedad = e.formato == "balda" or de_la_redaccion
+        self.sin_novedad = not formatos.de(e.formato).exige_novedad or de_la_redaccion
         self.permitir_repetidos = de_la_redaccion and e.repetir
         self.permitir_sin_castellano = de_la_redaccion and e.sin_castellano
 
@@ -687,7 +688,7 @@ class Pipeline:
         por_id = {h.id: h for h in al_jefe}
         # «Cinco del libro» comprueba sus hechos al escribirse, con los textos de sus cinco noticias (folio.cinco)
         con_guion = [(p, self.textos_de_historia(por_id[p.historia_id])) for p in piezas
-                     if p.guion and p.eleccion.formato != cinco.FORMATO]
+                     if p.guion and not formatos.de(p.eleccion.formato).propio]
         aviso = progreso if anunciar else (lambda etapa: None)
 
         def una(pieza: Pieza, textos_h) -> None:
@@ -716,7 +717,7 @@ class Pipeline:
         que dos piezas del día no lleven la misma imagen (unos 10 s por pieza). Con `solo`, se dirige
         únicamente esas piezas: las demás cuentan para no repetir imagen ni composición."""
         por_id = {h.id: h for h in al_jefe}
-        con_guion = [p for p in piezas if p.guion and p.estado != "fallida" and p.eleccion.formato != cinco.FORMATO]
+        con_guion = [p for p in piezas if p.guion and p.estado != "fallida" and not formatos.de(p.eleccion.formato).propio]
         usadas: set[str] = {x for p in con_guion if solo and p.id not in solo and p.arte
                             for x in (p.arte.imagen, p.arte.imagen_noticia) if x}
         for i, pieza in enumerate(con_guion):
@@ -811,7 +812,7 @@ class Pipeline:
             n = 1 + max((int(p.id.rsplit("-", 1)[1]) for p in piezas if p.id.rsplit("-", 1)[1].isdigit()), default=0)
             piezas.append(cinco.preparar(self, al_jefe, f"{self.fecha}-{n}", dibujar=not self.dev))
             self._guardar_etapa(self.etapas.guardar_piezas, piezas)
-        buenas = [p for p in piezas if p.estado == "propuesta" and p.eleccion.formato != cinco.FORMATO]
+        buenas = [p for p in piezas if p.estado == "propuesta" and not formatos.de(p.eleccion.formato).propio]
         if inicio <= 2 and not self.prueba:
             self._registrar_historial(piezas, buenas, al_jefe, vectores)
         previstas = min(self.cfg.pipeline.seleccion.desarrollar_al_inicio, len(sel.elegidas))

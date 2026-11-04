@@ -16,6 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from pydantic import BaseModel, Field
 
+from folio import formatos
 from folio.llm import LLM, ErrorLLM, cargar_prompt
 from folio.modelos import HistoriaElegida, LibroCandidato, SeleccionJefe
 
@@ -57,7 +58,7 @@ def buscar(llm: LLM, cfg, e: HistoriaElegida, anio_minimo: int, usados: str = "(
 
 def elegir(llm: LLM, cfg, e: HistoriaElegida, encontrados: list[LibroBalda], anio_minimo: int,
            usados: str = "(ninguno)", hoy: str = "") -> HistoriaElegida:
-    cuantos = "4 o 5" if e.formato == "balda" else "3 o 4"
+    cuantos = "4 o 5" if formatos.de(e.formato).libros == 3 else "3 o 4"
     prompt = cargar_prompt(cfg, "balda_elegir", {
         "[pegar propuesta]": _historia(e) + f"\nFormato: {e.formato}\nGancho de ahora: {e.gancho_libro}",
         "[pegar candidatos]": "\n".join(f"- {l.titulo} ({l.autor})" for l in e.libros_candidatos) or "(ninguno)",

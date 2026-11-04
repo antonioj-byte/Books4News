@@ -15,6 +15,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date
 
+from folio import formatos
 from folio import catalogo, temas
 from folio.config import Config
 from folio.etapas import EtapasGuardadas
@@ -57,7 +58,7 @@ def _del_tema(llm: LLM, cfg: Config, fecha: str, n: int, t: TemaBanco) -> tuple[
         raise ErrorLLM(f"{t.clave}: el jefe pregunta en vez de proponer: {r.preguntas}")
     temas.guardar_en_el_dia(cfg, fecha, h, fuentes)
     tuberia = Pipeline(cfg, fecha, llm=llm)
-    tuberia.sin_novedad = t.formato == "balda"        # un perfil necesita la obra, como en los temas de la redacción
+    tuberia.sin_novedad = not formatos.de(t.formato).exige_novedad        # un perfil necesita la obra, como en los temas de la redacción
     return h, _escribir(tuberia, fecha, n, h, r.propuesta, avisos)
 
 

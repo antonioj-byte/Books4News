@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 
+from folio import formatos
 from folio.llm import LLM, ErrorLLM, cargar_prompt
 from folio.modelos import Historia, SeleccionJefe
 
@@ -45,12 +46,12 @@ def anio_minimo(fecha: str, anios: int) -> int:
 
 # «Tres libros» (balda, 2/11) va en el hueco del diálogo: cuenta como él en el reparto
 ALIAS_REPARTO = {"balda": "dialogo"}
-NOMBRES_FORMATO = {"lateral": "lectura lateral", "dialogo": "diálogo con la actualidad", "balda": "tres libros", "edicion": "mundo del libro",
-                   "curiosidad": "historia editorial", "recomendado": "libro recomendado", "radar": "radar del libro", "noticia": "noticia", "ensayo": "ensayo"}
+# Los nombres de los formatos en los prompts y el informe, del registro de formatos (4/11)
+NOMBRES_FORMATO = {f.id: f.en_prompt for f in formatos.FORMATOS.values() if not f.propio}
 _EN_EL_REPARTO = {"lateral": "de lectura lateral", "dialogo": "de diálogo con la actualidad", "edicion": "del mundo del libro",
                   "curiosidad": "de historia editorial (del cajón)", "recomendado": "de libro recomendado"}
 # El carril del que tiene que salir cada formato que no es de actualidad
-_CARRIL_DEL_FORMATO = {"curiosidad": "cajon", "recomendado": "catalogo"}
+_CARRIL_DEL_FORMATO = formatos.CARRIL_DEL_FORMATO
 
 
 def bloque_cajon(historias: list[Historia]) -> str:
@@ -149,8 +150,7 @@ def _validar(sel: SeleccionJefe, carriles: dict[str, str], cfg, reparto: dict[st
                 avisos.append(f"«{e.titular}»: la curiosidad tiene que salir del cajón y el recomendado del catálogo (y "
                               "cada uno solo sirve para su formato); se descarta")
                 continue
-            minimo = {"curiosidad": 0, "recomendado": 1}.get(e.formato, 3)
-            maximo_libros = 6 if e.formato == "balda" else 4
+            minimo, maximo_libros = formatos.de(e.formato).candidatos
             if not minimo <= len(e.libros_candidatos) <= maximo_libros:
                 avisos.append(f"«{e.titular}»: {len(e.libros_candidatos)} libros candidatos (se pedían {minimo}–{maximo_libros})")
             validas.append(e)

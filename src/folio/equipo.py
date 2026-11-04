@@ -18,6 +18,7 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, Field
 
+from folio import formatos
 from folio.config import Config
 from folio.modelos import Pieza
 
@@ -95,15 +96,12 @@ def _proponente(p: Pieza) -> list[tuple[str, str, str]]:
         return [("jefe_cultura", "Jefe de cultura", "eligió y tituló las cinco")]
     if f == "newsletter":
         return [("redaccion", "Redacción", "pegó el ensayo de la newsletter"), ("guionista", "Guionista", "eligió titular, percha y frases")]
-    if p.radar or f in ("edicion", "curiosidad", "recomendado", "radar"):
+    if p.radar or formatos.de(f).propone == "editor_libro":
         return [("editor_libro", "Editor del libro", f"propuso {_FORMATOS.get(f, f)}")]
     return [("jefe_cultura", "Jefe de cultura", f"propuso {_FORMATOS.get(f, f)}")]
 
 
-_FORMATOS = {"lateral": "una lectura lateral", "dialogo": "un diálogo", "edicion": "una del mundo del libro",
-             "curiosidad": "una historia editorial", "recomendado": "un libro recomendado", "radar": "un breve",
-             "balda": "tres libros", "noticia": "una noticia", "ensayo": "un ensayo", "cinco": "cinco del libro",
-             "newsletter": "la newsletter del jueves"}
+_FORMATOS = {f.id: f.en_frase for f in formatos.FORMATOS.values()}   # del registro de formatos (4/11)
 
 
 _QUE_HIZO = {"comprobador": "comprobó los hechos", "lector_sin_contexto": "lo leyó sin contexto",

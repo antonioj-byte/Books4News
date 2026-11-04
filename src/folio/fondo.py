@@ -22,6 +22,7 @@ from datetime import date, timedelta
 
 from pydantic import BaseModel, Field
 
+from folio import formatos
 from folio.config import Config
 from folio.llm import LLM, ErrorLLM, cargar_prompt
 from folio.modelos import Formato, HistoriaElegida, LibroCandidato, SeleccionJefe
@@ -252,7 +253,7 @@ def preparar_tanda(cfg: Config, almacen, fecha: str, llm: LLM | None = None, n: 
     guardar = []
     pendientes = 0
     for e in quedan:
-        tuberia.sin_novedad = e.formato == "balda"          # un perfil necesita la obra, no solo novedades
+        tuberia.sin_novedad = not formatos.de(e.formato).exige_novedad          # un perfil necesita la obra, no solo novedades
         libros, descartes = tuberia._verificar_libros(e, usados)
         if not libros:
             motivos = "; ".join(f"«{d.titulo}»: {d.motivo}" for d in descartes) or "sin libros"
@@ -335,7 +336,7 @@ def reverificar(cfg: Config, almacen, fecha: str, llm: LLM | None = None) -> lis
     for x in pendientes:
         p = PropuestaFondo(**x["datos"]["propuesta"])
         e = a_elegida(p, x["id"])
-        tuberia.sin_novedad = e.formato == "balda"
+        tuberia.sin_novedad = not formatos.de(e.formato).exige_novedad
         libros, descartes = tuberia._verificar_libros(e, usados)
         if libros:
             usados |= {clave_libro(l.titulo_propuesto, l.autores[0] if l.autores else "") for l in libros}

@@ -6,11 +6,12 @@ from __future__ import annotations
 
 from datetime import date
 
+from folio import formatos
 from folio.modelos import Pieza
 
 # En qué punto está una pieza, para los filtros del Archivo
 CATEGORIAS = ("nevera", "aprobada", "programada", "publicada", "pendiente", "descartada")
-SIN_PERCHA = ("curiosidad", "recomendado", "ensayo", "newsletter")          # no dependen de una noticia: no caducan
+SIN_PERCHA = tuple(f.id for f in formatos.FORMATOS.values() if f.atemporal)   # no dependen de una noticia: no caducan          # no dependen de una noticia: no caducan
 DIAS_VIGENTE, DIAS_REVISAR = 7, 30
 
 

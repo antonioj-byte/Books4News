@@ -7,16 +7,14 @@ import yaml
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from folio import formatos
 from folio import archivo, equipo
 from folio.publicacion import programar
 from folio_api.dependencias import Contexto, contexto
 
 router = APIRouter()
 
-NOMBRES_FORMATO = {"lateral": "Lectura lateral", "dialogo": "Diálogo con la actualidad", "balda": "Tres libros",
-                   "edicion": "Mundo del libro", "curiosidad": "Historia editorial", "recomendado": "Libro recomendado",
-                   "noticia": "Noticia", "ensayo": "Ensayo", "radar": "Breve del mundo del libro", "cinco": "Cinco del libro",
-                   "newsletter": "La newsletter del jueves"}
+NOMBRES_FORMATO = {f.id: f.nombre for f in formatos.FORMATOS.values()}   # del registro de formatos (4/11)
 
 
 # ---------------------------------------------------------------- Archivo
@@ -44,7 +42,7 @@ def ver_archivo(ctx: Contexto = Depends(contexto)):
     hoy = date.today()
     out = []
     for fecha, eid, p, v, tocada in ctx.almacen.archivo():
-        if p.eleccion.formato == "cinco" and not p.guion:
+        if formatos.de(p.eleccion.formato).propio and not p.guion:
             continue
         ev = ctx.almacen.evaluacion(eid, p.id)
         notas = [x for x in ((ev[0].seleccion, ev[0].libro, ev[0].idea, ev[0].voz) if ev else ()) if x]

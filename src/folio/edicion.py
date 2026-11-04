@@ -26,6 +26,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from folio import formatos
 from folio import guion as guionista
 from folio.config import Config
 from folio.llm import LLM, cache_al_final, cargar_prompt
@@ -88,10 +89,19 @@ def _citas_ok(p: Pieza, tipo: str = "libro") -> frozenset[str]:
 def validar(cfg: Config, p: Pieza, g: GuionLLM) -> list[str]:
     """Las citas que valen son las que ya se verificaron al escribir la pieza (del libro y de la crítica). «La newsletter
     del jueves» tiene sus propias reglas: las frases, literales del ensayo (4/11)."""
-    if p.eleccion.formato == "newsletter":
-        from folio import newsletter
-        return newsletter.validar_guion(g, p.eleccion.encargo)
+    propio = formatos.de(p.eleccion.formato).propio
+    if propio:
+        import importlib
+        modulo = importlib.import_module(f"folio.{propio}")
+        if hasattr(modulo, "validar_guion"):
+            return modulo.validar_guion(g, p.eleccion.encargo)
     return guionista.validar(cfg, g, p.libros, p.fuentes, _citas_ok(p), _citas_ok(p, "critica"), p.eleccion.formato)
+
+
+def _corregir(p: Pieza, g: GuionLLM) -> None:
+    """La corrección mecánica (numeración y firma de Folio en el cierre), salvo en los formatos sin firma (4/11)."""
+    if formatos.de(p.eleccion.formato).firma_folio:
+        guionista.corregir_mecanico(g)
 
 
 def editar_diapositiva(cfg: Config, p: Pieza, n: int, texto: str, subtitulo: str | None = None) -> tuple[Pieza, list[str]]:
@@ -101,8 +111,7 @@ def editar_diapositiva(cfg: Config, p: Pieza, n: int, texto: str, subtitulo: str
     d.texto = " ".join(texto.split())
     if d.tipo == "portada":
         d.subtitulo = " ".join((subtitulo or "").split()) or None
-    if p.eleccion.formato != "newsletter":          # la newsletter no lleva la firma «Folio» en el cierre
-        guionista.corregir_mecanico(nueva.guion)
+    _corregir(p, nueva.guion)
     return nueva, validar(cfg, nueva, nueva.guion)
 
 
@@ -360,8 +369,7 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
                 # de imagen no se hace, la respuesta lo dice primero y no promete lo que no ha pasado
                 return f"No lo he podido hacer: {nota.strip().strip('()')}", None, avisos
             return (f"{r.respuesta} {nota}".strip()), nueva, avisos
-        if p.eleccion.formato != "newsletter":
-            guionista.corregir_mecanico(r.guion)
+        _corregir(p, r.guion)
         errores = [e for e in validar(cfg, p, r.guion) if e not in previos]
         if not errores:
             nueva = p.model_copy(deep=True)
