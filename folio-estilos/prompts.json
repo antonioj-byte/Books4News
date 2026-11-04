@@ -1,0 +1,14 @@
+{
+ "risografia_anthropic": {
+  "estilo": "risografia",
+  "tema": "anthropic",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "stack of books with gold coins spilling and a torn cheque, risograph print, two-color magenta and yellow on off-white paper, slight misregistration, visible halftone, paper grain, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3739447187,
+  "task_id": "4cb3f6ab-2f46-4c9a-af77-b4aa2a9068e1",
+  "segundos": 26.3
+ }
+}
