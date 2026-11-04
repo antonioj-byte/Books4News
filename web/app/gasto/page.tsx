@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { VistaGasto } from "./VistaGasto";
+import { EsqueletoPagina } from "@/components/Esqueleto";
 
 export default function PaginaGasto() {
   return (
-    <Suspense fallback={<p className="p-6">Cargando…</p>}>
+    <Suspense fallback={<EsqueletoPagina />}>
       <VistaGasto />
     </Suspense>
   );

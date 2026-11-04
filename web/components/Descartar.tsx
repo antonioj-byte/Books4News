@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { avisar } from "@/lib/avisos";
+import { mensajeError } from "@/lib/errores";
 
 // Descartar con su motivo (2/11): un toque en una etiqueta y, si se quiere, una línea. Va al jefe de cultura a través
 // de la Memoria; descartar sin decir nada también vale.
@@ -18,8 +20,13 @@ export function Descartar({ eid, pid, onHecho, compacto = false }: { eid: number
   const parar = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); };
   const enviar = async (e: React.MouseEvent) => {
     parar(e); setEnviando(true); setError(null);
-    try { await api.descartar(eid, pid, marcados, texto.trim()); setAbierto(false); onHecho(); }
-    catch (err) { setError(err instanceof Error ? err.message.replace(/^\d+ \S+: /, "") : "No se pudo descartar"); }
+    try {
+      await api.descartar(eid, pid, marcados, texto.trim()); setAbierto(false); onHecho();
+      // «Deshacer» unos segundos (4/11, usabilidad: deshacer antes que confirmar): vuelve a la mesa como propuesta
+      avisar({ tipo: "info", texto: `Pieza ${pid} descartada.`, duracion: 8000,
+               accion: { texto: "Deshacer", hacer: () => { api.estado(eid, pid, "propuesta").then(onHecho).catch((e) => avisar({ tipo: "mal", texto: mensajeError(e, "No se pudo recuperar.") })); } } });
+    }
+    catch (err) { setError(mensajeError(err, "No se pudo descartar.")); }
     finally { setEnviando(false); }
   };
 
@@ -41,10 +48,10 @@ export function Descartar({ eid, pid, onHecho, compacto = false }: { eid: number
       <input id={`descarte-${pid}`} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Una línea más (opcional)"
              className="rounded-[8px] border border-borde bg-papel px-2 py-1.5 outline-none focus:border-tinta" />
       <div className="flex flex-wrap gap-2">
-        <button onClick={enviar} disabled={enviando} className="boton">{enviando ? "Descartando…" : "Descartar"}</button>
+        <button onClick={enviar} disabled={enviando} aria-busy={enviando || undefined} className="boton">{enviando ? <><span className="girando" aria-hidden />Descartando…</> : "Descartar"}</button>
         <button onClick={(e) => { parar(e); setAbierto(false); }} disabled={enviando} className="boton-suave">Cancelar</button>
       </div>
-      {error && <p className="text-carmesi">{error}</p>}
+      {error && <p className="text-carmesi" role="alert">{error}</p>}
     </div>
   );
 }

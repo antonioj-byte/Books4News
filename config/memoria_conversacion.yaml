@@ -759,3 +759,11 @@
   patron: "«Cada jueves publicamos en la newsletter un ensayo largo que normalmente firmo yo; me gustaría que haya una versión corta en Instagram: titular, varios entrecomillados y enlace a Folio» (opción C, sin foto a sangre, nombre y cargo arriba, una ilustración por frase)."
   propuesta: "El ensayo de los jueves sale en Instagram como titular entre comillas, percha, cuatro frases literales ilustradas y la invitación a leerlo en la newsletter; firmado por su autor y en primera persona, como excepción del formato."
   evidencia: ["Conversación, 4/11: Artifact «La newsletter del jueves»"]
+
+- clave: usabilidad-sin-esperas
+  fecha: "2026-11-04"
+  destino: codigo
+  capa: marca
+  patron: "«Dale una pensada a la usabilidad, botones, avisos de espera: haz una visión para que sea extremadamente excepcional» (y «haz las 3 fases seguidas»)."
+  propuesta: "Todo lo lento es un trabajo que se ve (pasos, reloj real, lo que suele tardar), sobrevive a recargar y avisa al acabar; cada botón dice qué hace, cuánto tarda y cuesta, y por qué está apagado; un error es una frase con el siguiente paso; deshacer antes que confirmar; respuesta al instante."
+  evidencia: ["Conversación, 4/11: Artifact «Folio sin esperas a ciegas»"]

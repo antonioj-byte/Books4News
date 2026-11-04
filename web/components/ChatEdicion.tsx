@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { api, type Material, type MensajeChat, type Para } from "@/lib/api";
+import { avisar, conDeshacer } from "@/lib/avisos";
+import { mensajeError } from "@/lib/errores";
 
 type Uso = "foto" | "cubierta" | "leer";
 
@@ -89,7 +91,7 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
         setMensajes(guardados!);
         if (ultimo.version_n) onCambio();
       } else {
-        setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo enviar");
+        setError(mensajeError(e, "No se pudo enviar."));
         setTexto(m);
         setMensajes((x) => x.slice(0, -1));    // el mensaje no llegó a guardarse
       }
@@ -103,7 +105,7 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
       setLocales((x) => [...x, `Titular cambiado: «${t}».`]);
       onCambio();
     } catch (e) {
-      setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo cambiar el titular");
+      setError(mensajeError(e, "No se pudo cambiar el titular."));
     } finally { setUsando(null); }
   };
 
@@ -134,10 +136,17 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
       }
       cancelar(); cargarAdjuntos();
     } catch (e) {
-      setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo subir");
+      setError(mensajeError(e, "No se pudo subir."));
     } finally { setSubiendo(false); }
   };
-  const quitarAdjunto = async (m: Material) => { await api.borrarMaterial(eid, pid, m.id).catch(() => null); cargarAdjuntos(); };
+  // Quitar un adjunto: al momento, con «Deshacer» unos segundos (4/11, usabilidad; antes fallaba en silencio)
+  const [quitados, setQuitados] = useState<Set<string>>(new Set());
+  const quitarAdjunto = (m: Material) => {
+    setQuitados((x) => new Set(x).add(m.id));
+    conDeshacer({ texto: `${m.nombre} quitado.`, hacer: async () => { await api.borrarMaterial(eid, pid, m.id); cargarAdjuntos(); },
+                  alDeshacer: () => setQuitados((x) => { const n = new Set(x); n.delete(m.id); return n; }),
+                  alFallar: (e) => avisar({ tipo: "mal", texto: mensajeError(e, "No se pudo quitar el adjunto.") }) });
+  };
 
   const esFoto = !!archivo?.type.startsWith("image/");
   const chip = (activo: boolean) => `rounded-full border px-3 py-1 text-[12.5px] ${activo ? "border-carmesi bg-carmesi text-papel" : "border-borde bg-papel hover:border-tinta"}`;
@@ -272,7 +281,7 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
       {adjuntos.length > 0 && (
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-tinta-suave">
           <span className="dato">Adjuntos</span>
-          {adjuntos.map((m) => (
+          {adjuntos.filter((m) => !quitados.has(m.id)).map((m) => (
             <span key={m.id} className="inline-flex items-center gap-1">
               <a href={api.urlMaterial(eid, pid, m.id)} target="_blank" rel="noreferrer" className="max-w-[160px] truncate hover:underline">{m.nombre}</a>
               <button onClick={() => quitarAdjunto(m)} aria-label={`Quitar ${m.nombre}`} className="hover:text-carmesi">✕</button>

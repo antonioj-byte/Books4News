@@ -11,6 +11,7 @@ export type ResumenDia = components["schemas"]["ResumenDia"];
 export type Estado = components["schemas"]["CambioEstado"]["estado"];
 export type EstadoEjecucion = components["schemas"]["EstadoEjecucion"];
 export type EstadoNewsletter = components["schemas"]["EstadoNewsletter"];
+export type EstadoTrabajo = components["schemas"]["EstadoTrabajo"];
 export type ResultadoEdicion = components["schemas"]["ResultadoEdicion"];
 export type MensajeChat = components["schemas"]["MensajeChat"];
 export type RespuestaChat = components["schemas"]["RespuestaChat"];
@@ -87,9 +88,11 @@ export const api = {
   trabajos: () => pedir<Trabajo[]>("/api/trabajos"),
   // El fondo del mes (2/11)
   fondo: () => pedir<Fondo>("/api/fondo"),
-  escribirDelFondo: (id: number, ejecucion: number) =>
-    pedir<TemaCreado>(`/api/fondo/${id}/escribir`, { method: "POST", body: JSON.stringify({ ejecucion }) }),
+  escribirDelFondo: (id: number, ejecucion: number, segundo_plano = false) =>
+    pedir<TemaCreado>(`/api/fondo/${id}/escribir`, { method: "POST", body: JSON.stringify({ ejecucion, segundo_plano }) }),
   descartarDelFondo: (id: number) => pedir<PropuestaDelFondo>(`/api/fondo/${id}/descartar`, { method: "POST" }),
+  // Un trabajo aparte por su clave (4/11): temas, réplicas y lo del fondo, que siguen aunque se salga de la página
+  trabajo: (clave: string) => pedir<EstadoTrabajo>(`/api/trabajos/${encodeURIComponent(clave)}`),
   newsletter: () => pedir<EstadoNewsletter>("/api/newsletter"),
   lanzarNewsletter: (texto: string) => pedir<EstadoNewsletter>("/api/newsletter", { method: "POST", body: JSON.stringify({ texto }) }),
   subirFotoNewsletter: (archivo: File) =>
@@ -98,7 +101,7 @@ export const api = {
   estadoCinco: () => pedir<EstadoEjecucion>("/api/cinco"),
   prepararFondo: (tandas: number) => pedir<EstadoEjecucion>("/api/fondo/preparar", { method: "POST", body: JSON.stringify({ tandas }) }),
   proponerTema: (t: TemaNuevo) => pedir<TemaCreado>("/api/temas", { method: "POST", body: JSON.stringify(t) }),
-  replicarTema: (id: number, r: { texto: string; ejecucion: number; enfoque?: "elige" | "noticia" | "ensayo" }) =>
+  replicarTema: (id: number, r: { texto: string; ejecucion: number; enfoque?: "elige" | "noticia" | "ensayo"; segundo_plano?: boolean }) =>
     pedir<TemaCreado>(`/api/temas/${id}/replica`, { method: "POST", body: JSON.stringify(r) }),
   descartarTema: (id: number) => pedir<Tema>(`/api/temas/${id}`, { method: "DELETE" }),
   // Feedback por agente (2/11): notas de diapositiva (arte o copy) y el motivo de un descarte (jefe de cultura)

@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { VistaMemoria } from "./VistaMemoria";
+import { EsqueletoPagina } from "@/components/Esqueleto";
 
 export default function PaginaMemoria() {
   return (
-    <Suspense fallback={<p className="p-6">Cargando…</p>}>
+    <Suspense fallback={<EsqueletoPagina />}>
       <VistaMemoria />
     </Suspense>
   );

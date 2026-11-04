@@ -28,6 +28,7 @@ class TemaNuevo(BaseModel):
     ejecucion: int | None = None          # para «ahora»: la ejecución de la mesa en que entra la pieza
     # 3/11 (a petición del usuario): «elige», el jefe decide el formato; «noticia», contar la noticia, sin ensayo
     enfoque: Literal["elige", "noticia", "ensayo"] = "elige"
+    segundo_plano: bool = False           # 4/11, usabilidad: responde al momento y el jefe trabaja aparte
 
 
 class TemaCreado(BaseModel):
@@ -37,12 +38,14 @@ class TemaCreado(BaseModel):
     avisos: list[str] = []
     preguntas: list[str] = []             # si el jefe necesita saber algo antes de proponer (2/11)
     respuesta: str = ""                   # lo que dice el jefe
+    trabajo: str | None = None            # en segundo plano: la clave del trabajo que se sigue en /api/trabajos/<clave>
 
 
 class Replica(BaseModel):
     texto: str = Field(min_length=2, max_length=MAX_TEXTO_TEMA)
     ejecucion: int
     enfoque: Literal["elige", "noticia", "ensayo"] | None = None   # si la réplica cambia lo que se pide (p. ej. «solo la noticia»)
+    segundo_plano: bool = False        # 4/11, usabilidad: responde al momento y el jefe trabaja aparte (trabajo «tema-<id>»)
 
 
 def _fallido(ctx: Contexto, tid: int, motivo: str) -> None:
@@ -52,11 +55,11 @@ def _fallido(ctx: Contexto, tid: int, motivo: str) -> None:
         ctx.almacen.actualizar_tema(tid, estado="fallido", nota=motivo[:300])
 
 
-def _resultado(ctx: Contexto, eid: int, tid: int, replica: str | None = None) -> TemaCreado:
+def _resultado(ctx: Contexto, eid: int, tid: int, replica: str | None = None, anunciar=None) -> TemaCreado:
     if not _un_tema.acquire(blocking=False):
         raise HTTPException(409, "El jefe ya está con otro tema; espera a que responda")
     try:
-        r = temas.crear_pieza(ctx.cfg, ctx.almacen, eid, tid, ctx.llm, replica=replica)
+        r = temas.crear_pieza(ctx.cfg, ctx.almacen, eid, tid, ctx.llm, replica=replica, anunciar=anunciar)
     except temas.SinFuentes as exc:
         _fallido(ctx, tid, str(exc))
         raise HTTPException(422, str(exc))
@@ -72,6 +75,20 @@ def _resultado(ctx: Contexto, eid: int, tid: int, replica: str | None = None) ->
     return TemaCreado(tema=tema, pieza_id=p.id if p else None, estado_pieza=p.estado if p else None,
                       avisos=r.avisos + ([p.error] if p is not None and p.error else []),
                       preguntas=r.preguntas, respuesta=r.respuesta)
+
+
+def trabajo_de_tema(tid: int) -> str:
+    return f"tema-{tid}"
+
+
+def _en_segundo_plano(ctx: Contexto, tid: int, nombre: str, hacer) -> TemaCreado:
+    """El jefe trabaja aparte (4/11, usabilidad: «nada atado a la página»): se responde al momento con el tema y su
+    trabajo, que la web sigue con `GET /api/trabajos/tema-<id>` aunque se salga y se vuelva. El resultado queda en el
+    propio tema (su conversación y su pieza) y en el registro del trabajo."""
+    motivo = ctx.ejecutor.en_hilo(trabajo_de_tema(tid), nombre, hacer)
+    if motivo:
+        raise HTTPException(409, "El jefe ya está con este tema; espera a que responda")
+    return TemaCreado(tema=next(x for x in ctx.almacen.temas() if x.id == tid), trabajo=trabajo_de_tema(tid))
 
 
 @router.get("/api/temas", response_model=list[Tema])
@@ -96,6 +113,8 @@ def proponer(t: TemaNuevo, ctx: Contexto = Depends(contexto)):
     tid = ctx.almacen.guardar_tema(texto, enlaces, t.cuando, t.enfoque)
     if t.cuando == "manana":
         return TemaCreado(tema=next(x for x in ctx.almacen.temas() if x.id == tid))
+    if t.segundo_plano:
+        return _en_segundo_plano(ctx, tid, f"Tema: {texto[:60]}", lambda anunciar: _resultado(ctx, t.ejecucion, tid, anunciar=anunciar))
     return _resultado(ctx, t.ejecucion, tid)
 
 
@@ -112,6 +131,9 @@ def replicar(tid: int, r: Replica, ctx: Contexto = Depends(contexto)):
         raise HTTPException(409, "La pieza de este tema se está escribiendo con «Proceder»; espera a que acabe")
     if r.enfoque and r.enfoque != tema.enfoque:
         ctx.almacen.cambiar_enfoque_tema(tid, r.enfoque)
+    if r.segundo_plano:
+        return _en_segundo_plano(ctx, tid, f"Réplica al jefe: {tema.texto[:50]}",
+                                 lambda anunciar: _resultado(ctx, r.ejecucion, tid, replica=r.texto, anunciar=anunciar))
     return _resultado(ctx, r.ejecucion, tid, replica=r.texto)
 
 

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { CAPA, coste, modeloCorto } from "@/app/equipo/VistaEquipo";
 import { api } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
+import { EsqueletoPagina } from "@/components/Esqueleto";
 
 // La ficha de un rol (3/11): lo que sabe, por capas; cómo le va; y lo que se le ha pedido. Responde, rol a rol, a
 // «¿se está aprendiendo lo que digo?».
@@ -12,7 +13,7 @@ export function VistaRol() {
   const { rol } = useParams<{ rol: string }>();
   const { datos: r, error } = useDatos(`rol:${rol}`, () => api.rol(rol));
   if (error) return <p className="p-6 text-carmesi">{error}</p>;
-  if (!r) return <p className="dato p-6">Cargando…</p>;
+  if (!r) return <EsqueletoPagina />;
   const enVigor = r.reglas_lista.filter((x) => x.estado !== "propuesta");
   const porDecidir = r.reglas_lista.filter((x) => x.estado === "propuesta");
   return (

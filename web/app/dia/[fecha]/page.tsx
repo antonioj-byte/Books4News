@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { VistaDia } from "./VistaDia";
+import { EsqueletoPagina } from "@/components/Esqueleto";
 
 export default function PaginaDia() {
   return (
-    <Suspense fallback={<p className="p-6">Cargando…</p>}>
+    <Suspense fallback={<EsqueletoPagina />}>
       <VistaDia />
     </Suspense>
   );

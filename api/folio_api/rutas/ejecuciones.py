@@ -33,6 +33,22 @@ def programada(ctx: Contexto = Depends(contexto)):
     return ctx.programador.estado() if ctx.programador else EstadoProgramada(activa=False)
 
 
+class EstadoTrabajo(EstadoEjecucion):
+    resultado: dict | None = None      # lo que devolvió un trabajo en hilo que acabó bien (p. ej. el tema con su pieza)
+
+
+@router.get("/api/trabajos/{clave}", response_model=EstadoTrabajo)
+def un_trabajo(clave: str, ctx: Contexto = Depends(contexto)):
+    """Cómo va un trabajo aparte por su clave (4/11, usabilidad: los temas, las réplicas y lo del fondo se siguen así
+    aunque se salga de la página y se vuelva)."""
+    import json
+    e = ctx.ejecutor.estado_desarrollo(clave)
+    if e is None:
+        raise HTTPException(404, "No hay ningún trabajo con esa clave")
+    r = ctx.ejecutor.resultado(clave) if not e.en_marcha and e.codigo == 0 else None
+    return EstadoTrabajo(**e.model_dump(), resultado=json.loads(r) if r else None)
+
+
 @router.get("/api/trabajos", response_model=list[Trabajo])
 def trabajos(ctx: Contexto = Depends(contexto)):
     """Los trabajos en segundo plano de esta sesión de la API (la web avisa cuando acaba cada uno)."""

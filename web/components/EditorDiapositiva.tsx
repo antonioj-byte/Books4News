@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { mensajeError } from "@/lib/errores";
 
 // Edición directa sobre la diapositiva: el mismo HTML del render, con el titular, el subtítulo y el
 // texto editables en el sitio. Las cursivas (<em>) vuelven a ser *así* al guardar.
@@ -21,6 +22,8 @@ export function EditorDiapositiva({ src, ancho, onGuardar, onCancelar }: {
 }) {
   const marco = useRef<HTMLIFrameElement>(null);
   const [guardando, setGuardando] = useState(false);
+  // Si no se guarda, se dice (4/11, usabilidad: antes fallaba en silencio y el editor seguía abierto como si nada)
+  const [error, setError] = useState("");
   const escala = ancho / ANCHO;
 
   const preparar = () => {
@@ -47,8 +50,9 @@ export function EditorDiapositiva({ src, ancho, onGuardar, onCancelar }: {
     const parrafo = doc.querySelector("p.texto");
     const texto = golpe ? [parrafo ? aTexto(parrafo) : "", aTexto(golpe)].filter(Boolean).join(" ")
       : titular ? aTexto(titular) : aTexto(parrafo ?? doc.body);
-    setGuardando(true);
+    setGuardando(true); setError("");
     try { await onGuardar(texto, subtitulo ? aTexto(subtitulo) : null); }
+    catch (e) { setError(`${mensajeError(e, "No se ha guardado.")} Tu texto sigue en la diapositiva: pulsa «Guardar texto» otra vez.`); }
     finally { setGuardando(false); }
   };
 
@@ -60,9 +64,12 @@ export function EditorDiapositiva({ src, ancho, onGuardar, onCancelar }: {
                 className="absolute left-0 top-0 origin-top-left border-0" style={{ transform: `scale(${escala})` }} />
       </div>
       <div className="flex gap-2">
-        <button onClick={guardar} disabled={guardando} className="boton">{guardando ? "Guardando…" : "Guardar texto"}</button>
+        <button onClick={guardar} disabled={guardando} aria-busy={guardando || undefined} className="boton">
+          {guardando ? <><span className="girando" aria-hidden />Guardando…</> : "Guardar texto"}
+        </button>
         <button onClick={onCancelar} disabled={guardando} className="boton-suave">Cancelar</button>
       </div>
+      {error && <p className="max-w-[440px] text-[13px] text-carmesi" role="alert">{error}</p>}
     </div>
   );
 }

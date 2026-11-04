@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type Capa, type EstadoMemoria, type Patron } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
+import { Boton } from "@/components/Boton";
+import { Trabajando } from "@/components/Trabajando";
+import { mensajeError } from "@/lib/errores";
+import { mirarTrabajos } from "@/lib/trabajos";
 
 // Memoria del feedback: lo que se repite en las evaluaciones, comentarios, ediciones y peticiones al chat,
 // con una propuesta de regla. Quien edita decide; las aceptadas cuentan desde ya en el prompt de su agente (2/11) y
@@ -39,7 +43,9 @@ const CAPAS: { valor: Capa; texto: string; ayuda: string }[] = [
   { valor: "celda", texto: "Este rol en Folio", ayuda: "lo más estrecho" },
 ];
 
-function Tarjeta({ p, decidir }: { p: Patron; decidir: (estado: Patron["estado"], capa?: Capa) => void }) {
+function Tarjeta({ p, decidir }: { p: Patron; decidir: (estado: Patron["estado"], capa?: Capa) => Promise<void> }) {
+  // Aceptar cambia los prompts de producción desde la siguiente pieza: se confirma en la página (4/11, usabilidad)
+  const [confirmar, setConfirmar] = useState(false);
   const [capa, setCapa] = useState<Capa>((p.capa as Capa) ?? "celda");
   const decidible = p.origen !== "conversacion";
   return (
@@ -68,10 +74,19 @@ function Tarjeta({ p, decidir }: { p: Patron; decidir: (estado: Patron["estado"]
         <span className="dato">{CAPAS.find((c) => c.valor === capa)?.ayuda}</span>
       </div>
       {decidible && <div className="flex flex-wrap gap-2">
-        {p.estado !== "aceptada" && p.estado !== "aplicada" && <button className="boton" onClick={() => decidir("aceptada", capa)}>Aceptar</button>}
-        {p.estado !== "rechazada" && p.estado !== "aplicada" && <button className="boton-suave" onClick={() => decidir("rechazada")}>Rechazar</button>}
-        {p.estado === "aceptada" && <button className="boton-suave" onClick={() => decidir("aplicada")}>Marcar como ya aplicada</button>}
-        {p.estado !== "propuesta" && <button className="boton-suave" onClick={() => decidir("propuesta")}>Volver a propuesta</button>}
+        {p.estado !== "aceptada" && p.estado !== "aplicada" && !confirmar && <button className="boton" onClick={() => setConfirmar(true)}>Aceptar</button>}
+        {confirmar && (
+          <span className="flex basis-full flex-col items-start gap-2 rounded-[10px] border border-borde bg-papel p-3 text-[13px]">
+            <span>Desde la siguiente pieza, {p.destino === "codigo" ? "queda para una sesión de trabajo (necesita cambiar el código)" : "su agente cumplirá esta regla en producción"}.</span>
+            <span className="flex gap-2">
+              <Boton onClick={async () => { await decidir("aceptada", capa); setConfirmar(false); }} hecho="Aceptada">Sí, aceptarla</Boton>
+              <button className="boton-suave" onClick={() => setConfirmar(false)}>Cancelar</button>
+            </span>
+          </span>
+        )}
+        {p.estado !== "rechazada" && p.estado !== "aplicada" && !confirmar && <Boton tipo="secundario" hecho={null} onClick={() => decidir("rechazada")}>Rechazar</Boton>}
+        {p.estado === "aceptada" && <Boton tipo="secundario" hecho={null} onClick={() => decidir("aplicada")}>Marcar como ya aplicada</Boton>}
+        {p.estado !== "propuesta" && !confirmar && <Boton tipo="secundario" hecho={null} onClick={() => decidir("propuesta")}>Volver a propuesta</Boton>}
       </div>}
     </article>
   );
@@ -107,8 +122,9 @@ export function VistaMemoria() {
     try {
       await api.analizarMemoria(14);
       setAnalizando(true);
+      mirarTrabajos();
     } catch (e) {
-      setResultado(`No se pudo analizar: ${String(e)}`);
+      setResultado(`No se pudo analizar: ${mensajeError(e)}`);
     }
   };
   const decidir = async (p: Patron, estado: Patron["estado"], capa?: Capa) => { await api.decidirPatron(p.id, estado, "", capa); recargar(); };
@@ -121,12 +137,14 @@ export function VistaMemoria() {
         propuesta. Tú decides: una regla aceptada la cumple su agente (jefe de cultura, guionista o director de arte) desde la siguiente pieza. Las del programa necesitan cambiar el código y esperan a una sesión de trabajo.
       </p>
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <button className="boton" onClick={analizar} disabled={analizando}>{analizando ? "Analizando…" : "Analizar el feedback de los últimos 14 días"}</button>
-        <span className="text-[13px] text-tinta-suave">{analizando ? "Opus está leyendo el feedback; puede tardar varios minutos (puedes salir de la página)." : "Una llamada a Opus, unos céntimos."}</span>
+        {analizando
+          ? <Trabajando etapa="Opus está leyendo el feedback y buscando lo que se repite" rotulo="Analizando" />
+          : <button className="boton" onClick={analizar}>Analizar el feedback de los últimos 14 días<span className="boton__coste">unos minutos · unos céntimos</span></button>}
       </div>
       {estado.datos && <Calendario e={estado.datos} />}
       {resultado && <p className="mb-6 text-[14px]">{resultado}</p>}
-      {error && <p className="text-carmesi">No se pudo cargar la memoria: {error}</p>}
+      {error && <p className="text-carmesi" role="alert">No se pudo cargar la memoria: {error}</p>}
+      {!datos && !error && <div className="flex flex-col gap-4" aria-busy="true">{[0, 1].map((i) => <div key={i} className="esqueleto h-40 w-full" />)}</div>}
       {datos && datos.length === 0 && <p className="text-tinta-suave">Todavía no hay patrones. Evalúa y edita piezas, y analiza el feedback.</p>}
       {datos && ESTADOS.map((e) => {
         const grupo = datos.filter((p) => p.estado === e.valor);

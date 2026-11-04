@@ -6,6 +6,7 @@ vídeo); si un paso falla, los siguientes no se lanzan."""
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import threading
@@ -22,6 +23,7 @@ class EstadoEjecucion(BaseModel):
     codigo: int | None = None          # código de salida del último `folio run` (0 = bien)
     etapa: str | None = None           # última línea «ETAPA: …» del registro
     ultimas_lineas: list[str] = []
+    tipico_s: int | None = None        # lo que suele tardar este trabajo (mediana de los anteriores que acabaron bien)
 
 
 class Trabajo(BaseModel):
@@ -34,6 +36,8 @@ class Trabajo(BaseModel):
     inicio: str | None = None
     fin: str | None = None
     ultima_linea: str = ""
+    etapa: str | None = None           # el paso en curso, para la bandeja de trabajos (4/11)
+    tipico_s: int | None = None
 
 
 NOMBRES_TRABAJO = {"diaria": "Ejecución del día", "fondo-del-mes": "Tanda del fondo del mes",
@@ -45,6 +49,11 @@ YA_EN_MARCHA = "Esta pieza ya se está escribiendo"
 # Cada registro acaba con esta línea al terminar. Uno sin ella es de un trabajo que se cortó (un despliegue reinicia la
 # API y mata sus procesos): así el estado sobrevive al reinicio (revisión general, 2/11: la web lo daba por terminado)
 FIN = "FIN: código "
+# Y, justo antes, lo que tardó: de ahí sale «suele tardar» (4/11, usabilidad: la barra de la tarjeta de trabajo)
+DURACION = "DURACION: "
+# Lo que suele tardar cada tipo de trabajo si aún no hay ninguno terminado con su duración (segundos)
+TIPICO_POR_DEFECTO = {"diaria": 300, "pieza": 150, "cinco-del-libro": 300, "newsletter": 180, "fondo-del-mes": 900,
+                      "memoria-analisis": 90, "tema": 90}
 INTERRUMPIDO = "Interrumpido: la API se reinició (un despliegue) antes de que terminara. Vuelve a lanzarlo."
 
 
@@ -67,9 +76,10 @@ class _Trabajo:
                 break
             salida.flush()
             self.proceso = subprocess.Popen(self.pendientes.pop(0), stdout=salida, stderr=subprocess.STDOUT)
-        salida.write(f"\n{FIN}{self.proceso.returncode}\n")
+        fin = datetime.now(timezone.utc)
+        salida.write(f"\n{DURACION}{round((fin - datetime.fromisoformat(self.inicio)).total_seconds())}\n{FIN}{self.proceso.returncode}\n")
         salida.close()
-        self.fin = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        self.fin = fin.isoformat(timespec="seconds")
 
     def vivo(self) -> bool:
         return self.proceso.poll() is None or self.fin is None
@@ -79,6 +89,47 @@ class _Trabajo:
                        None if self.vivo() else self.proceso.returncode)
 
 
+class _Hilo:
+    """Un trabajo que corre en un hilo de la API (4/11, usabilidad: proponer un tema, replicar al jefe o escribir una
+    propuesta del fondo ya no dependen de que la página siga abierta). Escribe su registro como los procesos (ETAPA,
+    DURACION, FIN), así que se sigue igual, y deja su resultado en `<clave>.json`."""
+    cuenta = False                     # no ocupa sitio de «Proceder»
+
+    def __init__(self, registro: Path, nombre: str, fn):
+        self.registro, self.nombre = registro, nombre
+        self.registro.parent.mkdir(parents=True, exist_ok=True)
+        self.registro.write_text("", encoding="utf-8")
+        self.resultado_ruta = registro.with_suffix(".json")
+        self.resultado_ruta.unlink(missing_ok=True)
+        self.inicio, self.fin, self.codigo = datetime.now(timezone.utc).isoformat(timespec="seconds"), None, None
+        threading.Thread(target=self._correr, args=(fn,), daemon=True).start()
+
+    def _linea(self, texto: str) -> None:
+        with self.registro.open("a", encoding="utf-8") as f:
+            f.write(texto.rstrip("\n") + "\n")
+
+    def _correr(self, fn) -> None:
+        codigo = 0
+        try:
+            resultado = fn(lambda etapa: self._linea(f"ETAPA: {etapa}"))
+            if resultado is not None:
+                self.resultado_ruta.write_text(resultado.model_dump_json() if hasattr(resultado, "model_dump_json")
+                                               else json.dumps(resultado, ensure_ascii=False), encoding="utf-8")
+        except Exception as exc:       # el motivo, en una línea, como la última de un proceso que falla
+            codigo = 1
+            self._linea(str(getattr(exc, "detail", None) or f"{type(exc).__name__}: {exc}"))
+        fin = datetime.now(timezone.utc)
+        self._linea(f"{DURACION}{round((fin - datetime.fromisoformat(self.inicio)).total_seconds())}")
+        self._linea(f"{FIN}{codigo}")
+        self.codigo, self.fin = codigo, fin.isoformat(timespec="seconds")
+
+    def vivo(self) -> bool:
+        return self.fin is None
+
+    def estado(self) -> EstadoEjecucion:
+        return _estado(self.registro, self.vivo(), self.inicio, self.fin, None if self.vivo() else self.codigo)
+
+
 def _estado(registro: Path, en_marcha: bool, inicio, fin, codigo) -> EstadoEjecucion:
     lineas: list[str] = []
     etapa = None
@@ -86,7 +137,7 @@ def _estado(registro: Path, en_marcha: bool, inicio, fin, codigo) -> EstadoEjecu
         todas = [l for l in registro.read_text(encoding="utf-8", errors="replace").splitlines()
                  if l.strip() and "Fetching" not in l]
         etapa = next((l.removeprefix("ETAPA: ") for l in reversed(todas) if l.startswith("ETAPA: ")), None)
-        lineas = [l for l in todas if not l.startswith(("ETAPA: ", "TIEMPO: ", FIN))][-12:]
+        lineas = [l for l in todas if not l.startswith(("ETAPA: ", "TIEMPO: ", FIN, DURACION))][-12:]
         if not en_marcha and codigo is None:
             # Sin el trabajo en memoria (la API se reinició): el registro dice cómo acabó, o que se cortó
             final = next((l for l in reversed(todas) if l.startswith(FIN)), None)
@@ -171,7 +222,49 @@ class Ejecutor:
     def desarrollando(self) -> int:
         """Piezas escribiéndose con «Proceder». La tanda del fondo y la Memoria no cuentan: ni ocupan sitio de las
         piezas ni bloquean la ejecución del día con un mensaje que no es (revisión general, 2/11)."""
-        return sum(1 for k, t in self._desarrollos.items() if t.vivo() and k not in NOMBRES_TRABAJO)
+        return sum(1 for k, t in self._desarrollos.items() if t.vivo() and k not in NOMBRES_TRABAJO and getattr(t, "cuenta", True))
+
+    def en_hilo(self, clave: str, nombre: str, fn) -> str | None:
+        """Un trabajo corto de la API en segundo plano (`fn(progreso)` devuelve el resultado). None si lo lanza; si ya
+        hay uno con esa clave en marcha, YA_EN_MARCHA."""
+        with self._cerrojo:
+            previo = self._desarrollos.get(clave)
+            if previo and previo.vivo():
+                return YA_EN_MARCHA
+            self._desarrollos[clave] = _Hilo(self._registro_de(clave), nombre, fn)
+            return None
+
+    def resultado(self, clave: str) -> str | None:
+        """El resultado (JSON) de un trabajo en hilo que acabó bien, si lo hay."""
+        r = self._registro_de(clave).with_suffix(".json")
+        return r.read_text(encoding="utf-8") if r.exists() else None
+
+    def tipico(self, clave: str) -> int | None:
+        """Lo que suele tardar este tipo de trabajo: la mediana de los anteriores que acabaron bien (sus registros
+        guardan la duración); si aún no hay, un valor por defecto."""
+        tipo = "diaria" if clave == "diaria" else clave if clave in NOMBRES_TRABAJO else "tema" if clave.startswith(("tema-", "fondo-")) else "pieza"
+        if tipo == "diaria":
+            registros = [self.registro]
+        elif tipo == "pieza":
+            raros = {self._registro_de(k).name for k in NOMBRES_TRABAJO}
+            registros = [r for r in self.dir_desarrollos.glob("*.log") if r.name not in raros and not r.name.startswith(("tema-", "fondo-"))]
+        elif tipo == "tema":
+            registros = [*self.dir_desarrollos.glob("tema-*.log"), *self.dir_desarrollos.glob("fondo-*.log")]
+        else:
+            registros = [self._registro_de(clave)]
+        duraciones = []
+        for r in sorted(registros, key=lambda x: x.stat().st_mtime if x.exists() else 0)[-30:]:
+            try:
+                cola = r.read_text(encoding="utf-8", errors="replace").splitlines()[-4:]
+            except OSError:
+                continue
+            d = next((l.removeprefix(DURACION) for l in cola if l.startswith(DURACION)), None)
+            if d and f"{FIN}0" in cola and d.strip().isdigit():
+                duraciones.append(int(d))
+        if not duraciones:
+            return TIPICO_POR_DEFECTO.get(tipo)
+        duraciones.sort()
+        return duraciones[len(duraciones) // 2]
 
     def en_marcha(self, pid: str) -> bool:
         t = self._desarrollos.get(pid)
@@ -185,17 +278,22 @@ class Ejecutor:
         «interrumpido» si se cortó en un despliegue). None si nunca se lanzó."""
         t = self._desarrollos.get(pid)
         if t:
-            return t.estado()
-        r = self._registro_de(pid)
-        return _estado(r, False, None, None, None) if r.exists() else None
+            e = t.estado()
+        else:
+            r = self._registro_de(pid)
+            if not r.exists():
+                return None
+            e = _estado(r, False, None, None, None)
+        e.tipico_s = self.tipico(pid)
+        return e
 
     def trabajos(self) -> list[Trabajo]:
         """La ejecución del día y los trabajos aparte («Proceder», fondo, memoria) de esta sesión de la API."""
         def de(clave: str, t: _Trabajo) -> Trabajo:
             e = t.estado()
-            nombre = NOMBRES_TRABAJO.get(clave) or f"Pieza {clave} escrita («Proceder»)"
+            nombre = getattr(t, "nombre", None) or NOMBRES_TRABAJO.get(clave) or f"Pieza {clave} escrita («Proceder»)"
             return Trabajo(clave=clave, nombre=nombre, en_marcha=e.en_marcha, codigo=e.codigo, inicio=e.inicio, fin=e.fin,
-                           ultima_linea=(e.ultimas_lineas or [""])[-1][:200])
+                           ultima_linea=(e.ultimas_lineas or [""])[-1][:200], etapa=e.etapa, tipico_s=self.tipico(clave))
         out = [de("diaria", self._trabajo)] if self._trabajo else []
         return out + [de(k, t) for k, t in self._desarrollos.items()]
 
@@ -209,6 +307,6 @@ class Ejecutor:
 
     def estado(self) -> EstadoEjecucion:
         t = self._trabajo
-        if not t:
-            return _estado(self.registro, False, None, None, None)
-        return t.estado()
+        e = t.estado() if t else _estado(self.registro, False, None, None, None)
+        e.tipico_s = self.tipico("diaria")
+        return e

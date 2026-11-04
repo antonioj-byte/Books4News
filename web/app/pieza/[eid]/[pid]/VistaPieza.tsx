@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Atajos } from "@/components/Atajos";
+import { Boton } from "@/components/Boton";
 import { Carrusel } from "@/components/Carrusel";
+import { DescargarZip } from "@/components/DescargarZip";
 import { Descartar } from "@/components/Descartar";
 import { ChatEdicion } from "@/components/ChatEdicion";
 import { Creditos } from "@/components/Creditos";
@@ -15,21 +18,50 @@ import { ProgramarBuffer } from "@/components/ProgramarBuffer";
 import { PanelNoticia } from "@/components/PanelNoticia";
 import { api, ESTADOS } from "@/lib/api";
 import { conCursivas } from "@/lib/cursivas";
+import { avisar } from "@/lib/avisos";
+import { mensajeError } from "@/lib/errores";
 import { useDatos } from "@/lib/useDatos";
 
 // Vista de pieza en tres columnas: la noticia y sus avisos; el carrusel, con el texto editable sobre la
 // diapositiva; y el chat de edición con la evaluación. En el móvil, una columna: carrusel, chat y
 // evaluación, y la noticia al final.
 function VerificarDeNuevo({ eid, pid, onHecho }: { eid: number; pid: string; onHecho: () => void }) {
-  const [estado, setEstado] = useState<"" | "verificando" | "error">("");
+  // El motivo real si falla (4/11, usabilidad: antes se tiraba el detalle, también el 409 de «se está escribiendo»)
   return (
-    <span className="flex flex-col items-start gap-1">
-      <button className="boton" disabled={estado === "verificando"}
-              onClick={async () => { setEstado("verificando"); try { await api.verificarDeNuevo(eid, pid); setEstado(""); onHecho(); } catch { setEstado("error"); } }}>
-        {estado === "verificando" ? "Verificando…" : "Volver a verificar los libros →"}
-      </button>
-      {estado === "error" && <span className="text-[13px] text-carmesi">No se pudo verificar ahora. Prueba en un rato.</span>}
-    </span>
+    <Boton onClick={async () => { await api.verificarDeNuevo(eid, pid); onHecho(); }} trabajando="Verificando los libros…" hecho="Verificados">
+      Volver a verificar los libros →
+    </Boton>
+  );
+}
+
+// «Más ▾»: se cierra al pulsar fuera, con Escape y al elegir un cambio de estado (4/11, usabilidad: antes se quedaba abierto)
+function MenuMas({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const fuera = (e: MouseEvent) => { if (ref.current?.open && !ref.current.contains(e.target as Node)) ref.current.open = false; };
+    const escape = (e: KeyboardEvent) => { if (e.key === "Escape" && ref.current) ref.current.open = false; };
+    document.addEventListener("mousedown", fuera);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("mousedown", fuera); document.removeEventListener("keydown", escape); };
+  }, []);
+  return (
+    <details ref={ref} className="relative">
+      {children}
+    </details>
+  );
+}
+
+// Mientras carga la pieza: la forma de la página, no un «Cargando…» (4/11, usabilidad)
+function EsqueletoPieza() {
+  return (
+    <div className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-[1fr_minmax(340px,440px)] lg:p-8" aria-busy="true" aria-label="Cargando la pieza">
+      <div className="flex flex-col items-center gap-4">
+        <div className="esqueleto h-8 w-2/3 self-start" />
+        <div className="esqueleto aspect-[4/5] w-full max-w-[440px]" />
+        <div className="flex gap-2">{Array.from({ length: 6 }, (_, i) => <div key={i} className="esqueleto h-16 w-12" />)}</div>
+      </div>
+      <div className="flex flex-col gap-3"><div className="esqueleto h-9 w-1/2" /><div className="esqueleto h-24 w-full" /><div className="esqueleto h-24 w-5/6" /></div>
+    </div>
   );
 }
 
@@ -41,8 +73,13 @@ export function VistaPieza() {
   const [pestana, setPestana] = useState<"chat" | "fuentes" | "evaluacion">("chat");
   const [borrador, setBorrador] = useState<{ texto: string } | null>(null);
 
-  if (error) return <p className="p-6 text-carmesi">{error}</p>;
-  if (!d) return <p className="dato p-6">Cargando la pieza…</p>;
+  if (error) return (
+    <div className="flex flex-col items-start gap-3 p-6">
+      <p className="text-carmesi" role="alert">{error}</p>
+      <div className="flex gap-2"><button className="boton-suave" onClick={cargar}>Volver a intentarlo</button><Link href="/" className="boton-suave">Ir a la mesa de hoy</Link></div>
+    </div>
+  );
+  if (!d) return <EsqueletoPieza />;
   const g = d.pieza.guion;
   // Retrato del autor generado con IA (folio.imagenes.retrato_generado): el estilo va en su crédito
   const estiloRetrato = d.pieza.arte?.retrato?.match(/retrato (.+?) generado con IA/)?.[1];
@@ -64,22 +101,33 @@ export function VistaPieza() {
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {escrita && (estado === "propuesta" || estado === "en_edicion") && (
-              <button onClick={() => api.estado(eid, pid, "aprobada").then(cargar)} className="boton">Aprobar</button>
+              <Boton onClick={async () => { await api.estado(eid, pid, "aprobada"); cargar(); }} hecho="Aprobada">Aprobar</Boton>
             )}
             {estado === "descartada" && (
-              <button onClick={() => api.estado(eid, pid, "propuesta").then(cargar)} className="boton-suave">Recuperar</button>
+              <Boton tipo="secundario" onClick={async () => { await api.estado(eid, pid, "propuesta"); cargar(); }} hecho="Recuperada">Recuperar</Boton>
             )}
             {estado !== "descartada" && <Descartar eid={eid} pid={pid} onHecho={cargar} />}
-            <details className="relative">
+            <Atajos atajos={[
+              { tecla: "A", texto: "Aprobar la pieza",
+                hacer: escrita && (estado === "propuesta" || estado === "en_edicion")
+                  ? () => { api.estado(eid, pid, "aprobada").then(() => { cargar(); avisar({ tipo: "ok", texto: `Pieza ${pid} aprobada.` }); })
+                              .catch((e) => avisar({ tipo: "mal", texto: mensajeError(e, "No se pudo aprobar.") })); }
+                  : undefined },
+              { tecla: "/", texto: "Escribir al equipo (chat)",
+                hacer: () => { setPestana("chat"); setTimeout(() => (document.getElementById(`chat-${pid}`) as HTMLTextAreaElement | null)?.focus(), 50); } },
+              { tecla: "F", texto: "Ver las fuentes", hacer: () => setPestana("fuentes") },
+              { tecla: "E", texto: "Ver la evaluación", hacer: () => setPestana("evaluacion") },
+            ]} />
+            <MenuMas>
               <summary className="boton-suave cursor-pointer list-none">Más ▾</summary>
               <div className="absolute right-0 z-20 mt-1.5 flex w-[260px] flex-col gap-2 rounded-[10px] border border-borde bg-panel p-3 text-[13px] shadow-lg">
                 <span className="dato">{d.pieza.id} · versión {d.version}{(d.videos ?? []).length ? ` · vídeo en ${(d.videos ?? []).map((v) => v.n).join(", ")}` : ""}</span>
-                {escrita && <a href={api.urlDescarga(eid, pid)} download className="hover:underline">Descargar el carrusel (.zip) <span className="dato">· hasta un minuto</span></a>}
+                {escrita && <DescargarZip eid={eid} pid={pid} />}
                 {escrita && otrosEstados.length > 0 && (
                   <span className="flex flex-wrap items-center gap-1.5">
                     <span className="dato">Pasar a</span>
                     {otrosEstados.map((e) => (
-                      <button key={e.valor} onClick={() => api.estado(eid, pid, e.valor).then(cargar)} className="rounded-full border border-borde px-2.5 py-0.5 hover:border-tinta">{e.texto}</button>
+                      <Boton key={e.valor} tipo="secundario" hecho={null} onClick={async () => { await api.estado(eid, pid, e.valor); cargar(); }}>{e.texto}</Boton>
                     ))}
                   </span>
                 )}
@@ -87,7 +135,7 @@ export function VistaPieza() {
                   <span><b>Ilustración</b>{d.pieza.arte.escena_idea ? ` · ${d.pieza.arte.escena_idea}` : ""}<span className="mt-1 block font-mono text-[11.5px] text-tinta-suave">{d.pieza.arte.escena}</span></span>
                 )}
               </div>
-            </details>
+            </MenuMas>
           </div>
         </div>
         <Creditos creditos={d.creditos ?? []} />
@@ -243,7 +291,7 @@ function EditarPie({ pie, guardar }: { pie: string; guardar: (pie: string) => Pr
                 onClick={async () => {
                   setGuardando(true); setError(null);
                   try { await guardar(texto); setEditando(false); }
-                  catch (e) { setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo guardar."); }
+                  catch (e) { setError(mensajeError(e, "No se pudo guardar.")); }
                   finally { setGuardando(false); }
                 }}>
           {guardando ? "Guardando…" : "Guardar el pie"}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { mensajeError } from "@/lib/errores";
 
 // Carga datos de la API: datos, error y una función para recargar. `clave` identifica la petición
 // (cuando cambia, se vuelve a cargar); mientras llega la nueva respuesta se mantienen los datos
@@ -14,7 +15,7 @@ export function useDatos<T>(clave: string, cargar: () => Promise<T>) {
   const recargar = useCallback(() => {
     cargarActual.current()
       .then((d) => { setDatos(d); setError(""); })
-      .catch((e) => setError(String(e)));
+      .catch((e) => setError(mensajeError(e, "No se pudieron cargar los datos.")));   // una frase, no «Error: 404 /api/…»
   }, [clave]); // eslint-disable-line react-hooks/exhaustive-deps -- la clave es la que decide cuándo recargar
 
   useEffect(recargar, [recargar]);

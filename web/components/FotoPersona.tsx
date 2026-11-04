@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { api } from "@/lib/api";
+import { mensajeError } from "@/lib/errores";
 
 // La foto del autor o protagonista, subida desde la ficha (3/11, a petición del usuario: «muchas veces no la
 // encuentra; yo puedo buscar… ahora mismo es bastante calvario»). Va como retrato al momento, sin pasar por el chat.
@@ -37,7 +38,7 @@ export function FotoPersona({ eid, pid, persona, credito, escrita, onHecho }: {
       const r = await api.subirFotoPersona(eid, pid, archivo, texto.trim(), modificable, modificable ? tratamiento : "foto");
       setMensaje(r.nota); cancelar(); setTexto(""); onHecho();
     } catch (e) {
-      setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo subir");
+      setError(mensajeError(e, "No se pudo subir la foto."));
     } finally { setSubiendo(false); }
   };
 

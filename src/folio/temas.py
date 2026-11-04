@@ -311,7 +311,8 @@ def aportes_de_la_replica(tid: int, replica: str, ya: list[FuenteTema], cliente=
     return nuevas, avisos
 
 
-def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None, replica: str | None = None) -> ResultadoTema:
+def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None, replica: str | None = None,
+                anunciar=None) -> ResultadoTema:
     """«Proponer ahora» (y cada réplica de la redacción): el tema `tid` se convierte en una pieza pendiente de la
     ejecución `eid` (noticias, propuesta del jefe, libros verificados y cubiertas), o el jefe pregunta. Con una
     réplica, si la pieza del tema aún no está escrita, se rehace en el sitio (versión nueva). SinFuentes o ErrorLLM
@@ -333,7 +334,10 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
     llm = llm or LLM(cfg)
     avisos: list[str] = []
     try:
+        anunciar = anunciar or (lambda etapa: None)    # la tarjeta de trabajo de la web sigue estos pasos (4/11)
         guardadas = [FuenteTema(**f) for f in almacen.fuentes_tema(tid)]
+        if not guardadas:
+            anunciar("Buscando las noticias del tema")
         if guardadas:
             fuentes = guardadas
         else:
@@ -350,6 +354,7 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
                 fuentes = [*fuentes, *aportadas]
                 almacen.actualizar_tema(tid, fuentes=[f.model_dump() for f in fuentes])
         h = historia(tid, tema.texto, fuentes)
+        anunciar("El jefe de cultura piensa la propuesta")
         r = proponer(llm, cfg, h, tema.texto, fuentes, fecha, conversacion, tema.enfoque)
     except (SinFuentes, ErrorLLM) as exc:
         almacen.actualizar_tema(tid, estado="fallido", nota=str(exc)[:300], conversacion=conversacion)
@@ -368,6 +373,7 @@ def crear_pieza(cfg: Config, almacen, eid: int, tid: int, llm: LLM | None = None
     # Un tema de la redacción (un perfil, un premio a toda una obra) no exige novedades: sí la edición en castellano
     tuberia.sin_novedad = True
     pieza = None
+    anunciar("Verificando los libros")
     for intento in range(2):
         # Por excepción, un título sin traducir o un libro ya usado si la redacción lo pide expresamente (2/11, reglas
         # del usuario). Dentro del bucle: la segunda propuesta del jefe puede marcarlos y antes no se aplicaban

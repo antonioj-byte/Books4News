@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { FormatoChip } from "@/components/Marcas";
 import { api, type PiezaArchivo } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
+import { EsqueletoTarjetas } from "@/components/Esqueleto";
 
 // El Archivo (3/11, a petición del usuario: «¿cómo puedo ver el histórico? Puede interesar publicar o editar contenidos
 // ya hechos, pero que se quedan en nevera»): todas las piezas de todos los días, en qué punto están y si siguen vigentes.
@@ -57,7 +58,8 @@ export function VistaArchivo() {
         </select>
       </div>
 
-      {error && <p className="text-carmesi">{error}</p>}
+      {error && <p className="text-carmesi" role="alert">{error}</p>}
+      {!datos && !error && <EsqueletoTarjetas n={8} />}
       {datos && lista.length === 0 && (
         <p className="panel px-5 py-4 text-tinta-suave">{ver === "nevera" ? "No hay nada en la nevera: todas las piezas escritas están aprobadas, publicadas o descartadas." : "No hay piezas con este filtro."}</p>
       )}

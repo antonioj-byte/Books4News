@@ -44,6 +44,7 @@ class Fondo(BaseModel):
 
 class Escribir(BaseModel):
     ejecucion: int
+    segundo_plano: bool = False        # 4/11, usabilidad: responde al momento y se sigue como trabajo «fondo-<id>»
 
 
 class Preparar(BaseModel):
@@ -89,11 +90,20 @@ def escribir(fid: int, e: Escribir, ctx: Contexto = Depends(contexto)):
     if ctx.ejecutor.con_pipeline():
         raise HTTPException(409, "Se está preparando la mesa del día; prueba cuando termine")
     tid = ctx.almacen.guardar_tema(fondo_folio.texto_tema(x), [], "ahora")
-    r = _resultado(ctx, e.ejecucion, tid)
-    if r.pieza_id and r.estado_pieza == "pendiente":
-        # Solo si llegó a la mesa con libro: una pieza fallida deja la propuesta disponible para reintentar (revisión, 2/11)
-        ctx.almacen.actualizar_fondo(fid, estado="usada", tema_id=tid)
-    return r
+
+    def hacer(anunciar=None) -> TemaCreado:
+        r = _resultado(ctx, e.ejecucion, tid, **({"anunciar": anunciar} if anunciar else {}))
+        if r.pieza_id and r.estado_pieza == "pendiente":
+            # Solo si llegó a la mesa con libro: una pieza fallida deja la propuesta disponible para reintentar (revisión, 2/11)
+            ctx.almacen.actualizar_fondo(fid, estado="usada", tema_id=tid)
+        return r
+    if e.segundo_plano:
+        clave = f"fondo-{fid}"
+        motivo = ctx.ejecutor.en_hilo(clave, f"Del fondo a la mesa: {x['titular'][:60]}", hacer)
+        if motivo:
+            raise HTTPException(409, "Esta propuesta ya se está llevando a la mesa")
+        return TemaCreado(tema=next(t for t in ctx.almacen.temas() if t.id == tid), trabajo=clave)
+    return hacer()
 
 
 @router.post("/api/fondo/{fid}/descartar", response_model=PropuestaDelFondo)

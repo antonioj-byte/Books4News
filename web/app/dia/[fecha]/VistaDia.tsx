@@ -12,6 +12,7 @@ import { ProponerTema } from "@/components/ProponerTema";
 import { CincoDelLibro } from "@/components/CincoDelLibro";
 import { api } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
+import { EsqueletoTarjetas } from "@/components/Esqueleto";
 
 const hora = (iso: string) => new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
@@ -67,7 +68,8 @@ export function VistaDia() {
 
       <ProponerTema eid={dia?.ejecucion.id} onPieza={recargarDia} />
 
-      {error && <p className="text-carmesi">{error}</p>}
+      {error && <p className="text-carmesi" role="alert">{error}</p>}
+      {!dia && !error && <EsqueletoTarjetas n={6} rejilla />}
       {dia?.aviso_jefe && (
         <p className="panel mb-6 px-5 py-3 text-sm">
           <span className="subrayado font-semibold">Aviso del jefe de cultura</span> {dia.aviso_jefe}

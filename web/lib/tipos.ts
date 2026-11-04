@@ -503,6 +503,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/trabajos/{clave}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Un Trabajo
+         * @description Cómo va un trabajo aparte por su clave (4/11, usabilidad: los temas, las réplicas y lo del fondo se siguen así
+         *     aunque se salga de la página y se vuelva).
+         */
+        get: operations["un_trabajo_api_trabajos__clave__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/trabajos": {
         parameters: {
             query?: never;
@@ -1334,6 +1355,11 @@ export interface components {
         Escribir: {
             /** Ejecucion */
             ejecucion: number;
+            /**
+             * Segundo Plano
+             * @default false
+             */
+            segundo_plano: boolean;
         };
         /**
          * EstadoBuffer
@@ -1366,6 +1392,8 @@ export interface components {
              * @default []
              */
             ultimas_lineas: string[];
+            /** Tipico S */
+            tipico_s: number | null;
         };
         /** EstadoMemoria */
         EstadoMemoria: {
@@ -1400,6 +1428,30 @@ export interface components {
             ultima: string | null;
             /** Proxima */
             proxima: string | null;
+        };
+        /** EstadoTrabajo */
+        EstadoTrabajo: {
+            /** En Marcha */
+            en_marcha: boolean;
+            /** Inicio */
+            inicio: string | null;
+            /** Fin */
+            fin: string | null;
+            /** Codigo */
+            codigo: number | null;
+            /** Etapa */
+            etapa: string | null;
+            /**
+             * Ultimas Lineas
+             * @default []
+             */
+            ultimas_lineas: string[];
+            /** Tipico S */
+            tipico_s: number | null;
+            /** Resultado */
+            resultado: {
+                [key: string]: unknown;
+            } | null;
         };
         /** Evaluacion */
         "Evaluacion-Input": {
@@ -2353,6 +2405,11 @@ export interface components {
             ejecucion: number;
             /** Enfoque */
             enfoque?: ("elige" | "noticia" | "ensayo") | null;
+            /**
+             * Segundo Plano
+             * @default false
+             */
+            segundo_plano: boolean;
         };
         /** RespuestaChat */
         RespuestaChat: {
@@ -2559,6 +2616,8 @@ export interface components {
              * @default
              */
             respuesta: string;
+            /** Trabajo */
+            trabajo?: string | null;
         };
         /** TemaNuevo */
         TemaNuevo: {
@@ -2579,6 +2638,11 @@ export interface components {
              * @enum {string}
              */
             enfoque: "elige" | "noticia" | "ensayo";
+            /**
+             * Segundo Plano
+             * @default false
+             */
+            segundo_plano: boolean;
         };
         /**
          * Trabajo
@@ -2603,6 +2667,10 @@ export interface components {
              * @default
              */
             ultima_linea: string;
+            /** Etapa */
+            etapa: string | null;
+            /** Tipico S */
+            tipico_s: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -3529,6 +3597,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstadoProgramada"];
+                };
+            };
+        };
+    };
+    un_trabajo_api_trabajos__clave__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoTrabajo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

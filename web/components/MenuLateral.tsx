@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BandejaTrabajos } from "@/components/BandejaTrabajos";
 import { Isotipo } from "@/components/Isotipo";
 
 // Menú lateral de la agencia (3/11, a petición del usuario: «tipo modelos SaaS clásico»). Arriba, la cuenta (hoy solo
@@ -35,6 +36,7 @@ export function MenuLateral() {
           <span className="antetitulo mt-1 hidden text-[9.5px] lg:inline">Mesa de edición</span>
         </span>
       </Link>
+      <BandejaTrabajos estrecho={estrecho} />
       <nav className="flex flex-row flex-wrap gap-0.5 text-[14px] lg:flex-col" aria-label="Secciones">
         {GRUPOS.map((g, i) => (
           <div key={i} className="contents lg:flex lg:flex-col lg:gap-0.5">

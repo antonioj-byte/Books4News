@@ -3,6 +3,7 @@
 import { FormatoChip } from "@/components/Marcas";
 import { api } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
+import { EsqueletoPagina } from "@/components/Esqueleto";
 
 // La memoria de marca (3/11, a petición del usuario: «cada cuenta tiene su propia memoria»): lo que comparten todos los
 // roles cuando trabajan para Folio. Es lo que cambiaría al cambiar de cuenta; el equipo sería el mismo. De lectura.
@@ -20,7 +21,7 @@ function Apartado({ ante, titulo, texto, fuente }: { ante: string; titulo: strin
 export function VistaMarca() {
   const { datos: m, error } = useDatos("marca", api.marca);
   if (error) return <p className="p-6 text-carmesi">{error}</p>;
-  if (!m) return <p className="dato p-6">Cargando…</p>;
+  if (!m) return <EsqueletoPagina />;
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <div className="antetitulo">La memoria de marca</div>

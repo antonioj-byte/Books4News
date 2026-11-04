@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { api, type EstadoBuffer } from "@/lib/api";
+import { mensajeError } from "@/lib/errores";
 import { useDatos } from "@/lib/useDatos";
 
 // «Programar en Buffer» (2/11): solo en piezas aprobadas. Publicar es hacia fuera, así que hay un paso de
@@ -50,8 +51,7 @@ export function ProgramarBuffer({ eid, pid }: { eid: number; pid: string }) {
       setReemplazar(false);
       recargar();
     } catch (err) {
-      const texto = err instanceof Error ? err.message : String(err);
-      setError(texto.replace(/^\d+ \S+: /, "") || "No se pudo programar. Prueba otra vez en un momento.");
+      setError(mensajeError(err, "No se pudo programar. Prueba otra vez en un momento."));
     } finally {
       setEnviando(false);
       setConfirmando(false);
@@ -114,15 +114,19 @@ export function ProgramarBuffer({ eid, pid }: { eid: number; pid: string }) {
             </label>
           )}
           {!confirmando ? (
-            <button className="boton-suave self-start disabled:cursor-not-allowed disabled:opacity-40" disabled={enviando || bloqueada}
-                    title={redes.length === 0 ? "Elige al menos una red" : bloqueada ? `Ya está en ${ocupadas.map((r) => NOMBRE[r]).join(" y ")}: bórrala antes en Buffer y marca «Ya la he borrado en Buffer», o desmarca esa red` : undefined}
-                    onClick={() => setConfirmando(true)}>
-              Programar en Buffer
-            </button>
+            // Publica fuera de Folio: el botón destaca (4/11, usabilidad) y, si está apagado, dice por qué a la vista
+            <span className="flex flex-col items-start gap-1">
+              <button className="boton boton--fuera self-start" aria-disabled={enviando || bloqueada || undefined}
+                      onClick={() => { if (!enviando && !bloqueada) setConfirmando(true); }}>
+                Programar en Buffer
+              </button>
+              {bloqueada && <span className="motivo">{redes.length === 0 ? "Elige al menos una red"
+                : `Ya está en ${ocupadas.map((r) => NOMBRE[r]).join(" y ")}: bórrala antes en Buffer y marca «Ya la he borrado en Buffer», o desmarca esa red`}</span>}
+            </span>
           ) : (
             <div className="flex flex-wrap items-center gap-2 rounded-[6px] border border-tinta px-3 py-2">
               <span className="text-[13px]">¿Mandar la versión actual a {redes.map((r) => NOMBRE[r]).join(" y ")} {resumen}?</span>
-              <button className="boton-suave" onClick={enviar} disabled={enviando}>{enviando ? "Enviando…" : "Sí, programar"}</button>
+              <button className="boton boton--fuera" onClick={enviar} disabled={enviando} aria-busy={enviando || undefined}>{enviando ? <><span className="girando" aria-hidden />Enviando a Buffer…</> : "Sí, programar"}</button>
               <button className="text-[13px] underline" onClick={() => setConfirmando(false)} disabled={enviando}>Cancelar</button>
             </div>
           )}
