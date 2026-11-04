@@ -284,3 +284,19 @@ def test_el_chat_filtra_las_opciones(cfg):
     opciones = []
     respuesta, nueva, _ = edicion.chat(LLM(), cfg, _pieza(), [], "¿qué hacemos?", opciones)
     assert respuesta == "Elige" and nueva is None and opciones == ["Sí, banda de la 2 a la 4", "Mejor solo la portada"]
+
+
+def test_si_la_imagen_no_se_puede_la_respuesta_no_lo_promete(cfg):
+    """4/11: el editor decía «hago una ilustración nueva…» y al final «(En piezas graves no se ilustra.)»."""
+    escena = "A tall stack of freshly printed books walks out of an office door while empty chairs wait around a long table inside"
+
+    class LLM:
+        def estructurado(self, paso, mensajes, esquema, **k):
+            return esquema(respuesta="Hago una ilustración nueva con otra escena.", guion=None,
+                           imagen=_accion("ilustrar", escena=escena)), []
+
+    p = _pieza().model_copy(deep=True)
+    p.arte.tono = "grave"
+    respuesta, nueva, _ = edicion.chat(LLM(), cfg, p, [], "Mejor una ilustración nueva")
+    assert nueva is None and respuesta.startswith("No lo he podido hacer") and "graves" in respuesta
+    assert "Hago una ilustración" not in respuesta

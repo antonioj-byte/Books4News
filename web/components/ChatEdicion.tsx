@@ -193,7 +193,7 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
           </div>
         ))}
         {locales.map((l, i) => <p key={i} className="dato self-start">{l}</p>)}
-        {enviando && <p className="dato self-start">El editor está trabajando… {segundos} s{segundos > 45 ? " · los cambios de imagen tardan un par de minutos" : ""}</p>}
+        {enviando && <Trabajando segundos={segundos} para={para} mensaje={mensajes.at(-1)?.texto ?? ""} />}
         <div ref={final} />
       </div>
 
@@ -280,6 +280,34 @@ export function ChatEdicion({ eid, pid, onCambio, titulares = [], titularActual 
           ))}
         </p>
       )}
+    </div>
+  );
+}
+
+
+// Mientras el equipo trabaja (4/11, a petición del usuario: «mientras el director de arte esté trabajando, que quede
+// claro que se está procesando una acción»): una burbuja viva con quién trabaja, qué está haciendo (por el tiempo y
+// por lo que se ha pedido: una ilustración tarda hasta un minuto) y el reloj
+const PIDE_IMAGEN = /ilustraci|imagen|foto|retrato|portada|banda|friso|collage|escena|dibuj|recorte|cubierta/i;
+
+function Trabajando({ segundos, para, mensaje }: { segundos: number; para: string | null; mensaje: string }) {
+  const imagen = para === "director_arte" || PIDE_IMAGEN.test(mensaje);
+  const quien = para ? (NOMBRE_ROL[para] ?? "El equipo") : imagen ? "Director de arte" : "Editor";
+  const paso = segundos < 6 ? "Lee la pieza y tu mensaje"
+    : segundos < 20 ? "Decide el cambio"
+    : imagen ? (segundos < 75 ? "Prepara la imagen (una ilustración tarda hasta un minuto)" : "Revisa la imagen y la pone en la pieza")
+    : "Reescribe y comprueba las reglas";
+  const m = Math.floor(segundos / 60), s = segundos % 60;
+  return (
+    <div className="flex max-w-[92%] flex-col gap-1.5 self-start" role="status" aria-live="polite">
+      <div className="rounded-[12px] border border-carmesi bg-panel px-3 py-2 leading-snug">
+        <span className="mb-1 flex items-center gap-2">
+          <span className="trabajando__punto inline-block" style={{ background: "var(--carmesi)" }} aria-hidden />
+          <span className="dato uppercase tracking-[0.12em]">{quien} · trabajando</span>
+          <span className="dato ml-auto">{m}:{String(s).padStart(2, "0")}</span>
+        </span>
+        <span>{paso}<span className="puntos-vivos" aria-hidden /></span>
+      </div>
     </div>
   );
 }

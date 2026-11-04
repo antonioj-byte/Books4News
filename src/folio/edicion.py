@@ -350,6 +350,10 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
             if r.imagen is None:
                 return r.respuesta, None, avisos
             nueva, nota = _imagen_sin_romper(llm, cfg, p, r.imagen)
+            if nueva is None:
+                # 4/11: el editor decía «hago una ilustración nueva…» y la nota final decía que no se podía; si el cambio
+                # de imagen no se hace, la respuesta lo dice primero y no promete lo que no ha pasado
+                return f"No lo he podido hacer: {nota.strip().strip('()')}", None, avisos
             return (f"{r.respuesta} {nota}".strip()), nueva, avisos
         guionista.corregir_mecanico(r.guion)
         errores = [e for e in validar(cfg, p, r.guion) if e not in previos]
@@ -364,6 +368,8 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
                 nueva.revision_humana.append(AVISO_CHAT)
             if r.imagen is not None:
                 con_imagen, nota = _imagen_sin_romper(llm, cfg, nueva, r.imagen)
+                if con_imagen is None:
+                    return f"{r.respuesta} Pero el cambio de imagen no se ha podido hacer: {nota.strip().strip('()')}", nueva, avisos
                 return f"{r.respuesta} {nota}".strip(), con_imagen or nueva, avisos
             return r.respuesta, nueva, avisos
         avisos.append(f"Intento {intento + 1} rechazado: " + " | ".join(errores))
