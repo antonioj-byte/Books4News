@@ -320,6 +320,11 @@ def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str, libro: st
     if ar.portada == "panorama":
         ar.portada = cfg.pipeline.arte.portadas[0]
     if como == "retrato":
+        if ar.imagen and ar.imagen.startswith(PREFIJO):
+            # La misma foto subida como imagen de portada y luego como retrato: la de portada sobra (si no, el render
+            # la pasaba a la noticia y la cara salía dos veces; 4/11)
+            ar.imagen = ar.credito = None
+            libres.olvidar(p.id, dir_fecha)
         ar.registro, ar.retrato = "foto_autor", img.credito
         return nueva, f"(La foto subida va como retrato de {persona} en la portada. Crédito: {img.credito}.)"
     ar.registro, ar.recurso, ar.imagen, ar.credito = "archivo", "foto", img.archivo, img.credito

@@ -68,6 +68,19 @@ def misma_persona(a: str | None, b: str | None) -> bool:
     return bool(corto) and corto <= largo
 
 
+def _misma_foto(imagen: dict | None, retrato: dict | None) -> bool:
+    """¿Es la imagen de portada la misma foto que el retrato (el mismo archivo de origen, o una foto subida de la misma
+    persona)? Si lo es, no se repite en la noticia (4/11)."""
+    if not imagen or not retrato:
+        return False
+    a, b = imagen.get("archivo") or "", retrato.get("archivo") or ""
+    if a and a == b:
+        return True
+    if a.startswith("material:") and b.startswith("material:"):
+        return True
+    return misma_persona(imagen.get("persona_img"), retrato.get("persona"))
+
+
 _MESES_CORTOS = ("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
 
 
@@ -293,7 +306,12 @@ class Plantillas:
         if retrato and not misma_persona(retrato["persona"], cara_de):
             retrato = None
         cara_en_portada = bool(retrato and not (a and (a.portada == "panorama" or (a.registro == "archivo" and imagen))))
-        if d.tipo == "actualidad" and imagen and not cara_en_portada and not (a and a.portada == "panorama"):
+        if d.tipo == "actualidad" and imagen and cara_en_portada and _misma_foto(imagen, retrato):
+            # 4/11 («le pido que cambie la diapo 1 y cambia la dos también»): con la cara en la portada, la imagen de
+            # portada pasa a la noticia; si es la misma foto de la persona (subida primero como portada y luego como
+            # retrato), saldría dos veces: la noticia se queda con la suya o sin foto. Nunca dos caras.
+            imagen = self.medios.imagen(pieza, "-noticia")
+        elif d.tipo == "actualidad" and imagen and not cara_en_portada and not (a and a.portada == "panorama"):
             # La imagen de archivo ya va en la portada: la noticia lleva la segunda, distinta, o ninguna (y entonces
             # la cifra o un recurso sin foto). Regla del usuario, 1/11: no se repite imagen de archivo.
             imagen = self.medios.imagen(pieza, "-noticia")

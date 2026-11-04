@@ -63,7 +63,8 @@ class Medios:
         if not img or not img.local or not (libres.dir_imagenes(cache) / img.local).exists():
             return None
         return {"src": self.url_medio(libres.dir_imagenes(cache) / img.local), "credito": img.credito,
-                "enfoque": img.enfoque, "grabado": bool(pieza.arte and pieza.arte.recurso == "grabado")}
+                "enfoque": img.enfoque, "grabado": bool(pieza.arte and pieza.arte.recurso == "grabado"),
+                "archivo": img.archivo, "persona_img": img.persona}
 
     def esquema(self, pieza: Pieza) -> str | None:
         """La ilustración técnica de la infografía «esquema», si se hizo."""

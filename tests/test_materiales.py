@@ -222,3 +222,20 @@ def test_fotos_de_prensa_en_la_noticia_con_el_credito_del_chat(cfg):
     pl = render.Plantillas(cfg, url_medio=lambda r: "/api/medios/" + r.name)
     n = next(i for i, x in enumerate(nueva.guion.diapositivas, 1) if x.tipo == "actualidad")
     assert f"{p.id}-noticia.jpg" in pl.html_diapositiva(nueva, n)
+
+
+def test_la_foto_de_portada_que_pasa_a_retrato_no_sale_en_la_noticia(cfg):
+    """4/11 («le pido que cambie la diapo 1 y cambia la dos también»): la foto subida como imagen de portada y luego
+    como retrato salía también en la noticia. Nunca dos caras."""
+    from folio import render
+    (cfg.raiz / "diseno").symlink_to(render.dir_diseno(type(cfg)(pipeline={}, fuentes=[])).resolve())
+    p = _pieza(acento="pluma")
+    m = materiales.guardar(cfg, p, "autora.png", _png(), "image/png", "Tusquets")
+    nueva, _ = edicion.aplicar_imagen(None, cfg, p, _accion(material=m.id, como="portada"))
+    nueva, _ = edicion.aplicar_imagen(None, cfg, nueva, _accion(material=m.id, como="retrato"))
+    assert nueva.arte.registro == "foto_autor" and nueva.arte.imagen is None
+    pl = render.Plantillas(cfg, url_medio=lambda r: "/api/medios/" + r.name)
+    n = next(i for i, x in enumerate(nueva.guion.diapositivas, 1) if x.tipo == "actualidad")
+    html = pl.html_diapositiva(nueva, n)
+    assert f"{p.id}.jpg" not in html and f"{p.id}-retrato.jpg" not in html
+    assert f"{p.id}-retrato.jpg" in pl.html_diapositiva(nueva, 1)
