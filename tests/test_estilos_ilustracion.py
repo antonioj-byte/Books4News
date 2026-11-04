@@ -38,3 +38,17 @@ def test_las_de_antes_eran_collage_y_un_solo_estilo_se_respeta(cfg):
     assert editorial.estilo_de_pieza(cfg, "2026-11-04-3", d) == "collage"
     cfg.pipeline.arte.ilustracion_editorial.estilos = ["collage"]
     assert editorial.estilo_de_pieza(cfg, "2026-11-04-9", d) == "collage"
+
+
+def test_quita_el_marco_que_rodea_la_imagen_pero_no_el_suelo():
+    from PIL import Image, ImageDraw
+    escena = Image.new("RGB", (400, 200), (214, 36, 110))
+    ImageDraw.Draw(escena).rectangle((200, 0, 400, 100), fill=(242, 225, 76))
+    ImageDraw.Draw(escena).line((0, 150, 400, 160), fill=(0, 0, 0), width=3)
+    con_marco = Image.new("RGB", (430, 230), (243, 239, 230))
+    con_marco.paste(escena, (15, 15))
+    assert editorial.quitar_marco(con_marco).size == (400, 200)
+    # Un suelo liso solo abajo es parte de la escena: no se toca
+    suelo = Image.new("RGB", (400, 240), (243, 239, 230))
+    suelo.paste(escena.crop((0, 0, 400, 200)), (0, 0))
+    assert editorial.quitar_marco(suelo).size == (400, 240)

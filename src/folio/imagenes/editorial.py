@@ -166,6 +166,34 @@ def del_dia(dir_fecha: Path, sin: str) -> int:
     return n
 
 
+def quitar_marco(im: Image.Image, maximo: float = 0.08) -> Image.Image:
+    """Quita el marco que a veces pinta el modelo aunque el prompt lo prohíbe (4/11, el grabado salió con un margen
+    de papel crema y una raya negra): desde cada borde (al menos tres, porque el marco rodea la imagen), las líneas lisas (claras u oscuras) hasta dar con la imagen,
+    como mucho un `maximo` de cada lado. Sin marco, la imagen no cambia."""
+    gris = im.convert("L")
+    ancho, alto = gris.size
+    px = gris.load()
+
+    def lisa(valores: list[int]) -> bool:
+        media = sum(valores) / len(valores)
+        return (sum((v - media) ** 2 for v in valores) / len(valores)) ** 0.5 < 14
+
+    def fila(y): return [px[x, y] for x in range(0, ancho, 4)]
+    def columna(x): return [px[x, y] for y in range(0, alto, 4)]
+
+    def cuanto(linea, n, desde_el_final):
+        tope, k = int(n * maximo), 0
+        while k < tope and lisa(linea(n - 1 - k if desde_el_final else k)):
+            k += 1
+        return k if k >= 3 else 0      # dos líneas lisas sueltas no son un marco
+    izq, der = cuanto(columna, ancho, False), cuanto(columna, ancho, True)
+    arr, aba = cuanto(fila, alto, False), cuanto(fila, alto, True)
+    # Un marco rodea la imagen: si solo un lado es liso, es el suelo o el cielo de la escena, no un marco
+    if sum(bool(k) for k in (izq, der, arr, aba)) < 3:
+        return im
+    return im.crop((izq, arr, ancho - der, alto - aba))
+
+
 def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | None = None,
             nombre_estilo: str = "collage") -> Path:
     """Dibuja una escena (una variante) y devuelve su archivo en la caché común (cache/ilustraciones/): la
@@ -188,7 +216,7 @@ def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | Non
             raise
         with Image.open(BytesIO(datos)) as im:
             cache.parent.mkdir(parents=True, exist_ok=True)
-            im.convert("RGB").save(cache, "JPEG", quality=90)
+            quitar_marco(im.convert("RGB")).save(cache, "JPEG", quality=90)
     return cache
 
 
