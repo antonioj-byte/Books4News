@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 
 from folio.modelos import Pieza
 from folio.publicacion import enlaces
-from folio.publicacion.buffer import MAX_IMAGENES_LINKEDIN, NOMBRE_RED, REDES, Buffer
+from folio.publicacion.buffer import NOMBRE_RED, REDES, Buffer
 from folio.publicacion.preparar import preparar
 
 
@@ -97,6 +97,15 @@ def recordar_programadas(cfg, almacen, dias: int = 7) -> int:
                 h.anadir_publicada(cuando, pid, hallada[0].eleccion.titular, texto_de_pieza(hallada[0]), ",".join(redes))
                 n += 1
     return n
+
+
+def pdf_del_carrusel(carpeta: Path, jpgs: list[str]) -> Path:
+    """Las diapositivas en JPEG, en orden, en un PDF de una página cada una (carrusel.pdf), para LinkedIn (4/11)."""
+    from PIL import Image
+    paginas = [Image.open(carpeta / j).convert("RGB") for j in jpgs]
+    destino = carpeta / "carrusel.pdf"
+    paginas[0].save(destino, "PDF", save_all=True, append_images=paginas[1:], resolution=144)
+    return destino
 
 
 def carpeta_estable(cfg, fecha: str, pid: str) -> Path:
@@ -189,11 +198,11 @@ def _programar(cfg, fecha, p, version, cuando, borrador, confirmar, con_video, v
     fallos = []
     for red in redes:
         if red == "linkedin":
-            # LinkedIn no mezcla vídeo e imágenes (3/11): todas las diapositivas en JPEG, como mucho nueve
+            # 4/11 (a petición del usuario: «las imágenes funcionarían mejor si fuese como .pdf»): el carrusel entero
+            # en un PDF, que LinkedIn enseña como documento que se pasa página a página; la portada, la primera diapositiva
             jpgs = [f"{n:02d}.jpg" for n in range(1, len(lista.medios) + 1)]
-            if len(jpgs) > MAX_IMAGENES_LINKEDIN:
-                resultado.avisos.append(f"LinkedIn admite {MAX_IMAGENES_LINKEDIN} imágenes: van las {MAX_IMAGENES_LINKEDIN} primeras")
-            medios = [("imagen", firmado(a)) for a in jpgs[:MAX_IMAGENES_LINKEDIN]]
+            pdf = pdf_del_carrusel(estable, jpgs)
+            medios = [("documento", firmado(pdf.name), firmado(jpgs[0]), p.eleccion.titular)]
         else:
             medios = [(tipo, firmado(archivo)) for tipo, archivo in lista.medios]
         try:

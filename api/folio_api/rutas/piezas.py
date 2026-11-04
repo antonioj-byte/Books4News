@@ -13,7 +13,7 @@ from folio.llm import LLM, ErrorLLM
 from folio.modelos import InformeDiario
 from folio_api.dependencias import Contexto, contexto
 from folio_api.ejecutor import EstadoEjecucion
-from folio_api.esquemas import (CambioEstado, EdicionDiapositiva, EstadoBuffer, MensajeNuevo, PiezaDetalle,
+from folio_api.esquemas import (CambioEstado, EdicionDiapositiva, EdicionPie, EstadoBuffer, MensajeNuevo, PiezaDetalle,
                                 ProgramadaBuffer, ProgramarBuffer, RespuestaChat, ResultadoEdicion, VideoDiapositiva)
 from folio_api.rutas.dias import lomos
 from folio_api.servicio import hechos_ligados
@@ -165,6 +165,19 @@ def editar_diapositiva(eid: int, pid: str, n: int, cambio: EdicionDiapositiva, c
         raise HTTPException(404, "Diapositiva no encontrada")
     nueva, avisos = edicion.editar_diapositiva(ctx.cfg, p, n, cambio.texto, cambio.subtitulo)
     v = ctx.almacen.guardar_version(eid, pid, nueva, "manual", f"Diapositiva {n} editada a mano")
+    return ResultadoEdicion(version=v, avisos=avisos)
+
+
+@router.put("/api/ejecuciones/{eid}/piezas/{pid}/pie", response_model=ResultadoEdicion)
+def editar_pie(eid: int, pid: str, cambio: EdicionPie, ctx: Contexto = Depends(contexto)):
+    """El pie de Instagram editado a mano (4/11): versión nueva («manual»), aunque rompa reglas, con los avisos."""
+    p, _ = ctx.pieza(eid, pid)
+    if not p.guion:
+        raise HTTPException(409, "Esta pieza no tiene guion")
+    if ctx.ejecutor.en_marcha(pid):
+        raise HTTPException(409, ESCRIBIENDOSE)
+    nueva, avisos = edicion.editar_pie(ctx.cfg, p, cambio.pie)
+    v = ctx.almacen.guardar_version(eid, pid, nueva, "manual", "Pie editado a mano")
     return ResultadoEdicion(version=v, avisos=avisos)
 
 

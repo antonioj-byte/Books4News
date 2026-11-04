@@ -216,6 +216,11 @@ def test_linkedin_va_en_imagenes_y_sin_metadatos_de_instagram():
     assert "metadata" not in entrada and [list(a) for a in entrada["assets"]] == [["image"]] * 3
     with pytest.raises(ErrorBuffer, match="no mezcla"):
         b.entrada("c-li", "Pie", MEDIOS, None, red="linkedin")
+    # Como documento (4/11): un solo asset con el PDF, su portada y el título
+    b.programar(canal["id"], "Pie", [("documento", "https://f.example/c.pdf", "https://f.example/01.jpg", "Titular")], None, red="linkedin")
+    entrada = api.peticiones[-1]["variables"]["input"]
+    assert entrada["assets"] == [{"document": {"url": "https://f.example/c.pdf", "thumbnailUrl": "https://f.example/01.jpg", "title": "Titular"}}]
+    assert entrada["mode"] == "addToQueue"
     with pytest.raises(ErrorBuffer, match="de 1 a 9"):
         b.entrada("c-li", "Pie", [("imagen", "u")] * 10, None, red="linkedin")
 
@@ -236,8 +241,9 @@ def test_programar_en_las_dos_redes_y_recordar_lo_publicado(cfg, monkeypatch):
     def preparar(cfg_, pieza, con_video=True, videos_de=None):
         carpeta = cfg_.dir_informes / pieza.fecha / "publicar" / pieza.id
         carpeta.mkdir(parents=True, exist_ok=True)
+        from PIL import Image
         for n in (1, 2, 3):
-            (carpeta / f"0{n}.jpg").write_bytes(b"j")
+            Image.new("RGB", (108, 135), (20 * n, 0, 0)).save(carpeta / f"0{n}.jpg")
         (carpeta / "01.mp4").write_bytes(b"v")
         return Preparada(carpeta=carpeta, medios=[("video", "01.mp4"), ("imagen", "02.jpg"), ("imagen", "03.jpg")],
                          pie="Pie", avisos=[])
@@ -253,7 +259,12 @@ def test_programar_en_las_dos_redes_y_recordar_lo_publicado(cfg, monkeypatch):
     r = prog.programar(cfg, p, 1, p.fecha, cuando, buffer=BufferFalso(), redes=["instagram", "linkedin"])
     assert set(r.posts) == {"instagram", "linkedin"}
     ig, li = dict(enviados)["instagram"], dict(enviados)["linkedin"]
-    assert ig[0][0] == "video" and all(t == "imagen" and u.split("?")[0].endswith(".jpg") for t, u in li)
+    assert ig[0][0] == "video"
+    # LinkedIn (4/11): un documento, el PDF del carrusel con la primera diapositiva de portada
+    assert len(li) == 1 and li[0][0] == "documento" and "/carrusel.pdf" in li[0][1] and "/01.jpg" in li[0][2]
+    import re as _re
+    pdf = (prog.carpeta_estable(cfg, p.fecha, p.id) / "carrusel.pdf").read_bytes()
+    assert pdf.startswith(b"%PDF") and len(_re.findall(rb"/Type\s*/Page\b", pdf)) == 3
     assert prog.estado(cfg, p.fecha, p.id)["canal"] == "instagram" and prog.estado(cfg, p.fecha, p.id, "linkedin")
     hoy = datetime.now(MADRID).date().isoformat()
     memoria = Historial(cfg.ruta_db).publicadas_recientes(hoy, 7)
@@ -292,3 +303,28 @@ def test_la_memoria_de_lo_publicado_aparta_la_misma_historia(cfg):
     excluidas = {}
     quedan = tuberia._no_repetidas([igual, otra], {**v1, **v2}, 5, publicadas, excluidas)
     assert [x.id for x in quedan] == ["b"] and "ya publicada el 2026-11-03" in excluidas["a"]
+
+
+def test_el_pie_se_edita_a_mano(cfg):
+    """4/11 («permite que se pueda editar el pie, que ahora no se puede»): versión nueva «manual» con los párrafos."""
+    from fastapi.testclient import TestClient
+    from folio import informe
+    from folio.almacen import Almacen
+    from folio.modelos import InformeDiario, Pieza, SeleccionJefe
+    from folio_api.main import crear_app
+    from datos import ELECCION, LIBRO, guion_valido
+    p = Pieza(id="2026-11-04-1", fecha="2026-11-04", estado="propuesta", historia_id="h1", eleccion=ELECCION,
+              n_medios=3, libros=[LIBRO], guion=guion_valido())
+    inf = InformeDiario(fecha=p.fecha, generado_en=datetime(2026, 11, 4, 5, tzinfo=MADRID), stats={}, top_historias=[],
+                        seleccion=SeleccionJefe(elegidas=[ELECCION], reserva=[]), piezas=[p], coste_total_usd=0)
+    informe.escribir(inf, cfg.dir_informes / p.fecha)
+    almacen = Almacen(cfg.ruta_db)
+    almacen.importar_informes(cfg.dir_informes)
+    eid = almacen.ultima_ejecucion(p.fecha)
+    (cfg.raiz / "diseno").symlink_to((type(cfg)(pipeline={}, fuentes=[]).raiz / "diseno").resolve())
+    c = TestClient(crear_app(cfg, almacen))
+    r = c.put(f"/api/ejecuciones/{eid}/piezas/{p.id}/pie", json={"pie": "Primer  párrafo con *Eichmann en Jerusalén*.\n\nSegundo."})
+    assert r.status_code == 200 and r.json()["version"] == 2
+    nueva, v = almacen.pieza(eid, p.id)
+    assert v == 2 and nueva.guion.pie_instagram == "Primer párrafo con *Eichmann en Jerusalén*.\n\nSegundo."
+    assert c.put(f"/api/ejecuciones/{eid}/piezas/{p.id}/pie", json={"pie": ""}).status_code == 422

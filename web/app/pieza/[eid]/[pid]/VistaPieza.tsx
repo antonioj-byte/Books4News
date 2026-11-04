@@ -132,7 +132,8 @@ export function VistaPieza() {
                 <span className="antetitulo">Pie de Instagram e idea nueva</span>
                 <span className="mt-1 block truncate text-[14px] text-tinta-suave">{g.pie_instagram}</span>
               </summary>
-              <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed">{conCursivas(g.pie_instagram)}</p>
+              <EditarPie key={`${d.version}`} pie={g.pie_instagram}
+                         guardar={async (pie) => { const r = await api.editarPie(eid, pid, pie); setAvisosEdicion(r.avisos); cargar(); }} />
               <h3 className="antetitulo mb-2 mt-7">Idea nueva</h3>
               <p className="titular text-[22px] italic leading-snug" style={{ fontWeight: 400 }}>{conCursivas(g.idea_elegida)}</p>
               <p className="mt-2 text-[13px] text-tinta-suave">{g.por_que}</p>
@@ -212,6 +213,45 @@ export function VistaPieza() {
           )}
         </div>
       </aside>
+    </div>
+  );
+}
+
+
+// El pie de Instagram, editable (4/11, a petición del usuario: «permite que se pueda editar el pie, que ahora no se
+// puede»): se lee como antes y, con «Editar el pie», se cambia en un cuadro de texto y se guarda como versión nueva
+function EditarPie({ pie, guardar }: { pie: string; guardar: (pie: string) => Promise<void> }) {
+  const [editando, setEditando] = useState(false);
+  const [texto, setTexto] = useState(pie);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!editando) {
+    return (
+      <div className="mt-3">
+        <p className="whitespace-pre-line text-[15px] leading-relaxed">{conCursivas(pie)}</p>
+        <button className="boton-suave mt-2" onClick={() => { setTexto(pie); setEditando(true); }}>Editar el pie</button>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      <label htmlFor="pie-editar" className="sr-only">Pie de Instagram</label>
+      <textarea id="pie-editar" value={texto} onChange={(e) => setTexto(e.target.value)} rows={9} maxLength={3000} disabled={guardando}
+                className="rounded-[12px] border border-borde bg-papel p-3 text-[15px] leading-relaxed outline-none focus:border-tinta" />
+      <div className="flex flex-wrap items-center gap-2">
+        <button className="boton" disabled={guardando || !texto.trim()}
+                onClick={async () => {
+                  setGuardando(true); setError(null);
+                  try { await guardar(texto); setEditando(false); }
+                  catch (e) { setError(e instanceof Error ? e.message.replace(/^\d+ \S+: /, "") : "No se pudo guardar."); }
+                  finally { setGuardando(false); }
+                }}>
+          {guardando ? "Guardando…" : "Guardar el pie"}
+        </button>
+        <button className="text-[13px] underline" onClick={() => setEditando(false)} disabled={guardando}>Cancelar</button>
+        <span className="dato">{texto.length} caracteres · Instagram admite 2.200; LinkedIn, 3.000 · los créditos se añaden al publicar</span>
+      </div>
+      {error && <p className="text-[13px] text-carmesi">{error}</p>}
     </div>
   );
 }

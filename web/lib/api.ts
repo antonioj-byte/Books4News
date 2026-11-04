@@ -79,6 +79,8 @@ export const api = {
   ejecucionEnMarcha: () => pedir<EstadoEjecucion>("/api/ejecuciones/en-marcha"),
   editarDiapositiva: (eid: number, pid: string, n: number, texto: string, subtitulo?: string | null) =>
     pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),
+  editarPie: (eid: number, pid: string, pie: string) =>
+    pedir<ResultadoEdicion>(`${pieza(eid, pid)}/pie`, { method: "PUT", body: JSON.stringify({ pie }) }),
   chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),
   temas: () => pedir<Tema[]>("/api/temas"),
   trabajos: () => pedir<Trabajo[]>("/api/trabajos"),

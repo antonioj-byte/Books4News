@@ -199,6 +199,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ejecuciones/{eid}/piezas/{pid}/pie": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Editar Pie
+         * @description El pie de Instagram editado a mano (4/11): versión nueva («manual»), aunque rompa reglas, con los avisos.
+         */
+        put: operations["editar_pie_api_ejecuciones__eid__piezas__pid__pie_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ejecuciones/{eid}/piezas/{pid}/chat": {
         parameters: {
             query?: never;
@@ -1248,6 +1268,11 @@ export interface components {
             traductor: string | null;
             /** Pais */
             pais: string | null;
+        };
+        /** EdicionPie */
+        EdicionPie: {
+            /** Pie */
+            pie: string;
         };
         /** Ejecucion */
         Ejecucion: {
@@ -2893,6 +2918,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["EdicionDiapositiva"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoEdicion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    editar_pie_api_ejecuciones__eid__piezas__pid__pie_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EdicionPie"];
             };
         };
         responses: {

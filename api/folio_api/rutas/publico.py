@@ -23,4 +23,5 @@ def publico(caduca: int, firma: str, fecha: str, pieza: str, archivo: str, ctx: 
     destino = ctx.cfg.dir_informes / fecha / "publicar" / pieza / archivo
     if not destino.is_file():
         raise HTTPException(404)
-    return FileResponse(destino, media_type="video/mp4" if archivo.endswith(".mp4") else "image/jpeg")
+    tipo = {".mp4": "video/mp4", ".pdf": "application/pdf"}.get(destino.suffix, "image/jpeg")   # el PDF, para LinkedIn (4/11)
+    return FileResponse(destino, media_type=tipo)

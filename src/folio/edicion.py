@@ -101,6 +101,15 @@ def editar_diapositiva(cfg: Config, p: Pieza, n: int, texto: str, subtitulo: str
     return nueva, validar(cfg, nueva, nueva.guion)
 
 
+def editar_pie(cfg: Config, p: Pieza, pie: str) -> tuple[Pieza, list[str]]:
+    """La pieza con el pie de Instagram cambiado a mano (4/11, a petición del usuario: «permite que se pueda editar el
+    pie, que ahora no se puede») y los avisos (reglas que no cumple). Se respetan los saltos de párrafo."""
+    nueva = p.model_copy(deep=True)
+    parrafos = [" ".join(x.split()) for x in pie.replace("\r", "").split("\n\n")]
+    nueva.guion.pie_instagram = "\n\n".join(x for x in parrafos if x)
+    return nueva, validar(cfg, nueva, nueva.guion)
+
+
 def _buscar_retrato(cfg: Config, p: Pieza, nueva: Pieza, ar, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
     """La foto libre de una persona real para la portada (Commons; si no, la de prensa de su editorial). Nunca se
     genera una cara desde cero (regla del usuario): sin foto con licencia comprobada, no hay retrato."""

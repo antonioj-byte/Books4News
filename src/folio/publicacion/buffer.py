@@ -107,7 +107,18 @@ class Buffer:
                 borrador: bool = False, red: str = "instagram") -> dict:
         """CreatePostInput del carrusel: `medios` son («imagen» o «video», URL pública) en orden; sin
         `cuando`, a la cola de Buffer. Con `borrador`, se guarda en los borradores de Buffer y no se publica.
-        En LinkedIn (3/11), solo imágenes (no mezcla vídeo e imágenes), de 1 a 9, y sin metadatos de Instagram."""
+        En LinkedIn (3/11), solo imágenes (no mezcla vídeo e imágenes), de 1 a 9, y sin metadatos de Instagram; o,
+        desde el 4/11, un documento: `medios` = [(«documento», URL del PDF, URL de la portada, título)], que LinkedIn
+        enseña como un carrusel que se pasa página a página."""
+        if red == "linkedin" and medios and medios[0][0] == "documento":
+            if len(medios) != 1 or len(medios[0]) != 4:
+                raise ErrorBuffer("Un documento de LinkedIn va solo: el PDF, su portada y un título")
+            if len(pie) > MAX_PIE_LINKEDIN:
+                raise ErrorBuffer(f"El pie tiene {len(pie)} caracteres; LinkedIn admite {MAX_PIE_LINKEDIN}")
+            _, url, portada, titulo = medios[0]
+            entrada = {"channelId": canal, "text": pie, "schedulingType": "automatic",
+                       "assets": [{"document": {"url": url, "thumbnailUrl": portada, "title": titulo[:120]}}]}
+            return Buffer._cuando(entrada, cuando, borrador)
         if red == "linkedin":
             if any(t == "video" for t, _ in medios):
                 raise ErrorBuffer("LinkedIn no mezcla vídeo e imágenes: el carrusel va en imágenes")
@@ -126,6 +137,10 @@ class Buffer:
         }
         if red == "instagram":
             entrada["metadata"] = {"instagram": {"type": "post", "shouldShareToFeed": True}}
+        return Buffer._cuando(entrada, cuando, borrador)
+
+    @staticmethod
+    def _cuando(entrada: dict, cuando: datetime | None, borrador: bool) -> dict:
         if cuando:
             if cuando.tzinfo is None:
                 raise ErrorBuffer("La hora tiene que llevar zona horaria")

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Literal
 
+from pydantic import Field
+
 from folio.equipo import Credito
 
 
@@ -138,6 +140,10 @@ class PiezaDetalle(BaseModel):
 class EdicionDiapositiva(BaseModel):
     texto: str
     subtitulo: str | None = None          # solo la portada
+
+
+class EdicionPie(BaseModel):
+    pie: str = Field(min_length=1, max_length=3000)
 
 
 class ResultadoEdicion(BaseModel):
