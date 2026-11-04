@@ -186,7 +186,7 @@ def test_la_ilustracion_se_elige_entre_variantes(cfg, monkeypatch, tmp_path):
             return esquema(escenas=[{"escena": e, "idea": f"idea {i}"} for i, e in enumerate(escenas)]), []
 
     dibujados = []
-    def dibujar(cfg, pid, escena):
+    def dibujar(cfg, pid, escena, cliente=None, nombre_estilo="collage"):
         import uuid
         ruta = tmp_path / f"{uuid.uuid4().hex}.jpg"           # las variantes se dibujan a la vez
         Image.new("RGB", (160, 90)).save(ruta)
@@ -242,7 +242,7 @@ def test_las_variantes_con_letras_se_descartan_y_se_dibuja_otra(cfg, monkeypatch
             return esquema(escenas=[{"escena": e, "idea": ""} for e in escenas]), []
 
     dibujados = []
-    def dibujar(cfg, pid, escena):
+    def dibujar(cfg, pid, escena, cliente=None, nombre_estilo="collage"):
         import uuid
         ruta = tmp_path / f"{uuid.uuid4().hex}.jpg"           # las variantes se dibujan a la vez
         Image.new("RGB", (160, 90)).save(ruta)

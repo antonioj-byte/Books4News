@@ -743,3 +743,11 @@
   patron: "«No tiene sentido que dé el mismo breve dos veces» (dos breves de Jaenada y el Goncourt)."
   propuesta: "Cada noticia sale una sola vez en los breves, aunque la cuenten medios de varios países, y no se repite lo que ya está en la mesa o se ha publicado."
   evidencia: ["Conversación, 4/11: breves del mundo del libro"]
+
+- clave: grabado-segundo-estilo
+  fecha: "2026-11-04"
+  destino: director_arte
+  capa: marca
+  patron: "«Esto se suma a los estilos que ya hay, ¿no? No es sustitutivo» (prueba de estilos de folio-estilos: grabado y fotomontaje, los que mejor se leen en miniatura)."
+  propuesta: "Las ilustraciones editoriales alternan en el día el collage de la casa y el grabado del XIX con bloques de magenta y amarillo; la portada y la noticia de una pieza van en el mismo estilo. El collage pide pocas piezas grandes y ningún papel impreso."
+  evidencia: ["Conversación, 4/11: Artifact «Estilos de ilustración de Folio»"]

@@ -26,6 +26,14 @@ el revisor de letras ya no cuenta las «manchas sueltas», solo las letras. Las 
 uncluttered.» y «No real or recognisable people…» las sustituyen el friso y la banda: no cambiarlas sin tocar
 `folio.imagenes.friso` y `folio.imagenes.banda`.
 
+Grabado (4/11, a petición del usuario, tras la prueba de `folio-estilos/` y el Artifact «Estilos de ilustración
+de Folio»: «se suma a los estilos que ya hay»): segundo estilo, que se alterna con el collage en el día
+(`arte.ilustracion_editorial.estilos`, `editorial.estilo_de_pieza`; la portada y la noticia de una pieza van en
+el mismo). Grabado en madera del XIX sobre crema con dos grandes bloques planos de magenta y amarillo detrás, el
+motivo grande y una silueta que se lee en miniatura. De la misma prueba pasan al collage dos cosas: pocas piezas
+grandes en torno a un objeto claro y ningún papel impreso (cheques, recibos, periódicos), que es donde el modelo
+seguía inventando letras. El friso, la banda, el recorte y «Cinco del libro» siguen siempre en collage.
+
 Reglas: sin nombres de artistas, revistas ni marcas; sin texto, letras ni números en la imagen (los textos
 los pone el código); sin personas reales ni caras reconocibles (como mucho, figuras diminutas y anónimas);
 apaisada, porque cruza dos diapositivas: lo importante, repartido a lo ancho, sin nada clave en el centro
@@ -33,4 +41,8 @@ exacto (es el corte entre las dos).
 
 ## estilo
 
-A wordless bold conceptual collage built on one witty visual metaphor that makes the viewer think: cut-paper shapes with torn edges mixed with black-and-white halftone photo fragments, flat hot magenta and lemon yellow blocks, deep black and warm off-white paper, visible paper grain, witty and surreal, high contrast. One single continuous scene that flows across the full width with no division, with points of interest on the left and on the right and nothing essential in the exact centre; the lower left area calm and uncluttered. Every surface is plain: blank walls, blank sky, blank paper, book spines without titles, screens showing only light, signs left empty. The picture contains no writing of any kind: absolutely no text, letters, numbers, signatures, logos or labels anywhere, and no frames, borders, panels or white margins. No medals, coins or plaques. No real or recognisable people; any human figures are anonymous.
+A wordless bold conceptual collage built on one witty visual metaphor that makes the viewer think: cut-paper shapes with torn edges mixed with black-and-white halftone photo fragments, flat hot magenta and lemon yellow blocks, deep black and warm off-white paper, visible paper grain, witty and surreal, high contrast. Few large pieces rather than many small ones, built around one clear focal object that reads at thumbnail size. One single continuous scene that flows across the full width with no division, with points of interest on the left and on the right and nothing essential in the exact centre; the lower left area calm and uncluttered. Every surface is plain: blank walls, blank sky, blank paper, book spines without titles, screens showing only light, signs left empty, and no tickets, receipts, cheques, newspapers or printed paper. The picture contains no writing of any kind: absolutely no text, letters, numbers, signatures, logos or labels anywhere, and no frames, borders, panels or white margins. No medals, coins or plaques. No real or recognisable people; any human figures are anonymous.
+
+## estilo_grabado
+
+A wordless 19th-century wood engraving built on one witty visual metaphor that makes the viewer think: fine black crosshatching and line work on warm cream paper, set against two large flat blocks of hot magenta and lemon yellow behind the subject, the subject large and bold with a clear silhouette that reads at thumbnail size, high contrast, no other colours. One single continuous scene that flows across the full width with no division, with points of interest on the left and on the right and nothing essential in the exact centre; the lower left area calm and uncluttered. Every surface is plain: blank walls, blank sky, blank paper, book spines without titles, screens showing only light, signs left empty, and no tickets, receipts, cheques, newspapers or printed paper. The picture contains no writing of any kind: absolutely no text, letters, numbers, signatures, logos or labels anywhere, and no frames, borders, panels or white margins. No medals, coins or plaques. No 3D render, no glossy CGI. No real or recognisable people; any human figures are anonymous.

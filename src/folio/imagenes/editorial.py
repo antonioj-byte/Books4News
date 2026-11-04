@@ -18,6 +18,7 @@ borra de la caché (si se vuelve a pedir, se paga y sale otra).
 from __future__ import annotations
 
 import hashlib
+from datetime import date
 import re
 import time
 from io import BytesIO
@@ -63,12 +64,45 @@ def nombres_de_pieza(pieza) -> set[str]:
     return nombres
 
 
-def estilo(cfg: Config) -> str:
+def estilo(cfg: Config, nombre: str = "collage") -> str:
+    """El estilo de la casa (`collage`, sección «## estilo») o el alternativo (`grabado`, «## estilo_grabado»,
+    4/11). El friso, la banda y el recorte usan siempre el collage."""
+    seccion = "estilo" if nombre == "collage" else f"estilo_{nombre}"
     texto = (cfg.dir_prompts / "ilustracion_editorial.md").read_text(encoding="utf-8")
-    m = re.search(r"^## estilo\n(.*?)(?=^## |\Z)", texto, re.M | re.S)
+    m = re.search(rf"^## {seccion}\n(.*?)(?=^## |\Z)", texto, re.M | re.S)
     if not m or not m.group(1).strip():
-        raise ValueError("prompts/ilustracion_editorial.md no tiene la sección «## estilo»")
+        raise ValueError(f"prompts/ilustracion_editorial.md no tiene la sección «## {seccion}»")
     return m.group(1).strip()
+
+
+def pieza_base(pieza_id: str) -> str:
+    """El id de la pieza sin el sufijo de la ilustración de la noticia (`-noticia`)."""
+    return pieza_id[:-len("-noticia")] if pieza_id.endswith("-noticia") else pieza_id
+
+
+def estilo_de_pieza(cfg: Config, pieza_id: str, dir_fecha: Path) -> str:
+    """El estilo de las ilustraciones de una pieza (4/11, a petición del usuario: el grabado se suma al collage y se
+    alternan en el día). Si la pieza ya tiene una ilustración, el suyo, para que la portada y la noticia (y lo que
+    rehaga el chat) vayan a juego; si no, el siguiente de `estilos` según las piezas ya ilustradas hoy, empezando
+    cada día por uno distinto."""
+    estilos = cfg.pipeline.arte.ilustracion_editorial.estilos
+    if len(estilos) == 1:
+        return estilos[0]
+    base = pieza_base(pieza_id)
+    otras = set()
+    for p in libres.dir_imagenes(dir_fecha).glob("*.json"):
+        img = libres.de_pieza(p.stem, dir_fecha)
+        if not img or img.archivo != CLAVE:
+            continue
+        if pieza_base(p.stem) == base:
+            # Las de antes del 4/11 no guardan el estilo: eran collage
+            return img.estilo if img.estilo in estilos else estilos[0]
+        otras.add(pieza_base(p.stem))
+    try:
+        dia = date.fromisoformat(dir_fecha.name).toordinal()
+    except ValueError:
+        dia = 0
+    return estilos[(dia + len(otras)) % len(estilos)]
 
 
 def validar_escena(escena: str | None, prohibidos: set[str] = frozenset(), max_palabras: int = 70) -> tuple[str | None, str | None]:
@@ -132,7 +166,8 @@ def del_dia(dir_fecha: Path, sin: str) -> int:
     return n
 
 
-def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | None = None) -> Path:
+def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | None = None,
+            nombre_estilo: str = "collage") -> Path:
     """Dibuja una escena (una variante) y devuelve su archivo en la caché común (cache/ilustraciones/): la
     misma escena no se vuelve a pagar. ErrorMagnific si no se puede."""
     if rg.bloqueado():
@@ -140,7 +175,7 @@ def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | Non
     if not cfg.magnific_api_key:
         raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
     ie = cfg.pipeline.arte.ilustracion_editorial
-    texto = con_estilo(escena, estilo(cfg))
+    texto = con_estilo(escena, estilo(cfg, nombre_estilo))
     huella = hashlib.sha256(f"{ie.modelo}\n{texto}".encode()).hexdigest()[:20]
     cache = cfg.dir_cache("x").parent / "ilustraciones" / f"{huella}.jpg"
     if not cache.exists():
@@ -157,7 +192,8 @@ def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | Non
     return cache
 
 
-def fijar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, dibujo: Path) -> libres.ImagenLibre:
+def fijar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, dibujo: Path,
+          nombre_estilo: str = "collage") -> libres.ImagenLibre:
     """La ilustración elegida pasa a ser la imagen de la pieza (<pieza>.jpg con sus metadatos)."""
     carpeta = libres.dir_imagenes(dir_fecha)
     carpeta.mkdir(parents=True, exist_ok=True)
@@ -166,7 +202,8 @@ def fijar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, dibujo: Path
         ancho, alto = im.size
     img = libres.ImagenLibre(archivo=CLAVE, pagina="", url="", ancho=ancho, alto=alto,
                              licencia="ilustración generada con IA (Magnific)", licencia_url=None, autor="Folio",
-                             descripcion=escena, libre=True, motivo="", local=f"{pieza_id}.jpg", fuente="")
+                             descripcion=escena, libre=True, motivo="", local=f"{pieza_id}.jpg", fuente="",
+                             estilo=nombre_estilo)
     libres.guardar_metadatos(img, pieza_id, dir_fecha)
     return img
 
@@ -210,7 +247,8 @@ def revisar(llm, cfg: Config, pieza_id: str, dibujo: Path, manchas: bool = False
 
 def generar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, cliente: httpx.Client | None = None) -> libres.ImagenLibre:
     """Dibuja la escena y la fija como imagen de la pieza (una sola variante). ErrorMagnific si no se puede."""
-    return fijar(cfg, pieza_id, dir_fecha, escena, dibujar(cfg, pieza_id, escena, cliente))
+    nombre = estilo_de_pieza(cfg, pieza_id, dir_fecha)
+    return fijar(cfg, pieza_id, dir_fecha, escena, dibujar(cfg, pieza_id, escena, cliente, nombre), nombre)
 
 
 def generar_limpia(llm, cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, intentos: int = 2,
@@ -218,10 +256,11 @@ def generar_limpia(llm, cfg: Config, pieza_id: str, dir_fecha: Path, escena: str
     """Como `generar`, pero revisando las letras: si sale con letras, se dibuja otra (hasta `intentos`).
     Devuelve (imagen o None, motivos de los descartes)."""
     descartes = []
+    nombre = estilo_de_pieza(cfg, pieza_id, dir_fecha)
     for _ in range(intentos):
-        dibujo = dibujar(cfg, pieza_id, escena, cliente)
+        dibujo = dibujar(cfg, pieza_id, escena, cliente, nombre)
         motivo = revisar(llm, cfg, pieza_id, dibujo)
         if not motivo:
-            return fijar(cfg, pieza_id, dir_fecha, escena, dibujo), descartes
+            return fijar(cfg, pieza_id, dir_fecha, escena, dibujo, nombre), descartes
         descartes.append(motivo)
     return None, descartes

@@ -185,6 +185,9 @@ class IlustracionEditorial(_Seccion):
     # Modelo de Magnific (2/11, elegido por el usuario tras comparar: «usamos Flux 2 Pro»); Seedream 4.5, de reserva
     modelo: Literal["flux_2_pro", "seedream_4_5"] = "flux_2_pro"
     creditos_imagen: int = Field(default=25, ge=0)   # para el panel de gasto: la API no da el coste
+    # Estilos que se alternan en el día (4/11, a petición del usuario: el grabado se suma al collage de la casa);
+    # cada uno es una sección de prompts/ilustracion_editorial.md
+    estilos: list[Literal["collage", "grabado"]] = Field(default_factory=lambda: ["collage", "grabado"], min_length=1)
 
 
 class Friso(_Seccion):

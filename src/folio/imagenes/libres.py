@@ -59,6 +59,7 @@ class ImagenLibre:
     persona: str | None = None            # en un retrato, el autor retratado (para no ponerlo junto al libro de otro)
     cara: tuple[int, int, int, int] | None = None   # caja de la cara en % (x0, y0, x1, y1), si se detectó (folio.imagenes.cara)
     modificable: bool = False             # foto subida que la redacción puede modificar (recorte en collage, 3/11)
+    estilo: str | None = None             # en una ilustración editorial, su estilo: collage o grabado (4/11)
 
     @property
     def credito(self) -> str:

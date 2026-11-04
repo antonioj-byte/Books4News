@@ -394,7 +394,7 @@ def _elegir_ilustracion(llm: LLM, cfg: Config, pieza: Pieza, dibujos: list[tuple
 
 
 def _sin_letras(llm: LLM, cfg: Config, pieza: Pieza, dibujos: list[tuple[str, str, Path]],
-                fallos: list[str]) -> tuple[list[tuple[str, str, Path]], list[str]]:
+                fallos: list[str], nombre_estilo: str = "collage") -> tuple[list[tuple[str, str, Path]], list[str]]:
     """Quita las variantes con letras o manchas sueltas (2/11). Si no queda ninguna, vuelve a dibujar una vez la
     primera escena (la descartada se borró de la caché, así que sale otra)."""
     limpios, descartes = [], []
@@ -405,7 +405,7 @@ def _sin_letras(llm: LLM, cfg: Config, pieza: Pieza, dibujos: list[tuple[str, st
     if dibujos and not limpios and not retrato_generado.bloqueado():
         escena, idea, _ = dibujos[0]
         try:
-            dibujo = editorial.dibujar(cfg, pieza.id, escena)
+            dibujo = editorial.dibujar(cfg, pieza.id, escena, nombre_estilo=nombre_estilo)
             motivo = editorial.revisar(llm, cfg, pieza.id, dibujo)
             (descartes.append(motivo) if motivo else limpios.append((escena, idea, dibujo)))
         except Exception as exc:
@@ -428,18 +428,19 @@ def _ilustracion_editorial(llm: LLM, cfg: Config, pieza: Pieza, propuesta: Propu
         motivo = f"ya hay {ie.max_por_dia} hoy (máximo del día)"
     else:
         escenas = _escenas(llm, cfg, pieza, propuesta.escena, ie.variantes)
+        nombre_estilo = editorial.estilo_de_pieza(cfg, pieza.id, dir_fecha)   # collage o grabado, alternando (4/11)
         dibujos, fallos = [], []
         # Las variantes se dibujan a la vez (2/11, para agilizar: ~15 s en vez de ~30)
         def dibujar(par):
             escena, idea = par
             try:
-                return (escena, idea, editorial.dibujar(cfg, pieza.id, escena)), None
+                return (escena, idea, editorial.dibujar(cfg, pieza.id, escena, nombre_estilo=nombre_estilo)), None
             except Exception as exc:
                 return None, str(exc)
         with ThreadPoolExecutor(max_workers=max(1, len(escenas))) as pool:
             for hecho, fallo in pool.map(dibujar, escenas):
                 (dibujos.append(hecho) if hecho else fallos.append(fallo))
-        dibujos, descartes = _sin_letras(llm, cfg, pieza, dibujos, fallos)
+        dibujos, descartes = _sin_letras(llm, cfg, pieza, dibujos, fallos, nombre_estilo)
         if descartes:
             arte.avisos.append(f"Ilustración editorial: descartadas {len(descartes)} con letras o manchas ({'; '.join(descartes)[:240]})")
         if not dibujos:
@@ -457,7 +458,7 @@ def _ilustracion_editorial(llm: LLM, cfg: Config, pieza: Pieza, propuesta: Propu
             else:
                 escena, idea, dibujo = dibujos[i]
                 libres.olvidar(pieza.id, dir_fecha)
-                img = editorial.fijar(cfg, pieza.id, dir_fecha, escena, dibujo)
+                img = editorial.fijar(cfg, pieza.id, dir_fecha, escena, dibujo, nombre_estilo)
                 arte.imagen, arte.credito, arte.escena, arte.escena_idea = img.archivo, img.credito, escena, idea or None
                 if len(dibujos) > 1:
                     arte.por_que += f" Ilustración: elegida la {i + 1} de {len(dibujos)}."
