@@ -1,5 +1,5 @@
 {
- "risografia_anthropic": {
+ "prueba_risografia_anthropic_tema_original": {
   "estilo": "risografia",
   "tema": "anthropic",
   "modelo": "flux-2-pro",
@@ -10,5 +10,185 @@
   "seed": 3739447187,
   "task_id": "4cb3f6ab-2f46-4c9a-af77-b4aa2a9068e1",
   "segundos": 26.3
+ },
+ "risografia_goncourt": {
+  "estilo": "risografia",
+  "tema": "goncourt",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other, risograph print, two-color magenta and yellow on off-white paper, slight misregistration, visible halftone, paper grain, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 1043082984,
+  "task_id": "2b9c4383-a113-4328-bf11-8097e878c824",
+  "segundos": 15.3
+ },
+ "risografia_anthropic": {
+  "estilo": "risografia",
+  "tema": "anthropic",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing, risograph print, two-color magenta and yellow on off-white paper, slight misregistration, visible halftone, paper grain, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 4070166877,
+  "task_id": "f4f2be71-7bdf-4505-ae71-d70f413ac295",
+  "segundos": 15.5
+ },
+ "risografia_biblia1631": {
+  "estilo": "risografia",
+  "tema": "biblia1631",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "antique open Bible with blank pages on a wooden printing press, one empty gap where a word is missing, risograph print, two-color magenta and yellow on off-white paper, slight misregistration, visible halftone, paper grain, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 4034606719,
+  "task_id": "f597c58f-6c39-42f5-9f8a-edf77dd0f955",
+  "segundos": 15.9
+ },
+ "grabado_anthropic": {
+  "estilo": "grabado",
+  "tema": "anthropic",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing, 19th century engraving, fine crosshatching, black ink on cream paper, one flat accent block of magenta or yellow, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3873690568,
+  "task_id": "103a8d6a-bda1-4a0e-b435-ae0d5d450703",
+  "segundos": 10.6
+ },
+ "grabado_biblia1631": {
+  "estilo": "grabado",
+  "tema": "biblia1631",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "antique open Bible with blank pages on a wooden printing press, one empty gap where a word is missing, 19th century engraving, fine crosshatching, black ink on cream paper, one flat accent block of magenta or yellow, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 1075180310,
+  "task_id": "b99bd958-45ce-40f4-9e55-3dbc6e386865",
+  "segundos": 14.7
+ },
+ "fotomontaje_biblia1631": {
+  "estilo": "fotomontaje",
+  "tema": "biblia1631",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "antique open Bible with blank pages on a wooden printing press, one empty gap where a word is missing, dada constructivist photomontage, black and white cut-out photos, impossible scale, torn paper edges, flat geometric shapes in magenta and yellow, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3585177835,
+  "task_id": "720f2a52-cab7-49dc-856b-5e548b249c24",
+  "segundos": 14.7
+ },
+ "grabado_goncourt": {
+  "estilo": "grabado",
+  "tema": "goncourt",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other, 19th century engraving, fine crosshatching, black ink on cream paper, one flat accent block of magenta or yellow, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3319069828,
+  "task_id": "060de0d9-17ec-4f80-b669-4aaa408c4530",
+  "segundos": 35.5
+ },
+ "fotomontaje_anthropic": {
+  "estilo": "fotomontaje",
+  "tema": "anthropic",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing, dada constructivist photomontage, black and white cut-out photos, impossible scale, torn paper edges, flat geometric shapes in magenta and yellow, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 498903158,
+  "task_id": "ddd66847-0942-4a02-874d-9f1e849ebede",
+  "segundos": 27.3
+ },
+ "fotomontaje_goncourt": {
+  "estilo": "fotomontaje",
+  "tema": "goncourt",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other, dada constructivist photomontage, black and white cut-out photos, impossible scale, torn paper edges, flat geometric shapes in magenta and yellow, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 183950543,
+  "task_id": "eae06852-4d70-4a26-be4e-fea9305a2329",
+  "segundos": 19.1
+ },
+ "objeto_anthropic": {
+  "estilo": "objeto",
+  "tema": "anthropic",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing, single symbolic object isolated on flat background, hard studio light, editorial still life, limited palette magenta yellow black cream, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3647166876,
+  "task_id": "ebc41ab0-38fd-4411-ba3a-3b77f145e7bc",
+  "segundos": 14.8
+ },
+ "objeto_biblia1631": {
+  "estilo": "objeto",
+  "tema": "biblia1631",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "antique open Bible with blank pages on a wooden printing press, one empty gap where a word is missing, single symbolic object isolated on flat background, hard studio light, editorial still life, limited palette magenta yellow black cream, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3434409483,
+  "task_id": "11373893-8862-48bd-892e-f2f2ce459425",
+  "segundos": 14.9
+ },
+ "objeto_goncourt": {
+  "estilo": "objeto",
+  "tema": "goncourt",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other, single symbolic object isolated on flat background, hard studio light, editorial still life, limited palette magenta yellow black cream, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 1563418985,
+  "task_id": "23328ffd-2fe7-4ff8-a03c-e25318c5f52c",
+  "segundos": 15.3
+ },
+ "gouache_anthropic": {
+  "estilo": "gouache",
+  "tema": "anthropic",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing, muted gouache illustration, vintage children's book style, visible brush texture, limited palette, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 2876485949,
+  "task_id": "35ab06e5-e71e-4207-bc2b-9ba967a34665",
+  "segundos": 14.7
+ },
+ "gouache_biblia1631": {
+  "estilo": "gouache",
+  "tema": "biblia1631",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "antique open Bible with blank pages on a wooden printing press, one empty gap where a word is missing, muted gouache illustration, vintage children's book style, visible brush texture, limited palette, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 627086557,
+  "task_id": "0ed6ea6e-eeb8-4f10-8cf1-3507b5d5a76b",
+  "segundos": 15.2
+ },
+ "gouache_goncourt": {
+  "estilo": "gouache",
+  "tema": "goncourt",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other, muted gouache illustration, vintage children's book style, visible brush texture, limited palette, editorial magazine cover image, negative space in lower third, no text, no letters, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 1567858059,
+  "task_id": "ae6d0f8a-a3b2-41df-9ff6-dea54a9cc6a1",
+  "segundos": 15.4
  }
 }

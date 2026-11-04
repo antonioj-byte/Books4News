@@ -33,10 +33,12 @@ COMUN = "editorial magazine cover image, negative space in lower third, no text,
 # La paleta cerrada de la marca y lo prohibido, iguales en todos
 PALETA = ("strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; "
           "no 3D render, no glossy CGI, no cartoon characters, no recognizable real people")
+# Opción A (4/11): los mismos temas sin superficies que inviten a escribir (cheque, monedas, páginas, letrero),
+# porque en la prueba el cheque y las monedas salieron con letras y números inventados
 TEMAS = {
-    "anthropic": "stack of books with gold coins spilling and a torn cheque",
-    "biblia1631": "antique open Bible on a printing press, one missing word",
-    "goncourt": "Parisian restaurant facade at night with two laurel wreaths facing each other",
+    "anthropic": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing",
+    "biblia1631": "antique open Bible with blank pages on a wooden printing press, one empty gap where a word is missing",
+    "goncourt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other",
 }
 
 
@@ -93,9 +95,17 @@ def main() -> None:
         pares = [(e, t) for e in ESTILOS for t in TEMAS]
     else:
         pares = [tuple(a.split(":")) for a in sys.argv[1:]]
-    for e, t in pares:
-        generar(e, t, clave, registro)
-        ruta.write_text(json.dumps(registro, ensure_ascii=False, indent=1))
+    # De tres en tres, para no tardar un cuarto de hora (sin reintentos: un fallo se informa y se sigue)
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    cerrojo = threading.Lock()
+
+    def una(par):
+        generar(par[0], par[1], clave, registro)
+        with cerrojo:
+            ruta.write_text(json.dumps(registro, ensure_ascii=False, indent=1))
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        list(pool.map(una, pares))
 
 
 if __name__ == "__main__":

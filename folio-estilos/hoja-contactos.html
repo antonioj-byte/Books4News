@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estilos de Folio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@700&family=EB+Garamond:ital@1&display=swap" rel="stylesheet">
+<style>
+:root{--magenta:#D6246E;--amarillo:#F2E14C;--crema:#F3EFE6;--tinta:#141012;--suave:#6b6466;--fondo:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--fondo:#141012;--tinta:#F3EFE6;--suave:#a39c9e}}
+:root[data-theme="dark"]{--fondo:#141012;--tinta:#F3EFE6;--suave:#a39c9e}
+*{box-sizing:border-box} body{margin:0;background:var(--fondo);color:var(--tinta);font:15px/1.45 system-ui,sans-serif}
+main{max-width:960px;margin:0 auto;padding:24px 16px 64px}
+h1{font:700 28px/1.1 Alexandria,sans-serif;letter-spacing:-.04em;margin:0 0 4px}
+h2{font:700 20px/1.2 Alexandria,sans-serif;letter-spacing:-.03em;margin:36px 0 8px}
+h3{font:600 12px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--magenta);margin:22px 0 8px}
+p.n{color:var(--suave);margin:0 0 12px;max-width:62ch}
+.controles{display:flex;flex-wrap:wrap;gap:8px 16px;margin:12px 0 4px;font-size:14px}
+.vistas button{border:1px solid var(--suave);background:none;color:var(--tinta);border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit}
+.vistas button[aria-pressed="true"]{background:var(--tinta);color:var(--fondo);border-color:var(--tinta)}
+.rejilla{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.t{margin:0} .img{position:relative;aspect-ratio:4/5;overflow:hidden;background:#ddd}
+.img img{width:100%;height:100%;object-fit:cover;display:block}
+.titular{position:absolute;left:0;right:0;bottom:0;padding:9% 7% 8%;container-type:inline-size}
+.titular span{display:block;color:#fff;font:700 9.2cqw/1.02 Alexandria,sans-serif;letter-spacing:-.05em}
+.titular em{font:italic 400 10.4cqw/1 "EB Garamond",serif;letter-spacing:0;background:linear-gradient(transparent 62%,var(--amarillo) 62%);color:#fff;padding:0 .08em}
+body.sombra .titular{background:linear-gradient(transparent,rgba(20,16,18,.85) 55%)}
+figcaption{font:11px/1.3 ui-monospace,monospace;color:var(--suave);padding:5px 2px 10px}
+@media (max-width:520px){.rejilla{gap:2px} figcaption{font-size:10px}}
+.titular em{white-space:nowrap}</style></head>
+<body class="sombra"><main>
+<h1>Estilos de ilustración · Folio</h1>
+<p class="n">Cinco estilos × tres temas, Flux 2 Pro a 1080×1350, paleta cerrada (magenta, amarillo, negro y crema). Sobre cada imagen, un titular de prueba en blanco con la palabra en cursiva sobre marcador amarillo, en el tercio inferior.</p>
+<div class="controles">
+<div class="vistas" role="group" aria-label="Vista"><button id="b-perfil" aria-pressed="true">Por estilo</button> <button id="b-feed" aria-pressed="false">Feed alterno</button></div>
+<label><input type="checkbox" id="sombra" checked> Oscurecer el tercio inferior</label>
+</div>
+<section id="perfil"><h2>Por estilo</h2><p class="n">Filas: estilo. Columnas: Anthropic, Biblia de 1631, Goncourt.</p><h3>Risografía</h3><div class="rejilla"><figure class="t"><div class="img"><img src="risografia_anthropic.png" alt="Risografía, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Risografía</figcaption></figure><figure class="t"><div class="img"><img src="risografia_biblia1631.png" alt="Risografía, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em> </span></div></div><figcaption>Risografía</figcaption></figure><figure class="t"><div class="img"><img src="risografia_goncourt.png" alt="Risografía, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em> </span></div></div><figcaption>Risografía</figcaption></figure></div>
+<h3>Grabado</h3><div class="rejilla"><figure class="t"><div class="img"><img src="grabado_anthropic.png" alt="Grabado, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Grabado</figcaption></figure><figure class="t"><div class="img"><img src="grabado_biblia1631.png" alt="Grabado, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em> </span></div></div><figcaption>Grabado</figcaption></figure><figure class="t"><div class="img"><img src="grabado_goncourt.png" alt="Grabado, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em> </span></div></div><figcaption>Grabado</figcaption></figure></div>
+<h3>Fotomontaje</h3><div class="rejilla"><figure class="t"><div class="img"><img src="fotomontaje_anthropic.png" alt="Fotomontaje, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Fotomontaje</figcaption></figure><figure class="t"><div class="img"><img src="fotomontaje_biblia1631.png" alt="Fotomontaje, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em> </span></div></div><figcaption>Fotomontaje</figcaption></figure><figure class="t"><div class="img"><img src="fotomontaje_goncourt.png" alt="Fotomontaje, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em> </span></div></div><figcaption>Fotomontaje</figcaption></figure></div>
+<h3>Objeto</h3><div class="rejilla"><figure class="t"><div class="img"><img src="objeto_anthropic.png" alt="Objeto, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Objeto</figcaption></figure><figure class="t"><div class="img"><img src="objeto_biblia1631.png" alt="Objeto, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em> </span></div></div><figcaption>Objeto</figcaption></figure><figure class="t"><div class="img"><img src="objeto_goncourt.png" alt="Objeto, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em> </span></div></div><figcaption>Objeto</figcaption></figure></div>
+<h3>Gouache</h3><div class="rejilla"><figure class="t"><div class="img"><img src="gouache_anthropic.png" alt="Gouache, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Gouache</figcaption></figure><figure class="t"><div class="img"><img src="gouache_biblia1631.png" alt="Gouache, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em> </span></div></div><figcaption>Gouache</figcaption></figure><figure class="t"><div class="img"><img src="gouache_goncourt.png" alt="Gouache, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em> </span></div></div><figcaption>Gouache</figcaption></figure></div></section>
+<section id="feed" hidden><h2>Feed alterno</h2><p class="n">Una de cada estilo seguida, rotando los temas: así se vería el ritmo del perfil.</p><div class="rejilla"><figure class="t"><div class="img"><img src="risografia_anthropic.png" alt="Risografía, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Risografía</figcaption></figure><figure class="t"><div class="img"><img src="grabado_biblia1631.png" alt="Grabado, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em></span></div></div><figcaption>Grabado</figcaption></figure><figure class="t"><div class="img"><img src="fotomontaje_goncourt.png" alt="Fotomontaje, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em></span></div></div><figcaption>Fotomontaje</figcaption></figure><figure class="t"><div class="img"><img src="objeto_anthropic.png" alt="Objeto, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Objeto</figcaption></figure><figure class="t"><div class="img"><img src="gouache_biblia1631.png" alt="Gouache, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em></span></div></div><figcaption>Gouache</figcaption></figure><figure class="t"><div class="img"><img src="risografia_goncourt.png" alt="Risografía, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em></span></div></div><figcaption>Risografía</figcaption></figure><figure class="t"><div class="img"><img src="grabado_anthropic.png" alt="Grabado, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Grabado</figcaption></figure><figure class="t"><div class="img"><img src="fotomontaje_biblia1631.png" alt="Fotomontaje, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em></span></div></div><figcaption>Fotomontaje</figcaption></figure><figure class="t"><div class="img"><img src="objeto_goncourt.png" alt="Objeto, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em></span></div></div><figcaption>Objeto</figcaption></figure><figure class="t"><div class="img"><img src="gouache_anthropic.png" alt="Gouache, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Gouache</figcaption></figure><figure class="t"><div class="img"><img src="risografia_biblia1631.png" alt="Risografía, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em></span></div></div><figcaption>Risografía</figcaption></figure><figure class="t"><div class="img"><img src="grabado_goncourt.png" alt="Grabado, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em></span></div></div><figcaption>Grabado</figcaption></figure><figure class="t"><div class="img"><img src="fotomontaje_anthropic.png" alt="Fotomontaje, anthropic" loading="lazy">
+<div class="titular"><span>Las editoriales se quedan el <em>95 %</em> del acuerdo</span></div></div><figcaption>Fotomontaje</figcaption></figure><figure class="t"><div class="img"><img src="objeto_biblia1631.png" alt="Objeto, biblia1631" loading="lazy">
+<div class="titular"><span>La Biblia que olvidó <em>un no</em></span></div></div><figcaption>Objeto</figcaption></figure><figure class="t"><div class="img"><img src="gouache_goncourt.png" alt="Gouache, goncourt" loading="lazy">
+<div class="titular"><span>Cien años fallando en el mismo <em>restaurante</em></span></div></div><figcaption>Gouache</figcaption></figure></div></section>
+</main>
+<script>
+const bp=document.getElementById("b-perfil"),bf=document.getElementById("b-feed"),sp=document.getElementById("perfil"),sf=document.getElementById("feed");
+function ver(f){sp.hidden=f;sf.hidden=!f;bp.setAttribute("aria-pressed",String(!f));bf.setAttribute("aria-pressed",String(f));}
+bp.onclick=()=>ver(false);bf.onclick=()=>ver(true);
+document.getElementById("sombra").onchange=e=>document.body.classList.toggle("sombra",e.target.checked);
+</script></body></html>
