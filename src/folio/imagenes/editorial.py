@@ -60,7 +60,8 @@ def nombres_de_pieza(pieza) -> set[str]:
     if pieza.guion:
         for d in pieza.guion.diapositivas:
             for frase in re.split(r"[.!?;:]\s*", d.texto.replace("*", "")):
-                nombres |= {w.lower() for w in re.findall(r"[A-Za-zÀ-ÿ']{3,}", frase)[1:] if w[0].isupper()}
+                # Las palabras en mayúsculas enteras son énfasis, no nombres (4/11: «COMO SEA» prohibía «sea» en inglés)
+                nombres |= {w.lower() for w in re.findall(r"[A-Za-zÀ-ÿ']{3,}", frase)[1:] if w[0].isupper() and not w.isupper()}
     return nombres
 
 

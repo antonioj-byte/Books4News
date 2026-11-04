@@ -127,6 +127,22 @@ def validar(g: GuionNewsletter, texto: str) -> list[str]:
     return errores
 
 
+def validar_guion(g: GuionLLM, texto: str) -> list[str]:
+    """Las reglas de una pieza ya escrita, al editarla a mano o desde el chat (4/11): el titular, las frases y el
+    cierre siguen siendo literales del ensayo; la percha, el subtítulo y el pie se pueden reescribir."""
+    errores = []
+    for d in g.diapositivas:
+        t = d.texto.replace("*", "")
+        if d.tipo in ("portada", "cita", "cierre") and texto and not literal(t, texto):
+            que = {"portada": "El titular", "cita": f"La frase de la diapositiva {d.n}", "cierre": "La frase del cierre"}[d.tipo]
+            errores.append(f"{que} tiene que estar letra por letra en el ensayo (va entre comillas): «{t[:60]}»")
+        if d.tipo == "portada" and _palabras(t) > 20:
+            errores.append(f"El titular tiene {_palabras(t)} palabras; máximo 20.")
+        if d.tipo == "portada" and d.subtitulo and _palabras(d.subtitulo) > 24:
+            errores.append(f"El subtítulo tiene {_palabras(d.subtitulo)} palabras; máximo 24.")
+    return errores
+
+
 # --- Escribir -------------------------------------------------------------------------------------
 
 def escribir(llm: LLM, cfg: Config, fecha: str, texto: str) -> tuple[GuionNewsletter, list[str]]:

@@ -69,7 +69,7 @@ def test_render_de_cada_diapositiva(cfg_diseno):
     portada = pl.html_diapositiva(p, 1)
     assert "diapositiva--nl_portada" in portada and "Opinión" in portada and "Antonio J. Rodríguez" in portada
     assert "Director editorial de Alighieria" in portada and "nl-autor__foto" in portada
-    assert '«2026 es el año en que más he escrito, y en el que <span class="remate">menos he escrito</span>»' in portada
+    assert '2026 es el año en que más he escrito, y en el que <span class="remate">menos he escrito</span></h1>' in portada
     assert "Por qué ahora" in pl.html_diapositiva(p, 2)
     primera, segunda = pl.html_diapositiva(p, 3), pl.html_diapositiva(p, 4)
     assert "nl-par" not in primera and "nl-par" in segunda          # alternan pluma y papel
@@ -89,3 +89,20 @@ def test_la_foto_de_quien_firma_se_guarda_cuadrada(cfg):
     ruta = newsletter.guardar_foto(cfg, _jpg((800, 1200)))
     with Image.open(ruta) as im:
         assert im.size == (600, 600) and im.format == "JPEG"
+
+
+def test_editar_a_mano_con_sus_reglas_sin_firma_ni_comillas_dentro(cfg):
+    """4/11, en producción: la edición a mano aplicaba las reglas de las piezas con libro (7 diapositivas, «idea»,
+    12 palabras, comillas), metía la píldora en el texto y añadía «Folio.» al cierre."""
+    from folio import edicion
+    from folio.imagenes.editorial import nombres_de_pieza
+    p = newsletter.a_pieza(cfg, _guion(), "2026-11-05-7", "2026-11-05", TEXTO)
+    assert edicion.validar(cfg, p, p.guion) == []
+    nueva, avisos = edicion.editar_diapositiva(cfg, p, 2, "El Goncourt retiró a Orélien y el ganador habló de la IA.")
+    assert avisos == []                                   # la percha se puede reescribir
+    nueva, avisos = edicion.editar_diapositiva(cfg, p, 7, "La literatura va a sobrevivir. COMO SEA.")
+    assert avisos == [] and nueva.guion.diapositivas[6].texto == "La literatura va a sobrevivir. COMO SEA."   # sin «Folio.»
+    _, avisos = edicion.editar_diapositiva(cfg, p, 3, "A escribir se aprende tachando")
+    assert any("letra por letra" in a for a in avisos)    # las frases siguen siendo literales
+    # «COMO SEA» en mayúsculas no hace de «sea» un nombre propio que las escenas no puedan usar
+    assert "sea" not in nombres_de_pieza(p)

@@ -523,6 +523,8 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .diapositiva--nl_portada .cuerpo { padding-top: 36px; }
 .diapositiva--nl_portada .antetitulo { background: transparent; color: var(--colores-marcador); border: 4px solid var(--colores-marcador); }
 .diapositiva--nl_portada .titular { font-size: 76px; }
+/* Las comillas, por CSS: así no entran en el texto al editarlo en la web */
+.diapositiva--nl_portada .titular::before { content: "«"; } .diapositiva--nl_portada .titular::after { content: "»"; }
 .diapositiva--nl_portada .subtitulo { color: var(--colores-papel); font-size: 36px; opacity: 0.88; }
 .diapositiva--nl_portada .remate, .diapositiva--nl_cierre .remate {
   color: var(--colores-tinta); padding: 0 0.1em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
@@ -533,14 +535,14 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .nl-autor__foto { width: 118px; height: 118px; border-radius: 50%; flex: none; background-size: cover; background-position: center 35%;
   filter: grayscale(1) contrast(1.1); }
 .nl-autor__nombre small { display: block; font-weight: 400; font-size: 23px; opacity: 0.75; margin-top: 4px; }
-.nl-percha { margin-top: 56px; font-family: var(--fuentes-titular); font-weight: 700; font-size: 72px; line-height: 1.05; letter-spacing: -0.045em; text-wrap: balance; }
+.diapositiva--nl_percha .nl-percha { margin-top: 56px; font-family: var(--fuentes-titular); font-weight: 700; font-size: 72px; line-height: 1.05; letter-spacing: -0.045em; text-wrap: balance; }
 .nl-percha em { font-family: var(--fuentes-remate); font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
 .nl-comilla { position: absolute; z-index: 2; left: 60px; top: calc(var(--nl-corte) - 96px); width: 162px; height: 162px; border-radius: 50%;
   display: grid; place-items: center; padding-bottom: 18px; background: var(--nl-fondo); color: var(--nl-acento);
   font-family: var(--fuentes-titular); font-weight: 700; font-size: 140px; line-height: 1; }
 .nl-comilla--sola { position: static; margin-bottom: 30px; }
 .diapositiva--nl_cita .cuerpo { padding-top: 76px; }
-.nl-cita { font-family: var(--fuentes-titular); font-weight: 700; font-size: 72px; line-height: 1.04; letter-spacing: -0.045em; text-wrap: balance; padding-bottom: 0.08em; }
+.diapositiva--nl_cita .nl-cita { font-family: var(--fuentes-titular); font-weight: 700; font-size: 72px; line-height: 1.04; letter-spacing: -0.045em; text-wrap: balance; padding-bottom: 0.08em; }
 .nl-cita .remate, .nl-cita em { font-family: var(--fuentes-remate); font-style: italic; font-weight: 500; letter-spacing: -0.01em; color: inherit; }
 .nl-par .nl-cita .remate { color: var(--colores-pluma); }
 .diapositiva--nl_percha .antetitulo, .diapositiva--nl_portada .antetitulo { align-self: flex-start; }

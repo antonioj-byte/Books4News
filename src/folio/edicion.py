@@ -86,7 +86,11 @@ def _citas_ok(p: Pieza, tipo: str = "libro") -> frozenset[str]:
 
 
 def validar(cfg: Config, p: Pieza, g: GuionLLM) -> list[str]:
-    """Las citas que valen son las que ya se verificaron al escribir la pieza (del libro y de la crítica)."""
+    """Las citas que valen son las que ya se verificaron al escribir la pieza (del libro y de la crítica). «La newsletter
+    del jueves» tiene sus propias reglas: las frases, literales del ensayo (4/11)."""
+    if p.eleccion.formato == "newsletter":
+        from folio import newsletter
+        return newsletter.validar_guion(g, p.eleccion.encargo)
     return guionista.validar(cfg, g, p.libros, p.fuentes, _citas_ok(p), _citas_ok(p, "critica"), p.eleccion.formato)
 
 
@@ -97,7 +101,8 @@ def editar_diapositiva(cfg: Config, p: Pieza, n: int, texto: str, subtitulo: str
     d.texto = " ".join(texto.split())
     if d.tipo == "portada":
         d.subtitulo = " ".join((subtitulo or "").split()) or None
-    guionista.corregir_mecanico(nueva.guion)
+    if p.eleccion.formato != "newsletter":          # la newsletter no lleva la firma «Folio» en el cierre
+        guionista.corregir_mecanico(nueva.guion)
     return nueva, validar(cfg, nueva, nueva.guion)
 
 
@@ -355,7 +360,8 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
                 # de imagen no se hace, la respuesta lo dice primero y no promete lo que no ha pasado
                 return f"No lo he podido hacer: {nota.strip().strip('()')}", None, avisos
             return (f"{r.respuesta} {nota}".strip()), nueva, avisos
-        guionista.corregir_mecanico(r.guion)
+        if p.eleccion.formato != "newsletter":
+            guionista.corregir_mecanico(r.guion)
         errores = [e for e in validar(cfg, p, r.guion) if e not in previos]
         if not errores:
             nueva = p.model_copy(deep=True)
