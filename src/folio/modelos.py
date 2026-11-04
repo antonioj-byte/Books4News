@@ -29,15 +29,15 @@ Seccion = Literal[
 ]
 # «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
 EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
-Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia", "ensayo"]
+Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia", "ensayo", "newsletter"]
 # Formatos que pueden salir sin libro: la curiosidad del cajón, los temas del radar del libro y, en los temas de la
 # redacción, «noticia» (contada sin ensayo) y «ensayo» (tema literario sin percha), los dos del 3/11
-SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar", "noticia", "ensayo")
+SIN_LIBRO_OBLIGATORIO = ("curiosidad", "radar", "noticia", "ensayo", "newsletter")
 # «cajon»: historias sin percha del cajón de curiosidades (config/cajon_curiosidades.yaml); «catalogo»: novedades de
 # las editoriales independientes (formato «recomendado»); «radar»: historias del mundo del libro que no pasan al jefe
 # pero sí a la lista del radar
 Carril = Literal["actualidad", "editorial", "cajon", "catalogo", "radar", "redaccion"]
-TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre", "noticia"]   # «noticia»: Cinco del libro (2/11)
+TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre", "noticia", "cita"]   # «noticia»: Cinco del libro (2/11); «cita»: la newsletter (4/11)
 
 
 # --- Ingesta -----------------------------------------------------------------

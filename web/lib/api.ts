@@ -10,6 +10,7 @@ export type Evaluacion = components["schemas"]["Evaluacion-Output"];
 export type ResumenDia = components["schemas"]["ResumenDia"];
 export type Estado = components["schemas"]["CambioEstado"]["estado"];
 export type EstadoEjecucion = components["schemas"]["EstadoEjecucion"];
+export type EstadoNewsletter = components["schemas"]["EstadoNewsletter"];
 export type ResultadoEdicion = components["schemas"]["ResultadoEdicion"];
 export type MensajeChat = components["schemas"]["MensajeChat"];
 export type RespuestaChat = components["schemas"]["RespuestaChat"];
@@ -89,6 +90,10 @@ export const api = {
   escribirDelFondo: (id: number, ejecucion: number) =>
     pedir<TemaCreado>(`/api/fondo/${id}/escribir`, { method: "POST", body: JSON.stringify({ ejecucion }) }),
   descartarDelFondo: (id: number) => pedir<PropuestaDelFondo>(`/api/fondo/${id}/descartar`, { method: "POST" }),
+  newsletter: () => pedir<EstadoNewsletter>("/api/newsletter"),
+  lanzarNewsletter: (texto: string) => pedir<EstadoNewsletter>("/api/newsletter", { method: "POST", body: JSON.stringify({ texto }) }),
+  subirFotoNewsletter: (archivo: File) =>
+    pedir<EstadoNewsletter>("/api/newsletter/foto", { method: "PUT", body: archivo, headers: { "Content-Type": archivo.type || "application/octet-stream" } }),
   lanzarCinco: (fecha: string) => pedir<EstadoEjecucion>(`/api/cinco/${fecha}`, { method: "POST" }),
   estadoCinco: () => pedir<EstadoEjecucion>("/api/cinco"),
   prepararFondo: (tandas: number) => pedir<EstadoEjecucion>("/api/fondo/preparar", { method: "POST", body: JSON.stringify({ tandas }) }),

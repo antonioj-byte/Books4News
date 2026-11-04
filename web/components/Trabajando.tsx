@@ -17,6 +17,13 @@ export const PASOS_PIEZA: Paso[] = [
   { id: "pintar", texto: "Diapositivas", claves: ["pintando las diapositivas"] },
 ];
 
+export const PASOS_NEWSLETTER: Paso[] = [
+  { id: "frases", texto: "Titular y frases", claves: ["titular", "empezando"] },
+  { id: "ilus", texto: "Ilustraciones", claves: ["ilustraciones"] },
+  { id: "percha", texto: "Hechos", claves: ["comprobando"] },
+  { id: "pintar", texto: "Diapositivas", claves: ["pintando"] },
+];
+
 export const PASOS_CINCO: Paso[] = [
   { id: "elegir", texto: "Noticias", claves: ["empezando", "cinco del libro"] },
   { id: "pintar", texto: "Diapositivas", claves: ["pintando"] },

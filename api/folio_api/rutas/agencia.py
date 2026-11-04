@@ -15,7 +15,8 @@ router = APIRouter()
 
 NOMBRES_FORMATO = {"lateral": "Lectura lateral", "dialogo": "Diálogo con la actualidad", "balda": "Tres libros",
                    "edicion": "Mundo del libro", "curiosidad": "Historia editorial", "recomendado": "Libro recomendado",
-                   "noticia": "Noticia", "ensayo": "Ensayo", "radar": "Breve del mundo del libro", "cinco": "Cinco del libro"}
+                   "noticia": "Noticia", "ensayo": "Ensayo", "radar": "Breve del mundo del libro", "cinco": "Cinco del libro",
+                   "newsletter": "La newsletter del jueves"}
 
 
 # ---------------------------------------------------------------- Archivo
@@ -152,6 +153,8 @@ def ver_marca(ctx: Contexto = Depends(contexto)):
     if "cinco" not in {f.id for f in formatos}:
         formatos.append(FormatoMarca(id="cinco", nombre=NOMBRES_FORMATO["cinco"],
                                      descripcion="Las cinco noticias del mundo del libro del día, cada una con su ilustración."))
+    formatos.append(FormatoMarca(id="newsletter", nombre=NOMBRES_FORMATO["newsletter"],
+                                 descripcion="La versión corta del ensayo de los jueves: titular entre comillas, percha, cuatro frases ilustradas y el enlace a la newsletter."))
 
     def contar(nombre: str, clave: str) -> int:
         f = raiz / "config" / nombre

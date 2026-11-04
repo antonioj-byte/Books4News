@@ -507,3 +507,45 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .cinco-contador i.si { background: var(--colores-papel); opacity: 1; }
 .diapositiva--noticia .titular { font-size: 84px; }
 .cinco-medio { margin-top: 26px; font-family: var(--fuentes-maquina); font-size: 24px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; }
+
+/* «La newsletter del jueves» (4/11, opción C del Artifact): ilustración arriba con borde rasgado, quien firma en un
+   botón en la portada, frases que alternan pluma y papel con la comilla de apertura en un círculo sobre la junta */
+.diapositiva--nl_portada, .diapositiva--nl_cierre { background: var(--colores-tinta-honda); color: var(--colores-papel); }
+.diapositiva--nl_percha { background: var(--colores-rosado); color: var(--colores-tinta); }
+.diapositiva--nl_cita { background: var(--colores-pluma); color: var(--colores-papel); --nl-fondo: var(--colores-pluma); --nl-acento: var(--colores-marcador); }
+.diapositiva--nl_cita.nl-par { background: var(--colores-papel); color: var(--colores-tinta); --nl-fondo: var(--colores-papel); --nl-acento: var(--colores-pluma); }
+.diapositiva--nl_portada { --nl-fondo: var(--colores-tinta-honda); --nl-corte: 56%; }
+.diapositiva--nl_cita { --nl-corte: 47%; }
+.nl-ilus { position: absolute; z-index: -3; left: 0; right: 0; top: 0; height: var(--nl-corte); background-size: cover; background-position: center; }
+.nl-rasgado { position: absolute; z-index: -2; left: 0; right: 0; top: calc(var(--nl-corte) - 52px); height: 56px; background: var(--nl-fondo);
+  clip-path: polygon(0 40%, 4% 70%, 9% 35%, 15% 60%, 22% 30%, 28% 65%, 35% 40%, 42% 70%, 49% 35%, 57% 62%, 64% 30%, 71% 66%, 78% 38%, 85% 64%, 92% 33%, 100% 58%, 100% 100%, 0 100%); }
+.diapositiva--nl_portada .cuerpo, .diapositiva--nl_cita .cuerpo { flex: none; margin-top: auto; height: calc(100% - var(--nl-corte) - 30px); justify-content: flex-start; }
+.diapositiva--nl_portada .cuerpo { padding-top: 36px; }
+.diapositiva--nl_portada .antetitulo { background: transparent; color: var(--colores-marcador); border: 4px solid var(--colores-marcador); }
+.diapositiva--nl_portada .titular { font-size: 76px; }
+.diapositiva--nl_portada .subtitulo { color: var(--colores-papel); font-size: 36px; opacity: 0.88; }
+.diapositiva--nl_portada .remate, .diapositiva--nl_cierre .remate {
+  color: var(--colores-tinta); padding: 0 0.1em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: linear-gradient(transparent 18%, var(--colores-marcador) 18%, var(--colores-marcador) 94%, transparent 94%); }
+.nl-autor { position: absolute; z-index: 2; left: 54px; top: 54px; display: flex; align-items: center; gap: 22px; padding: 13px 36px 13px 13px;
+  border-radius: 999px; background: var(--colores-papel); color: var(--colores-tinta); box-shadow: 0 6px 22px var(--colores-tinta-60);
+  font-family: var(--fuentes-texto); font-weight: 700; font-size: 27px; line-height: 1.2; }
+.nl-autor__foto { width: 118px; height: 118px; border-radius: 50%; flex: none; background-size: cover; background-position: center 35%;
+  filter: grayscale(1) contrast(1.1); }
+.nl-autor__nombre small { display: block; font-weight: 400; font-size: 23px; opacity: 0.75; margin-top: 4px; }
+.nl-percha { margin-top: 56px; font-family: var(--fuentes-titular); font-weight: 700; font-size: 72px; line-height: 1.05; letter-spacing: -0.045em; text-wrap: balance; }
+.nl-percha em { font-family: var(--fuentes-remate); font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
+.nl-comilla { position: absolute; z-index: 2; left: 60px; top: calc(var(--nl-corte) - 96px); width: 162px; height: 162px; border-radius: 50%;
+  display: grid; place-items: center; padding-bottom: 18px; background: var(--nl-fondo); color: var(--nl-acento);
+  font-family: var(--fuentes-titular); font-weight: 700; font-size: 140px; line-height: 1; }
+.nl-comilla--sola { position: static; margin-bottom: 30px; }
+.diapositiva--nl_cita .cuerpo { padding-top: 76px; }
+.nl-cita { font-family: var(--fuentes-titular); font-weight: 700; font-size: 72px; line-height: 1.04; letter-spacing: -0.045em; text-wrap: balance; padding-bottom: 0.08em; }
+.nl-cita .remate, .nl-cita em { font-family: var(--fuentes-remate); font-style: italic; font-weight: 500; letter-spacing: -0.01em; color: inherit; }
+.nl-par .nl-cita .remate { color: var(--colores-pluma); }
+.diapositiva--nl_percha .antetitulo, .diapositiva--nl_portada .antetitulo { align-self: flex-start; }
+.diapositiva--nl_cierre .cuerpo { justify-content: space-between; }
+.nl-cierre { font-size: 108px; margin-top: 40px; }
+.nl-cta { display: flex; flex-direction: column; gap: 14px; }
+.nl-cta__nombre { font-family: var(--fuentes-texto); font-weight: 600; font-size: 30px; opacity: 0.8; }
+.nl-cta__url { font-family: var(--fuentes-texto); font-weight: 700; font-size: 40px; color: var(--colores-marcador); }

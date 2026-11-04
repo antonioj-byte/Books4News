@@ -118,6 +118,8 @@ class Plantillas:
         d = pieza.guion.diapositivas[n - 1]
         if pieza.eleccion.formato == "cinco":
             return self._cinco(pieza, d, n, base_url)
+        if pieza.eleccion.formato == "newsletter":
+            return self._newsletter(pieza, d, n, base_url)
         return self.env.get_template(f"{d.tipo}.html").render(
             **self._base(base_url), **self._texto(pieza, d, n), **self._medios_y_arte(pieza, d, n))
 
@@ -140,6 +142,36 @@ class Plantillas:
                      noticia_subtitulo=texto_html(d.subtitulo) if d.subtitulo else None,
                      noticia_medio=pieza.fuentes[k].medio if k < len(pieza.fuentes) else None)
         return self.env.get_template("noticia.html").render(**datos)
+
+    def _newsletter(self, pieza: Pieza, d: Diapositiva, n: int, base_url: str | None) -> str:
+        """«La newsletter del jueves» (4/11, opción C): portada con quien firma, percha, frases ilustradas y cierre."""
+        from folio import newsletter
+        a, nl = pieza.arte, self.cfg.pipeline.newsletter
+        datos = {**self._base(base_url), **self._texto(pieza, d, n), "imagen": None, "retrato": None, "acento": None,
+                 "tono": None, "sin_foto": None, "infografia": None, "panorama": False, "friso": None, "banda": None,
+                 "video": False, "portada_estilo": None, "ilustracion": None}
+        if d.tipo == "portada":
+            img = self.medios.imagen(pieza)
+            foto = newsletter.ruta_foto(self.cfg)
+            datos.update(tipo="nl_portada", ilustracion=img["src"] if img else None, autor=nl.autor, cargo=nl.cargo,
+                         foto_autor=self.url_medio(foto) if foto.exists() else None,
+                         titular_remate=titular_con_remate(d.texto, a.remate if a else None),
+                         subtitulo=texto_html(d.subtitulo) if d.subtitulo else None)
+            return self.env.get_template("nl_portada.html").render(**datos)
+        if d.tipo == "cita":
+            citas = [x for x in pieza.guion.diapositivas if x.tipo == "cita"]
+            k = next(i for i, x in enumerate(citas) if x.n == d.n)
+            img = self.medios.imagen(pieza, f"{newsletter.SUFIJO_FRASE}-{k + 1}")
+            remate = a.remates_noticias[k] if a and k < len(a.remates_noticias) else None
+            datos.update(tipo="nl_cita", ilustracion=img["src"] if img else None, cita_remate=titular_con_remate(d.texto, remate))
+            html = self.env.get_template("nl_cita.html").render(**datos)
+            return html.replace("diapositiva--nl_cita", "diapositiva--nl_cita nl-par", 1) if k % 2 else html
+        if d.tipo == "cierre":
+            datos.update(tipo="nl_cierre", nombre=nl.nombre, url=nl.url,
+                         cierre_remate=titular_con_remate(d.texto, a.remate_cierre if a else None))
+            return self.env.get_template("nl_cierre.html").render(**datos)
+        datos.update(tipo="nl_percha", texto_html=texto_html(d.texto))
+        return self.env.get_template("nl_percha.html").render(**datos)
 
     def _base(self, base_url: str | None) -> dict:
         logo = self.tokens["logotipo"].strip()

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{# «La newsletter del jueves», el cierre (4/11): una última frase del ensayo con su remate en marcador y la invitación a
+   leerlo entero en la newsletter #}
+{% block cuerpo %}
+    <h1 class="titular nl-cierre">{{ cierre_remate }}</h1>
+    <div class="nl-cta">
+      <p class="nl-cta__nombre">{{ nombre }}</p>
+      <p class="nl-cta__url">Léelo entero en {{ url }}</p>
+    </div>
+{% endblock %}

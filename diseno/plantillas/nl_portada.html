@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{# «La newsletter del jueves», portada (4/11, opción C): la ilustración arriba con borde rasgado, quien firma en un botón
+   (foto, nombre y cargo), la píldora «Opinión», el titular entre comillas con su remate y el subtítulo #}
+{% block fondo %}{% if ilustracion %}<div class="nl-ilus nl-ilus--portada" aria-hidden="true" style="background-image: url('{{ ilustracion }}')"></div>{% endif %}<div class="nl-rasgado nl-rasgado--portada" aria-hidden="true"></div>
+<div class="nl-autor">{% if foto_autor %}<span class="nl-autor__foto" style="background-image: url('{{ foto_autor }}')"></span>{% endif %}<span class="nl-autor__nombre">{{ autor }}<small>{{ cargo }}</small></span></div>{% endblock %}
+{% block cuerpo %}
+    <div class="titulo">
+      <div class="antetitulo">Opinión</div>
+      <h1 class="titular">«{{ titular_remate }}»</h1>
+      {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
+    </div>
+{% endblock %}

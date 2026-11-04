@@ -94,6 +94,14 @@ class Cinco(_Seccion):
     activo: bool = True
 
 
+class Newsletter(_Seccion):
+    """«La newsletter del jueves» (4/11): quien firma el ensayo semanal y dónde se lee entero."""
+    autor: str = "Antonio J. Rodríguez"
+    cargo: str = "Director editorial de Alighieria"
+    url: str = "folioeditorial.substack.com"
+    nombre: str = "La newsletter de Folio"
+
+
 class Exclusion(_Seccion):
     dias_historias: int
     dias_libros: int
@@ -261,6 +269,7 @@ class ConfigPipeline(_Seccion):
     catalogo: Catalogo = Field(default_factory=Catalogo)
     radar: Radar = Field(default_factory=Radar)
     cinco: Cinco = Field(default_factory=Cinco)
+    newsletter: Newsletter = Field(default_factory=Newsletter)
     guion: Guion
     arte: Arte = Field(default_factory=Arte)
     gasto: Gasto = Field(default_factory=Gasto)

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Newsletter } from "@/components/Newsletter";
 import { api, type Tema } from "@/lib/api";
 import { useDatos } from "@/lib/useDatos";
 
@@ -71,12 +72,14 @@ function mensajeError(e: unknown): string {
   return m.length > 300 ? m.slice(0, 300) + "…" : m;
 }
 
+const MAX_NEWSLETTER = 40000;
+
 export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => void }) {
   const [texto, setTexto] = useState("");
   const [enlaces, setEnlaces] = useState("");
   const [enviando, setEnviando] = useState<"ahora" | "manana" | null>(null);
   // Lo que pide la redacción (3/11, «si lo que le pido es que me cuente una noticia… no me haga un ensayo»)
-  const [enfoque, setEnfoque] = useState<"elige" | "noticia" | "ensayo">("elige");
+  const [enfoque, setEnfoque] = useState<"elige" | "noticia" | "ensayo" | "newsletter">("elige");
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
   const { datos: temas, recargar } = useDatos("temas", api.temas);
   const [abierto, setAbierto] = useState<number | null>(null);
@@ -85,7 +88,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
     if (texto.trim().length < 8 || enviando) return;
     setEnviando(cuando); setMensaje(null);
     try {
-      const r = await api.proponerTema({ texto: texto.trim(), enlaces: enlaces.split(/\s+/).filter(Boolean), cuando, ejecucion: eid ?? null, enfoque });
+      const r = await api.proponerTema({ texto: texto.trim(), enlaces: enlaces.split(/\s+/).filter(Boolean), cuando, ejecucion: eid ?? null, enfoque: enfoque === "newsletter" ? "elige" : enfoque });
       setTexto(""); setEnlaces("");
       setMensaje({ ok: true, texto: cuando === "manana" ? "Guardado: el jefe lo verá en la mesa de mañana."
         : r.preguntas.length ? "El jefe necesita saber algo antes de proponer: contéstale abajo."
@@ -99,7 +102,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
   const descartar = async (t: Tema) => { await api.descartarTema(t.id).catch(() => null); recargar(); };
   const recientes = (temas ?? []).slice(0, 6);
 
-  const abiertoForm = texto.length > 0 || !!enviando || enlaces.length > 0;
+  const abiertoForm = texto.length > 0 || !!enviando || enlaces.length > 0 || enfoque === "newsletter";
   const pendientes = recientes.filter((t) => t.estado === "pregunta").length;
 
   // Arriba de la mesa y en compacto (3/11, «se está volviendo demasiado compleja la web»): una línea que se abre al escribir
@@ -108,28 +111,30 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
       <div className="panel flex flex-col gap-3 p-3 sm:p-4">
         <label id="h-tema" htmlFor="tema-texto" className="sr-only">Proponer un tema al jefe de cultura</label>
         <textarea id="tema-texto" value={texto} onChange={(e) => setTexto(e.target.value)} rows={abiertoForm ? 3 : 1} disabled={!!enviando}
-                  maxLength={MAX_TEXTO}
-                  placeholder="¿De qué quieres que hablemos hoy? El jefe de cultura le busca el ángulo y el libro."
+                  maxLength={enfoque === "newsletter" ? MAX_NEWSLETTER : MAX_TEXTO}
+                  placeholder={enfoque === "newsletter" ? "Pega aquí el texto entero de la newsletter." : "¿De qué quieres que hablemos hoy? El jefe de cultura le busca el ángulo y el libro."}
                   className="resize-none rounded-[12px] border border-borde bg-papel px-3 py-2.5 text-[16px] outline-none focus:border-tinta" />
         {abiertoForm && (
           <>
-            <textarea id="tema-enlaces" value={enlaces} onChange={(e) => setEnlaces(e.target.value)} rows={2} disabled={!!enviando}
+            {enfoque !== "newsletter" && <textarea id="tema-enlaces" value={enlaces} onChange={(e) => setEnlaces(e.target.value)} rows={2} disabled={!!enviando}
                       placeholder={enfoque === "ensayo" ? "Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las fuentes." : "Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las noticias."}
                       aria-label="Enlaces (opcional)"
-                      className="resize-y rounded-[12px] border border-borde bg-papel p-3 font-mono text-[13px] outline-none focus:border-tinta" />
+                      className="resize-y rounded-[12px] border border-borde bg-papel p-3 font-mono text-[13px] outline-none focus:border-tinta" />}
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Qué le pides al jefe">
-              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"], ["ensayo", "Ensayo sin percha"]] as const).map(([v, txt]) => (
+              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"], ["ensayo", "Ensayo sin percha"], ["newsletter", "Newsletter del jueves"]] as const).map(([v, txt]) => (
                 <button key={v} aria-pressed={enfoque === v} onClick={() => setEnfoque(v)} disabled={!!enviando}
                         className={`rounded-full border px-3 py-1 text-[13px] ${enfoque === v ? "border-carmesi bg-carmesi text-papel" : "border-borde bg-papel hover:border-tinta"}`}>
                   {txt}
                 </button>
               ))}
               <span className="text-[12.5px] text-tinta-suave">
-                {enfoque === "noticia" ? "Contada con su contexto, sin ensayo ni libro ajeno."
+                {enfoque === "newsletter" ? "La versión corta en Instagram del ensayo de los jueves, con tus frases literales."
+                  : enfoque === "noticia" ? "Contada con su contexto, sin ensayo ni libro ajeno."
                   : enfoque === "ensayo" ? "Un tema literario con su historia, sin noticia ni libro obligatorio. Sigue tu estructura y tu tono."
                   : "Lectura lateral, diálogo, tres libros… lo que mejor le vaya."}
               </span>
             </div>
+            {enfoque === "newsletter" ? <Newsletter texto={texto} onHecho={() => { setTexto(""); onPieza(); }} /> : <>
             {texto.length > MAX_TEXTO * 0.8 && (
               <span className={`dato ${texto.length >= MAX_TEXTO ? "text-carmesi" : ""}`}>{texto.length} de {MAX_TEXTO} caracteres</span>
             )}
@@ -142,6 +147,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
                 {enviando === "manana" ? "Guardando…" : "Para la mesa de mañana"}
               </button>
             </div>
+            </>}
           </>
         )}
         {mensaje && <p className={mensaje.ok ? "text-[14px]" : "text-[14px] text-carmesi"}>{mensaje.texto}</p>}

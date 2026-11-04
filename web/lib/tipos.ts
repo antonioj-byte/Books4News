@@ -741,6 +741,44 @@ export interface paths {
         patch: operations["decidir_api_memoria__pid__patch"];
         trace?: never;
     };
+    "/api/newsletter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado */
+        get: operations["estado_api_newsletter_get"];
+        put?: never;
+        /** Lanzar */
+        post: operations["lanzar_api_newsletter_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/newsletter/foto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Subir Foto
+         * @description La foto de quien firma, en el cuerpo (sin multipart, como los materiales). Sustituye a la anterior.
+         */
+        put: operations["subir_foto_api_newsletter_foto_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ejecuciones/{eid}/piezas/{pid}/notas": {
         parameters: {
             query?: never;
@@ -1221,7 +1259,7 @@ export interface components {
              * Tipo
              * @enum {string}
              */
-            tipo: "portada" | "actualidad" | "libro" | "idea" | "cierre" | "noticia";
+            tipo: "portada" | "actualidad" | "libro" | "idea" | "cierre" | "noticia" | "cita";
             /** Texto */
             texto: string;
             /**
@@ -1339,6 +1377,16 @@ export interface components {
             proximo: string;
             /** De Conversacion */
             de_conversacion: number;
+        };
+        /** EstadoNewsletter */
+        EstadoNewsletter: {
+            trabajo: components["schemas"]["EstadoEjecucion"];
+            /** Foto */
+            foto?: string | null;
+            /** Autor */
+            autor: string;
+            /** Cargo */
+            cargo: string;
         };
         /** EstadoProgramada */
         EstadoProgramada: {
@@ -1571,7 +1619,7 @@ export interface components {
              * @default lateral
              * @enum {string}
              */
-            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco" | "noticia" | "ensayo";
+            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco" | "noticia" | "ensayo" | "newsletter";
             /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista
@@ -1865,6 +1913,13 @@ export interface components {
             mensaje: string;
             /** Para */
             para?: ("guionista" | "director_arte" | "jefe_cultura") | null;
+        };
+        /** NewsletterNueva */
+        NewsletterNueva: {
+            /** Texto */
+            texto: string;
+            /** Fecha */
+            fecha?: string | null;
         };
         /** Nota */
         Nota: {
@@ -3821,6 +3876,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estado_api_newsletter_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoNewsletter"];
+                };
+            };
+        };
+    };
+    lanzar_api_newsletter_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewsletterNueva"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoNewsletter"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    subir_foto_api_newsletter_foto_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoNewsletter"];
                 };
             };
         };

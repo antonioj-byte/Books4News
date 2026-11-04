@@ -136,6 +136,44 @@ def cinco_del_libro(fecha: str | None = typer.Option(None, help="AAAA-MM-DD; por
     typer.echo(f"{pid}: Cinco del libro, {coste} $" + ("".join(f"\n· {a}" for a in pieza.avisos[1:])))
 
 
+@app.command("newsletter")
+def newsletter_del_jueves(archivo: Path = typer.Argument(..., help="El texto de la newsletter (markdown o texto)"),
+                          fecha: str | None = typer.Option(None, help="AAAA-MM-DD; por defecto, hoy"),
+                          sin_dibujo: bool = typer.Option(False, "--sin-dibujo", help="Sin ilustraciones (gratis en Magnific)"),
+                          quiet: bool = typer.Option(False, "--quiet")):
+    """«La newsletter del jueves» (4/11): la versión corta en Instagram del ensayo de la newsletter. La escribe, la
+    ilustra, comprueba la percha, la añade a la última ejecución del día y pinta sus PNG."""
+    _logging(quiet)
+    from folio import newsletter
+    from folio.almacen import Almacen
+    from folio.pipeline import Pipeline, progreso
+    from folio.render import marcar_render, renderizar
+
+    cfg = config.cargar()
+    fecha = fecha or date.today().isoformat()
+    almacen = Almacen(cfg.ruta_db)
+    eid = almacen.ultima_ejecucion(fecha)
+    if not eid:
+        typer.echo(f"No hay ejecución del {fecha}: lanza antes la del día", err=True)
+        raise typer.Exit(1)
+    texto = archivo.read_text(encoding="utf-8")
+    tuberia = Pipeline(cfg, fecha)
+    tuberia.embedder.liberar = True
+    pid = f"{fecha}-{almacen.siguiente_numero(eid, fecha)}"
+    progreso("La newsletter: titular, percha y frases")
+    pieza = newsletter.preparar(tuberia, texto, pid, dibujar=not sin_dibujo)
+    almacen.anadir_pieza(eid, pieza, "La newsletter del jueves")
+    coste = round(sum(t.coste_usd for t in tuberia.llm.trazas), 4)
+    if pieza.estado != "propuesta":
+        typer.echo(f"No se pudo escribir: {pieza.error}", err=True)
+        raise typer.Exit(1)
+    progreso("Pintando las diapositivas")
+    destino = cfg.dir_informes / fecha / "render"
+    renderizar(cfg, [pieza], destino)
+    marcar_render(destino / pid, eid, 1)
+    typer.echo(f"{pid}: La newsletter del jueves, {coste} $" + ("".join(f"\n· {a}" for a in pieza.avisos)))
+
+
 @app.command("fuentes-editoriales")
 def fuentes_editoriales(csv_medios: Path = typer.Argument(..., help="medios.csv de publishing-monitor")):
     """Importa los feeds RSS activos de publishing-monitor a config/fuentes_editoriales.yaml (carril editorial)."""

@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{# «La newsletter del jueves», cada frase (4/11): su ilustración arriba con borde rasgado, la comilla de apertura en un
+   círculo sobre la junta y la frase con su remate; alternan pluma y papel #}
+{% block fondo %}{% if ilustracion %}<div class="nl-ilus" aria-hidden="true" style="background-image: url('{{ ilustracion }}')"></div><div class="nl-rasgado" aria-hidden="true"></div><span class="nl-comilla" aria-hidden="true">«</span>{% endif %}{% endblock %}
+{% block cuerpo %}
+    {% if not ilustracion %}<span class="nl-comilla nl-comilla--sola" aria-hidden="true">«</span>{% endif %}
+    <p class="nl-cita">{{ cita_remate }}</p>
+{% endblock %}

@@ -268,3 +268,26 @@ def test_varias_piezas_se_escriben_a_la_vez(tmp_path):
     assert "mesa del día" in e.desarrollar("2026-11-02-5", dormir("cinco"))
     while e.ocupado():
         time.sleep(0.1)
+
+
+def test_newsletter_foto_y_lanzar(cliente, cfg, monkeypatch):
+    """«La newsletter del jueves» (4/11): la foto de quien firma se sube una vez; sin ejecución del día no se lanza."""
+    from io import BytesIO
+
+    from PIL import Image
+    e = cliente.get("/api/newsletter").json()
+    assert e["foto"] is None and e["autor"] == "Antonio J. Rodríguez" and not e["trabajo"]["en_marcha"]
+    assert cliente.put("/api/newsletter/foto", content=b"no es una imagen").status_code == 422
+    b = BytesIO()
+    Image.new("RGB", (500, 700), (90, 80, 70)).save(b, "JPEG")
+    foto = cliente.put("/api/newsletter/foto", content=b.getvalue(), headers={"Content-Type": "image/jpeg"}).json()["foto"]
+    assert foto.startswith("/api/medios/newsletter/autor.jpg") and cliente.get(foto).status_code == 200
+    texto = "Un ensayo de prueba. " * 40
+    assert cliente.post("/api/newsletter", json={"texto": "corto"}).status_code == 422
+    assert cliente.post("/api/newsletter", json={"texto": texto, "fecha": "2026-01-01"}).status_code == 409
+    lanzados = []
+    monkeypatch.setattr(cliente.app.state.folio.ejecutor, "desarrollar", lambda clave, pasos: lanzados.append((clave, pasos)) or None)
+    assert cliente.post("/api/newsletter", json={"texto": texto, "fecha": "2026-10-30"}).status_code == 202
+    clave, pasos = lanzados[0]
+    assert clave == "newsletter" and pasos[0][3:5] == ["newsletter", str(cfg.dir_datos / "newsletter" / "2026-10-30.md")]
+    assert (cfg.dir_datos / "newsletter" / "2026-10-30.md").read_text(encoding="utf-8") == texto
