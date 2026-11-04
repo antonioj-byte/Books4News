@@ -190,5 +190,53 @@
   "seed": 1567858059,
   "task_id": "ae6d0f8a-a3b2-41df-9ff6-dea54a9cc6a1",
   "segundos": 15.4
+ },
+ "fotomontaje2_anthropic": {
+  "estilo": "fotomontaje2",
+  "tema": "anthropic",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing, conceptual cut-paper collage, torn paper edges, black-and-white halftone photo fragments, flat magenta and yellow shapes, paper grain, few large pieces rather than many small ones, one clear focal object, lower third a calm flat field of black or cream, no text, no letters, no numbers, no labels, tickets or printed paper, all surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 1911707278,
+  "task_id": "a0fb0cc3-9071-471c-b85b-96491c6882e7",
+  "segundos": 15.3
+ },
+ "grabado2_anthropic": {
+  "estilo": "grabado2",
+  "tema": "anthropic",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing, 19th-century wood engraving, fine black crosshatching on cream paper, set against two large flat blocks of magenta and yellow behind the subject, bold clear silhouette readable at small size, single subject centred in the upper two thirds, lower third plain cream and empty, no text, no letters, no numbers, all paper and surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3586524947,
+  "task_id": "a2fb62fd-ec63-427b-b96c-f65dc3abe746",
+  "segundos": 16.0
+ },
+ "grabado2_goncourt": {
+  "estilo": "grabado2",
+  "tema": "goncourt",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other, 19th-century wood engraving, fine black crosshatching on cream paper, set against two large flat blocks of magenta and yellow behind the subject, bold clear silhouette readable at small size, single subject centred in the upper two thirds, lower third plain cream and empty, no text, no letters, no numbers, all paper and surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3439603000,
+  "task_id": "8f51c946-09f1-47c4-95c8-6368927fd64c",
+  "segundos": 19.6
+ },
+ "fotomontaje2_goncourt": {
+  "estilo": "fotomontaje2",
+  "tema": "goncourt",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other, conceptual cut-paper collage, torn paper edges, black-and-white halftone photo fragments, flat magenta and yellow shapes, paper grain, few large pieces rather than many small ones, one clear focal object, lower third a calm flat field of black or cream, no text, no letters, no numbers, no labels, tickets or printed paper, all surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3707510575,
+  "task_id": "628935aa-3370-41c0-bce7-11df0c03f180",
+  "segundos": 14.7
  }
 }

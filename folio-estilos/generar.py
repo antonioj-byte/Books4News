@@ -42,7 +42,24 @@ TEMAS = {
 }
 
 
+# Segunda vuelta (4/11): los dos mejores en miniatura, con el sufijo refinado. Llevan dentro el tercio inferior
+# y el «sin texto», y no dicen «magazine» (en Folio hacía escribir al modelo), así que no usan COMUN.
+REFINADOS = {
+    "grabado2": ("19th-century wood engraving, fine black crosshatching on cream paper, set against two large flat "
+                 "blocks of magenta and yellow behind the subject, bold clear silhouette readable at small size, "
+                 "single subject centred in the upper two thirds, lower third plain cream and empty, no text, "
+                 "no letters, no numbers, all paper and surfaces blank"),
+    "fotomontaje2": ("conceptual cut-paper collage, torn paper edges, black-and-white halftone photo fragments, flat "
+                     "magenta and yellow shapes, paper grain, few large pieces rather than many small ones, one clear "
+                     "focal object, lower third a calm flat field of black or cream, no text, no letters, no numbers, "
+                     "no labels, tickets or printed paper, all surfaces blank"),
+}
+ESTILOS.update(REFINADOS)
+
+
 def prompt_de(estilo: str, tema: str) -> str:
+    if estilo in REFINADOS:
+        return f"{TEMAS[tema]}, {ESTILOS[estilo]}, {PALETA}"
     return f"{TEMAS[tema]}, {ESTILOS[estilo]}, {COMUN}, {PALETA}"
 
 
@@ -92,7 +109,7 @@ def main() -> None:
     ruta = AQUI / "prompts.json"
     registro = json.loads(ruta.read_text()) if ruta.exists() else {}
     if sys.argv[1:] == ["--todas"]:
-        pares = [(e, t) for e in ESTILOS for t in TEMAS]
+        pares = [(e, t) for e in ESTILOS if e not in REFINADOS for t in TEMAS]
     else:
         pares = [tuple(a.split(":")) for a in sys.argv[1:]]
     # De tres en tres, para no tardar un cuarto de hora (sin reintentos: un fallo se informa y se sigue)
