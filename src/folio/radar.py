@@ -10,6 +10,9 @@ pieza «pendiente» con `radar=True` y formato «radar» (sin libro obligatorio)
 
 from __future__ import annotations
 
+import re
+import unicodedata
+
 from pydantic import Field
 
 from folio import seleccion
@@ -30,8 +33,29 @@ class RadarLLM(BaseModel):
     temas: list[TemaRadar] = Field(description="De mejor a peor; vacía si ninguna historia vale")
 
 
-def temas(llm: LLM, historias: list[Historia], sel: SeleccionJefe | None) -> tuple[list[HistoriaElegida], list[str]]:
-    """Los temas del radar y los avisos (ids que no existen, repetidos). Nada si está apagado o no hay historias."""
+_NO_NOMBRES = {"el", "la", "los", "las", "un", "una", "del", "de", "en", "por", "con", "tras", "para", "premio", "festival",
+               "editorial", "libro", "libros", "feria", "nuevo", "nueva", "gran"}
+
+
+def nombres(texto: str) -> set[str]:
+    """Los nombres propios de un titular (palabras con mayúscula de 4 letras o más, sin tildes ni mayúsculas): lo que
+    dice de qué noticia se trata aunque cambie la forma de contarla («Jaenada», «goncourt»)."""
+    def plano(w: str) -> str:
+        return unicodedata.normalize("NFKD", w).encode("ascii", "ignore").decode().lower()
+    return {plano(w) for w in re.findall(r"\b[A-ZÁÉÍÓÚÑÜ][\wÁÉÍÓÚÑÜáéíóúñü'-]{3,}", texto or "")} - _NO_NOMBRES
+
+
+def misma_noticia(a: str, b: str) -> bool:
+    """Dos titulares cuentan la misma noticia si comparten al menos dos nombres propios (4/11, a petición del usuario:
+    «no tiene sentido que dé el mismo breve dos veces»: «Jaenada gana el Goncourt…» salió de las crónicas alemanas y de
+    las hispanas, que se agrupan aparte por el idioma)."""
+    return len(nombres(a) & nombres(b)) >= 2
+
+
+def temas(llm: LLM, historias: list[Historia], sel: SeleccionJefe | None,
+          ya: list[str] = ()) -> tuple[list[HistoriaElegida], list[str]]:
+    """Los temas del radar y los avisos (ids que no existen, repetidos). Nada si está apagado o no hay historias.
+    `ya`: titulares que no se repiten como breve (lo de la mesa y lo publicado en los últimos días)."""
     p = llm.cfg.pipeline.radar
     elegidas = {e.historia_id for e in (sel.elegidas if sel else [])}
     candidatas = [h for h in historias if h.carril in ("editorial", "radar") and h.id not in elegidas]
@@ -47,6 +71,10 @@ def temas(llm: LLM, historias: list[Historia], sel: SeleccionJefe | None) -> tup
     for t in salida.temas:
         if t.historia_id not in ids or t.historia_id in vistos:
             avisos.append(f"Radar: id inexistente o repetido ({t.historia_id}); se descarta «{t.titular}»")
+            continue
+        repetido = next((x for x in [*ya, *(o.titular for o in out)] if misma_noticia(t.titular, x)), None)
+        if repetido:
+            avisos.append(f"Radar: «{t.titular}» cuenta lo mismo que «{repetido}»; se descarta")
             continue
         vistos.add(t.historia_id)
         out.append(HistoriaElegida(formato="radar", historia_id=t.historia_id, titular=t.titular,

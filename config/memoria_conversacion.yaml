@@ -735,3 +735,11 @@
   patron: "«Como hemos publicado ahora sobre el Goncourt, mola que lo recuerde para que mañana por la mañana no mande la misma historia.»"
   propuesta: "Lo que se programa en Buffer o se marca publicado no vuelve a la mesa en los días siguientes: la madrugada aparta las noticias que cuentan lo mismo."
   evidencia: ["Conversación, 3/11: pieza del Goncourt y el Renaudot"]
+
+- clave: radar-sin-repetidos
+  fecha: "2026-11-04"
+  destino: jefe_cultura
+  capa: oficio
+  patron: "«No tiene sentido que dé el mismo breve dos veces» (dos breves de Jaenada y el Goncourt)."
+  propuesta: "Cada noticia sale una sola vez en los breves, aunque la cuenten medios de varios países, y no se repite lo que ya está en la mesa o se ha publicado."
+  evidencia: ["Conversación, 4/11: breves del mundo del libro"]

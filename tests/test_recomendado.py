@@ -201,3 +201,29 @@ def test_las_de_referencia_se_intercalan_y_son_75():
     paises = {e.pais for e in eds if e.pais}
     assert {"Argentina", "México", "Chile", "Colombia"} <= paises
     assert all(e.referencia for e in eds if e.pais in ("Argentina", "México"))
+
+
+def test_el_radar_no_repite_la_misma_noticia(cfg):
+    """4/11 («no tiene sentido que dé el mismo breve dos veces»): las crónicas alemanas y las hispanas del Goncourt se
+    agrupan aparte por el idioma y salían dos breves; tampoco vuelve como breve lo que ya está publicado."""
+    from folio import radar
+    from folio.modelos import Historia
+
+    def h(i):
+        return Historia(id=f"e{i}", carril="editorial", n_medios=1, medios=["m"], titular_es=f"N {i}", resumen_es="r", articulos=[])
+
+    class LLM:
+        def __init__(self): self.cfg = cfg
+        def estructurado(self, paso, mensajes, esquema, **k):
+            t = lambda hid, tit: radar.TemaRadar(historia_id=hid, titular=tit, de_que_se_habla="x", cuestion_de_fondo="x",
+                                                 por_que="x", protagonista="")
+            return esquema(temas=[t("e1", "Jaenada gana el Goncourt tras retirar un jurado a un autor por IA"),
+                                  t("e2", "Jaenada gana el Goncourt con un crimen sin resolver de 1949"),
+                                  t("e3", "Eva Baltasar gana el Médicis extranjero"),
+                                  t("e4", "Angulema cambia de nombre y de organizador")]), []
+
+    out, avisos = radar.temas(LLM(), [h(1), h(2), h(3), h(4)], None, ya=["Angulema, el festival que se reinventa: el organizador sale"])
+    assert [e.historia_id for e in out] == ["e1", "e3", "e4"]          # un solo nombre en común no basta
+    assert any("cuenta lo mismo" in a for a in avisos)
+    out, _ = radar.temas(LLM(), [h(1), h(2), h(3), h(4)], None, ya=["Jaenada gana el Goncourt y Désérable el Renaudot"])
+    assert [e.historia_id for e in out][:1] == ["e3"]

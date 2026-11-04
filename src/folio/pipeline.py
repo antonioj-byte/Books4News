@@ -333,7 +333,13 @@ class Pipeline:
         self._guardar_etapa(self.etapas.guardar_seleccion, sel)
         self._marcar_temas(sel, al_jefe)
         try:
-            self.radar, avisos_radar = radar.temas(self.llm, al_jefe, sel)
+            # Ni lo que ya está en la mesa ni lo publicado en los últimos días vuelve como breve (4/11)
+            ya = [e.titular for e in sel.elegidas]
+            try:
+                ya += [t for _, _, t, _, _ in self.historial.publicadas_recientes(self.fecha, self.cfg.pipeline.exclusion.dias_historias)]
+            except Exception:
+                pass
+            self.radar, avisos_radar = radar.temas(self.llm, al_jefe, sel, ya)
             self.avisos += avisos_radar
         except Exception as exc:
             self.radar = []
