@@ -238,5 +238,77 @@
   "seed": 3707510575,
   "task_id": "628935aa-3370-41c0-bce7-11df0c03f180",
   "segundos": 14.7
+ },
+ "grabado3_goncourt": {
+  "estilo": "grabado3",
+  "tema": "goncourt",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other, 19th-century wood engraving, fine black crosshatching on cream paper, set against two large flat blocks of magenta and yellow behind the subject, the subject is large and fills the upper two thirds edge to edge, bold clear silhouette readable at small size, lower third plain cream and empty, no text, no letters, no numbers, all paper and surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3591906061,
+  "task_id": "edf86def-4085-4700-aaca-baf887e5e46f",
+  "segundos": 19.3
+ },
+ "grabado3_anthropic": {
+  "estilo": "grabado3",
+  "tema": "anthropic",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing, 19th-century wood engraving, fine black crosshatching on cream paper, set against two large flat blocks of magenta and yellow behind the subject, the subject is large and fills the upper two thirds edge to edge, bold clear silhouette readable at small size, lower third plain cream and empty, no text, no letters, no numbers, all paper and surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 59923734,
+  "task_id": "b5cc0979-aaa1-48e0-b98c-be0ca72f00c4",
+  "segundos": 19.4
+ },
+ "grabado3_biblia1631": {
+  "estilo": "grabado3",
+  "tema": "biblia1631",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "antique open Bible with blank pages on a wooden printing press, one empty gap where a word is missing, 19th-century wood engraving, fine black crosshatching on cream paper, set against two large flat blocks of magenta and yellow behind the subject, the subject is large and fills the upper two thirds edge to edge, bold clear silhouette readable at small size, lower third plain cream and empty, no text, no letters, no numbers, all paper and surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 1255849153,
+  "task_id": "772597db-39ed-4a3d-9aa2-ef5d71f02fe2",
+  "segundos": 20.1
+ },
+ "fotomontaje2_biblia1631": {
+  "estilo": "fotomontaje2",
+  "tema": "biblia1631",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "antique open Bible with blank pages on a wooden printing press, one empty gap where a word is missing, conceptual cut-paper collage, torn paper edges, black-and-white halftone photo fragments, flat magenta and yellow shapes, paper grain, few large pieces rather than many small ones, one clear focal object, lower third a calm flat field of black or cream, no text, no letters, no numbers, no labels, tickets or printed paper, all surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 3218591460,
+  "task_id": "1e087050-0b77-4a2b-aa4f-2adc4c4af3ef",
+  "segundos": 15.0
+ },
+ "fotomontaje2_almodovar": {
+  "estilo": "fotomontaje2",
+  "tema": "almodovar",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "a film reel unspooling into the pages of an open blank book, a red lipstick and a single high-heeled shoe beside it, no people, conceptual cut-paper collage, torn paper edges, black-and-white halftone photo fragments, flat magenta and yellow shapes, paper grain, few large pieces rather than many small ones, one clear focal object, lower third a calm flat field of black or cream, no text, no letters, no numbers, no labels, tickets or printed paper, all surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 1569969065,
+  "task_id": "a65cbbfa-1ff8-4b06-881c-f1830d84e258",
+  "segundos": 15.2
+ },
+ "grabado3_nothomb": {
+  "estilo": "grabado3",
+  "tema": "nothomb",
+  "modelo": "flux-2-pro",
+  "endpoint": "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro",
+  "prompt": "a tall black top hat carrying a small suitcase, walking from one tall bookcase of blank spines to another, 19th-century wood engraving, fine black crosshatching on cream paper, set against two large flat blocks of magenta and yellow behind the subject, the subject is large and fills the upper two thirds edge to edge, bold clear silhouette readable at small size, lower third plain cream and empty, no text, no letters, no numbers, all paper and surfaces blank, strict colour palette: magenta #D6246E, yellow #F2E14C, black and cream #F3EFE6, no other colours; no 3D render, no glossy CGI, no cartoon characters, no recognizable real people",
+  "width": 1080,
+  "height": 1350,
+  "seed": 2831089119,
+  "task_id": "1bb9599f-53d4-484e-bdd1-b7b2ae38e153",
+  "segundos": 14.8
  }
 }

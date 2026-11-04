@@ -20,7 +20,7 @@ import httpx
 AQUI = Path(__file__).parent
 BASE = "https://api.magnific.com/v1/ai/text-to-image/flux-2-pro"
 ANCHO, ALTO = 1080, 1350          # 4:5
-MAX_GENERACIONES = 20
+MAX_GENERACIONES = 26          # 20 + la tanda de 6 aprobada el 4/11
 
 ESTILOS = {
     "risografia": "risograph print, two-color magenta and yellow on off-white paper, slight misregistration, visible halftone, paper grain",
@@ -38,6 +38,10 @@ PALETA = ("strict colour palette: magenta #D6246E, yellow #F2E14C, black and cre
 TEMAS = {
     "anthropic": "stack of books with plain unmarked gold coins spilling out and a blank torn cheque with no writing",
     "biblia1631": "antique open Bible with blank pages on a wooden printing press, one empty gap where a word is missing",
+    # Dos noticias reales del 3/11, para probar con titulares de verdad
+    "almodovar": ("a film reel unspooling into the pages of an open blank book, a red lipstick and a single "
+                  "high-heeled shoe beside it, no people"),
+    "nothomb": "a tall black top hat carrying a small suitcase, walking from one tall bookcase of blank spines to another",
     "goncourt": "Parisian restaurant facade at night with blank awning and no sign, two laurel wreaths facing each other",
 }
 
@@ -53,6 +57,11 @@ REFINADOS = {
                      "magenta and yellow shapes, paper grain, few large pieces rather than many small ones, one clear "
                      "focal object, lower third a calm flat field of black or cream, no text, no letters, no numbers, "
                      "no labels, tickets or printed paper, all surfaces blank"),
+    # Tercera vuelta: el grabado con el motivo grande (en el restaurante quedó pequeño y con media página vacía)
+    "grabado3": ("19th-century wood engraving, fine black crosshatching on cream paper, set against two large flat "
+                 "blocks of magenta and yellow behind the subject, the subject is large and fills the upper two "
+                 "thirds edge to edge, bold clear silhouette readable at small size, lower third plain cream and "
+                 "empty, no text, no letters, no numbers, all paper and surfaces blank"),
 }
 ESTILOS.update(REFINADOS)
 
