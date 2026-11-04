@@ -24,6 +24,10 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // La portada y las mesas no se guardan en caché del navegador (4/11: «la caché me lleva al domingo 1 de noviembre»)
+  async headers() {
+    return ["/", "/dia/:path*"].map((source) => ({ source, headers: [{ key: "Cache-Control", value: "no-store" }] }));
+  },
   async rewrites() {
     return [
       { source: "/api/:path*", destination: `${API}/api/:path*` },

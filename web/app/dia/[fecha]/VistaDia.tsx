@@ -54,6 +54,17 @@ export function VistaDia() {
         </div>
       </div>
 
+      {/* 4/11 («al entrar me lleva al domingo 1 de noviembre»): el navegador abría una dirección guardada de un día
+          viejo; si hay uno más reciente, se dice y se lleva a él con un clic */}
+      {!ejecucion && dias[0] && dias[0].fecha > fecha && (
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-[12px] border border-carmesi bg-panel px-4 py-3 text-[14px]" role="status">
+          <span>Estás viendo la mesa de un día anterior.</span>
+          <Link href={`/dia/${dias[0].fecha}`} className="boton-suave border-carmesi text-carmesi">
+            Ir a la mesa más reciente ({new Date(`${dias[0].fecha}T12:00:00`).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}) →
+          </Link>
+        </div>
+      )}
+
       <ProponerTema eid={dia?.ejecucion.id} onPieza={recargarDia} />
 
       {error && <p className="text-carmesi">{error}</p>}
