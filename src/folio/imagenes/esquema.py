@@ -11,6 +11,7 @@ data/cache/esquemas/: relanzar no vuelve a pagar. Comparte con los retratos el c
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import re
 from io import BytesIO
@@ -19,7 +20,6 @@ from pathlib import Path
 import httpx
 from PIL import Image
 
-from folio import gastos
 from folio.config import Config
 from folio.imagenes import libres, retrato_generado
 
@@ -45,10 +45,6 @@ def del_dia(dir_fecha: Path, sin: str) -> int:
 
 def generar(cfg: Config, pieza_id: str, dir_fecha: Path, cliente: httpx.Client | None = None) -> str:
     """Hace el esquema de la imagen fijada de la pieza y devuelve su crédito. ErrorMagnific si no se puede."""
-    if retrato_generado.bloqueado():
-        raise retrato_generado.ErrorMagnific(f"Magnific bloqueado en esta ejecución: {retrato_generado.bloqueado()}", bloqueo=True)
-    if not cfg.magnific_api_key:
-        raise retrato_generado.ErrorMagnific("Falta MAGNIFIC_API_KEY")
     img = libres.de_pieza(pieza_id, dir_fecha)
     origen = libres.dir_imagenes(dir_fecha) / img.local if img and img.local else None
     if not origen or not origen.exists():
@@ -61,17 +57,12 @@ def generar(cfg: Config, pieza_id: str, dir_fecha: Path, cliente: httpx.Client |
     foto, texto = b.getvalue(), prompt(cfg)
     ec = cfg.pipeline.arte.esquema
     cache = cfg.dir_cache("x").parent / "esquemas" / f"{hashlib.sha256(foto + texto.encode() + ec.aspecto.encode()).hexdigest()[:20]}.jpg"
-    if not cache.exists():
-        try:
-            datos, _, _ = retrato_generado.generar(foto, texto, cfg.magnific_api_key, ec.aspecto, ec.espera_max_s, cliente)
-            gastos.imagen_magnific(cfg, "esquema", pieza_id)
-        except retrato_generado.ErrorMagnific as e:
-            if e.bloqueo:
-                retrato_generado._bloqueo = str(e)
-            raise
-        with Image.open(BytesIO(datos)) as im:
-            cache.parent.mkdir(parents=True, exist_ok=True)
-            im.convert("RGB").save(cache, "JPEG", quality=90)
+    from folio.imagenes import magnific
+    magnific.comprobar(cfg)            # antes de mirar la caché, como siempre: sin clave o bloqueado, no hay esquema
+    magnific.imagen(cfg, ruta=retrato_generado.RUTA, cuerpo={"prompt": texto, "reference_images": [base64.b64encode(foto).decode()],
+                                                             "aspect_ratio": ec.aspecto},
+                    cache=cache, pieza_id=pieza_id, concepto="esquema", modelo="Seedream 4.5",
+                    espera_max_s=ec.espera_max_s, cliente=cliente, procesar=magnific.rgb)
     destino = ruta(dir_fecha, pieza_id)
     destino.write_bytes(cache.read_bytes())
     return f"esquema generado con IA (Magnific) a partir de: {img.credito}"

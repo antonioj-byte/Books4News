@@ -21,7 +21,6 @@ import hashlib
 import logging
 import threading
 from dataclasses import replace
-from io import BytesIO
 from pathlib import Path
 
 import httpx
@@ -29,10 +28,8 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageOps
 from scipy import ndimage
 
-from folio import gastos
 from folio.config import Config
 from folio.imagenes import editorial, libres
-from folio.imagenes import retrato_generado as rg
 
 log = logging.getLogger(__name__)
 
@@ -201,39 +198,13 @@ def estilo_fondo(cfg: Config) -> str:
 
 def dibujar_fondo(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | None = None) -> Path:
     """La escena vertical (1088×1360) del fondo, en la caché común. ErrorMagnific si no se puede."""
-    import time
-    if rg.bloqueado():
-        raise rg.ErrorMagnific(f"Magnific bloqueado en esta ejecución: {rg.bloqueado()}", bloqueo=True)
-    if not cfg.magnific_api_key:
-        raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
+    from folio.imagenes import magnific
     ie = cfg.pipeline.arte.ilustracion_editorial
     texto = f"{escena} {estilo_fondo(cfg)}"
     cache = cfg.dir_cache("x").parent / "ilustraciones" / f"recorte-{hashlib.sha256(texto.encode()).hexdigest()[:20]}.jpg"
-    if cache.exists():
-        return cache
-    ruta = "/v1/ai/text-to-image/flux-2-pro"
-    try:
-        with cliente or httpx.Client(timeout=60) as c:
-            tarea = rg._api(c, cfg.magnific_api_key, "POST", ruta, json={"prompt": texto, "width": 1088, "height": 1360})
-            gastos.imagen_magnific(cfg, "recorte", pieza_id, ie.creditos_imagen, "Flux 2 Pro")
-            tid, t0 = tarea["task_id"], time.monotonic()
-            while tarea.get("status") not in ("COMPLETED", "FAILED"):
-                if time.monotonic() - t0 > ie.espera_max_s:
-                    raise rg.ErrorMagnific(f"La tarea {tid} no terminó en {ie.espera_max_s:.0f} s")
-                time.sleep(3)
-                tarea = rg._api(c, cfg.magnific_api_key, "GET", f"{ruta}/{tid}")
-            if tarea["status"] == "FAILED" or not tarea.get("generated"):
-                raise rg.ErrorMagnific(f"La tarea {tid} falló")
-            r = c.get(tarea["generated"][0])
-            r.raise_for_status()
-    except rg.ErrorMagnific as e:
-        if e.bloqueo:
-            rg._bloqueo = str(e)
-        raise
-    with Image.open(BytesIO(r.content)) as im:
-        cache.parent.mkdir(parents=True, exist_ok=True)
-        im.convert("RGB").save(cache, "JPEG", quality=90)
-    return cache
+    return magnific.imagen(cfg, ruta=magnific.FLUX_2_PRO, cuerpo={"prompt": texto, "width": 1088, "height": 1360},
+                           cache=cache, pieza_id=pieza_id, concepto="recorte", modelo="Flux 2 Pro",
+                           creditos=ie.creditos_imagen, cliente=cliente, procesar=magnific.rgb)
 
 
 # ---------------------------------------------------------------- aplicar a la pieza

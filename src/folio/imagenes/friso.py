@@ -18,10 +18,8 @@ from pathlib import Path
 import httpx
 from PIL import Image
 
-from folio import gastos
 from folio.config import Config
 from folio.imagenes import editorial, libres
-from folio.imagenes import retrato_generado as rg
 
 SUFIJO = "-friso"
 CLAVE = "magnific:friso"
@@ -52,44 +50,14 @@ def recortar(datos: bytes) -> Image.Image:
 
 def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | None = None) -> Path:
     """Dibuja el friso y lo guarda en la caché común (la misma escena no se vuelve a pagar). ErrorMagnific si no se puede."""
-    if rg.bloqueado():
-        raise rg.ErrorMagnific(f"Magnific bloqueado en esta ejecución: {rg.bloqueado()}", bloqueo=True)
-    if not cfg.magnific_api_key:
-        raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
+    from folio.imagenes import magnific
     ie = cfg.pipeline.arte.ilustracion_editorial
     texto = editorial.con_estilo(escena, estilo(cfg))
     huella = hashlib.sha256(f"friso\n{ANCHO}x{ALTO}\n{texto}".encode()).hexdigest()[:20]
-    cache = cfg.dir_cache("x").parent / "ilustraciones" / f"friso-{huella}.jpg"
-    if not cache.exists():
-        try:
-            datos = _pedir(texto, cfg.magnific_api_key, ie.espera_max_s, cliente)
-            gastos.imagen_magnific(cfg, "friso", pieza_id, ie.creditos_imagen, "Flux 2 Pro")
-        except rg.ErrorMagnific as e:
-            if e.bloqueo:
-                rg._bloqueo = str(e)
-            raise
-        cache.parent.mkdir(parents=True, exist_ok=True)
-        recortar(datos).save(cache, "JPEG", quality=90)
-    return cache
-
-
-def _pedir(texto: str, clave: str, espera_max_s: float, cliente: httpx.Client | None) -> bytes:
-    import time
-    ruta = editorial.MODELOS["flux_2_pro"][0]
-    with cliente or httpx.Client(timeout=60) as c:
-        t0 = time.monotonic()
-        tarea = rg._api(c, clave, "POST", ruta, json={"prompt": texto, "width": ANCHO, "height": ALTO})
-        tid = tarea["task_id"]
-        while tarea.get("status") not in ("COMPLETED", "FAILED"):
-            if time.monotonic() - t0 > espera_max_s:
-                raise rg.ErrorMagnific(f"La tarea {tid} no terminó en {espera_max_s:.0f} s")
-            time.sleep(rg.ESPERA_S)
-            tarea = rg._api(c, clave, "GET", f"{ruta}/{tid}")
-        if tarea["status"] == "FAILED" or not tarea.get("generated"):
-            raise rg.ErrorMagnific(f"La tarea {tid} falló")
-        r = c.get(tarea["generated"][0])
-        r.raise_for_status()
-        return r.content
+    return magnific.imagen(cfg, ruta=magnific.FLUX_2_PRO, cuerpo={"prompt": texto, "width": ANCHO, "height": ALTO},
+                           cache=cfg.dir_cache("x").parent / "ilustraciones" / f"friso-{huella}.jpg", pieza_id=pieza_id,
+                           concepto="friso", modelo="Flux 2 Pro", creditos=ie.creditos_imagen, cliente=cliente,
+                           procesar=recortar)
 
 
 def fijar(dir_fecha: Path, pieza_id: str, escena: str, dibujo: Path) -> libres.ImagenLibre:

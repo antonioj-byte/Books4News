@@ -20,7 +20,6 @@ from __future__ import annotations
 import hashlib
 from datetime import date
 import re
-import time
 from io import BytesIO
 from pathlib import Path
 
@@ -30,9 +29,8 @@ import httpx
 from PIL import Image
 from pydantic import BaseModel, Field
 
-from folio import gastos
 from folio.config import Config
-from folio.imagenes import libres, retrato_generado as rg
+from folio.imagenes import libres
 
 # Modelos de Magnific para la ilustración (2/11: Flux 2 Pro, elegido por el usuario tras compararlo con Mystic,
 # RunWay y Seedream; Seedream 4.5 queda de reserva): ruta, cuerpo de la petición y nombre para el panel de gasto
@@ -140,24 +138,6 @@ def con_estilo(escena: str, estilo: str) -> str:
     return f"{estilo} The scene: {escena}"
 
 
-def _pedir(texto: str, clave: str, espera_max_s: float, cliente: httpx.Client | None, modelo: str = "flux_2_pro") -> bytes:
-    ruta, cuerpo, _ = MODELOS[modelo]
-    with cliente or httpx.Client(timeout=60) as c:
-        t0 = time.monotonic()
-        tarea = rg._api(c, clave, "POST", ruta, json=cuerpo(texto))
-        tid = tarea["task_id"]
-        while tarea.get("status") not in ("COMPLETED", "FAILED"):
-            if time.monotonic() - t0 > espera_max_s:
-                raise rg.ErrorMagnific(f"La tarea {tid} no terminó en {espera_max_s:.0f} s")
-            time.sleep(rg.ESPERA_S)
-            tarea = rg._api(c, clave, "GET", f"{ruta}/{tid}")
-        if tarea["status"] == "FAILED" or not tarea.get("generated"):
-            raise rg.ErrorMagnific(f"La tarea {tid} falló")
-        r = c.get(tarea["generated"][0])
-        r.raise_for_status()
-        return r.content
-
-
 def del_dia(dir_fecha: Path, sin: str) -> int:
     """Ilustraciones editoriales ya hechas hoy, sin contar las de la pieza `sin`."""
     n = 0
@@ -198,27 +178,15 @@ def quitar_marco(im: Image.Image, maximo: float = 0.08) -> Image.Image:
 def dibujar(cfg: Config, pieza_id: str, escena: str, cliente: httpx.Client | None = None,
             nombre_estilo: str = "collage") -> Path:
     """Dibuja una escena (una variante) y devuelve su archivo en la caché común (cache/ilustraciones/): la
-    misma escena no se vuelve a pagar. ErrorMagnific si no se puede."""
-    if rg.bloqueado():
-        raise rg.ErrorMagnific(f"Magnific bloqueado en esta ejecución: {rg.bloqueado()}", bloqueo=True)
-    if not cfg.magnific_api_key:
-        raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
+    misma escena no se vuelve a pagar. Sin el marco de papel que a veces pinta el modelo. ErrorMagnific si no se puede."""
+    from folio.imagenes import magnific
     ie = cfg.pipeline.arte.ilustracion_editorial
     texto = con_estilo(escena, estilo(cfg, nombre_estilo))
     huella = hashlib.sha256(f"{ie.modelo}\n{texto}".encode()).hexdigest()[:20]
-    cache = cfg.dir_cache("x").parent / "ilustraciones" / f"{huella}.jpg"
-    if not cache.exists():
-        try:
-            datos = _pedir(texto, cfg.magnific_api_key, ie.espera_max_s, cliente, ie.modelo)
-            gastos.imagen_magnific(cfg, "ilustración", pieza_id, ie.creditos_imagen, MODELOS[ie.modelo][2])
-        except rg.ErrorMagnific as e:
-            if e.bloqueo:
-                rg._bloqueo = str(e)
-            raise
-        with Image.open(BytesIO(datos)) as im:
-            cache.parent.mkdir(parents=True, exist_ok=True)
-            quitar_marco(im.convert("RGB")).save(cache, "JPEG", quality=90)
-    return cache
+    ruta, cuerpo, nombre = MODELOS[ie.modelo]
+    return magnific.imagen(cfg, ruta=ruta, cuerpo=cuerpo(texto), cache=cfg.dir_cache("x").parent / "ilustraciones" / f"{huella}.jpg",
+                           pieza_id=pieza_id, concepto="ilustración", modelo=nombre, creditos=ie.creditos_imagen,
+                           cliente=cliente, procesar=lambda datos: quitar_marco(magnific.rgb(datos)))
 
 
 def fijar(cfg: Config, pieza_id: str, dir_fecha: Path, escena: str, dibujo: Path,

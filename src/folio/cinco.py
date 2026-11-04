@@ -207,42 +207,12 @@ def clave_imagen(pieza_id: str, i: int) -> str:
 def _dibujar(cfg: Config, pieza_id: str, texto: str) -> Path:
     """Una ilustración vertical con Flux 2 Pro, en la caché común (la misma escena no se vuelve a pagar)."""
     import hashlib
-    import time
 
-    import httpx
-
-    from folio import gastos
-    from folio.imagenes import retrato_generado as rg
-    if rg.bloqueado():
-        raise rg.ErrorMagnific(f"Magnific bloqueado en esta ejecución: {rg.bloqueado()}", bloqueo=True)
-    if not cfg.magnific_api_key:
-        raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
+    from folio.imagenes import magnific
     ie = cfg.pipeline.arte.ilustracion_editorial
     cache = cfg.dir_cache("x").parent / "ilustraciones" / f"cinco-{hashlib.sha256(texto.encode()).hexdigest()[:20]}.jpg"
-    if cache.exists():
-        return cache
-    ruta = "/v1/ai/text-to-image/flux-2-pro"
-    try:
-        with httpx.Client(timeout=60) as c:
-            tarea = rg._api(c, cfg.magnific_api_key, "POST", ruta, json={"prompt": texto, "width": ANCHO, "height": ALTO})
-            gastos.imagen_magnific(cfg, "cinco", pieza_id, ie.creditos_imagen, "Flux 2 Pro")
-            t0 = time.monotonic()
-            while tarea.get("status") not in ("COMPLETED", "FAILED"):
-                if time.monotonic() - t0 > ie.espera_max_s:
-                    raise rg.ErrorMagnific(f"La tarea {tarea.get('task_id')} no terminó a tiempo")
-                time.sleep(rg.ESPERA_S)
-                tarea = rg._api(c, cfg.magnific_api_key, "GET", f"{ruta}/{tarea['task_id']}")
-            if tarea["status"] == "FAILED" or not tarea.get("generated"):
-                raise rg.ErrorMagnific("La tarea de Magnific falló")
-            r = c.get(tarea["generated"][0])
-            r.raise_for_status()
-    except rg.ErrorMagnific as e:
-        if e.bloqueo:
-            rg._bloqueo = str(e)
-        raise
-    cache.parent.mkdir(parents=True, exist_ok=True)
-    cache.write_bytes(r.content)
-    return cache
+    return magnific.imagen(cfg, ruta=magnific.FLUX_2_PRO, cuerpo={"prompt": texto, "width": ANCHO, "height": ALTO},
+                           cache=cache, pieza_id=pieza_id, concepto="cinco", modelo="Flux 2 Pro", creditos=ie.creditos_imagen)
 
 
 def _una(llm: LLM, cfg: Config, pieza: Pieza, i: int, intentos: int) -> str | None:

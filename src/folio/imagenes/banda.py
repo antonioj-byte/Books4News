@@ -13,13 +13,11 @@ from __future__ import annotations
 
 import hashlib
 import re
-from io import BytesIO
 from pathlib import Path
 
 import httpx
 from PIL import Image
 
-from folio import gastos
 from folio.config import Config
 from folio.imagenes import editorial, friso, libres
 from folio.imagenes import retrato_generado as rg
@@ -68,32 +66,23 @@ def a_proporcion(im: Image.Image, alto_relativo: float = 0.4) -> Image.Image:
 def dibujar(cfg: Config, pieza_id: str, escena: str, foto: bytes | None = None,
             cliente: httpx.Client | None = None) -> Path:
     """Dibuja la banda (con la foto de referencia, si la hay) y la guarda en la caché común. ErrorMagnific si no se puede."""
-    if rg.bloqueado():
-        raise rg.ErrorMagnific(f"Magnific bloqueado en esta ejecución: {rg.bloqueado()}", bloqueo=True)
-    if not cfg.magnific_api_key:
-        raise rg.ErrorMagnific("Falta MAGNIFIC_API_KEY")
+    import base64
+
+    from folio.imagenes import magnific
     ie = cfg.pipeline.arte.ilustracion_editorial
     texto = editorial.con_estilo(escena, estilo(cfg, foto is not None))
     huella = hashlib.sha256(b"banda\n" + texto.encode() + (foto or b"")).hexdigest()[:20]
     cache = cfg.dir_cache("x").parent / "ilustraciones" / f"banda-{huella}.jpg"
-    if not cache.exists():
-        try:
-            if foto is None:
-                datos = friso._pedir(texto, cfg.magnific_api_key, ie.espera_max_s, cliente)
-                gastos.imagen_magnific(cfg, "banda", pieza_id, ie.creditos_imagen, "Flux 2 Pro")
-                im = friso.recortar(datos)
-            else:
-                datos, _, _ = rg.generar(foto, texto, cfg.magnific_api_key, ASPECTO_EDIT, ie.espera_max_s, cliente)
-                gastos.imagen_magnific(cfg, "banda", pieza_id, ie.creditos_imagen, rg.MODELO)
-                with Image.open(BytesIO(datos)) as bruto:
-                    im = bruto.convert("RGB")
-        except rg.ErrorMagnific as e:
-            if e.bloqueo:
-                rg._bloqueo = str(e)
-            raise
-        cache.parent.mkdir(parents=True, exist_ok=True)
-        a_proporcion(im).save(cache, "JPEG", quality=90)
-    return cache
+    if foto is None:
+        return magnific.imagen(cfg, ruta=magnific.FLUX_2_PRO, cuerpo={"prompt": texto, "width": friso.ANCHO, "height": friso.ALTO},
+                               cache=cache, pieza_id=pieza_id, concepto="banda", modelo="Flux 2 Pro",
+                               creditos=ie.creditos_imagen, cliente=cliente,
+                               procesar=lambda datos: a_proporcion(friso.recortar(datos)))
+    # Con la foto libre de la persona como referencia (Seedream 4.5 Edit): obra derivada
+    return magnific.imagen(cfg, ruta=rg.RUTA, cuerpo={"prompt": texto, "reference_images": [base64.b64encode(foto).decode()],
+                                                      "aspect_ratio": ASPECTO_EDIT},
+                           cache=cache, pieza_id=pieza_id, concepto="banda", modelo=rg.MODELO, creditos=ie.creditos_imagen,
+                           cliente=cliente, procesar=lambda datos: a_proporcion(magnific.rgb(datos)))
 
 
 def fijar(dir_fecha: Path, pieza_id: str, escena: str, dibujo: Path, credito: str) -> libres.ImagenLibre:

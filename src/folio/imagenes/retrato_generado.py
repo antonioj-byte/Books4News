@@ -94,22 +94,11 @@ def _api(c: httpx.Client, clave: str, metodo: str, ruta: str, **kw) -> dict:
 
 def generar(foto: bytes, texto_prompt: str, clave: str, aspecto: str, espera_max_s: float,
             cliente: httpx.Client | None = None) -> tuple[bytes, str, float]:
-    """Pide la imagen y espera a que esté. Devuelve (bytes, task_id, segundos)."""
-    with cliente or httpx.Client(timeout=60) as c:
-        t0 = time.monotonic()
-        tarea = _api(c, clave, "POST", RUTA, json={
-            "prompt": texto_prompt, "reference_images": [base64.b64encode(foto).decode()], "aspect_ratio": aspecto})
-        tid = tarea["task_id"]
-        while tarea.get("status") not in ("COMPLETED", "FAILED"):
-            if time.monotonic() - t0 > espera_max_s:
-                raise ErrorMagnific(f"La tarea {tid} no terminó en {espera_max_s:.0f} s")
-            time.sleep(ESPERA_S)
-            tarea = _api(c, clave, "GET", f"{RUTA}/{tid}")
-        if tarea["status"] == "FAILED" or not tarea.get("generated"):
-            raise ErrorMagnific(f"La tarea {tid} falló: {_limpiar(str(tarea.get('error'))[:200], clave)}")
-        r = c.get(tarea["generated"][0])          # URL firmada del CDN: sin la clave
-        r.raise_for_status()
-        return r.content, tid, round(time.monotonic() - t0, 1)
+    """Pide la imagen y espera a que esté. Devuelve (bytes, task_id, segundos). La llamada es la del cliente único
+    (`folio.imagenes.magnific.pedir`)."""
+    from folio.imagenes import magnific
+    return magnific.pedir(clave, RUTA, {"prompt": texto_prompt, "reference_images": [base64.b64encode(foto).decode()],
+                                        "aspect_ratio": aspecto}, espera_max_s, cliente)
 
 
 def posproceso(estilo: str, datos: bytes) -> tuple[bytes, str]:

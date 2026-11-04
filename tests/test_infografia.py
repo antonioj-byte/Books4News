@@ -116,7 +116,8 @@ def test_el_esquema_parte_de_la_imagen_y_se_guarda_en_cache(cfg, monkeypatch):
     cfg.magnific_api_key = "clave"
     dir_fecha = _fijar_imagen(cfg)
     llamadas = []
-    monkeypatch.setattr(rg, "generar", lambda foto, texto, *a, **k: (llamadas.append(texto), (_jpeg(), "t1", 1.0))[1])
+    from folio.imagenes import magnific
+    monkeypatch.setattr(magnific, "pedir", lambda clave, ruta, cuerpo, *a, **k: (llamadas.append(cuerpo["prompt"]), (_jpeg(), "t1", 1.0))[1])
     p = _pieza(infografia=ESQUEMA, imagen="europeana:/1")
     for _ in range(2):
         arte._esquema(cfg, p, p.arte, dir_fecha)
@@ -129,9 +130,11 @@ def test_el_esquema_parte_de_la_imagen_y_se_guarda_en_cache(cfg, monkeypatch):
 def test_sin_magnific_el_esquema_pasa_a_la_linea(cfg, monkeypatch):
     cfg.magnific_api_key = "clave"
     dir_fecha = _fijar_imagen(cfg)
+    from folio.imagenes import magnific
     def falla(*a, **k):
+        rg._bloqueo = "Magnific respondió 429"           # como hace magnific.pedir ante un bloqueo
         raise rg.ErrorMagnific("Magnific respondió 429", bloqueo=True)
-    monkeypatch.setattr(rg, "generar", falla)
+    monkeypatch.setattr(magnific, "pedir", falla)
     p = _pieza(infografia=ESQUEMA, imagen="europeana:/1")
     arte._esquema(cfg, p, p.arte, dir_fecha)
     assert p.arte.infografia.tipo == "linea" and "pasa a la línea" in p.arte.avisos[-1]
