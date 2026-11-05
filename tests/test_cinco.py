@@ -108,3 +108,90 @@ def test_el_boton_lanza_solo_cinco_del_libro(cfg_diseno, monkeypatch):
     assert c.post("/api/cinco/2026-11-03").status_code == 202
     clave, pasos = lanzados[0]
     assert clave == "cinco-del-libro" and pasos[0][-4:] == ["cinco", "--fecha", "2026-11-03", "--quiet"]
+
+
+# --- Con elección de la redacción (5/11) ---------------------------------------------------------
+
+class _LLM:
+    """Devuelve las respuestas en orden y guarda los prompts."""
+    def __init__(self, *respuestas):
+        self.respuestas, self.prompts, self.trazas = list(respuestas), [], []
+
+    def estructurado(self, paso, mensajes, esquema, **kw):
+        self.prompts.append(mensajes)
+        return self.respuestas.pop(0), None
+
+
+def _texto(mensaje):
+    c = mensaje["content"]
+    return c if isinstance(c, str) else "".join(b.get("text", "") for b in c)
+
+
+def _lista(n=10, ids=None):
+    ids = ids or [f"e{i}" for i in range(n)]
+    return cinco.ListaCinco(candidatas=[cinco.CandidataCinco(historia=i, titular=f"Pasa algo en {i}",
+                                                             por_que="Porque importa a los lectores de Folio hoy mismo") for i in ids])
+
+
+def test_la_lista_marca_las_cinco_primeras_y_trae_el_enlace(cfg):
+    llm = _LLM(_lista())
+    p = cinco.proponer(llm, cfg, "2026-11-05", _historias(12))
+    assert [c.marcada for c in p.candidatas] == [True] * 5 + [False] * 5
+    assert p.candidatas[0].url == "https://elpais.com/0" and p.candidatas[0].medio == "El País"
+    assert "lector" in _texto(llm.prompts[0][0]).lower()          # el criterio del lector español va dentro
+
+
+def test_la_lista_rechaza_ids_inventados_y_reintenta(cfg):
+    mala = _lista(ids=[f"e{i}" for i in range(9)] + ["x99"])
+    llm = _LLM(mala, _lista())
+    p = cinco.proponer(llm, cfg, "2026-11-05", _historias(12))
+    assert len(p.candidatas) == 10 and "x99" in _texto(llm.prompts[1][-1])
+
+
+def test_con_elegidas_escribe_esas_y_en_su_orden(cfg):
+    orden = ["e7", "e2", "e9", "e0", "e4"]
+    def guion(ids):
+        g = _guion()
+        for x, i in zip(g.noticias, ids):
+            x.historia = i
+        return g
+    llm = _LLM(guion(sorted(orden)), guion(orden))                     # la primera, en otro orden: se rechaza
+    g, avisos = cinco.escribir(llm, cfg, "2026-11-05", _historias(12), elegidas=orden)
+    assert [x.historia for x in g.noticias] == orden
+    prompt = _texto(llm.prompts[0][0])
+    assert "La redacción ya ha elegido" in prompt and "[e1]" not in prompt      # solo van las elegidas
+    assert "en su orden" in avisos[0]
+
+
+def test_con_elegidas_que_no_son_cinco_no_llama_al_modelo(cfg):
+    with pytest.raises(cinco.ErrorLLM):
+        cinco.escribir(_LLM(), cfg, "2026-11-05", _historias(12), elegidas=["e1", "e2"])
+
+
+def test_lo_que_cambia_la_redaccion_queda_apuntado(cfg):
+    llm = _LLM(_lista())
+    cinco.guardar_propuesta(cfg, cinco.proponer(llm, cfg, "2026-11-05", _historias(12)))
+    texto = cinco.cambios_de_la_redaccion(cfg, "2026-11-05", ["e0", "e1", "e2", "e3", "e8"], _historias(12))
+    assert texto.startswith(cinco.PREFIJO_CAMBIOS + ": quitó «Pasa algo en e4» y puso «Pasa algo en e8»")
+    assert cinco.cargar_propuesta(cfg, "2026-11-05").elegidas == ["e0", "e1", "e2", "e3", "e8"]
+    assert cinco.cambios_de_la_redaccion(cfg, "2026-11-05", ["e1", "e0", "e2", "e3", "e4"], _historias(12)).endswith("en otro orden")
+
+
+def test_la_api_da_la_lista_y_monta_con_las_elegidas(cfg_diseno, monkeypatch):
+    from fastapi.testclient import TestClient
+    from folio.almacen import Almacen
+    from folio_api import ejecutor
+    from folio_api.main import crear_app
+    lanzados = []
+    monkeypatch.setattr(ejecutor.Ejecutor, "desarrollar", lambda self, clave, pasos: lanzados.append((clave, pasos)) or None)
+    c = TestClient(crear_app(cfg_diseno, Almacen(cfg_diseno.ruta_db), importar=False))
+    r = c.get("/api/cinco/2026-11-05/lista").json()
+    assert r == {"modo": "propuesta", "propuesta": None}
+    assert c.post("/api/cinco/2026-11-05/lista").status_code == 202
+    assert lanzados[-1][0] == "cinco-lista" and "--proponer" in lanzados[-1][1][0]
+    cinco.guardar_propuesta(cfg_diseno, cinco.proponer(_LLM(_lista()), cfg_diseno, "2026-11-05", _historias(12)))
+    assert len(c.get("/api/cinco/2026-11-05/lista").json()["propuesta"]["candidatas"]) == 10
+    assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2"]}).status_code == 422
+    assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2", "e3", "e4", "e5;rm"]}).status_code == 422
+    assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2", "e3", "e4", "e5"]}).status_code == 202
+    assert lanzados[-1][1][0][-2:] == ["--elegidas", "e1,e2,e3,e4,e5"]

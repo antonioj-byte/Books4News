@@ -100,9 +100,12 @@ def render(
 @app.command("cinco")
 def cinco_del_libro(fecha: str | None = typer.Option(None, help="AAAA-MM-DD; por defecto, hoy"),
                     sin_dibujo: bool = typer.Option(False, "--sin-dibujo", help="Sin la ilustración del día (gratis en Magnific)"),
+                    proponer: bool = typer.Option(False, "--proponer", help="Solo la lista de noticias para elegir (5/11)"),
+                    elegidas: str | None = typer.Option(None, "--elegidas", help="Ids de las cinco historias elegidas, en orden, separados por comas"),
                     quiet: bool = typer.Option(False, "--quiet")):
     """«Cinco del libro» (2/11, prueba de cinco días) sobre las historias guardadas del día: la escribe, la ilustra, la
-    comprueba, la añade a la última ejecución del día y pinta sus PNG. La madrugada la hace sola."""
+    comprueba, la añade a la última ejecución del día y pinta sus PNG. Con `--proponer`, solo la lista para que la
+    redacción elija; con `--elegidas`, el post con esas cinco (5/11)."""
     _logging(quiet)
     from folio import cinco
     from folio.almacen import Almacen
@@ -120,9 +123,21 @@ def cinco_del_libro(fecha: str | None = typer.Option(None, help="AAAA-MM-DD; por
     al_jefe, _, _ = EtapasGuardadas(cfg.dir_cache(fecha)).historias()
     tuberia = Pipeline(cfg, fecha)
     tuberia.embedder.liberar = True
+    if proponer:
+        from folio.llm import ErrorLLM
+        progreso("Cinco del libro: la lista de noticias para elegir")
+        try:
+            p = cinco.proponer(tuberia.llm, cfg, fecha, al_jefe)
+        except ErrorLLM as exc:
+            typer.echo(f"No se pudo preparar la lista: {exc}", err=True)
+            raise typer.Exit(1)
+        cinco.guardar_propuesta(cfg, p)
+        typer.echo(f"Cinco del libro: {len(p.candidatas)} noticias para elegir, {p.coste_usd} $")
+        return
+    lista = [x.strip() for x in elegidas.split(",") if x.strip()] if elegidas else None
     pid = f"{fecha}-{almacen.siguiente_numero(eid, fecha)}"
     progreso("Cinco del libro: las cinco noticias del mundo del libro")
-    pieza = cinco.preparar(tuberia, al_jefe, pid, dibujar=not sin_dibujo)
+    pieza = cinco.preparar(tuberia, al_jefe, pid, dibujar=not sin_dibujo, elegidas=lista)
     almacen.anadir_pieza(eid, pieza, "Cinco del libro")
     coste = round(sum(t.coste_usd for t in tuberia.llm.trazas), 4)
     if pieza.estado != "propuesta":

@@ -23,7 +23,7 @@ from folio.config import Config
 from folio.historial import Historial
 from folio.ingesta import agrupacion, resumen, rss
 from folio.libros.verificacion import NoVerificado, Verificador
-from folio.llm import LLM
+from folio.llm import LLM, ErrorLLM
 from folio.modelos import (
     SIN_LIBRO_OBLIGATORIO, Articulo, FuenteNoticia, Historia, HistoriaElegida, HistoriaResumida, InformeDiario,
     LibroDescartado, LibroVerificado, Pieza, SeleccionJefe,
@@ -808,10 +808,19 @@ class Pipeline:
         self._guardar_etapa(self.etapas.guardar_piezas, piezas)
         if inicio <= 2 and self.cfg.pipeline.cinco.activo and self.solo_pieza is None:
             # «Cinco del libro» (2/11, prueba de cinco días): las cinco noticias del mundo del libro, ya escritas
-            progreso("Cinco del libro: las cinco noticias del mundo del libro")
-            n = 1 + max((int(p.id.rsplit("-", 1)[1]) for p in piezas if p.id.rsplit("-", 1)[1].isdigit()), default=0)
-            piezas.append(cinco.preparar(self, al_jefe, f"{self.fecha}-{n}", dibujar=not self.dev))
-            self._guardar_etapa(self.etapas.guardar_piezas, piezas)
+            if self.cfg.pipeline.cinco.modo == "propuesta":
+                # 5/11: solo la lista; el post se monta cuando la redacción elige en la mesa
+                progreso("Cinco del libro: la lista de noticias para elegir")
+                try:
+                    if not self.prueba:
+                        cinco.guardar_propuesta(self.cfg, cinco.proponer(self.llm, self.cfg, self.fecha, al_jefe))
+                except ErrorLLM as exc:
+                    self.avisos.append(f"Cinco del libro: no se pudo preparar la lista ({exc})"[:300])
+            else:
+                progreso("Cinco del libro: las cinco noticias del mundo del libro")
+                n = 1 + max((int(p.id.rsplit("-", 1)[1]) for p in piezas if p.id.rsplit("-", 1)[1].isdigit()), default=0)
+                piezas.append(cinco.preparar(self, al_jefe, f"{self.fecha}-{n}", dibujar=not self.dev))
+                self._guardar_etapa(self.etapas.guardar_piezas, piezas)
         buenas = [p for p in piezas if p.estado == "propuesta" and not formatos.de(p.eleccion.formato).propio]
         if inicio <= 2 and not self.prueba:
             self._registrar_historial(piezas, buenas, al_jefe, vectores)

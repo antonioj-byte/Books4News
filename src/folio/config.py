@@ -92,6 +92,9 @@ class Radar(_Seccion):
 class Cinco(_Seccion):
     """«Cinco del libro» (2/11, prueba de cinco días): las cinco noticias del mundo del libro del día, con la mesa ilustrada."""
     activo: bool = True
+    # 5/11, a petición del usuario («yo elijo las más importantes y finalmente monta el post»): con «propuesta», la
+    # madrugada solo prepara la lista y el post se monta al elegir en la mesa; con «automatico», ya escrito, como antes
+    modo: Literal["propuesta", "automatico"] = "propuesta"
 
 
 class Newsletter(_Seccion):

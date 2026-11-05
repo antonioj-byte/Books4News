@@ -49,6 +49,15 @@ async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+// «Cinco del libro» con elección (5/11): una noticia de la lista y la lista del día (folio.cinco.PropuestaCinco)
+export type CandidataCinco = {
+  historia: string; titular: string; por_que: string; medio: string; url: string; n_medios: number; marcada: boolean;
+};
+export type ListaCinco = {
+  modo: string;
+  propuesta: { fecha: string; candidatas: CandidataCinco[]; elegidas: string[] | null; coste_usd: number } | null;
+};
+
 const pieza = (eid: number, pid: string) => `/api/ejecuciones/${eid}/piezas/${pid}`;
 
 export const api = {
@@ -97,8 +106,13 @@ export const api = {
   lanzarNewsletter: (texto: string) => pedir<EstadoNewsletter>("/api/newsletter", { method: "POST", body: JSON.stringify({ texto }) }),
   subirFotoNewsletter: (archivo: File) =>
     pedir<EstadoNewsletter>("/api/newsletter/foto", { method: "PUT", body: archivo, headers: { "Content-Type": archivo.type || "application/octet-stream" } }),
-  lanzarCinco: (fecha: string) => pedir<EstadoEjecucion>(`/api/cinco/${fecha}`, { method: "POST" }),
+  lanzarCinco: (fecha: string, elegidas?: string[]) =>
+    pedir<EstadoEjecucion>(`/api/cinco/${fecha}`, { method: "POST", ...(elegidas ? { body: JSON.stringify({ elegidas }) } : {}) }),
   estadoCinco: () => pedir<EstadoEjecucion>("/api/cinco"),
+  // «Cinco del libro» con elección (5/11): la lista para elegir
+  listaCinco: (fecha: string) => pedir<ListaCinco>(`/api/cinco/${fecha}/lista`),
+  prepararListaCinco: (fecha: string) => pedir<EstadoEjecucion>(`/api/cinco/${fecha}/lista`, { method: "POST" }),
+  estadoListaCinco: () => pedir<EstadoEjecucion>("/api/cinco-lista"),
   prepararFondo: (tandas: number) => pedir<EstadoEjecucion>("/api/fondo/preparar", { method: "POST", body: JSON.stringify({ tandas }) }),
   proponerTema: (t: TemaNuevo) => pedir<TemaCreado>("/api/temas", { method: "POST", body: JSON.stringify(t) }),
   replicarTema: (id: number, r: { texto: string; ejecucion: number; enfoque?: "elige" | "noticia" | "ensayo"; segundo_plano?: boolean }) =>

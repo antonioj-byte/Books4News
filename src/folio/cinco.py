@@ -10,6 +10,14 @@ Cada madrugada, después de la mesa:
    y el revisor de letras (dos intentos cada una). La portada lleva la de la primera noticia.
 3. Comprobación de hechos contra los textos de las cinco noticias.
 La pieza entra en la mesa escrita («propuesta»), con su colofón de fuentes.
+
+**Con elección de la redacción** (5/11, a petición del usuario: «tengo dudas si lo mejor es que me dé el post ya hecho
+o me haga una propuesta de noticias; yo elijo las más importantes y finalmente monta el post»; `cinco.modo: propuesta`):
+la madrugada solo hace la lista (`proponer`, Haiku, `prompts/cinco_propuesta.md`): unas diez noticias con una línea de
+por qué importan y las cinco que el jefe publicaría ya marcadas, en `data/cache/<fecha>/cinco_propuesta.json`. En la
+mesa se marcan las cinco y «Montar el post» hace los pasos 1–3 con esas, en ese orden (`escribir(elegidas=…)`): las
+ilustraciones solo se pagan de lo elegido. Lo que la redacción cambió de la preselección queda en los avisos de la pieza
+y en la Memoria. Con `cinco.modo: automatico`, como antes.
 """
 
 from __future__ import annotations
@@ -23,6 +31,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from folio.config import Config
+from folio.etapas import guardar_json
 from folio.llm import LLM, ErrorLLM, cache_al_final, cargar_prompt
 from folio.modelos import Arte, Diapositiva, FuenteNoticia, GuionLLM, Historia, HistoriaElegida, Pieza
 
@@ -140,14 +149,29 @@ def _bloque(historias: list[Historia]) -> str:
     return "<noticias>\n" + "\n".join(linea(h) for h in historias) + "\n</noticias>"
 
 
-def escribir(llm: LLM, cfg: Config, fecha: str, historias: list[Historia]) -> tuple[GuionCinco, list[str]]:
-    """El guion de «Cinco del libro». ErrorLLM si no hay noticias bastantes o si no valida tras un reintento."""
+ELEGIDAS_POR_LA_REDACCION = ("La redacción ya ha elegido las cinco noticias: son exactamente las de la lista, y en ese "
+                             "orden (la primera abre). No elijas ni cambies el orden: escríbelas. Los criterios de "
+                             "elección de abajo no aplican; el resto, sí.")
+
+
+def escribir(llm: LLM, cfg: Config, fecha: str, historias: list[Historia],
+             elegidas: list[str] | None = None) -> tuple[GuionCinco, list[str]]:
+    """El guion de «Cinco del libro». Con `elegidas` (ids de historia, en orden), escribe esas cinco tal cual las eligió
+    la redacción. ErrorLLM si no hay noticias bastantes o si no valida tras un reintento."""
     from folio.guion import linea_hoy
     lista = candidatas(historias)
+    if elegidas is not None:
+        por_id = {h.id: h for h in lista}
+        faltan = [i for i in elegidas if i not in por_id]
+        if faltan or len(elegidas) != N or len(set(elegidas)) != N:
+            raise ErrorLLM(f"Cinco del libro: hay que elegir {N} noticias distintas de la lista del día"
+                           + (f" (no están: {', '.join(faltan)})" if faltan else ""))
+        lista = [por_id[i] for i in elegidas]
     if len(lista) < N:
         raise ErrorLLM(f"Cinco del libro: solo hay {len(lista)} noticias del mundo del libro hoy")
     usadas = escenas_recientes(cfg, fecha)
     prompt = cargar_prompt(cfg, "cinco", {"[pegar hoy]": linea_hoy(fecha), "[pegar noticias]": _bloque(lista),
+                                          "[pegar eleccion]": ELEGIDAS_POR_LA_REDACCION if elegidas else "",
                                           "[pegar objetos]": "\n".join(f"- {e}" for e in usadas) or "(ninguna)"})
     mensajes = [{"role": "user", "content": prompt}]
     ids = {h.id for h in lista}
@@ -157,6 +181,8 @@ def escribir(llm: LLM, cfg: Config, fecha: str, historias: list[Historia]) -> tu
         g, _ = llm.estructurado(f"cinco:{fecha}:{intento + 1}", cache_al_final(mensajes, hasta=0), GuionCinco,
                                 etapa_modelo="cinco", max_tokens=16000)
         errores = validar(g, ids)
+        if elegidas and not errores and [x.historia for x in g.noticias] != elegidas:
+            errores = ["Las noticias tienen que ser las elegidas por la redacción, en su orden: " + ", ".join(elegidas) + "."]
         if not errores:
             return g, avisos
         avisos.append(f"Cinco del libro: rechazado en el intento {intento + 1}: " + " | ".join(errores))
@@ -256,13 +282,14 @@ def ilustrar(llm: LLM, cfg: Config, pieza: Pieza, intentos: int = 2) -> list[str
 
 # --- Todo junto -------------------------------------------------------------------------------
 
-def preparar(tuberia, historias: list[Historia], pieza_id: str, dibujar: bool = True) -> Pieza:
+def preparar(tuberia, historias: list[Historia], pieza_id: str, dibujar: bool = True,
+             elegidas: list[str] | None = None) -> Pieza:
     """Escribe, ilustra y comprueba la pieza de «Cinco del libro». Si falla el guion, la pieza sale «fallida» con el
     motivo; las ilustraciones y la comprobación nunca la paran."""
     from folio import hechos
     cfg, llm, fecha = tuberia.cfg, tuberia.llm, tuberia.fecha
     try:
-        g, avisos = escribir(llm, cfg, fecha, historias)
+        g, avisos = escribir(llm, cfg, fecha, historias, elegidas)
     except ErrorLLM as exc:
         e = HistoriaElegida(formato=FORMATO, historia_id=PREFIJO + fecha, titular="Cinco del libro", de_que_se_habla="",
                             cuestion_de_fondo="", libros_candidatos=[], por_que="")
@@ -270,6 +297,8 @@ def preparar(tuberia, historias: list[Historia], pieza_id: str, dibujar: bool = 
                      error=str(exc)[:400])
     pieza = a_pieza(g, pieza_id, fecha, historias)
     pieza.avisos += avisos
+    if elegidas is not None:
+        pieza.avisos.append(cambios_de_la_redaccion(cfg, fecha, elegidas, historias))
     if dibujar:
         for motivo in ilustrar(llm, cfg, pieza):
             pieza.avisos.append(f"Cinco del libro: sin ilustración en la {motivo}")
@@ -281,3 +310,120 @@ def preparar(tuberia, historias: list[Historia], pieza_id: str, dibujar: bool = 
     except Exception as exc:                        # la comprobación nunca para la pieza
         pieza.avisos.append(f"No se pudo comprobar los hechos: {type(exc).__name__}: {exc}"[:300])
     return pieza
+
+
+# --- La lista para elegir (5/11) -----------------------------------------------------------------
+
+N_LISTA = 10                      # noticias que se proponen (hasta 12 si hay material; las cinco primeras, marcadas)
+PREFIJO_CAMBIOS = "Cinco del libro: elección de la redacción"
+
+
+class CandidataCinco(BaseModel):
+    historia: str = Field(description="El id exacto de la noticia en la lista")
+    titular: str = Field(description="En español, de 12 palabras como máximo, que diga qué ha pasado")
+    por_que: str = Field(description="Una línea, de 8 a 25 palabras: por qué importa a un lector de Folio")
+
+
+class ListaCinco(BaseModel):
+    candidatas: list[CandidataCinco] = Field(description="De 8 a 12 noticias, de más a menos importante: las cinco primeras son las que publicarías")
+
+
+class Candidata(BaseModel):
+    """Una noticia de la lista, como la ve la web."""
+    historia: str
+    titular: str
+    por_que: str
+    medio: str = ""
+    url: str = ""
+    n_medios: int = 1
+    marcada: bool = False         # preseleccionada por el jefe
+
+
+class PropuestaCinco(BaseModel):
+    fecha: str
+    candidatas: list[Candidata]
+    elegidas: list[str] | None = None     # lo que eligió la redacción al montar el post
+    coste_usd: float = 0.0
+
+
+def ruta_propuesta(cfg: Config, fecha: str) -> Path:
+    return cfg.dir_cache(fecha) / "cinco_propuesta.json"
+
+
+def cargar_propuesta(cfg: Config, fecha: str) -> PropuestaCinco | None:
+    try:
+        return PropuestaCinco.model_validate_json(ruta_propuesta(cfg, fecha).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def guardar_propuesta(cfg: Config, p: PropuestaCinco) -> None:
+    guardar_json(ruta_propuesta(cfg, p.fecha), p.model_dump())
+
+
+def validar_lista(lista: ListaCinco, ids: set[str]) -> list[str]:
+    errores = []
+    minimo = min(8, len(ids))
+    if not minimo <= len(lista.candidatas) <= 12:
+        errores.append(f"Tienen que ser de {minimo} a 12 noticias (hay {len(lista.candidatas)}).")
+    vistos = set()
+    for i, c in enumerate(lista.candidatas, 1):
+        if c.historia not in ids:
+            errores.append(f"Noticia {i}: «{c.historia}» no es un id de la lista.")
+        elif c.historia in vistos:
+            errores.append(f"Noticia {i}: repite la historia {c.historia}.")
+        vistos.add(c.historia)
+        if _palabras(c.titular) > 12 or c.titular.strip().endswith("?"):
+            errores.append(f"Noticia {i}: el titular tiene que tener 12 palabras como máximo y no ser una pregunta.")
+    return errores
+
+
+def proponer(llm: LLM, cfg: Config, fecha: str, historias: list[Historia]) -> PropuestaCinco:
+    """La lista para elegir: unas diez noticias con su porqué y las cinco primeras marcadas. ErrorLLM si no hay noticias
+    bastantes o si la lista no valida tras un reintento."""
+    from folio.guion import linea_hoy
+    lista = candidatas(historias)
+    if len(lista) < N:
+        raise ErrorLLM(f"Cinco del libro: solo hay {len(lista)} noticias del mundo del libro hoy")
+    prompt = cargar_prompt(cfg, "cinco_propuesta", {"[pegar hoy]": linea_hoy(fecha), "[pegar noticias]": _bloque(lista)})
+    mensajes = [{"role": "user", "content": prompt}]
+    ids = {h.id for h in lista}
+    errores: list[str] = []
+    antes = len(llm.trazas)
+    for intento in range(2):
+        r, _ = llm.estructurado(f"cinco-propuesta:{fecha}:{intento + 1}", cache_al_final(mensajes, hasta=0), ListaCinco,
+                                etapa_modelo="cinco_propuesta", max_tokens=8000)
+        errores = validar_lista(r, ids)
+        if not errores:
+            por_id = {h.id: h for h in lista}
+            out = []
+            for i, c in enumerate(r.candidatas):
+                h = por_id[c.historia]
+                a = h.articulos[0] if h.articulos else None
+                out.append(Candidata(historia=c.historia, titular=c.titular.strip(), por_que=c.por_que.strip(),
+                                     medio=a.medio if a else "", url=a.url if a else "", n_medios=h.n_medios, marcada=i < N))
+            coste = round(sum(t.coste_usd for t in llm.trazas[antes:]), 4)
+            return PropuestaCinco(fecha=fecha, candidatas=out, coste_usd=coste)
+        mensajes += [{"role": "assistant", "content": json.dumps(r.model_dump(), ensure_ascii=False)},
+                     {"role": "user", "content": "No cumple estas condiciones:\n" + "\n".join(f"- {e}" for e in errores)
+                      + "\nCorrígelo y devuelve el JSON completo."}]
+    raise ErrorLLM("Cinco del libro: la lista no cumple las reglas tras un reintento (" + " | ".join(errores) + ")")
+
+
+def cambios_de_la_redaccion(cfg: Config, fecha: str, elegidas: list[str], historias: list[Historia]) -> str:
+    """Qué cambió la redacción respecto a las cinco del jefe (para los avisos de la pieza y la Memoria). Guarda la
+    elección en la propuesta del día."""
+    p = cargar_propuesta(cfg, fecha)
+    titulares = {h.id: h.titular_es or h.id for h in historias}
+    if p is None:
+        return f"{PREFIJO_CAMBIOS}: sin lista del jefe"
+    titulares.update({c.historia: c.titular for c in p.candidatas})
+    jefe = [c.historia for c in p.candidatas if c.marcada]
+    p.elegidas = list(elegidas)
+    guardar_propuesta(cfg, p)
+    quitadas = [titulares[i] for i in jefe if i not in elegidas]
+    anadidas = [titulares.get(i, i) for i in elegidas if i not in jefe]
+    if not quitadas and not anadidas:
+        return f"{PREFIJO_CAMBIOS}: las cinco del jefe" + ("" if elegidas == jefe else ", en otro orden")
+    return (f"{PREFIJO_CAMBIOS}: quitó " + ("; ".join(f"«{t}»" for t in quitadas) or "nada")
+            + " y puso " + ("; ".join(f"«{t}»" for t in anadidas) or "nada"))

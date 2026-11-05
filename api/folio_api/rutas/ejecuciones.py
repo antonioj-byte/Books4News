@@ -4,6 +4,7 @@ import re
 import sys
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
 from folio_api.dependencias import Contexto, contexto
 from folio_api.ejecutor import YA_EN_MARCHA, EstadoEjecucion, Trabajo
@@ -60,11 +61,31 @@ def trabajos(ctx: Contexto = Depends(contexto)):
 TRABAJO_CINCO = "cinco-del-libro"
 
 
-@router.post("/api/cinco/{fecha}", response_model=EstadoEjecucion, status_code=202)
-def lanzar_cinco(fecha: str, ctx: Contexto = Depends(contexto)):
+TRABAJO_LISTA = "cinco-lista"
+
+
+class MontarCinco(BaseModel):
+    elegidas: list[str] | None = Field(default=None, description="Las cinco historias elegidas, en orden (5/11)")
+
+
+def _fecha(fecha: str) -> None:
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", fecha):
         raise HTTPException(422, "Fecha no válida")
-    motivo = ctx.ejecutor.desarrollar(TRABAJO_CINCO, [[sys.executable, "-m", "folio.cli", "cinco", "--fecha", fecha, "--quiet"]])
+
+
+@router.post("/api/cinco/{fecha}", response_model=EstadoEjecucion, status_code=202)
+def lanzar_cinco(fecha: str, cuerpo: MontarCinco | None = None, ctx: Contexto = Depends(contexto)):
+    """Escribe y monta el post. Con `elegidas`, con esas cinco y en ese orden (5/11: la redacción elige de la lista)."""
+    _fecha(fecha)
+    orden = [sys.executable, "-m", "folio.cli", "cinco", "--fecha", fecha, "--quiet"]
+    if cuerpo and cuerpo.elegidas is not None:
+        from folio import cinco
+        if len(cuerpo.elegidas) != cinco.N or len(set(cuerpo.elegidas)) != cinco.N:
+            raise HTTPException(422, f"Hay que elegir {cinco.N} noticias distintas")
+        if any(not re.fullmatch(r"[\w.:-]{1,80}", i) for i in cuerpo.elegidas):
+            raise HTTPException(422, "Id de noticia no válido")
+        orden += ["--elegidas", ",".join(cuerpo.elegidas)]
+    motivo = ctx.ejecutor.desarrollar(TRABAJO_CINCO, [orden])
     if motivo:
         raise HTTPException(409, "Ya se está escribiendo «Cinco del libro»" if motivo == YA_EN_MARCHA else motivo)
     return ctx.ejecutor.estado_desarrollo(TRABAJO_CINCO) or EstadoEjecucion(en_marcha=True)
@@ -73,3 +94,33 @@ def lanzar_cinco(fecha: str, ctx: Contexto = Depends(contexto)):
 @router.get("/api/cinco", response_model=EstadoEjecucion)
 def estado_cinco(ctx: Contexto = Depends(contexto)):
     return ctx.ejecutor.estado_desarrollo(TRABAJO_CINCO) or EstadoEjecucion(en_marcha=False)
+
+
+# La lista para elegir (5/11, a petición del usuario: «me haga una propuesta de noticias; yo elijo las más importantes y
+# finalmente monta el post»). La hace la madrugada; si falta (un día anterior, o falló), se prepara aquí (~30 s, Haiku).
+class ListaCinco(BaseModel):
+    modo: str                                  # «propuesta» o «automatico» (cinco.modo)
+    propuesta: dict | None = None              # cinco.PropuestaCinco
+
+
+@router.get("/api/cinco/{fecha}/lista", response_model=ListaCinco)
+def lista_cinco(fecha: str, ctx: Contexto = Depends(contexto)):
+    from folio import cinco
+    _fecha(fecha)
+    p = cinco.cargar_propuesta(ctx.cfg, fecha)
+    return ListaCinco(modo=ctx.cfg.pipeline.cinco.modo, propuesta=p.model_dump() if p else None)
+
+
+@router.post("/api/cinco/{fecha}/lista", response_model=EstadoEjecucion, status_code=202)
+def preparar_lista(fecha: str, ctx: Contexto = Depends(contexto)):
+    _fecha(fecha)
+    motivo = ctx.ejecutor.desarrollar(TRABAJO_LISTA, [[sys.executable, "-m", "folio.cli", "cinco", "--fecha", fecha,
+                                                       "--proponer", "--quiet"]])
+    if motivo:
+        raise HTTPException(409, "Ya se está preparando la lista" if motivo == YA_EN_MARCHA else motivo)
+    return ctx.ejecutor.estado_desarrollo(TRABAJO_LISTA) or EstadoEjecucion(en_marcha=True)
+
+
+@router.get("/api/cinco-lista", response_model=EstadoEjecucion)
+def estado_lista(ctx: Contexto = Depends(contexto)):
+    return ctx.ejecutor.estado_desarrollo(TRABAJO_LISTA) or EstadoEjecucion(en_marcha=False)

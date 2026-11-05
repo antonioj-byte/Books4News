@@ -552,15 +552,17 @@ class Almacen:
                     if (da.texto, da.subtitulo) != (db_.texto, db_.subtitulo):
                         ediciones.append({"diapositiva": f"{db_.n} ({db_.tipo})", "antes": da.texto, "despues": db_.texto})
             notas = [n.model_dump(exclude={"id", "version_n"}) for n in self.notas(eid, pid)]
-            if not (ev or pedidos or ediciones or notas or f["estado"] == "descartada"):
-                continue
             ultima = Pieza.model_validate_json(versiones[-1]["datos"]) if versiones else None
+            # «Cinco del libro» con elección (5/11): qué noticias quitó y puso la redacción respecto a las del jefe
+            eleccion = [a for a in (ultima.avisos if ultima else []) if a.startswith("Cinco del libro: elección de la redacción: quitó")]
+            if not (ev or pedidos or ediciones or notas or eleccion or f["estado"] == "descartada"):
+                continue
             out.append({"pieza": pid, "fecha": f["fecha"], "estado": f["estado"],
                         "formato": ultima.eleccion.formato if ultima else None,
                         "titular": ultima.guion.diapositivas[0].texto if ultima and ultima.guion else (ultima.eleccion.titular if ultima else ""),
                         "evaluacion": ev[0].model_dump() if ev else None, "pedidos_chat": pedidos, "ediciones": ediciones,
                         # Lo que se dijo a cada agente (2/11): el motivo de un descarte, notas sobre una diapositiva
-                        "notas": notas})
+                        "notas": notas, **({"eleccion_redaccion": eleccion[0]} if eleccion else {})})
         return out
 
     # --- Gasto -----------------------------------------------------------------------

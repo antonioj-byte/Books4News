@@ -17,6 +17,7 @@ modelos:
   claridad: claude-haiku-5-5      # lector sin contexto: señala lo que no se entiende sin conocer la obra ni la noticia
   estilo: claude-opus-5-5         # editor de estilo (2/11, prueba A/B de la voz de Folio)
   cinco: claude-opus-5-5          # «Cinco del libro» (2/11): las cinco noticias del mundo del libro del día
+  cinco_propuesta: claude-haiku-5-5   # «Cinco del libro» con elección (5/11): la lista de unas diez para que elija la redacción
   newsletter: claude-opus-5-5     # «La newsletter del jueves» (4/11): titular, percha, frases y escenas del ensayo semanal
   juez: claude-sonnet-5-5         # juez a ciegas de las rondas de la voz (2/11): otro modelo que el que escribe
 
@@ -30,6 +31,7 @@ esfuerzo:                       # output_config.effort
   fondo: medium                   # 2/11: con high, el razonamiento agotaba los 21.000 tokens con seis propuestas
   guion: high
   cinco: medium                   # «Cinco del libro» (2/11): elegir y titular cinco noticias, sin libro que pensar
+  cinco_propuesta: medium         # la lista para elegir (5/11)
   newsletter: medium              # «La newsletter del jueves» (4/11): elegir frases literales y escribir las escenas
   guion_correccion: medium        # 2/11 (a petición del usuario, por el gasto): las correcciones, con esfuerzo medio
   comprobacion: medium
@@ -117,6 +119,8 @@ newsletter:
   nombre: La newsletter de Folio
 cinco:
   activo: true
+  modo: propuesta               # 5/11: la madrugada propone unas diez noticias con cinco marcadas y la redacción
+                                # elige antes de montar el post; «automatico»: el post ya escrito, como antes
 
 exclusion:
   dias_historias: 7

@@ -783,3 +783,11 @@
   patron: "«Veo que hay mucho foco en cosas francesas, alemanas… ten en cuenta que el público principal es español. No se trata de premiar cosas locales como de tener en cuenta esa sensibilidad.»"
   propuesta: "Se elige lo que le importa, le suena o le sirve a un lector en España: lo de fuera, si se entiende sin conocer el país, toca algo que también vive aquí, se lee en castellano o es lo bastante grande; nunca una lista llena de un mismo país extranjero, y lo de fuera se cuenta desde aquí."
   evidencia: ["Conversación, 5/11: radar y Cinco del libro con Janosch, el Renaudot y editoriales francesas"]
+
+- clave: cinco-con-eleccion
+  fecha: "2026-11-05"
+  destino: codigo
+  capa: celda
+  patron: "«Con lo de las noticias del día tengo dudas si lo mejor es que me dé el post ya hecho o me haga una propuesta de noticias. Yo elijo las más importantes y finalmente monta el post.»"
+  propuesta: "«Cinco del libro» se monta con las noticias que elige la redacción: la madrugada propone unas diez con las cinco del jefe marcadas, y el post (textos, ilustraciones, hechos y PNG) se hace al pulsar «Montar el post»."
+  evidencia: ["Conversación, 5/11: prueba de «Cinco del libro» con elección"]
