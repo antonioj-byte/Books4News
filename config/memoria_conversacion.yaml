@@ -767,3 +767,11 @@
   patron: "«Dale una pensada a la usabilidad, botones, avisos de espera: haz una visión para que sea extremadamente excepcional» (y «haz las 3 fases seguidas»)."
   propuesta: "Todo lo lento es un trabajo que se ve (pasos, reloj real, lo que suele tardar), sobrevive a recargar y avisa al acabar; cada botón dice qué hace, cuánto tarda y cuesta, y por qué está apagado; un error es una frase con el siguiente paso; deshacer antes que confirmar; respuesta al instante."
   evidencia: ["Conversación, 4/11: Artifact «Folio sin esperas a ciegas»"]
+
+- clave: imagen-archivo-sin-repetir
+  fecha: "2026-11-05"
+  destino: director_arte
+  capa: celda
+  patron: "«No sé qué le pasa con esta ilustración, que me la ha hecho varias veces» (la misma prensa de imprenta de archivo en piezas de días distintos)."
+  propuesta: "Una imagen de archivo usada no vuelve a salir en otra pieza en 30 días."
+  evidencia: ["Conversación, 5/11: Sylvia Beach y el Ulises"]

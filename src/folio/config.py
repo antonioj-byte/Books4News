@@ -212,6 +212,8 @@ class Recorte(_Seccion):
 
 
 class Arte(_Seccion):
+    # Días en que una imagen de archivo usada no vuelve a salir en otra pieza (5/11, a petición del usuario)
+    dias_sin_repetir_imagen: int = Field(default=30, ge=0)
     # Composiciones de portada que puede elegir el director de arte. La ilustración vectorial
     # dibujada por el modelo se desactivó el 31/10: el resultado parece clip-art.
     portadas: list[Literal["sangre", "banda", "caja", "neon", "ilustracion", "circulo", "collage"]] = Field(

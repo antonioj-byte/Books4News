@@ -257,6 +257,33 @@ def dir_imagenes(dir_cache_fecha: Path) -> Path:
     return dir_cache_fecha / "imagenes"
 
 
+def usadas_recientes(dir_cache_fecha: Path, dias: int, sin: str = "") -> set[str]:
+    """Las imágenes de archivo (Europeana, Commons) usadas en los últimos `dias` días, incluido hoy, por su clave y su
+    URL (5/11, a petición del usuario: «no sé qué le pasa con esta ilustración, que me la ha hecho varias veces»: una
+    misma prensa de imprenta salía en piezas de días distintos, porque las mismas búsquedas devuelven lo mismo y solo
+    se evitaba repetir dentro del día). Las de la pieza `sin` no cuentan, para que relanzar su arte pueda quedársela."""
+    from datetime import date, timedelta
+    try:
+        hoy = date.fromisoformat(dir_cache_fecha.name)
+    except ValueError:
+        return set()
+    usadas: set[str] = set()
+    for d in range(dias + 1):
+        carpeta = dir_imagenes(dir_cache_fecha.parent / (hoy - timedelta(days=d)).isoformat())
+        if not carpeta.is_dir():
+            continue
+        for p in carpeta.glob("*.json"):
+            if sin and p.stem.startswith(sin):
+                continue
+            try:
+                datos = json.loads(p.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if str(datos.get("archivo", "")).startswith(("europeana:", "commons:")):
+                usadas |= {datos["archivo"], *([datos["url"]] if datos.get("url") else [])}
+    return usadas
+
+
 def fijar(imagen: ImagenLibre, pieza_id: str, dir_cache_fecha: Path, ancho_minimo: int = ANCHO_MINIMO) -> Path:
     """Descarga la imagen para la pieza y guarda sus metadatos. Rechaza las que no son libres."""
     if not imagen.libre:

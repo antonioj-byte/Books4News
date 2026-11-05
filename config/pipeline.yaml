@@ -187,6 +187,7 @@ arte:
   buscador_max_por_dia: 1       # 2/11 (a petición del usuario: «lo pondría como recurso opcional, no siempre; queda muy recargado»): como mucho uno al día, y solo si el director lo pide
   mapa_ilustrado: false        # B4: el mapa sobre tres salas ilustradas. Apagado el 1/11: la imagen era una prueba (con la ilustración de referencia del usuario), no la definitiva; falta elegirla. Sin ella, el mapa de círculos dibujado por el código
   retratos: true               # retrato del autor (Wikidata + Commons) en la portada y junto a la cubierta
+  dias_sin_repetir_imagen: 30  # una imagen de archivo usada no vuelve en 30 días (5/11, a petición del usuario: «me la ha hecho varias veces»)
   retratos_cc_by_sa: true      # aceptar retratos CC BY-SA (casi todos): la diapositiva se publica con esa licencia
   fotos_editoriales: true      # sin retrato en Commons, la foto de prensa de la web de la editorial (con su crédito)
   # Retrato generado con IA a partir de la foto libre del autor (Magnific, Seedream 4.5 Edit), en un

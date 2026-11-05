@@ -250,6 +250,8 @@ def _imagen_de_archivo(llm: LLM, cfg: Config, pieza: Pieza, datos: str, propuest
     arte.imagen_noticia = arte.credito_noticia = None
     en_portada = arte.registro == "archivo"
     con_cara = arte.registro in CARAS
+    # Ni las de hoy ni las de los últimos días (5/11): la misma imagen de archivo salía en piezas de días distintos
+    usadas |= libres.usadas_recientes(cfg.dir_cache(pieza.fecha), cfg.pipeline.arte.dias_sin_repetir_imagen, sin=pieza.id)
     cands = candidatas(propuesta, usadas)
     if not cands:
         arte.avisos.append("Sin imagen: ninguna candidata libre y con tamaño suficiente")
