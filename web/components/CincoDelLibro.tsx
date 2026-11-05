@@ -55,6 +55,9 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
       {montar.enMarcha ? (
         <Trabajando etapa={montar.estado?.etapa ?? "Trabajando…"} pasos={PASOS_CINCO} rotulo="Montando el post"
                     inicio={montar.estado?.inicio} tipico={montar.estado?.tipico_s} />
+      ) : preparar.enMarcha ? (
+        <Trabajando etapa={preparar.estado?.etapa ?? "Trabajando…"} rotulo="Preparando la lista"
+                    inicio={preparar.estado?.inicio} tipico={preparar.estado?.tipico_s} />
       ) : lista?.propuesta && candidatas.length ? (
         <>
           <p className="max-w-[62ch] text-[14px] text-tinta-suave">
@@ -93,6 +96,7 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
               Montar el post ({n} {n === 1 ? "noticia" : "noticias"}) →
             </Boton>
             {cambiada && <button className="boton-suave" onClick={() => setOrden(null)}>Volver a las del jefe</button>}
+            <Boton onClick={preparar.lanzar} tipo="secundario" hecho={null} coste="~30 s · ~0,01 $">Rehacer la lista</Boton>
           </div>
         </>
       ) : preparar.enMarcha ? (

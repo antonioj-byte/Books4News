@@ -236,3 +236,20 @@ def test_la_portada_y_el_contador_cuentan_las_que_hay(cfg_diseno):
     tercera = pl.html_diapositiva(pieza, 3)
     contador = tercera.split('cinco-contador')[1].split("</div>")[0]
     assert contador.count("<i") == 3 and contador.count('class="si"') == 2
+
+
+def test_rehacer_la_lista_la_amplia_con_lo_leido_en_espanol(cfg):
+    """5/11: «solo me deja seleccionar los 5 de hoy, a partir de los 7»."""
+    from folio.etapas import EtapasGuardadas
+    from folio.modelos import Articulo
+    hs = _historias(4)
+    sueltos = [Articulo(id=f"s{i}", idioma="es", medio="El Cultural", url=f"https://elcultural.com/{i}", titulo=f"Novedad {i} en castellano",
+                        entradilla="Entradilla.", acceso="abierto", carril="editorial") for i in range(6)]
+    otros = [Articulo(id="fr", idioma="fr", medio="Le Monde", url="https://lemonde.fr/x", titulo="Prix", acceso="abierto", carril="editorial"),
+             Articulo(id="act", idioma="es", medio="El País", url="https://elpais.com/x", titulo="Política", acceso="abierto")]
+    EtapasGuardadas(cfg.dir_cache("2026-11-05")).guardar_articulos([*hs[0].articulos, *sueltos, *otros, sueltos[0]])
+    todas = cinco.con_extra(cfg, "2026-11-05", hs, ampliar_ahora=True)
+    nuevas = [h for h in todas if h.id.startswith("es-")]
+    assert [h.titular_es for h in nuevas] == [f"Novedad {i} en castellano" for i in range(6)]
+    assert len(cinco.candidatas(todas)) == 10
+    assert [h.id for h in cinco.con_extra(cfg, "2026-11-05", hs)] == [h.id for h in todas]     # el post las encuentra

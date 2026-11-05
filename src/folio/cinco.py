@@ -447,3 +447,58 @@ def cambios_de_la_redaccion(cfg: Config, fecha: str, elegidas: list[str], histor
         return f"{PREFIJO_CAMBIOS}: las cinco del jefe" + ("" if elegidas == jefe else ", en otro orden")
     return (f"{PREFIJO_CAMBIOS}: quitó " + ("; ".join(f"«{t}»" for t in quitadas) or "nada")
             + " y puso " + ("; ".join(f"«{t}»" for t in anadidas) or "nada"))
+
+
+# --- Ampliar la lista con lo que leyó la madrugada (5/11) ----------------------------------------
+# «¿Puedes permitir que lo pruebe hoy? Solo me deja seleccionar los 5 de hoy, a partir de los 7»: un día ya leído
+# tiene resumidas pocas noticias del libro. Al rehacer la lista, se completa con los artículos en español del carril
+# del libro que leyó la madrugada y no entraron en ninguna historia (uno por historia, con su titular y su entradilla;
+# sin modelo), hasta `cinco.en_espanol`. Se guardan en `cinco_extra.json` para que el post las encuentre al montarse.
+
+def _ruta_extra(cfg: Config, fecha: str) -> Path:
+    return cfg.dir_cache(fecha) / "cinco_extra.json"
+
+
+def _normal(t: str) -> str:
+    return re.sub(r"\W+", " ", t.lower()).strip()
+
+
+def ampliar(cfg: Config, fecha: str, historias: list[Historia]) -> list[Historia]:
+    """Historias de un artículo con las noticias del libro en español que no entraron (vacío si ya hay bastantes)."""
+    from folio.etapas import EtapasGuardadas
+    c = cfg.pipeline.cinco
+    if len(candidatas(historias)) >= c.propuestas or not c.en_espanol:
+        return []
+    etapas = EtapasGuardadas(cfg.dir_cache(fecha))
+    if not etapas.hay_articulos():
+        return []
+    usados = {a.id for h in historias for a in h.articulos}
+    titulares = {_normal(h.titular_es or "") for h in historias} | {_normal(a.titulo) for h in historias for a in h.articulos}
+    sueltos = [a for a in etapas.articulos() if a.carril == "editorial" and a.idioma == "es" and a.id not in usados
+               and a.titulo.strip() and _normal(a.titulo) not in titulares]
+    sueltos.sort(key=lambda a: a.publicado_en.timestamp() if a.publicado_en else 0, reverse=True)
+    out, vistos = [], set()
+    for a in sueltos:
+        if _normal(a.titulo) in vistos:
+            continue
+        vistos.add(_normal(a.titulo))
+        out.append(Historia(id=f"es-{a.id}"[:80], articulos=[a], medios=[a.medio], n_medios=1, ultima_publicacion=a.publicado_en,
+                            titular_es=a.titulo.strip(), resumen_es=(a.entradilla or "").strip()[:400] or None, carril="radar"))
+        if len(out) >= c.en_espanol:
+            break
+    return out
+
+
+def con_extra(cfg: Config, fecha: str, historias: list[Historia], ampliar_ahora: bool = False) -> list[Historia]:
+    """Las historias del día más las añadidas a la lista (`ampliar_ahora`: las busca y las guarda)."""
+    ruta = _ruta_extra(cfg, fecha)
+    if ampliar_ahora:
+        extra = ampliar(cfg, fecha, historias)
+        guardar_json(ruta, [h.model_dump(mode="json") for h in extra])
+    else:
+        try:
+            extra = [Historia.model_validate(x) for x in json.loads(ruta.read_text(encoding="utf-8"))]
+        except (OSError, ValueError):
+            extra = []
+    ya = {h.id for h in historias}
+    return historias + [h for h in extra if h.id not in ya]

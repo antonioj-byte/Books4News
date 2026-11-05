@@ -121,6 +121,7 @@ def cinco_del_libro(fecha: str | None = typer.Option(None, help="AAAA-MM-DD; por
         typer.echo(f"No hay ejecución del {fecha}: lanza antes la del día", err=True)
         raise typer.Exit(1)
     al_jefe, _, _ = EtapasGuardadas(cfg.dir_cache(fecha)).historias()
+    al_jefe = cinco.con_extra(cfg, fecha, al_jefe, ampliar_ahora=proponer)   # 5/11: la lista ampliada en español
     tuberia = Pipeline(cfg, fecha)
     tuberia.embedder.liberar = True
     if proponer:
