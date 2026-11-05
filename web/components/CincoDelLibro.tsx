@@ -14,7 +14,9 @@ const N = 5;
 // «Montar el post» lanza `folio cinco --elegidas …` en un proceso aparte y lo sigue con la tarjeta de trabajo; las
 // ilustraciones solo se pagan de lo elegido. Sin lista (un día anterior, o falló), se prepara aquí en unos segundos.
 // Con `cinco.modo: automatico`, como antes: un botón que la escribe entera.
-export function CincoDelLibro({ fecha, onHecho }: { fecha: string; onHecho: () => void }) {
+// Si el día ya tiene la pieza (5/11: la de la madrugada se escribió sola, antes del cambio), todo esto va plegado en
+// una línea, para elegir otras noticias y montar otra; la de antes se queda en la mesa.
+export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: string; onHecho: () => void; yaHecha?: boolean }) {
   const [lista, setLista] = useState<ListaCinco | null>(null);
   const [orden, setOrden] = useState<string[] | null>(null);       // las elegidas, en orden (null: las del jefe)
   const cargar = useCallback(() => {
@@ -48,9 +50,8 @@ export function CincoDelLibro({ fecha, onHecho }: { fecha: string; onHecho: () =
   const motivo = n < N ? `Marca ${N - n} más: el post lleva ${N} noticias` : n > N ? `Sobran ${n - N}: el post lleva ${N} noticias` : null;
   const cambiada = orden !== null && orden.join() !== delJefe.join();
 
-  return (
-    <div className="mt-10 flex flex-col items-start gap-3 rounded-[12px] border border-borde bg-panel p-5">
-      <div className="antetitulo">Cinco del libro</div>
+  const cuerpo = (
+    <>
       {montar.enMarcha ? (
         <Trabajando etapa={montar.estado?.etapa ?? "Trabajando…"} pasos={PASOS_CINCO} rotulo="Montando el post"
                     inicio={montar.estado?.inicio} tipico={montar.estado?.tipico_s} />
@@ -104,7 +105,7 @@ export function CincoDelLibro({ fecha, onHecho }: { fecha: string; onHecho: () =
           </p>
           <div className="flex flex-wrap items-start gap-3">
             <Boton onClick={preparar.lanzar} hecho={null} coste="~30 s · ~0,01 $">Preparar la lista →</Boton>
-            <Boton onClick={montar.lanzar} tipo="secundario" hecho={null} coste="sin elegir · ~0,20 $">Escribirla directamente</Boton>
+            {!yaHecha && <Boton onClick={montar.lanzar} tipo="secundario" hecho={null} coste="sin elegir · ~0,20 $">Escribirla directamente</Boton>}
           </div>
         </>
       ) : lista ? (
@@ -115,6 +116,23 @@ export function CincoDelLibro({ fecha, onHecho }: { fecha: string; onHecho: () =
       ) : null}
       {montar.error && !montar.enMarcha && <FalloTrabajo fallo={montar.error} reintentar={montar.lanzar} />}
       {preparar.error && !preparar.enMarcha && <FalloTrabajo fallo={preparar.error} reintentar={preparar.lanzar} />}
+    </>
+  );
+  if (yaHecha) {
+    return (
+      <details className="mt-10 rounded-[12px] border border-borde bg-panel p-5" open={montar.enMarcha || preparar.enMarcha || undefined}>
+        <summary className="cursor-pointer">
+          <span className="antetitulo">Cinco del libro</span>
+          <span className="ml-2 text-[14px] text-tinta-suave">Elegir tú las noticias y montar otro post</span>
+        </summary>
+        <div className="mt-3 flex flex-col items-start gap-3">{cuerpo}</div>
+      </details>
+    );
+  }
+  return (
+    <div className="mt-10 flex flex-col items-start gap-3 rounded-[12px] border border-borde bg-panel p-5">
+      <div className="antetitulo">Cinco del libro</div>
+      {cuerpo}
     </div>
   );
 }

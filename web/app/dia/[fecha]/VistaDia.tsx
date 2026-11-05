@@ -128,7 +128,7 @@ export function VistaDia() {
         ))}
       </div>
 
-      {dia && !(dia.piezas ?? []).some((p) => p.formato === "cinco") && <CincoDelLibro fecha={fecha} onHecho={recargarDia} />}
+      {dia && <CincoDelLibro fecha={fecha} onHecho={recargarDia} yaHecha={(dia.piezas ?? []).some((p) => p.formato === "cinco")} />}
 
       {radar.length > 0 && (
         <details className="mt-10">
