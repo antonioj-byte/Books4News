@@ -38,7 +38,7 @@ from folio.modelos import Arte, Diapositiva, FuenteNoticia, GuionLLM, Historia, 
 FORMATO = "cinco"
 PREFIJO = "cinco-"
 SUFIJO_IMAGEN = "-cinco"          # <pieza>-cinco-1.jpg … <pieza>-cinco-5.jpg
-N = 5
+N = 5                             # como mucho (y lo de siempre); desde el 5/11 van de `cinco.minimo` a `cinco.maximo`
 CARRILES = ("editorial", "radar")
 DIAS_ESCENAS = 7
 ANCHO, ALTO = 1088, 1360          # 4:5, múltiplos de 16 (Flux 2 Pro)
@@ -57,7 +57,7 @@ class GuionCinco(BaseModel):
     titular: str = Field(description="Titular de portada, de 12 palabras como máximo")
     subtitulo: str = Field(description="Subtítulo de portada, de 10 a 22 palabras")
     remate: str = Field(description="El final literal del titular de portada, de 2 a 5 palabras")
-    noticias: list[NoticiaCinco] = Field(description="Las cinco noticias, de más a menos importante")
+    noticias: list[NoticiaCinco] = Field(description="Las noticias, de 3 a 5, de más a menos importante")
     pie_instagram: str = Field(description="De 80 a 150 palabras")
 
 
@@ -70,8 +70,8 @@ def _remate_valido(titular: str, remate: str) -> bool:
     return bool(r) and 2 <= _palabras(r) <= 5 and t.endswith(r)
 
 
-def validar(g: GuionCinco, ids: set[str]) -> list[str]:
-    """Los errores del guion de «Cinco del libro» (lista vacía si vale)."""
+def validar(g: GuionCinco, ids: set[str], minimo: int = 3, maximo: int = N, exactas: int | None = None) -> list[str]:
+    """Los errores del guion de «Cinco del libro» (lista vacía si vale). Con `exactas`, tienen que ser esas."""
     from folio.imagenes.editorial import validar_escena
     errores = []
     if _palabras(g.titular) > 12 or g.titular.strip().endswith("?"):
@@ -80,8 +80,10 @@ def validar(g: GuionCinco, ids: set[str]) -> list[str]:
         errores.append(f"El subtítulo de portada tiene que tener de 10 a 22 palabras (tiene {_palabras(g.subtitulo)}).")
     if not _remate_valido(g.titular, g.remate):
         errores.append("El remate de portada tiene que ser el final literal del titular, de 2 a 5 palabras.")
-    if len(g.noticias) != N:
-        errores.append(f"Tienen que ser exactamente {N} noticias (hay {len(g.noticias)}).")
+    if exactas is not None and len(g.noticias) != exactas:
+        errores.append(f"Tienen que ser exactamente {exactas} noticias (hay {len(g.noticias)}).")
+    elif exactas is None and not minimo <= len(g.noticias) <= maximo:
+        errores.append(f"Tienen que ser de {minimo} a {maximo} noticias (hay {len(g.noticias)}).")
     vistos = set()
     for i, x in enumerate(g.noticias, 1):
         if x.historia not in ids:
@@ -138,7 +140,14 @@ def guardar_escenas(cfg: Config, fecha: str, escenas: list[str]) -> None:
 # --- Escribir ---------------------------------------------------------------------------------
 
 def candidatas(historias: list[Historia]) -> list[Historia]:
-    return [h for h in historias if h.carril in CARRILES and h.titular_es]
+    """Las del carril del libro y el radar y, desde el 5/11, las de la actualidad que tratan de libros (un premio
+    Cervantes o un Planeta salen en la prensa general, no en los medios del sector)."""
+    return [h for h in historias if h.titular_es and (h.carril in CARRILES or (h.carril == "actualidad" and h.sobre_libros))]
+
+
+def cuantas(cfg: Config) -> tuple[int, int]:
+    c = cfg.pipeline.cinco
+    return min(c.minimo, c.maximo, N), min(c.maximo, N)
 
 
 def _bloque(historias: list[Historia]) -> str:
@@ -149,7 +158,7 @@ def _bloque(historias: list[Historia]) -> str:
     return "<noticias>\n" + "\n".join(linea(h) for h in historias) + "\n</noticias>"
 
 
-ELEGIDAS_POR_LA_REDACCION = ("La redacción ya ha elegido las cinco noticias: son exactamente las de la lista, y en ese "
+ELEGIDAS_POR_LA_REDACCION = ("La redacción ya ha elegido las noticias: son exactamente las de la lista, todas, y en ese "
                              "orden (la primera abre). No elijas ni cambies el orden: escríbelas. Los criterios de "
                              "elección de abajo no aplican; el resto, sí.")
 
@@ -160,17 +169,19 @@ def escribir(llm: LLM, cfg: Config, fecha: str, historias: list[Historia],
     la redacción. ErrorLLM si no hay noticias bastantes o si no valida tras un reintento."""
     from folio.guion import linea_hoy
     lista = candidatas(historias)
+    minimo, maximo = cuantas(cfg)
     if elegidas is not None:
         por_id = {h.id: h for h in lista}
         faltan = [i for i in elegidas if i not in por_id]
-        if faltan or len(elegidas) != N or len(set(elegidas)) != N:
-            raise ErrorLLM(f"Cinco del libro: hay que elegir {N} noticias distintas de la lista del día"
+        if faltan or not minimo <= len(elegidas) <= maximo or len(set(elegidas)) != len(elegidas):
+            raise ErrorLLM(f"Cinco del libro: hay que elegir de {minimo} a {maximo} noticias distintas de la lista del día"
                            + (f" (no están: {', '.join(faltan)})" if faltan else ""))
         lista = [por_id[i] for i in elegidas]
-    if len(lista) < N:
+    if len(lista) < minimo:
         raise ErrorLLM(f"Cinco del libro: solo hay {len(lista)} noticias del mundo del libro hoy")
     usadas = escenas_recientes(cfg, fecha)
     prompt = cargar_prompt(cfg, "cinco", {"[pegar hoy]": linea_hoy(fecha), "[pegar noticias]": _bloque(lista),
+                                          "[pegar cuantas]": f"de {minimo} a {maximo}",
                                           "[pegar eleccion]": ELEGIDAS_POR_LA_REDACCION if elegidas else "",
                                           "[pegar objetos]": "\n".join(f"- {e}" for e in usadas) or "(ninguna)"})
     mensajes = [{"role": "user", "content": prompt}]
@@ -180,7 +191,7 @@ def escribir(llm: LLM, cfg: Config, fecha: str, historias: list[Historia],
     for intento in range(2):
         g, _ = llm.estructurado(f"cinco:{fecha}:{intento + 1}", cache_al_final(mensajes, hasta=0), GuionCinco,
                                 etapa_modelo="cinco", max_tokens=16000)
-        errores = validar(g, ids)
+        errores = validar(g, ids, minimo, maximo, exactas=len(elegidas) if elegidas else None)
         if elegidas and not errores and [x.historia for x in g.noticias] != elegidas:
             errores = ["Las noticias tienen que ser las elegidas por la redacción, en su orden: " + ", ".join(elegidas) + "."]
         if not errores:
@@ -314,7 +325,7 @@ def preparar(tuberia, historias: list[Historia], pieza_id: str, dibujar: bool = 
 
 # --- La lista para elegir (5/11) -----------------------------------------------------------------
 
-N_LISTA = 10                      # noticias que se proponen (hasta 12 si hay material; las cinco primeras, marcadas)
+N_LISTA = 10                      # noticias que se proponen como mínimo, si hay material (hasta `cinco.propuestas`)
 PREFIJO_CAMBIOS = "Cinco del libro: elección de la redacción"
 
 
@@ -325,7 +336,8 @@ class CandidataCinco(BaseModel):
 
 
 class ListaCinco(BaseModel):
-    candidatas: list[CandidataCinco] = Field(description="De 8 a 12 noticias, de más a menos importante: las cinco primeras son las que publicarías")
+    candidatas: list[CandidataCinco] = Field(description="Las noticias para elegir, de más a menos importante: las primeras son las que publicarías")
+    publicar: int = Field(description="Cuántas de las primeras publicarías hoy (de 3 a 5)")
 
 
 class Candidata(BaseModel):
@@ -342,6 +354,8 @@ class Candidata(BaseModel):
 class PropuestaCinco(BaseModel):
     fecha: str
     candidatas: list[Candidata]
+    minimo: int = 3                       # cuántas puede llevar el post (5/11)
+    maximo: int = N
     elegidas: list[str] | None = None     # lo que eligió la redacción al montar el post
     coste_usd: float = 0.0
 
@@ -361,11 +375,13 @@ def guardar_propuesta(cfg: Config, p: PropuestaCinco) -> None:
     guardar_json(ruta_propuesta(cfg, p.fecha), p.model_dump())
 
 
-def validar_lista(lista: ListaCinco, ids: set[str]) -> list[str]:
+def validar_lista(lista: ListaCinco, ids: set[str], maximo: int = 15, publicar: tuple[int, int] = (3, N)) -> list[str]:
     errores = []
-    minimo = min(8, len(ids))
-    if not minimo <= len(lista.candidatas) <= 12:
-        errores.append(f"Tienen que ser de {minimo} a 12 noticias (hay {len(lista.candidatas)}).")
+    minimo = min(N_LISTA, len(ids))
+    if not minimo <= len(lista.candidatas) <= max(maximo, minimo):
+        errores.append(f"Tienen que ser de {minimo} a {max(maximo, minimo)} noticias (hay {len(lista.candidatas)}).")
+    if not publicar[0] <= lista.publicar <= min(publicar[1], len(lista.candidatas)):
+        errores.append(f"`publicar` tiene que ser de {publicar[0]} a {publicar[1]}.")
     vistos = set()
     for i, c in enumerate(lista.candidatas, 1):
         if c.historia not in ids:
@@ -383,9 +399,13 @@ def proponer(llm: LLM, cfg: Config, fecha: str, historias: list[Historia]) -> Pr
     bastantes o si la lista no valida tras un reintento."""
     from folio.guion import linea_hoy
     lista = candidatas(historias)
-    if len(lista) < N:
+    minimo, maximo = cuantas(cfg)
+    tope = cfg.pipeline.cinco.propuestas
+    if len(lista) < minimo:
         raise ErrorLLM(f"Cinco del libro: solo hay {len(lista)} noticias del mundo del libro hoy")
-    prompt = cargar_prompt(cfg, "cinco_propuesta", {"[pegar hoy]": linea_hoy(fecha), "[pegar noticias]": _bloque(lista)})
+    prompt = cargar_prompt(cfg, "cinco_propuesta", {"[pegar hoy]": linea_hoy(fecha), "[pegar noticias]": _bloque(lista),
+                                                    "[pegar cuantas]": f"de {minimo} a {maximo}",
+                                                    "[pegar propuestas]": f"de {min(N_LISTA, len(lista))} a {max(tope, min(N_LISTA, len(lista)))}"})
     mensajes = [{"role": "user", "content": prompt}]
     ids = {h.id for h in lista}
     errores: list[str] = []
@@ -393,7 +413,7 @@ def proponer(llm: LLM, cfg: Config, fecha: str, historias: list[Historia]) -> Pr
     for intento in range(2):
         r, _ = llm.estructurado(f"cinco-propuesta:{fecha}:{intento + 1}", cache_al_final(mensajes, hasta=0), ListaCinco,
                                 etapa_modelo="cinco_propuesta", max_tokens=8000)
-        errores = validar_lista(r, ids)
+        errores = validar_lista(r, ids, tope, (minimo, maximo))
         if not errores:
             por_id = {h.id: h for h in lista}
             out = []
@@ -401,9 +421,9 @@ def proponer(llm: LLM, cfg: Config, fecha: str, historias: list[Historia]) -> Pr
                 h = por_id[c.historia]
                 a = h.articulos[0] if h.articulos else None
                 out.append(Candidata(historia=c.historia, titular=c.titular.strip(), por_que=c.por_que.strip(),
-                                     medio=a.medio if a else "", url=a.url if a else "", n_medios=h.n_medios, marcada=i < N))
+                                     medio=a.medio if a else "", url=a.url if a else "", n_medios=h.n_medios, marcada=i < r.publicar))
             coste = round(sum(t.coste_usd for t in llm.trazas[antes:]), 4)
-            return PropuestaCinco(fecha=fecha, candidatas=out, coste_usd=coste)
+            return PropuestaCinco(fecha=fecha, candidatas=out, coste_usd=coste, minimo=minimo, maximo=maximo)
         mensajes += [{"role": "assistant", "content": json.dumps(r.model_dump(), ensure_ascii=False)},
                      {"role": "user", "content": "No cumple estas condiciones:\n" + "\n".join(f"- {e}" for e in errores)
                       + "\nCorrígelo y devuelve el JSON completo."}]

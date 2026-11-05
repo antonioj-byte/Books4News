@@ -75,13 +75,14 @@ def _fecha(fecha: str) -> None:
 
 @router.post("/api/cinco/{fecha}", response_model=EstadoEjecucion, status_code=202)
 def lanzar_cinco(fecha: str, cuerpo: MontarCinco | None = None, ctx: Contexto = Depends(contexto)):
-    """Escribe y monta el post. Con `elegidas`, con esas cinco y en ese orden (5/11: la redacción elige de la lista)."""
+    """Escribe y monta el post. Con `elegidas`, con esas (de 3 a 5) y en ese orden (5/11: la redacción elige de la lista)."""
     _fecha(fecha)
     orden = [sys.executable, "-m", "folio.cli", "cinco", "--fecha", fecha, "--quiet"]
     if cuerpo and cuerpo.elegidas is not None:
         from folio import cinco
-        if len(cuerpo.elegidas) != cinco.N or len(set(cuerpo.elegidas)) != cinco.N:
-            raise HTTPException(422, f"Hay que elegir {cinco.N} noticias distintas")
+        minimo, maximo = cinco.cuantas(ctx.cfg)
+        if not minimo <= len(cuerpo.elegidas) <= maximo or len(set(cuerpo.elegidas)) != len(cuerpo.elegidas):
+            raise HTTPException(422, f"Hay que elegir de {minimo} a {maximo} noticias distintas")
         if any(not re.fullmatch(r"[\w.:-]{1,80}", i) for i in cuerpo.elegidas):
             raise HTTPException(422, "Id de noticia no válido")
         orden += ["--elegidas", ",".join(cuerpo.elegidas)]

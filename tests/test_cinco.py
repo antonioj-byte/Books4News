@@ -129,7 +129,7 @@ def _texto(mensaje):
 
 def _lista(n=10, ids=None):
     ids = ids or [f"e{i}" for i in range(n)]
-    return cinco.ListaCinco(candidatas=[cinco.CandidataCinco(historia=i, titular=f"Pasa algo en {i}",
+    return cinco.ListaCinco(publicar=5, candidatas=[cinco.CandidataCinco(historia=i, titular=f"Pasa algo en {i}",
                                                              por_que="Porque importa a los lectores de Folio hoy mismo") for i in ids])
 
 
@@ -163,7 +163,7 @@ def test_con_elegidas_escribe_esas_y_en_su_orden(cfg):
     assert "en su orden" in avisos[0]
 
 
-def test_con_elegidas_que_no_son_cinco_no_llama_al_modelo(cfg):
+def test_con_elegidas_que_no_llegan_a_tres_no_llama_al_modelo(cfg):
     with pytest.raises(cinco.ErrorLLM):
         cinco.escribir(_LLM(), cfg, "2026-11-05", _historias(12), elegidas=["e1", "e2"])
 
@@ -192,6 +192,47 @@ def test_la_api_da_la_lista_y_monta_con_las_elegidas(cfg_diseno, monkeypatch):
     cinco.guardar_propuesta(cfg_diseno, cinco.proponer(_LLM(_lista()), cfg_diseno, "2026-11-05", _historias(12)))
     assert len(c.get("/api/cinco/2026-11-05/lista").json()["propuesta"]["candidatas"]) == 10
     assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2"]}).status_code == 422
+    assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2", "e3"]}).status_code == 202
     assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2", "e3", "e4", "e5;rm"]}).status_code == 422
     assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2", "e3", "e4", "e5"]}).status_code == 202
     assert lanzados[-1][1][0][-2:] == ["--elegidas", "e1,e2,e3,e4,e5"]
+
+
+def test_tres_noticias_tambien_valen(cfg):
+    """5/11: «no tienen por qué ser cinco, a lo mejor un día son 3 y otro 4»."""
+    g = _guion(noticias=_guion().noticias[:3])
+    assert cinco.validar(g, {f"e{i}" for i in range(6)}) == []
+    assert cinco.validar(_guion(noticias=_guion().noticias[:2]), {f"e{i}" for i in range(6)})
+    llm = _LLM(g)
+    g2, _ = cinco.escribir(llm, cfg, "2026-11-05", _historias(12), elegidas=["e0", "e1", "e2"])
+    assert len(g2.noticias) == 3 and "de 3 a 5" in _texto(llm.prompts[0][0])
+
+
+def test_la_lista_marca_las_que_diga_el_jefe(cfg):
+    l = _lista(12)
+    l.publicar = 3
+    p = cinco.proponer(_LLM(l), cfg, "2026-11-05", _historias(20))
+    assert sum(c.marcada for c in p.candidatas) == 3 and (p.minimo, p.maximo) == (3, 5)
+
+
+def test_la_lista_pide_al_menos_diez_si_hay(cfg):
+    llm = _LLM(_lista(8), _lista(10))
+    p = cinco.proponer(llm, cfg, "2026-11-05", _historias(20))
+    assert len(p.candidatas) == 10 and "de 10 a" in _texto(llm.prompts[1][-1])
+
+
+def test_las_de_actualidad_sobre_libros_entran(cfg):
+    hs = _historias(3)
+    hs[0].carril, hs[0].sobre_libros = "actualidad", True
+    hs[1].carril, hs[1].sobre_libros = "actualidad", False
+    assert [h.id for h in cinco.candidatas(hs)] == ["e0", "e2"]
+
+
+def test_la_portada_y_el_contador_cuentan_las_que_hay(cfg_diseno):
+    g = _guion(noticias=_guion().noticias[:3])
+    pieza = cinco.a_pieza(g, "2026-11-05-9", "2026-11-05", _historias(6))
+    pl = render.Plantillas(cfg_diseno, url_medio=lambda r: "/api/medios/" + r.name)
+    assert 'aria-hidden="true">3</div>' in pl.html_diapositiva(pieza, 1)
+    tercera = pl.html_diapositiva(pieza, 3)
+    contador = tercera.split('cinco-contador')[1].split("</div>")[0]
+    assert contador.count("<i") == 3 and contador.count('class="si"') == 2

@@ -132,7 +132,8 @@ class Plantillas:
         datos = {**self._base(base_url), **self._texto(pieza, d, n), "ilustracion": img["src"] if img else None,
                  "imagen": None, "retrato": None, "acento": None, "tono": None, "sin_foto": None, "infografia": None,
                  "panorama": False, "friso": None, "banda": None, "video": False, "portada_estilo": None,
-                 "fecha_corta": fecha_corta(pieza.fecha)}
+                 "fecha_corta": fecha_corta(pieza.fecha),
+                 "total_noticias": sum(x.tipo == "noticia" for x in pieza.guion.diapositivas)}
         if d.tipo != "noticia":
             datos["tipo"] = "cinco"
             return self.env.get_template("cinco.html").render(**datos)

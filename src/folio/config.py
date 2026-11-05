@@ -95,6 +95,11 @@ class Cinco(_Seccion):
     # 5/11, a petición del usuario («yo elijo las más importantes y finalmente monta el post»): con «propuesta», la
     # madrugada solo prepara la lista y el post se monta al elegir en la mesa; con «automatico», ya escrito, como antes
     modo: Literal["propuesta", "automatico"] = "propuesta"
+    # 5/11 («no tienen por qué ser cinco, a lo mejor un día son 3 y otro 4»; «metamos más propuestas, tipo 10»)
+    minimo: int = Field(default=3, ge=1, le=5)
+    maximo: int = Field(default=5, ge=1, le=5)
+    propuestas: int = Field(default=12, ge=6, le=20)   # noticias de la lista para elegir (de 10 a esta cifra)
+    en_espanol: int = Field(default=12, ge=0, le=30)   # noticias del libro en español que se resumen además de las del jefe
 
 
 class Newsletter(_Seccion):

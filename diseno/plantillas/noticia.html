@@ -2,7 +2,7 @@
 {# «Cinco del libro», cada noticia (2/11): su ilustración a sangre, el titular con su remate, el subtítulo y el medio #}
 {% block fondo %}{% if ilustracion %}<div class="cinco-ilus" aria-hidden="true" style="background-image: url('{{ ilustracion }}')"></div><div class="cinco-velo" aria-hidden="true"></div>
 {%- else %}<div class="cinco-numero" aria-hidden="true">{{ orden }}</div>{% endif %}
-<div class="cinco-contador" aria-hidden="true">{% for i in range(5) %}<i{% if i < orden %} class="si"{% endif %}></i>{% endfor %}</div>{% endblock %}
+<div class="cinco-contador" aria-hidden="true">{% for i in range(total_noticias or 5) %}<i{% if i < orden %} class="si"{% endif %}></i>{% endfor %}</div>{% endblock %}
 {% block cuerpo %}
     <div class="titulo">
       <h1 class="titular">{{ noticia_remate }}</h1>

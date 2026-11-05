@@ -204,6 +204,13 @@ class Pipeline:
         # Se resumen el doble de las que ve el jefe (o las que pide el radar, que ve también las que no le llegan)
         resumir = max(2 * maximo, p.radar.historias if p.radar.activo else 0)
         del_libro = self._no_repetidas(grupos, vectores, resumir if con_llm else maximo, usadas, excluidas)
+        if con_llm and p.cinco.activo and p.cinco.en_espanol:
+            # 5/11, a petición del usuario («solo hay premios internacionales»): el orden por número de medios deja
+            # fuera lo que cuenta un solo medio en español; se resumen además las primeras en español que no
+            # entraron, para el radar y «Cinco del libro» (el jefe sigue viendo las suyas)
+            ya = {h.id for h in del_libro}
+            en_espanol = [g for g in grupos if g.id not in ya and any(a.idioma == "es" for a in g.articulos)]
+            del_libro += self._no_repetidas(en_espanol, vectores, p.cinco.en_espanol, usadas, excluidas)
         for h in del_libro:
             h.carril = "editorial"
         if con_llm:

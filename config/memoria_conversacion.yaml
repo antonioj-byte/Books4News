@@ -791,3 +791,11 @@
   patron: "«Con lo de las noticias del día tengo dudas si lo mejor es que me dé el post ya hecho o me haga una propuesta de noticias. Yo elijo las más importantes y finalmente monta el post.»"
   propuesta: "«Cinco del libro» se monta con las noticias que elige la redacción: la madrugada propone unas diez con las cinco del jefe marcadas, y el post (textos, ilustraciones, hechos y PNG) se hace al pulsar «Montar el post»."
   evidencia: ["Conversación, 5/11: prueba de «Cinco del libro» con elección"]
+
+- clave: cinco-flexible-y-en-espanol
+  fecha: "2026-11-05"
+  destino: jefe_cultura
+  capa: celda
+  patron: "«Solo hay premios internacionales. No tienen por qué ser cinco, a lo mejor un día son 3 y otro 4; hagámoslo flexible. Metamos más propuestas: tipo 10 propuestas o así para elegir.»"
+  propuesta: "«Cinco del libro» lleva de 3 a 5 noticias, las que valgan ese día; la lista para elegir trae de 10 a 15, con lo de España y Latinoamérica con su peso y como mucho un premio nacional de otro país."
+  evidencia: ["Conversación, 5/11: la lista con Janosch, el Baillie Gifford, el Renaudot, el Médicis y el Femina"]

@@ -55,7 +55,7 @@ export type CandidataCinco = {
 };
 export type ListaCinco = {
   modo: string;
-  propuesta: { fecha: string; candidatas: CandidataCinco[]; elegidas: string[] | null; coste_usd: number } | null;
+  propuesta: { fecha: string; candidatas: CandidataCinco[]; elegidas: string[] | null; coste_usd: number; minimo?: number; maximo?: number } | null;
 };
 
 const pieza = (eid: number, pid: string) => `/api/ejecuciones/${eid}/piezas/${pid}`;

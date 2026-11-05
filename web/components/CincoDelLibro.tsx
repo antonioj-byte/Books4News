@@ -6,11 +6,9 @@ import { useTrabajo } from "@/lib/useTrabajo";
 import { Boton } from "@/components/Boton";
 import { FalloTrabajo, PASOS_CINCO, Trabajando } from "@/components/Trabajando";
 
-const N = 5;
-
 // «Cinco del libro» en la mesa. Desde el 5/11 (a petición del usuario: «me haga una propuesta de noticias; yo elijo las
 // más importantes y finalmente monta el post»), la madrugada deja una lista de unas diez noticias con las cinco del jefe
-// ya marcadas: si valen, un clic; si no, se marcan otras. El número es el orden del post (la 1 abre) y ↑ la sube.
+// ya marcadas: si valen, un clic; si no, se marcan otras. Desde el 5/11, de 3 a 5 (las que valgan ese día) entre 10–15. El número es el orden del post (la 1 abre) y ↑ la sube.
 // «Montar el post» lanza `folio cinco --elegidas …` en un proceso aparte y lo sigue con la tarjeta de trabajo; las
 // ilustraciones solo se pagan de lo elegido. Sin lista (un día anterior, o falló), se prepara aquí en unos segundos.
 // Con `cinco.modo: automatico`, como antes: un botón que la escribe entera.
@@ -47,7 +45,9 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
     if (i > 0) setOrden([...elegidas.slice(0, i - 1), id, elegidas[i - 1], ...elegidas.slice(i + 1)]);
   };
   const n = elegidas.length;
-  const motivo = n < N ? `Marca ${N - n} más: el post lleva ${N} noticias` : n > N ? `Sobran ${n - N}: el post lleva ${N} noticias` : null;
+  const min = lista?.propuesta?.minimo ?? 3, max = lista?.propuesta?.maximo ?? 5;
+  const motivo = n < min ? `Marca ${min - n} más: el post lleva de ${min} a ${max} noticias`
+    : n > max ? `Sobran ${n - max}: el post lleva como mucho ${max} noticias` : null;
   const cambiada = orden !== null && orden.join() !== delJefe.join();
 
   const cuerpo = (
@@ -58,8 +58,8 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
       ) : lista?.propuesta && candidatas.length ? (
         <>
           <p className="max-w-[62ch] text-[14px] text-tinta-suave">
-            Elige las cinco noticias del mundo del libro de hoy. Van marcadas las que publicaría el jefe de cultura; el número es
-            el orden del post (la 1 abre).
+            Elige las noticias del mundo del libro de hoy, de {min} a {max}. Van marcadas las que publicaría el jefe de cultura; el
+            número es el orden del post (la 1 abre).
           </p>
           <ol className="flex w-full flex-col divide-y divide-borde rounded-[10px] border border-borde bg-papel">
             {candidatas.map((c) => {
@@ -90,7 +90,7 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
           <div className="flex flex-wrap items-start gap-3">
             <Boton onClick={montar.lanzar} motivo={motivo} hecho={null}
                    coste={`~${Math.round((montar.estado?.tipico_s ?? 300) / 60)} min · ~0,15 $ y ~125 créditos`}>
-              Montar el post ({Math.min(n, N)}/{N}) →
+              Montar el post ({n} {n === 1 ? "noticia" : "noticias"}) →
             </Boton>
             {cambiada && <button className="boton-suave" onClick={() => setOrden(null)}>Volver a las del jefe</button>}
           </div>

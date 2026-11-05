@@ -121,6 +121,10 @@ cinco:
   activo: true
   modo: propuesta               # 5/11: la madrugada propone unas diez noticias con cinco marcadas y la redacción
                                 # elige antes de montar el post; «automatico»: el post ya escrito, como antes
+  minimo: 3                     # 5/11: el post lleva de 3 a 5 noticias, las que valgan ese día
+  maximo: 5
+  propuestas: 15                # la lista para elegir: de 10 a 15 noticias
+  en_espanol: 12                # noticias del libro en español que se resumen además (el orden por medios las dejaba fuera)
 
 exclusion:
   dias_historias: 7
