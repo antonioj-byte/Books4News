@@ -121,8 +121,12 @@ def libros_usados(cfg, fecha: str) -> str:
 def criterios(cfg, fecha: str) -> str:
     """La línea editorial, los criterios y las reglas de libros del jefe de cultura (prompts/jefe_cultura.md), para
     que el editor del libro y el jefe ante un tema propuesto juzguen con las mismas reglas que la mesa."""
-    texto = (cfg.dir_prompts / "jefe_cultura.md").read_text(encoding="utf-8")
-    inicio, fin = texto.find("Línea editorial de Folio:"), texto.find("Para cada propuesta devuelve")
+    from folio.llm import plantilla
+    # Con las inclusiones ya puestas (5/11: el lector de Folio, lector_espanol.md, va justo antes de la línea editorial)
+    texto = plantilla(cfg, "jefe_cultura")
+    inicio, fin = texto.find("Para quién es Folio"), texto.find("Para cada propuesta devuelve")
+    if inicio < 0:
+        inicio = texto.find("Línea editorial de Folio:")
     if inicio < 0 or fin < 0:
         raise ValueError("prompts/jefe_cultura.md ha cambiado: no encuentro la línea editorial ni las reglas de libros")
     trozo = texto[inicio:fin].replace("`protagonista`, vacío.", "").strip()

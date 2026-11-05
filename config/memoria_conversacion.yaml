@@ -775,3 +775,11 @@
   patron: "«No sé qué le pasa con esta ilustración, que me la ha hecho varias veces» (la misma prensa de imprenta de archivo en piezas de días distintos)."
   propuesta: "Una imagen de archivo usada no vuelve a salir en otra pieza en 30 días."
   evidencia: ["Conversación, 5/11: Sylvia Beach y el Ulises"]
+
+- clave: lector-espanol
+  fecha: "2026-11-05"
+  destino: jefe_cultura
+  capa: marca
+  patron: "«Veo que hay mucho foco en cosas francesas, alemanas… ten en cuenta que el público principal es español. No se trata de premiar cosas locales como de tener en cuenta esa sensibilidad.»"
+  propuesta: "Se elige lo que le importa, le suena o le sirve a un lector en España: lo de fuera, si se entiende sin conocer el país, toca algo que también vive aquí, se lee en castellano o es lo bastante grande; nunca una lista llena de un mismo país extranjero, y lo de fuera se cuenta desde aquí."
+  evidencia: ["Conversación, 5/11: radar y Cinco del libro con Janosch, el Renaudot y editoriales francesas"]
