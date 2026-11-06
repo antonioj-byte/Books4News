@@ -240,3 +240,67 @@ def test_la_comprobacion_cortada_se_repite_con_esfuerzo_bajo(cfg):
     perfil.preparar(_LLM([_guion()]), cfg, p, TEXTOS)
     assert hechos.comprobar(llm, p.id, p.guion, TEXTOS) == []
     assert llm.etapas == [("comprobacion", hechos.MAX_TOKENS), ("comprobacion_corta", hechos.MAX_TOKENS)]
+
+
+def _accion(**k):
+    from folio import edicion
+    base = dict(tipo="libros", enfoque_x=50, enfoque_y=50, composicion="", consultas=[], escena="", persona="", estilo="",
+                material="", como="", destacado="", antetitulo="", acento="", libro="", autor="", sin_castellano="",
+                editorial="", isbn="", desde=0)
+    return edicion.AccionImagen(**{**base, **k})
+
+
+@pytest.fixture
+def verificador_simulado(monkeypatch):
+    """Tiempo muerto pasa; cualquier otro libro nuevo, no."""
+    from folio.modelos import LibroDescartado
+    from folio.pipeline import Pipeline
+
+    def verificar(self, pieza, reservados):
+        c = pieza.eleccion.libros_candidatos[0]
+        if c.titulo == "Tiempo muerto":
+            pieza.libros = [LIBRO.model_copy(update={"titulo": "Tiempo muerto", "titulo_propuesto": "Tiempo muerto",
+                                                     "anio_primera_edicion": 2017})]
+            return True
+        pieza.libros_descartados = [LibroDescartado(titulo=c.titulo, autor=c.autor, motivo="no aparece en los catálogos")]
+        return False
+    monkeypatch.setattr(Pipeline, "_verificar", verificar)
+    monkeypatch.setattr(Pipeline, "_cubiertas_de", lambda self, p: None)
+
+
+def test_el_chat_fija_los_libros_sin_dejar_la_pieza_pendiente(cfg, verificador_simulado):
+    """6/11 («me irrita increíblemente la estrechez»): «usa estos libros para la diapo 4» se verifica al momento."""
+    from folio import edicion
+    p = _pieza()
+    perfil.preparar(_LLM([_guion()]), cfg, p, TEXTOS)
+    p.estado = "propuesta"
+    a = _accion(libros=["Tiempo muerto — Margarita García Robayo", "*Hasta que pase un huracán*", "La encomienda"])
+    nueva, nota = edicion.aplicar_imagen(None, cfg, p, a)
+    assert [l.titulo_propuesto for l in nueva.libros] == ["Tiempo muerto", "Hasta que pase un huracán"]
+    assert [lg.titulo for lg in nueva.guion.libros] == ["*Tiempo muerto*", "*Hasta que pase un huracán*"]
+    assert nueva.estado == "propuesta" and nueva.guion is not None
+    assert "Verificados ahora: Tiempo muerto" in nota and "«La encomienda»: no aparece" in nota
+    # En un perfil, «cambiar_libro» ya no la deja pendiente: el nuevo va primero y los demás se quedan
+    nueva, _ = edicion.aplicar_imagen(None, cfg, p, _accion(tipo="cambiar_libro", libro="Tiempo muerto",
+                                                            autor="Margarita García Robayo"))
+    assert nueva.estado == "propuesta" and nueva.libros[0].titulo_propuesto == "Tiempo muerto"
+
+
+def test_el_turno_del_chat_aplica_los_libros_antes_de_validar_el_guion(cfg, verificador_simulado):
+    from folio import edicion
+
+    p = _pieza()
+    perfil.preparar(_LLM([_guion()]), cfg, p, TEXTOS)
+    g = p.guion.model_copy(deep=True)
+    g.diapositivas[3].texto += " Y *Tiempo muerto* lo lleva al matrimonio."
+
+    class LLM:
+        def estructurado(self, paso, mensajes, esquema, **k):
+            return edicion.RespuestaChat(respuesta="Hecho: la 4 nombra los dos libros.", guion=g,
+                                         imagen=_accion(libros=["Hasta que pase un huracán — Margarita García Robayo",
+                                                                "Tiempo muerto — Margarita García Robayo"]), opciones=[]), None
+
+    respuesta, nueva, _ = edicion.chat(LLM(), cfg, p, [], "Usa estos libros para la diapo 4: Hasta que pase un huracán y Tiempo muerto")
+    assert nueva is not None and "Tiempo muerto" in nueva.guion.diapositivas[3].texto
+    assert [l.titulo_propuesto for l in nueva.libros] == ["Hasta que pase un huracán", "Tiempo muerto"]
+    assert len(nueva.guion.libros) == 2 and "Verificados ahora: Tiempo muerto" in respuesta

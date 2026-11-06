@@ -815,3 +815,11 @@
   patron: "«Un posible formato nuevo es el perfil de autor: una breve semblanza biográfica con un título, un subtítulo y varias diapositivas sobre su trayectoria… al menos una quote de una entrevista del autor, o una cita significativa de un libro, lo que la prensa ha dicho, de qué tratan sus libros… Puede llevar percha o no: un premio, un obituario» («Puede proponer perfiles. Tres libros puede seguir como hasta ahora»; «Me gustan la B y la C»)."
   propuesta: "Formato «perfil»: portada con la cara, quién es, trayectoria con años sacados de las fuentes o las fichas, su obra, una frase suya verificada letra por letra, de 0 a 2 frases de la prensa verificadas y por dónde empezar. Lo propone el editor del libro en el hueco del mundo del libro (como mucho uno al día) o la redacción con el enfoque «Perfil de autor»; libros de su obra sin exigir novedad. Estilos «revista» (B) y «collage» (C) alternados en el día; un obituario, siempre en «revista», sin color y con el cierre como homenaje."
   evidencia: ["Conversación, 6/11: Artifact «El perfil de autor»"]
+
+- clave: chat-sin-estrechez
+  fecha: "2026-11-06"
+  destino: guionista
+  capa: oficio
+  patron: "«Me irrita increíblemente la estrechez a la hora de recibir el feedback» (el chat no quiso meter *La encomienda* en la diapositiva 4 de un perfil porque no estaba verificada)."
+  propuesta: "Quien edita manda: antes de decir que no, el chat busca la acción que lo hace y lo hace en el turno (los libros nuevos se verifican al momento con «libros»); si una regla lo impide de verdad, hace lo demás y lo más cercano, lo dice en una frase y no toca lo que no le pidieron."
+  evidencia: ["Conversación, 6/11: captura del chat del perfil de Margarita García Robayo"]

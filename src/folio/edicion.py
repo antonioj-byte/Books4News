@@ -39,7 +39,7 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado", "recorte", "usar_material", "formato", "cubierta", "friso", "banda", "cambiar_libro"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "recorte", "usar_material", "formato", "cubierta", "friso", "banda", "cambiar_libro", "libros"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
@@ -53,7 +53,9 @@ class AccionImagen(BaseModel):
                     "friso: dibujar de nuevo (o quitar) la ilustración en banda que cruza las tres fichas de «Tres libros»; "
                     "banda: una ilustración panorámica a sangre que cruza tres diapositivas seguidas (no la portada ni el cierre), "
                     "con el texto en blanco encima; puede llevar a una persona real, pintada a partir de su foto libre (o quitarla); "
-                    "cambiar_libro: cambiar el libro de la pieza por otro (se verifica) y dejarla lista para reescribirla")
+                    "cambiar_libro: cambiar el libro de la pieza por otro (se verifica) y dejarla lista para reescribirla; "
+                    "libros: fijar la lista de libros de la pieza (añadir, quitar u ordenar), que el código verifica al momento, "
+                    "sin dejarla pendiente: en el mismo turno puedes reescribir en `guion` las diapositivas que los nombran")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
@@ -72,6 +74,7 @@ class AccionImagen(BaseModel):
     sin_castellano: str = Field(description="Solo cambiar_libro: «si» solo si quien edita pide expresamente ese libro aunque no tenga edición en castellano; si no, vacío")
     editorial: str = Field(description="Solo cubierta: la editorial de la edición en castellano que se quiere («Mondadori»); si no, vacío")
     isbn: str = Field(description="Solo cubierta: el ISBN de esa edición, si lo da quien edita; si no, vacío")
+    libros: list[str] = Field(default_factory=list, description="Solo libros: la lista completa de libros de la pieza, en orden (el primero es el principal), cada uno como «Título — Autor»; los que ya tiene la pieza, tal cual; si no, vacía")
     desde: int = Field(description="Solo banda: la primera de las tres diapositivas seguidas que cruza (la 4 cubre 4, 5 y 6); si no, 0")
 
 
@@ -348,8 +351,19 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
                 *mensajes, {"role": "user", "content": ultimo}]
     avisos: list[str] = list(avisos_enlaces)
     previos = set(validar(cfg, p, p.guion))
+    base, nota_libros = p, ""                   # con «libros», la pieza con los libros nuevos (una vez por turno)
     for intento in range(cfg.pipeline.guion.reintentos + 1):
         r, contenido = llm.estructurado(f"chat:{p.id}:{intento + 1}", cache_al_final(mensajes), RespuestaChat, etapa_modelo="chat")
+        if r.imagen is not None and r.imagen.tipo == "libros":
+            # 6/11: los libros se verifican antes de mirar el guion, para que el mismo turno pueda nombrarlos
+            if base is p:
+                con_libros, nota_libros = _imagen_sin_romper(llm, cfg, p, r.imagen)
+                if con_libros is None:
+                    return f"No lo he podido hacer: {nota_libros.strip().strip('()')}", None, avisos
+                base = con_libros
+            r.imagen = None
+            if r.guion is None:
+                return f"{r.respuesta} {nota_libros}".strip(), base, avisos
         if opciones is not None:
             opciones[:] = [o.strip() for o in r.opciones if 2 <= len(o.split()) <= 14][:4]
         if meta is not None:
@@ -372,9 +386,12 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
                 return f"No lo he podido hacer: {nota.strip().strip('()')}", None, avisos
             return (f"{r.respuesta} {nota}".strip()), nueva, avisos
         _corregir(p, r.guion)
-        errores = [e for e in validar(cfg, p, r.guion) if e not in previos]
+        if base is not p and base.eleccion.formato == "perfil":
+            from folio import perfil
+            r.guion.libros = perfil.libros_del_guion(base.libros)
+        errores = [e for e in validar(cfg, base, r.guion) if e not in previos]
         if not errores:
-            nueva = p.model_copy(deep=True)
+            nueva = base.model_copy(deep=True)
             nueva.guion = r.guion
             if not nueva.guion.titulares_alternativos and p.guion:      # el chat no los rehace: se quedan los del guion
                 nueva.guion.titulares_alternativos = p.guion.titulares_alternativos
@@ -387,7 +404,7 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
                 if con_imagen is None:
                     return f"{r.respuesta} Pero el cambio de imagen no se ha podido hacer: {nota.strip().strip('()')}", nueva, avisos
                 return f"{r.respuesta} {nota}".strip(), con_imagen or nueva, avisos
-            return r.respuesta, nueva, avisos
+            return f"{r.respuesta} {nota_libros}".strip(), nueva, avisos
         avisos.append(f"Intento {intento + 1} rechazado: " + " | ".join(errores))
         mensajes += [{"role": "assistant", "content": json.dumps(r.model_dump(mode="json"), ensure_ascii=False)},
                      {"role": "user", "content": "El guion no cumple estas condiciones:\n" + "\n".join(f"- {e}" for e in errores)
@@ -494,6 +511,77 @@ def _cambiar_libro(cfg: Config, llm: LLM, nueva: Pieza, a: AccionImagen) -> tupl
     l = nueva.libros[0]
     return nueva, (f"(Libro cambiado a «{l.titulo_propuesto}», de {', '.join(l.autores[:2])}, verificado. La pieza queda "
                    "pendiente: pulsa «Proceder» para escribirla de nuevo con ese libro.)")
+
+
+def _libro_pedido(texto: str, autor_por_defecto: str) -> tuple[str, str]:
+    """«Primera persona — Margarita García Robayo», «Primera persona, de M. G. R.» o solo «Primera persona»."""
+    t = texto.strip().strip("*«»\"")
+    for sep in (" — ", " – ", " - ", ", de "):
+        if sep in t:
+            titulo, _, autor = t.rpartition(sep) if sep.strip() in ("—", "–", "-") else t.partition(sep)
+            if titulo.strip() and autor.strip():
+                return titulo.strip().strip("*«»\""), autor.strip()
+    return t, autor_por_defecto
+
+
+def _libros(cfg: Config, llm: LLM, nueva: Pieza, a: AccionImagen) -> tuple[Pieza | None, str]:
+    """Fija la lista de libros de una pieza ya escrita (6/11, a petición del usuario, harto de la «estrechez»: pidió
+    «usa los siguientes libros para la diapo 4: Primera persona, Tiempo muerto, La encomienda» en un perfil y el chat
+    contestó que no podía meter a mano uno que no estaba verificado). Los que ya tiene la pieza se quedan; los nuevos se
+    verifican al momento como siempre (catálogos y edición en castellano; sin exigir novedad ni la regla de repetidos,
+    porque los pide la redacción), con su cubierta. La pieza no vuelve a pendiente: el mismo turno puede reescribir el
+    texto. Los que no se verifican no entran y se dice por qué; los demás, sí."""
+    from folio.modelos import LibroCandidato
+    from folio.pipeline import Pipeline
+    from folio.verificacion_texto import autor_coincide, titulos_coinciden
+    pedidos = [x for x in a.libros if x.strip()]
+    if not pedidos:
+        return None, "(Dime qué libros quieres, en orden.)"
+    autor_def = (nueva.libros[0].autores or [""])[0] if nueva.libros else nueva.eleccion.protagonista
+    tope = max(1, formatos.de(nueva.eleccion.formato).libros)
+    tuberia = None
+    lista, fuera, nuevos = [], [], []
+    for texto in pedidos:
+        titulo, autor = _libro_pedido(texto, autor_def or "")
+        ya = next((l for l in nueva.libros if any(titulos_coinciden(titulo, t, umbral=0.85)
+                                                  for t in (l.titulo, l.titulo_propuesto, guionista.titulo_para_pieza(l)))
+                   and (not autor or autor_coincide(autor, l.autores))), None)
+        if ya:
+            lista.append(ya)
+            continue
+        if not autor:
+            fuera.append(f"«{titulo}»: falta el autor")
+            continue
+        if tuberia is None:
+            tuberia = Pipeline(cfg, nueva.fecha, llm=llm)
+            tuberia.sin_novedad = True
+            tuberia.permitir_repetidos = True
+            tuberia.permitir_sin_castellano = a.sin_castellano.strip().lower() in ("si", "sí", "true")
+        prueba = nueva.model_copy(deep=True)
+        prueba.eleccion.libros_candidatos = [LibroCandidato(titulo=titulo, autor=autor)]
+        prueba.libros, prueba.libros_descartados, prueba.error = [], [], None
+        if tuberia._verificar(prueba, set()) and prueba.libros:
+            tuberia._cubiertas_de(prueba)
+            lista.append(prueba.libros[0])
+            nuevos.append(prueba.libros[0].titulo_propuesto)
+        else:
+            motivo = "; ".join(d.motivo for d in prueba.libros_descartados) or prueba.error or "no aparece en los catálogos"
+            fuera.append(f"«{titulo}»: {motivo}")
+    if len(lista) > tope:
+        fuera += [f"«{l.titulo_propuesto}»: este formato lleva como mucho {tope}" for l in lista[tope:]]
+        lista = lista[:tope]
+    if not lista:
+        return None, f"(No ha entrado ninguno: {'; '.join(fuera)}.)"
+    nueva.libros = lista
+    if nueva.eleccion.formato == "perfil" and nueva.guion:
+        from folio import perfil
+        nueva.guion.libros = perfil.libros_del_guion(lista)
+    partes = [f"Libros de la pieza: {', '.join('*' + guionista.titulo_para_pieza(l) + '*' for l in lista)}"]
+    if nuevos:
+        partes.append(f"Verificados ahora: {', '.join(nuevos)}")
+    if fuera:
+        partes.append(f"No entran: {'; '.join(fuera)}")
+    return nueva, "(" + ". ".join(partes) + ".)"
 
 
 def _friso(llm: LLM, cfg: Config, nueva: Pieza, ar, a: AccionImagen, dir_fecha) -> tuple[Pieza | None, str]:
@@ -618,8 +706,15 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return _friso(llm, cfg, nueva, ar, a, dir_fecha)
     if a.tipo == "banda":
         return _banda(llm, cfg, nueva, ar, a, dir_fecha)
+    if a.tipo == "cambiar_libro" and formatos.de(nueva.eleccion.formato).libros > 1 and nueva.guion:
+        # En un perfil o «Tres libros», cambiar el principal no obliga a reescribir la pieza entera (6/11): va primero
+        # y los demás se quedan
+        a = a.model_copy(update={"tipo": "libros", "libros": [f"{a.libro} — {a.autor}"] + [
+            f"{l.titulo_propuesto} — {(l.autores or [''])[0]}" for l in nueva.libros]})
     if a.tipo == "cambiar_libro":
         return _cambiar_libro(cfg, llm, nueva, a)
+    if a.tipo == "libros":
+        return _libros(cfg, llm, nueva, a)
     if a.tipo == "encuadre":
         usa_retrato = retrato and ar.registro in (*CARAS, None) and ar.portada != "panorama"
         img, clave = (retrato, f"{p.id}-retrato") if usa_retrato else (archivo, p.id)
@@ -730,7 +825,7 @@ def foto_persona(llm: LLM, cfg: Config, p: Pieza, mid: str, modificable: bool, t
         return nueva, "Foto guardada: el director de arte la usará al escribir la pieza."
     nueva.arte = ar
     if tratamiento in ("papel", "escena"):
-        vacia = {k: (0 if k in ("enfoque_x", "enfoque_y", "desde") else []) if k in ("enfoque_x", "enfoque_y", "desde", "consultas") else ""
+        vacia = {k: (0 if k in ("enfoque_x", "enfoque_y", "desde") else []) if k in ("enfoque_x", "enfoque_y", "desde", "consultas", "libros") else ""
                  for k in AccionImagen.model_fields if k != "tipo"}
         r, nota_r = _recorte(llm, cfg, nueva, ar, AccionImagen(tipo="recorte", **{**vacia, "estilo": tratamiento}), dir_fecha)
         if r is None:
