@@ -34,6 +34,7 @@ _BETA_FALLBACK = "server-side-fallback-2026-07-01"
 # Esperas ante un 5xx, un 529 o un corte de red de Anthropic. El SDK ya no reintenta por su cuenta (max_retries=0):
 # reintentaba también los 429, contra la regla de la casa (revisión general, 2/11)
 ESPERAS_5XX = (2, 8, 20, 60)
+TIEMPO_MAXIMO_S = 360.0       # lo que se espera una respuesta de Anthropic; si no llega, un reintento y se para
 
 
 def _mensaje_api(exc) -> str:
@@ -189,7 +190,11 @@ class LLM:
         if self._cliente is None:
             if not self.cfg.anthropic_api_key:
                 raise ErrorLLM("Falta ANTHROPIC_API_KEY o FOLIO_ANTHROPIC_API_KEY (ponla en .env)")
-            self._cliente = anthropic.Anthropic(api_key=self.cfg.anthropic_api_key, max_retries=0)
+            # 6/11 («no me explico cómo puede tardar 20 minutos en hacer una cosa»): el SDK espera hasta 10 minutos por
+            # respuesta y un corte se reintentaba cuatro veces (casi 50 minutos con el jefe «pensando»). La llamada más
+            # larga (el guion, 21.000 tokens con esfuerzo alto) acaba en 3–4 minutos
+            self._cliente = anthropic.Anthropic(api_key=self.cfg.anthropic_api_key, max_retries=0,
+                                                timeout=TIEMPO_MAXIMO_S)
         return self._cliente
 
     def _coste(self, modelo: str, entrada: int, salida: int, escritura: int = 0, lectura: int = 0) -> float:
@@ -290,6 +295,7 @@ class LLM:
         - 5xx, 529, 408/409 y cortes de red: se reintenta con las esperas de `ESPERAS_5XX` (2/11: «Proceder» falló
           con un 500 «Unable to complete this request right now»).
         - 429: LimiteLLM, sin reintentar. Otros 4xx: PeticionInvalida."""
+        timeouts_vistos = False
         for espera in (*ESPERAS_5XX, None):
             try:
                 return llamada()
@@ -305,6 +311,13 @@ class LLM:
                                    f"{_mensaje_api(exc)}) tras varios intentos. Es un fallo pasajero de Anthropic, "
                                    "no de la pieza: vuelve a intentarlo en unos minutos.") from exc
                 log.warning("%s: Anthropic respondió %s; reintento en %s s", paso, codigo, espera)
+            except anthropic.APITimeoutError as exc:
+                if timeouts_vistos:
+                    raise ErrorLLM(f"{paso}: Anthropic no respondió en {int(TIEMPO_MAXIMO_S // 60)} minutos, dos veces. "
+                                   "Es un fallo pasajero de Anthropic, no de la pieza: vuelve a intentarlo en un rato.") from exc
+                timeouts_vistos = True
+                log.warning("%s: Anthropic no respondió en %s s; un reintento", paso, int(TIEMPO_MAXIMO_S))
+                continue
             except anthropic.APIConnectionError as exc:
                 if espera is None:
                     # El SDK resume como «Connection error» fallos muy distintos: red, DNS o una clave con un salto

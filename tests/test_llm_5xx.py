@@ -54,3 +54,31 @@ def test_un_corte_de_red_se_reintenta(cfg, sin_esperas):
     l = m.LLM(cfg)
     fallos = [anthropic.APIConnectionError(request=httpx.Request("POST", "https://api.anthropic.com"))]
     assert l._con_paciencia("x", lambda: (_ for _ in ()).throw(fallos.pop()) if fallos else "ok") == "ok"
+
+
+def _sin_respuesta():
+    return anthropic.APITimeoutError(request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"))
+
+
+def test_sin_respuesta_un_reintento_y_sale_bien(cfg, sin_esperas):
+    """6/11: «no me explico cómo puede tardar 20 minutos»: sin respuesta, un reintento y no cuatro."""
+    l = m.LLM(cfg)
+    fallos = [_sin_respuesta()]
+    assert l._con_paciencia("jefe", lambda: (_ for _ in ()).throw(fallos.pop()) if fallos else "ok") == "ok"
+    assert sin_esperas == []
+
+
+def test_sin_respuesta_dos_veces_para(cfg, sin_esperas):
+    l = m.LLM(cfg)
+    llamadas = []
+    def nunca():
+        llamadas.append(1)
+        raise _sin_respuesta()
+    with pytest.raises(m.ErrorLLM, match="no respondió en 6 minutos, dos veces"):
+        l._con_paciencia("jefe", nunca)
+    assert len(llamadas) == 2
+
+
+def test_el_cliente_no_espera_diez_minutos(cfg):
+    cfg.anthropic_api_key = cfg.anthropic_api_key or "x"
+    assert m.LLM(cfg).cliente.timeout == m.TIEMPO_MAXIMO_S
