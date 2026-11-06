@@ -162,6 +162,19 @@ export function VistaPieza() {
                         setAvisosEdicion(r.avisos);
                         cargar();
                       }}
+                      onQuitar={["cinco", "newsletter"].includes(d.pieza.eleccion.formato ?? "") ? undefined : async (n) => {
+                        // Al momento, con «Deshacer» (vuelve a la versión de antes como versión nueva)
+                        const antes = d.version;
+                        try {
+                          const r = await api.quitarDiapositiva(eid, pid, n);
+                          setAvisosEdicion(r.avisos);
+                          cargar();
+                          avisar({ tipo: "info", texto: `Diapositiva ${n} quitada`, duracion: 10000,
+                                   accion: { texto: "Deshacer", hacer: async () => { await api.restaurarVersion(eid, pid, antes); setAvisosEdicion([]); cargar(); } } });
+                        } catch (e) {
+                          avisar({ tipo: "mal", texto: mensajeError(e) });
+                        }
+                      }}
                       extra={(n) => (
                         <button onClick={() => { setBorrador({ texto: `Diapositiva ${n}: ` }); setPestana("chat"); }} className="boton-suave">
                           Comentar

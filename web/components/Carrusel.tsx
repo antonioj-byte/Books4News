@@ -7,10 +7,12 @@ import { EditorDiapositiva } from "./EditorDiapositiva";
 // Carrusel de la pieza: diapositiva grande, flechas (también con el teclado) y miniaturas. Si hay
 // vídeo de portada, la diapositiva 1 grande es el vídeo (la miniatura sigue siendo la imagen). Con
 // `onEditar`, el texto de la diapositiva grande se puede editar en el sitio.
-export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, editables, onEditar, extra, marcadas = [] }: {
+export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, editables, onEditar, onQuitar, extra, marcadas = [] }: {
   total: number; url: (n: number) => string; ancho: number; inicial?: number; video?: string | null;
   videos?: Record<number, string>; editables?: number;
   onEditar?: (n: number, texto: string, subtitulo: string | null) => Promise<void>;
+  // Quitar una diapositiva (6/11: «una X para eliminar diapos cuando no toque»): nunca la portada ni el colofón
+  onQuitar?: (n: number) => Promise<void>;
   extra?: (n: number) => ReactNode;   // bajo la diapositiva grande: las notas de esa diapositiva (2/11)
   marcadas?: number[];                      // miniaturas con notas
 }) {
@@ -38,6 +40,14 @@ export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, e
     return () => window.removeEventListener("keydown", tecla);
   }, [total, editando]);
   const actual = Math.min(n, total);
+  const quitable = (k: number) => !!onQuitar && k > 1 && k <= (editables ?? total);
+  const [quitando, setQuitando] = useState<number | null>(null);
+  const quitar = async (k: number) => {
+    if (!onQuitar) return;
+    setQuitando(k);
+    try { await onQuitar(k); if (k <= actual) setN(Math.max(1, actual - (k < actual ? 1 : 0))); }
+    finally { setQuitando(null); }
+  };
   const boton = "h-11 w-11 rounded-full bg-tinta text-xl leading-none text-papel shadow-[var(--sombra-boton)] disabled:opacity-20 disabled:shadow-none hover:bg-noche";
   const anterior = <button className={boton} disabled={actual <= 1 || editando} onClick={() => setN(actual - 1)} aria-label="Anterior">‹</button>;
   const siguiente = <button className={boton} disabled={actual >= total || editando} onClick={() => setN(actual + 1)} aria-label="Siguiente">›</button>;
@@ -63,16 +73,28 @@ export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, e
           {onEditar && actual <= (editables ?? total) && (
             <button onClick={() => setEditando(true)} className="boton-suave">Editar el texto</button>
           )}
+          {quitable(actual) && (
+            <button onClick={() => quitar(actual)} disabled={quitando !== null} className="boton-suave"
+                    aria-busy={quitando === actual}>{quitando === actual ? "Quitando…" : "Quitar"}</button>
+          )}
           {extra?.(actual)}
         </div>
       )}
       <div className="mt-2 flex max-w-full gap-2.5 overflow-x-auto px-1 pb-2">
         {Array.from({ length: total }, (_, i) => i + 1).map((k) => (
-          <button key={k} onClick={() => setN(k)} disabled={editando} aria-label={`Ir a la diapositiva ${k}`}
-                  className={`relative shrink-0 rounded-[6px] outline-offset-2 ${k === actual ? "outline-2 outline-carmesi" : "opacity-60 hover:opacity-100"}`}>
-            <Diapositiva src={url(k)} ancho={64} titulo={`Miniatura ${k}`} />
-            {marcadas.includes(k) && <span aria-label="Tiene notas" className="absolute -right-1.5 -top-1.5 h-3.5 w-3.5 rounded-full bg-carmesi" />}
-          </button>
+          <div key={k} className="group relative shrink-0 pt-1.5">
+            <button onClick={() => setN(k)} disabled={editando} aria-label={`Ir a la diapositiva ${k}`}
+                    className={`relative rounded-[6px] outline-offset-2 ${k === actual ? "outline-2 outline-carmesi" : "opacity-60 hover:opacity-100"}`}>
+              <Diapositiva src={url(k)} ancho={64} titulo={`Miniatura ${k}`} />
+              {marcadas.includes(k) && <span aria-label="Tiene notas" className="absolute -right-1.5 -top-1.5 h-3.5 w-3.5 rounded-full bg-carmesi" />}
+            </button>
+            {quitable(k) && !editando && (
+              <button onClick={() => quitar(k)} disabled={quitando !== null} aria-label={`Quitar la diapositiva ${k}`} title="Quitar esta diapositiva"
+                      className="absolute -left-1.5 top-0 grid h-6 w-6 place-items-center rounded-full bg-tinta text-[14px] leading-none text-papel opacity-0 shadow transition-opacity hover:bg-carmesi focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+                ×
+              </button>
+            )}
+          </div>
         ))}
       </div>
     </div>

@@ -120,6 +120,37 @@ def editar_diapositiva(cfg: Config, p: Pieza, n: int, texto: str, subtitulo: str
     return nueva, validar(cfg, nueva, nueva.guion)
 
 
+# Formatos en que cada diapositiva va atada por su posición a una ilustración y a un remate (quitar una los desordena)
+SIN_QUITAR = ("cinco", "newsletter")
+
+
+def quitar_diapositiva(cfg: Config, p: Pieza, n: int) -> tuple[Pieza, list[str]]:
+    """La pieza sin la diapositiva n (6/11, a petición del usuario: «molaría que hubiera una X para eliminar diapos
+    cuando no toque») y los avisos (reglas que deja de cumplir: se guarda igual, como una edición a mano). La portada no
+    se quita; en «Cinco del libro» y la newsletter, tampoco las demás (cada una va con su ilustración por su posición).
+    ValueError con el motivo si no se puede."""
+    if not p.guion or not 1 <= n <= len(p.guion.diapositivas):
+        raise ValueError("Esa diapositiva no existe")
+    if n == 1:
+        raise ValueError("La portada no se quita: cámbiala con «Editar el texto» o en el chat")
+    if p.eleccion.formato in SIN_QUITAR:
+        raise ValueError("En este formato cada diapositiva va con su ilustración: pide al chat que la cambie")
+    if len(p.guion.diapositivas) <= 2:
+        raise ValueError("Una pieza necesita al menos la portada y otra diapositiva")
+    nueva = p.model_copy(deep=True)
+    del nueva.guion.diapositivas[n - 1]
+    for i, d in enumerate(nueva.guion.diapositivas, 1):
+        d.n = i
+    a = nueva.arte
+    if a and a.banda and a.banda_desde:
+        # La banda cruza tres diapositivas seguidas: si se quita una de ellas, se cae; si se quita una de antes, se corre
+        if a.banda_desde <= n < a.banda_desde + 3:
+            a.banda = a.banda_desde = a.banda_credito = None
+        elif n < a.banda_desde:
+            a.banda_desde -= 1
+    return nueva, validar(cfg, nueva, nueva.guion)
+
+
 def editar_pie(cfg: Config, p: Pieza, pie: str) -> tuple[Pieza, list[str]]:
     """La pieza con el pie de Instagram cambiado a mano (4/11, a petición del usuario: «permite que se pueda editar el
     pie, que ahora no se puede») y los avisos (reglas que no cumple). Se respetan los saltos de párrafo."""

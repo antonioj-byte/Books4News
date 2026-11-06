@@ -168,6 +168,33 @@ def editar_diapositiva(eid: int, pid: str, n: int, cambio: EdicionDiapositiva, c
     return ResultadoEdicion(version=v, avisos=avisos)
 
 
+@router.delete("/api/ejecuciones/{eid}/piezas/{pid}/diapositivas/{n}", response_model=ResultadoEdicion)
+def quitar_diapositiva(eid: int, pid: str, n: int, ctx: Contexto = Depends(contexto)):
+    """Quita una diapositiva (6/11): una versión nueva («manual»); se deshace volviendo a la versión anterior."""
+    p, _ = ctx.pieza(eid, pid)
+    if ctx.ejecutor.en_marcha(pid):
+        raise HTTPException(409, ESCRIBIENDOSE)
+    try:
+        nueva, avisos = edicion.quitar_diapositiva(ctx.cfg, p, n)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    v = ctx.almacen.guardar_version(eid, pid, nueva, "manual", f"Diapositiva {n} quitada")
+    return ResultadoEdicion(version=v, avisos=avisos)
+
+
+@router.post("/api/ejecuciones/{eid}/piezas/{pid}/versiones/{n}/restaurar", response_model=ResultadoEdicion)
+def restaurar_version(eid: int, pid: str, n: int, ctx: Contexto = Depends(contexto)):
+    """Vuelve a una versión anterior como versión nueva («deshacer»: las versiones solo se añaden)."""
+    ctx.pieza(eid, pid)
+    if ctx.ejecutor.en_marcha(pid):
+        raise HTTPException(409, ESCRIBIENDOSE)
+    vieja = ctx.almacen.version(eid, pid, n)
+    if not vieja:
+        raise HTTPException(404, "No existe esa versión")
+    v = ctx.almacen.guardar_version(eid, pid, vieja, "deshacer", f"Vuelta a la versión {n}")
+    return ResultadoEdicion(version=v, avisos=[])
+
+
 @router.put("/api/ejecuciones/{eid}/piezas/{pid}/pie", response_model=ResultadoEdicion)
 def editar_pie(eid: int, pid: str, cambio: EdicionPie, ctx: Contexto = Depends(contexto)):
     """El pie de Instagram editado a mano (4/11): versión nueva («manual»), aunque rompa reglas, con los avisos."""

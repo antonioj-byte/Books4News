@@ -91,3 +91,20 @@ def test_un_fallo_del_editor_se_explica_en_vez_de_un_500_mudo(cfg, monkeypatch):
     monkeypatch.setattr(edicion, "chat", lambda *x, **k: (_ for _ in ()).throw(KeyError("libros")))
     r = c.post(f"/api/ejecuciones/{eid}/piezas/2026-11-01-1/chat", json={"mensaje": "acorta el titular"})
     assert r.status_code == 500 and "KeyError" in r.json()["detail"]
+
+
+def test_quitar_una_diapositiva_y_deshacerlo(cfg):
+    """6/11 («una X para eliminar diapos cuando no toque»): versión nueva sin ella; deshacer es volver a la de antes."""
+    a = _almacen_con_feedback(cfg)
+    eid = a.ultima_ejecucion("2026-11-01")
+    (cfg.raiz / "diseno").symlink_to((type(cfg)(pipeline={}, fuentes=[]).raiz / "diseno").resolve())
+    c = TestClient(crear_app(cfg, a, importar=False))
+    base = f"/api/ejecuciones/{eid}/piezas/2026-11-01-1"
+    p, v = a.pieza(eid, "2026-11-01-1")
+    n_antes, quitada = len(p.guion.diapositivas), p.guion.diapositivas[2].texto
+    assert c.delete(f"{base}/diapositivas/1").status_code == 422          # la portada, no
+    assert c.delete(f"{base}/diapositivas/3").status_code == 200
+    ds = a.pieza(eid, "2026-11-01-1")[0].guion.diapositivas
+    assert len(ds) == n_antes - 1 and [d.n for d in ds] == list(range(1, n_antes)) and quitada not in [d.texto for d in ds]
+    assert c.post(f"{base}/versiones/{v}/restaurar").status_code == 200
+    assert len(a.pieza(eid, "2026-11-01-1")[0].guion.diapositivas) == n_antes

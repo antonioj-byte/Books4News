@@ -98,6 +98,10 @@ export const api = {
     pedir<EstadoEjecucion>(`${pieza(eid, pid)}/desarrollar`, { method: "POST" }),
   desarrollo: (eid: number, pid: string) => pedir<EstadoEjecucion>(`${pieza(eid, pid)}/desarrollo`),
   ejecucionEnMarcha: () => pedir<EstadoEjecucion>("/api/ejecuciones/en-marcha"),
+  quitarDiapositiva: (eid: number, pid: string, n: number) =>
+    pedir<{ version: number; avisos: string[] }>(`/api/ejecuciones/${eid}/piezas/${encodeURIComponent(pid)}/diapositivas/${n}`, { method: "DELETE" }),
+  restaurarVersion: (eid: number, pid: string, n: number) =>
+    pedir<{ version: number; avisos: string[] }>(`/api/ejecuciones/${eid}/piezas/${encodeURIComponent(pid)}/versiones/${n}/restaurar`, { method: "POST" }),
   editarDiapositiva: (eid: number, pid: string, n: number, texto: string, subtitulo?: string | null) =>
     pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),
   editarPie: (eid: number, pid: string, pie: string) =>
