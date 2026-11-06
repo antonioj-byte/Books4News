@@ -203,6 +203,7 @@ class Pipeline:
         maximo = p.seleccion.historias_editoriales
         # Se resumen el doble de las que ve el jefe (o las que pide el radar, que ve también las que no le llegan)
         resumir = max(2 * maximo, p.radar.historias if p.radar.activo else 0)
+        antes = set(excluidas)
         del_libro = self._no_repetidas(grupos, vectores, resumir if con_llm else maximo, usadas, excluidas)
         if con_llm and p.cinco.activo and p.cinco.en_espanol:
             # 5/11, a petición del usuario («solo hay premios internacionales»): el orden por número de medios deja
@@ -213,6 +214,12 @@ class Pipeline:
             del_libro += self._no_repetidas(en_espanol, vectores, p.cinco.en_espanol, usadas, excluidas)
         for h in del_libro:
             h.carril = "editorial"
+        # 6/11 (el Herralde no llegó a la mesa ni a «Cinco del libro» y no había forma de saber por qué): las noticias del
+        # libro que la regla de no repetir dejó fuera, con su motivo, en los avisos del día («Detalles» de la mesa)
+        por_id = {g.id: g for g in grupos}
+        for i in [i for i in excluidas if i not in antes and i in por_id][:10]:
+            g = por_id[i]
+            self.avisos.append(f"Noticia del libro fuera por repetida: «{g.articulos[0].titulo}» ({g.n_medios} medios): {excluidas[i]}")
         if con_llm:
             self.avisos += resumen.resumir(self.llm, del_libro)
             del_libro = [h for h in del_libro if h.sobre_libros is not False]

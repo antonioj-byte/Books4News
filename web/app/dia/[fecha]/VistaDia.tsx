@@ -70,11 +70,6 @@ export function VistaDia() {
 
       {error && <p className="text-carmesi" role="alert">{error}</p>}
       {!dia && !error && <EsqueletoTarjetas n={6} rejilla />}
-      {dia?.aviso_jefe && (
-        <p className="panel mb-6 px-5 py-3 text-sm">
-          <span className="subrayado font-semibold">Aviso del jefe de cultura</span> {dia.aviso_jefe}
-        </p>
-      )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {mesa.map((p) => p.estado === "pendiente" ? (
@@ -163,7 +158,7 @@ export function VistaDia() {
       {/* Lo técnico, plegado al pie (3/11, «se está volviendo demasiado compleja»): otro día u otra ejecución, lanzar a mano, avisos y coste */}
       <details className="mt-10 text-sm">
         <summary className="dato cursor-pointer uppercase">
-          Detalles{dia ? ` · ejecución de las ${hora(dia.ejecucion.generado_en)} · ${dia.coste_usd.toFixed(2)} $${dia.avisos.length ? ` · ${dia.avisos.length} avisos` : ""}` : ""}
+          Detalles{dia ? ` · ejecución de las ${hora(dia.ejecucion.generado_en)} · ${dia.coste_usd.toFixed(2)} $${dia.avisos.length ? ` · ${dia.avisos.length} avisos` : ""}${dia.aviso_jefe ? " · notas del jefe" : ""}` : ""}
         </summary>
         <div className="mt-3 flex flex-col items-start gap-4">
           <div className="flex flex-wrap items-center gap-2">
@@ -180,6 +175,9 @@ export function VistaDia() {
             )}
           </div>
           <LanzarEjecucion alTerminar={alTerminar} />
+          {/* 6/11 («no sé si me parece innecesario el mensaje del aviso del jefe… no me aporta mucho»): sus notas sobre
+              lo que dejó fuera, aquí y no encima de la mesa */}
+          {dia?.aviso_jefe && <p className="max-w-[72ch] text-tinta-suave"><b>Notas del jefe de cultura:</b> {dia.aviso_jefe}</p>}
           {dia && dia.avisos.length > 0 && (
             <ul className="list-disc pl-5 text-tinta-suave">{dia.avisos.map((a) => <li key={a}>{a}</li>)}</ul>
           )}
