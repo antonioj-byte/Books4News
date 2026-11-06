@@ -130,6 +130,12 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
 
   const abiertoForm = texto.length > 0 || !!enviando || enlaces.length > 0 || enfoque === "newsletter";
   const pendientes = recientes.filter((t) => t.estado === "pregunta").length;
+  // 6/11 («¿no es un poco feo ver todo el historial de peticiones?»): a la vista, solo lo de hoy y lo que pide algo
+  // (una pregunta del jefe, un tema en marcha o uno que falló); lo demás, plegado en «Anteriores», en una línea
+  const hoy = new Date().toLocaleDateString("sv-SE");
+  const pideAlgo = (t: Tema) => ["pregunta", "pendiente", "fallido"].includes(t.estado) || abierto === t.id;
+  const aLaVista = recientes.filter((t) => pideAlgo(t) || t.creado_en.slice(0, 10) === hoy);
+  const anteriores = recientes.filter((t) => !aLaVista.includes(t));
 
   // Arriba de la mesa y en compacto (3/11, «se está volviendo demasiado compleja la web»): una línea que se abre al escribir
   return (
@@ -184,13 +190,29 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
         {mensaje && <p className={mensaje.ok ? "text-[14px]" : "text-[14px] text-carmesi"} role={mensaje.ok ? "status" : "alert"}>{mensaje.texto}</p>}
       </div>
       {recientes.length > 0 && (
-        <details className="mt-2 text-[13.5px]" open={pendientes > 0 || abierto !== null}>
-        <summary className="dato cursor-pointer uppercase">Temas propuestos · {recientes.length}{pendientes ? ` · ${pendientes} con pregunta del jefe` : ""}</summary>
-        <ul className="mt-2 flex flex-col gap-1.5">
-          {recientes.map((t) => (
+        <div className="mt-2 text-[13.5px]">
+        {aLaVista.length > 0 && (
+          <>
+          <p className="dato uppercase">Hoy{pendientes ? ` · ${pendientes} con pregunta del jefe` : ""}</p>
+          <ul className="mt-1.5 flex flex-col gap-1.5">{aLaVista.map(fila)}</ul>
+          </>
+        )}
+        {anteriores.length > 0 && (
+          <details className={aLaVista.length ? "mt-2" : ""}>
+            <summary className="dato cursor-pointer uppercase text-tinta-suave">Temas anteriores · {anteriores.length}</summary>
+            <ul className="mt-1.5 flex flex-col gap-1 text-tinta-suave">{anteriores.map(fila)}</ul>
+          </details>
+        )}
+        </div>
+      )}
+    </section>
+  );
+
+  function fila(t: Tema) {
+    return (
             <li key={t.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="dato uppercase text-tinta-suave">{ESTADOS[t.estado] ?? t.estado}{t.pieza_id ? ` · ${t.pieza_id}` : ""}</span>
-              <span className="line-clamp-2 min-w-0 flex-1" title={t.texto}>{t.texto}</span>
+              <span className="min-w-0 flex-1 truncate" title={t.texto}>{t.texto}</span>
               {t.estado === "pendiente" && <button onClick={() => descartar(t)} className="text-tinta-suave hover:text-carmesi">Descartar</button>}
               {(t.estado === "pregunta" || t.estado === "en_mesa" || (t.estado === "fallido" && t.pieza_id)) && t.conversacion.length > 0 && (
                 <button onClick={() => setAbierto(abierto === t.id ? null : t.id)} className="text-tinta-suave underline-offset-2 hover:text-tinta hover:underline">
@@ -205,10 +227,6 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
               )}
               {abierto === t.id && <div className="basis-full"><Conversacion tema={t} eid={eid} onPieza={onPieza} onCambio={recargar} /></div>}
             </li>
-          ))}
-        </ul>
-        </details>
-      )}
-    </section>
-  );
+    );
+  }
 }
