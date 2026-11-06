@@ -34,6 +34,11 @@ class PiezaArchivo(BaseModel):
     nota: float | None = None    # media de su evaluación, si la tiene
     vigencia: str
     vigencia_texto: str
+    # Lo que hizo en Instagram (6/11, el libro de estilo vivo: la señal del público), si se ha medido
+    alcance: int | None = None
+    guardados: int | None = None
+    compartidos: int | None = None
+    permalink: str | None = None
 
 
 @router.get("/api/archivo", response_model=list[PiezaArchivo])
@@ -41,6 +46,7 @@ def ver_archivo(ctx: Contexto = Depends(contexto)):
     """Todas las piezas, cada una en la última ejecución que la tiene, de la más reciente a la más antigua."""
     hoy = date.today()
     out = []
+    medidas = ctx.almacen.metricas()
     for fecha, eid, p, v, tocada in ctx.almacen.archivo():
         if formatos.de(p.eleccion.formato).propio and not p.guion:
             continue
@@ -56,7 +62,10 @@ def ver_archivo(ctx: Contexto = Depends(contexto)):
             libro=(libro.edicion_es_detalle.titulo if libro and libro.edicion_es_detalle and libro.edicion_es_detalle.titulo
                    else libro.titulo) if libro else None,
             autor=libro.autores[0] if libro and libro.autores else None,
-            nota=round(sum(notas) / len(notas), 1) if notas else None, vigencia=clave, vigencia_texto=texto))
+            nota=round(sum(notas) / len(notas), 1) if notas else None, vigencia=clave, vigencia_texto=texto,
+            **({"alcance": medidas[p.id].alcance, "guardados": medidas[p.id].guardados,
+                "compartidos": medidas[p.id].compartidos, "permalink": medidas[p.id].permalink or None}
+               if p.id in medidas else {})))
     return out
 
 

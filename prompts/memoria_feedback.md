@@ -15,6 +15,8 @@ Cómo:
 - `capa`: a quién alcanza la regla (3/11, Folio como agencia: una memoria por rol y otra por marca). «oficio» si es buen hacer de ese rol que valdría para cualquier marca (no inventar, claridad, encuadre de caras); «marca» si es de Folio y vale para todos sus roles (su línea editorial, su voz, su diseño, sus reglas de libros); «celda» si es lo que este rol ha aprendido de Folio en concreto (un formato de Folio, una manía de su redacción). Ante la duda, «celda»: es la más estrecha, y una regla de oficio mal puesta afectaría a todas las marcas.
 
 En el chat, un pedido que empieza por «(para guionista)», «(para director_arte)»… es para ese rol.
+- `ejemplo_bueno` y `ejemplo_malo` (6/11, el libro de estilo vivo): un caso concreto que cumple la regla y otro que la incumple, copiados del feedback (un «después» y un «antes» de una edición, una frase de una pieza). Un modelo aprende más de un ejemplo que de una regla abstracta. Si no hay uno claro, vacíos; no los inventes.
+- Lo que funcionó con el público: si el feedback trae métricas de Instagram (alcance, guardados, compartidos), úsalas como señal además del gusto de la redacción: qué tienen en común las piezas que más se guardan y comparten, y las que menos. Solo con varias piezas que lo muestren; una sola no es un patrón.
 - `existente`: si el patrón ya está en la lista de patrones guardados, su número; si es nuevo, 0. No repitas como nuevo uno que ya está: si vuelve a salir, refuérzalo con su número.
 - No propongas lo que contradiga una regla que la persona ya rechazó, salvo que el feedback nuevo lo pida claramente; en ese caso dilo en la propuesta.
 - Si no hay patrones claros, devuelve la lista vacía y explícalo en `aviso`. Mejor ninguno que uno flojo.

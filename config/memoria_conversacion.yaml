@@ -823,3 +823,11 @@
   patron: "«Me irrita increíblemente la estrechez a la hora de recibir el feedback» (el chat no quiso meter *La encomienda* en la diapositiva 4 de un perfil porque no estaba verificada)."
   propuesta: "Quien edita manda: antes de decir que no, el chat busca la acción que lo hace y lo hace en el turno (los libros nuevos se verifican al momento con «libros»); si una regla lo impide de verdad, hace lo demás y lo más cercano, lo dice en una frase y no toca lo que no le pidieron."
   evidencia: ["Conversación, 6/11: captura del chat del perfil de Margarita García Robayo"]
+
+- clave: libro-de-estilo-vivo
+  fecha: "2026-11-06"
+  destino: codigo
+  capa: marca
+  patron: "«Me interesa mucho activar un proceso de retroalimentación permanente, de tal forma que el equipo editorial vaya recursivamente mejorando su sistema editorial… al final, cada línea de código es un nuevo if sobre las consideraciones editoriales» («adelante con todo»)."
+  propuesta: "Cada regla de criterio es una ficha con ejemplo bueno y malo que se prueba en el banco, se poda si sobra y se retira si deja de servir; las ediciones de la redacción entran como ejemplos en el guionista y el chat; lo que necesita código se encarga en GitHub y lo recoge una tarea semanal; y las métricas de Instagram llegan a la Memoria."
+  evidencia: ["Conversación, 6/11: propuesta en seis puntos aprobada con «adelante con todo»"]

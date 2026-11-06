@@ -265,6 +265,17 @@ class Gasto(_Seccion):
     busqueda_web_usd: float = 0.01        # cada búsqueda web del servidor de Anthropic (10 $ por 1.000)
 
 
+class Estilo(_Seccion):
+    """El libro de estilo vivo (6/11): ejemplos de la redacción, poda, prueba en el banco y encargos de código."""
+    ejemplos_max: int = Field(default=8, ge=0, le=20)
+    max_activas_por_rol: int = Field(default=25, ge=5)
+    dias_sin_refuerzo: int = Field(default=45, ge=7)
+    prueba_piezas: int = Field(default=2, ge=1, le=5)
+    prueba_max_semana: int = Field(default=2, ge=0, le=10)
+    prueba_umbral: float = Field(default=0.5, ge=0)
+    github_repo: str = ""
+
+
 class ConfigPipeline(_Seccion):
     """config/pipeline.yaml, tipado."""
     modelos: dict[str, str]
@@ -280,6 +291,7 @@ class ConfigPipeline(_Seccion):
     radar: Radar = Field(default_factory=Radar)
     cinco: Cinco = Field(default_factory=Cinco)
     newsletter: Newsletter = Field(default_factory=Newsletter)
+    estilo: Estilo = Field(default_factory=Estilo)
     guion: Guion
     arte: Arte = Field(default_factory=Arte)
     gasto: Gasto = Field(default_factory=Gasto)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import logging
 from datetime import date, datetime, timedelta
 
@@ -555,6 +556,15 @@ def _nevera_y_memoria_de_dia(cfg, quiet: bool) -> None:
                 typer.echo(f"Nevera: {len(nuevas)} historias nuevas" + "".join(f"\n{a}" for a in avisos))
         except Exception as exc:                # noqa: BLE001
             typer.echo(f"Nevera: no se pudo ({type(exc).__name__}: {exc})")
+    # Las métricas de Instagram de lo publicado, una vez al día (6/11, el libro de estilo vivo)
+    try:
+        from folio import metricas
+        if os.getenv("INSTAGRAM_TOKEN") and not metricas.intento_hoy(cfg, hoy):
+            n, avisos = metricas.medir(cfg, Almacen(cfg.ruta_db), hoy)
+            if not quiet:
+                typer.echo(f"Métricas: {n} piezas medidas" + "".join(f"\n{a}" for a in avisos))
+    except Exception as exc:                    # noqa: BLE001
+        typer.echo(f"Métricas: no se pudo ({type(exc).__name__}: {exc})")
     try:
         almacen = Almacen(cfg.ruta_db)
         toca, motivo = memoria.toca_analisis(almacen)
@@ -739,6 +749,34 @@ def memoria_analizar(dias: int = typer.Option(14, help="Días de feedback que se
                f" · {round(sum(t.coste_usd for t in llm.trazas), 4)} $")
     if aviso:
         typer.echo(aviso)
+
+
+@app.command()
+def metricas():
+    """Mide en Instagram las piezas publicadas en los últimos 30 días (alcance, guardados, compartidos…)."""
+    from folio import metricas as m
+    from folio.almacen import Almacen
+    cfg = config.cargar()
+    n, avisos = m.medir(cfg, Almacen(cfg.ruta_db))
+    for a in avisos:
+        typer.echo(a)
+    typer.echo(f"Métricas: {n} piezas medidas")
+
+
+@memoria_app.command("probar")
+def memoria_probar(ficha: int = typer.Argument(..., help="El número de la ficha")):
+    """Prueba una ficha del guionista en el banco: reescribe unas piezas aprobadas con ella y sin ella y las juzga a
+    ciegas (~0,30 $)."""
+    from folio import estilo_vivo
+    from folio.almacen import Almacen
+    from folio.llm import LLM
+    cfg = config.cargar()
+    llm = LLM(cfg)
+    r = estilo_vivo.probar(llm, cfg, Almacen(cfg.ruta_db), ficha)
+    typer.echo(f"Ficha #{ficha}: {r['veredicto']}" + (f" (con {r['con']}, sin {r['sin']})" if "con" in r else f" — {r.get('nota', '')}"))
+    for linea in r.get("piezas", []):
+        typer.echo(f"  {linea}")
+    typer.echo(f"{round(sum(t.coste_usd or 0 for t in llm.trazas), 3)} $")
 
 
 @memoria_app.command("importar")

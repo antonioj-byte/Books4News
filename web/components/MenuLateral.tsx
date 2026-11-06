@@ -17,6 +17,7 @@ const GRUPOS: { titulo: string | null; items: { href: string; texto: string; ico
   { titulo: "Agencia", items: [
     { href: "/equipo", texto: "Equipo", icono: "◎", activa: (p) => p.startsWith("/equipo") },
     { href: "/marca", texto: "Marca", icono: "◆", activa: (p) => p.startsWith("/marca") },
+    { href: "/estilo", texto: "Libro de estilo", icono: "¶", activa: (p) => p.startsWith("/estilo") },
   ] },
   { titulo: null, items: [
     { href: "/como-vamos", texto: "Cómo vamos", icono: "↗", activa: (p) => p.startsWith("/como-vamos") || p.startsWith("/memoria") || p.startsWith("/gasto") || p.startsWith("/evaluacion") },

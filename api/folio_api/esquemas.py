@@ -237,6 +237,6 @@ class EstadoMemoria(BaseModel):
 
 
 class DecisionPatron(BaseModel):
-    estado: Literal["propuesta", "aceptada", "rechazada", "aplicada"]
+    estado: Literal["propuesta", "aceptada", "rechazada", "aplicada", "retirada"]
     nota: str = ""
     capa: Literal["oficio", "marca", "celda"] | None = None   # a quién alcanza la regla, al aceptarla (3/11)

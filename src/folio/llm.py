@@ -11,6 +11,8 @@ import hashlib
 import json
 import time
 import logging
+import contextvars
+from contextlib import contextmanager
 import re
 from pathlib import Path
 from typing import TypeVar
@@ -81,20 +83,69 @@ DESTINO_DE_PROMPT = {
 }
 
 
+# Las fichas que se dejan fuera en esta llamada (la prueba en el banco escribe con y sin una ficha, 6/11)
+_SIN_FICHAS: contextvars.ContextVar[frozenset[int]] = contextvars.ContextVar("sin_fichas", default=frozenset())
+
+
+@contextmanager
+def sin_fichas(ids):
+    """Dentro de este bloque, cargar_prompt no añade esas fichas (la prueba en el banco del libro de estilo vivo)."""
+    token = _SIN_FICHAS.set(frozenset(ids))
+    try:
+        yield
+    finally:
+        _SIN_FICHAS.reset(token)
+
+
 def reglas_aceptadas(cfg: Config, destino: str) -> list[str]:
     """Las reglas aceptadas en la Memoria para un agente que aún no se han pasado a su prompt (estado «aceptada»; las
-    «aplicada» ya están escritas en él). Nunca falla: sin base de datos o sin tabla, ninguna."""
+    «aplicada» ya están escritas en él; las «retirada», fuera), con su ejemplo bueno y malo si los tiene (el libro de
+    estilo vivo, 6/11). Nunca falla: sin base de datos o sin tabla, ninguna."""
     import sqlite3
     try:
         if not cfg.ruta_db.exists():
             return []
         with sqlite3.connect(cfg.ruta_db, timeout=5) as db:
             destinos = (destino, "formatos") if destino == "guionista" else (destino,)
-            filas = db.execute(f"SELECT propuesta FROM memoria WHERE estado = 'aceptada' AND destino IN "
+            columnas = {f[1] for f in db.execute("PRAGMA table_info(memoria)")}
+            extra = ", ejemplo_bueno, ejemplo_malo" if "ejemplo_bueno" in columnas else ", '', ''"
+            filas = db.execute(f"SELECT id, propuesta{extra} FROM memoria WHERE estado = 'aceptada' AND destino IN "
                                f"({','.join('?' * len(destinos))}) ORDER BY id", destinos).fetchall()
-        return [" ".join(f[0].split()) for f in filas if f[0].strip()]
+        fuera = _SIN_FICHAS.get()
+        out = []
+        for fid, regla, bueno, malo in filas:
+            if fid in fuera or not regla.strip():
+                continue
+            texto = " ".join(regla.split())
+            if bueno.strip():
+                texto += f" Así sí: «{' '.join(bueno.split())}»."
+            if malo.strip():
+                texto += f" Así no: «{' '.join(malo.split())}»."
+            out.append(texto)
+        return out
     except sqlite3.Error:
         return []
+
+
+# Los prompts que reciben los ejemplos de la redacción (las ediciones de quien edita, antes y después)
+CON_EJEMPLOS = ("guionista", "chat_edicion")
+
+
+def ejemplos_activos(cfg: Config) -> list[str]:
+    """Los ejemplos activos del libro de estilo vivo (6/11, punto 2: «ejemplos antes que reglas»), los más recientes
+    primero. Nunca falla."""
+    import sqlite3
+    try:
+        if not cfg.ruta_db.exists():
+            return []
+        with sqlite3.connect(cfg.ruta_db, timeout=5) as db:
+            filas = db.execute("SELECT tipo, formato, antes, despues, leccion FROM ejemplos WHERE estado = 'activo' "
+                               "ORDER BY fecha DESC, id DESC LIMIT ?", (cfg.pipeline.estilo.ejemplos_max,)).fetchall()
+    except sqlite3.Error:
+        return []
+    return [f"- [{tipo}{', ' + formato if formato else ''}] Escribió: «{' '.join(antes.split())}» → La redacción lo dejó: "
+            f"«{' '.join(despues.split())}»" + (f" (Lo que enseña: {leccion.strip()})" if leccion.strip() else "")
+            for tipo, formato, antes, despues, leccion in filas]
 
 
 def cargar_prompt(cfg: Config, nombre: str, reemplazos: dict[str, str]) -> str:
@@ -111,6 +162,10 @@ def cargar_prompt(cfg: Config, nombre: str, reemplazos: dict[str, str]) -> str:
             raise ErrorLLM(f"El prompt {nombre}.md no contiene el marcador {marcador!r}")
         texto = texto.replace(marcador, valor)
     reglas = reglas_aceptadas(cfg, DESTINO_DE_PROMPT[nombre]) if nombre in DESTINO_DE_PROMPT else []
+    ejemplos = ejemplos_activos(cfg) if nombre in CON_EJEMPLOS else []
+    if ejemplos:
+        texto += ("\n\nEjemplos de la redacción: así escribió el guionista y así lo dejó quien edita. Aprende el criterio "
+                  "(el tono, la claridad, lo que sobra), no copies los temas ni los datos:\n" + "\n".join(ejemplos))
     if reglas:
         texto += ("\n\nReglas que la redacción ha aceptado hace poco (Memoria). Cúmplelas como las de arriba; si alguna "
                   "choca con una regla de arriba, manda la de arriba:\n" + "\n".join(f"- {r}" for r in reglas))

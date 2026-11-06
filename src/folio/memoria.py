@@ -44,6 +44,8 @@ class PatronLLM(_TodoObligatorio):
     propuesta: str = Field(description="La regla que se propone, como iría en las instrucciones del agente")
     destino: Destino = Field(description="Dónde iría la regla")
     capa: Capa = Field(description="A quién alcanza: oficio (el rol, para cualquier marca), marca (Folio, todos sus roles) o celda (este rol en Folio); ante la duda, celda")
+    ejemplo_bueno: str = Field(default="", description="Una frase o un caso concreto que cumple la regla (de las ediciones de la redacción si los hay); vacío si no hay uno claro")
+    ejemplo_malo: str = Field(default="", description="Una frase o un caso concreto que la incumple, tal como salió en una pieza; vacío si no hay uno claro")
 
 
 class MemoriaLLM(_TodoObligatorio):
@@ -64,6 +66,8 @@ def _bloque_feedback(datos: list[dict]) -> str:
                 lineas.append(f"- Comentario: {ev['comentario']}")
         for p in d["pedidos_chat"]:
             lineas.append(f"- Pidió al chat: {p}")
+        if d.get("publico"):
+            lineas.append("- Público en Instagram: " + ", ".join(f"{k} {v}" for k, v in d["publico"].items() if v is not None))
         for e in d["ediciones"]:
             lineas.append(f"- Editó a mano la diapositiva {e['diapositiva']}:\n  antes: {e['antes']}\n  después: {e['despues']}")
     return "\n".join(lineas)
@@ -76,7 +80,11 @@ def analizar(llm: LLM, cfg: Config, almacen: Almacen, dias: int = 14, hoy: date 
     trazas = getattr(llm, "trazas", [])
     antes = len(trazas)
     ids, aviso, n = _analizar(llm, cfg, almacen, dias, hoy)
-    almacen.registrar_analisis(origen, n, len(ids), sum(t.coste_usd for t in trazas[antes:]), aviso)
+    # El libro de estilo vivo (6/11): ejemplos, poda y, en el semanal, la prueba en el banco de las fichas nuevas
+    from folio import estilo_vivo
+    lineas = estilo_vivo.ciclo(llm, cfg, almacen, probar_pendientes=origen == "semanal", hoy=hoy)
+    aviso = " · ".join(x for x in (aviso, *lineas) if x)
+    almacen.registrar_analisis(origen, n, len(ids), sum(t.coste_usd or 0 for t in trazas[antes:]), aviso)
     return ids, aviso, n
 
 
@@ -141,7 +149,8 @@ def _analizar(llm: LLM, cfg: Config, almacen: Almacen, dias: int, hoy: date | No
     r, _ = llm.estructurado("memoria", [{"role": "user", "content": prompt}], MemoriaLLM, etapa_modelo="memoria", max_tokens=16000)
     ids_validos = {p.id for p in guardados}
     ids = [almacen.guardar_patron(p.patron.strip(), [e.strip() for e in p.evidencia if e.strip()], p.propuesta.strip(), p.destino,
-                                  p.existente if p.existente in ids_validos else None, p.capa)
+                                  p.existente if p.existente in ids_validos else None, p.capa,
+                                  p.ejemplo_bueno.strip(), p.ejemplo_malo.strip())
            for p in r.patrones if p.patron.strip() and p.propuesta.strip()]
     return ids, r.aviso, len(datos)
 

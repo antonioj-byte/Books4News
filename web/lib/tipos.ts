@@ -109,6 +109,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/estilo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Libro */
+        get: operations["libro_api_estilo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/estilo/fichas/{fid}/retirar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retirar */
+        post: operations["retirar_api_estilo_fichas__fid__retirar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/estilo/fichas/{fid}/reactivar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reactivar */
+        post: operations["reactivar_api_estilo_fichas__fid__reactivar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/estilo/fichas/{fid}/probar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Probar
+         * @description Prueba la ficha en el banco en un proceso aparte (~0,30 $, unos minutos).
+         */
+        post: operations["probar_api_estilo_fichas__fid__probar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/estilo/prueba": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prueba */
+        get: operations["prueba_api_estilo_prueba_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/estilo/ejemplos/{eid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decidir Ejemplo */
+        post: operations["decidir_ejemplo_api_estilo_ejemplos__eid__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ejecuciones/{eid}/piezas/{pid}": {
         parameters: {
             query?: never;
@@ -1181,13 +1286,18 @@ export interface components {
              */
             llamadas: number;
         };
+        /** DecisionEjemplo */
+        DecisionEjemplo: {
+            /** Estado */
+            estado: string;
+        };
         /** DecisionPatron */
         "DecisionPatron-Input": {
             /**
              * Estado
              * @enum {string}
              */
-            estado: "propuesta" | "aceptada" | "rechazada" | "aplicada";
+            estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" | "retirada";
             /**
              * Nota
              * @default
@@ -1202,7 +1312,7 @@ export interface components {
              * Estado
              * @enum {string}
              */
-            estado: "propuesta" | "aceptada" | "rechazada" | "aplicada";
+            estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" | "retirada";
             /**
              * Nota
              * @default
@@ -1402,6 +1512,38 @@ export interface components {
             coste_usd: number;
             /** Piezas */
             piezas: number;
+        };
+        /**
+         * Ejemplo
+         * @description Una edición de la redacción (antes y después de una diapositiva), para enseñar el criterio a los agentes.
+         */
+        Ejemplo: {
+            /** Id */
+            id: number;
+            /** Creado En */
+            creado_en: string;
+            /** Fecha */
+            fecha: string;
+            /** Pieza Id */
+            pieza_id: string;
+            /** Formato */
+            formato: string;
+            /** N */
+            n: number;
+            /** Tipo */
+            tipo: string;
+            /** Antes */
+            antes: string;
+            /** Despues */
+            despues: string;
+            /** Origen */
+            origen: string;
+            /** Estado Pieza */
+            estado_pieza: string;
+            /** Leccion */
+            leccion: string;
+            /** Estado */
+            estado: string;
         };
         /** Enlace */
         Enlace: {
@@ -1676,6 +1818,11 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** Hecho */
+        Hecho: {
+            /** Avisos */
+            avisos: string[];
+        };
         /** HechoComprobado */
         HechoComprobado: {
             /**
@@ -1846,6 +1993,19 @@ export interface components {
             autor: string;
             /** Motivo */
             motivo: string;
+        };
+        /** LibroEstilo */
+        LibroEstilo: {
+            /** Roles */
+            roles: components["schemas"]["Rol"][];
+            /** Ejemplos */
+            ejemplos: components["schemas"]["Ejemplo"][];
+            /** Candidatos */
+            candidatos: number;
+            /** Ejemplos Max */
+            ejemplos_max: number;
+            /** Github */
+            github: boolean;
         };
         /** LibroGuion */
         LibroGuion: {
@@ -2155,6 +2315,26 @@ export interface components {
             nota: string;
             /** Clave */
             clave: string | null;
+            /**
+             * Ejemplo Bueno
+             * @default
+             */
+            ejemplo_bueno: string;
+            /**
+             * Ejemplo Malo
+             * @default
+             */
+            ejemplo_malo: string;
+            /**
+             * Prueba
+             * @default
+             */
+            prueba: string;
+            /**
+             * Encargo
+             * @default
+             */
+            encargo: string;
         };
         /** Pedido */
         Pedido: {
@@ -2247,6 +2427,14 @@ export interface components {
             vigencia: string;
             /** Vigencia Texto */
             vigencia_texto: string;
+            /** Alcance */
+            alcance?: number | null;
+            /** Guardados */
+            guardados?: number | null;
+            /** Compartidos */
+            compartidos?: number | null;
+            /** Permalink */
+            permalink?: string | null;
         };
         /** PiezaDetalle */
         PiezaDetalle: {
@@ -2578,6 +2766,19 @@ export interface components {
              * @default 0
              */
             pedidos_7d: number;
+        };
+        /** Rol */
+        Rol: {
+            /** Id */
+            id: string;
+            /** Nombre */
+            nombre: string;
+            /** Activas */
+            activas: number;
+            /** Tope */
+            tope: number;
+            /** Fichas */
+            fichas: components["schemas"]["Patron"][];
         };
         /**
          * SinFoto
@@ -2919,6 +3120,174 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DiaDetalle"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    libro_api_estilo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibroEstilo"];
+                };
+            };
+        };
+    };
+    retirar_api_estilo_fichas__fid__retirar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hecho"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reactivar_api_estilo_fichas__fid__reactivar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hecho"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    probar_api_estilo_fichas__fid__probar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prueba_api_estilo_prueba_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"] | null;
+                };
+            };
+        };
+    };
+    decidir_ejemplo_api_estilo_ejemplos__eid__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionEjemplo"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hecho"];
                 };
             };
             /** @description Validation Error */

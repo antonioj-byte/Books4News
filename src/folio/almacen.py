@@ -203,6 +203,42 @@ _MIGRACIONES = [
     ALTER TABLE chat_mensajes ADD COLUMN agente TEXT;
     ALTER TABLE memoria ADD COLUMN capa TEXT NOT NULL DEFAULT 'celda';
     """,
+    # 13: el libro de estilo vivo (6/11, a petición del usuario: «activar un proceso de retroalimentación permanente…
+    # cada línea de código es un nuevo if»; «adelante con todo»): cada regla es una ficha con su ejemplo bueno y malo,
+    # el resultado de su prueba en el banco, su encargo de código y su retiro; las ediciones de la redacción se
+    # guardan como ejemplos (antes y después) para los prompts; y las métricas de Instagram de lo publicado
+    """
+    ALTER TABLE memoria ADD COLUMN ejemplo_bueno TEXT NOT NULL DEFAULT '';
+    ALTER TABLE memoria ADD COLUMN ejemplo_malo TEXT NOT NULL DEFAULT '';
+    ALTER TABLE memoria ADD COLUMN prueba TEXT NOT NULL DEFAULT '';
+    ALTER TABLE memoria ADD COLUMN encargo TEXT NOT NULL DEFAULT '';
+    CREATE TABLE ejemplos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creado_en TEXT NOT NULL,
+        fecha TEXT NOT NULL,               -- la de la pieza
+        pieza_id TEXT NOT NULL,
+        formato TEXT NOT NULL DEFAULT '',
+        n INTEGER NOT NULL,                -- la diapositiva (0: el pie)
+        tipo TEXT NOT NULL,
+        antes TEXT NOT NULL,
+        despues TEXT NOT NULL,
+        origen TEXT NOT NULL DEFAULT '',   -- manual | chat
+        estado_pieza TEXT NOT NULL DEFAULT '',
+        leccion TEXT NOT NULL DEFAULT '',
+        estado TEXT NOT NULL DEFAULT 'candidato'   -- candidato | activo | descartado | retirado
+    );
+    CREATE UNIQUE INDEX ejemplos_unico ON ejemplos (pieza_id, n, despues);
+    CREATE TABLE metricas (
+        pieza_id TEXT NOT NULL,
+        dia TEXT NOT NULL,                 -- el día de la medida
+        medido_en TEXT NOT NULL,
+        media_id TEXT NOT NULL,
+        permalink TEXT NOT NULL DEFAULT '',
+        publicado_en TEXT NOT NULL DEFAULT '',
+        alcance INTEGER, guardados INTEGER, compartidos INTEGER, me_gusta INTEGER, comentarios INTEGER, interacciones INTEGER,
+        PRIMARY KEY (pieza_id, dia)
+    );
+    """,
 ]
 
 
@@ -237,8 +273,45 @@ class Patron(BaseModel):
     capa: str = "celda"                  # oficio | marca | celda (3/11)
     origen: str = "feedback"
     nota: str = ""
-    origen: str = "feedback"           # feedback (análisis de la web) | conversacion (decidido en una sesión)
+    origen: str = "feedback"           # feedback (análisis de la web) | conversacion (decidido en una sesión) | poda
     clave: str | None = None
+    # El libro de estilo vivo (6/11): la ficha con su ejemplo, su prueba en el banco (JSON) y su encargo de código
+    ejemplo_bueno: str = ""
+    ejemplo_malo: str = ""
+    prueba: str = ""
+    encargo: str = ""
+
+
+class Ejemplo(BaseModel):
+    """Una edición de la redacción (antes y después de una diapositiva), para enseñar el criterio a los agentes."""
+    id: int
+    creado_en: str
+    fecha: str
+    pieza_id: str
+    formato: str
+    n: int
+    tipo: str
+    antes: str
+    despues: str
+    origen: str
+    estado_pieza: str
+    leccion: str
+    estado: str
+
+
+class Metrica(BaseModel):
+    pieza_id: str
+    dia: str
+    medido_en: str
+    media_id: str
+    permalink: str = ""
+    publicado_en: str = ""
+    alcance: int | None = None
+    guardados: int | None = None
+    compartidos: int | None = None
+    me_gusta: int | None = None
+    comentarios: int | None = None
+    interacciones: int | None = None
 
 
 class Tema(BaseModel):
@@ -397,7 +470,7 @@ class Almacen:
         return [Patron(**{**dict(f), "evidencia": json.loads(f["evidencia"])}) for f in filas]
 
     def guardar_patron(self, patron: str, evidencia: list[str], propuesta: str, destino: str, existente: int | None = None,
-                       capa: str = "celda") -> int:
+                       capa: str = "celda", ejemplo_bueno: str = "", ejemplo_malo: str = "") -> int:
         """Un patrón nuevo, o uno que ya estaba y vuelve a salir (se suma la evidencia y una vez más)."""
         ahora = _ahora()
         with self._transaccion() as db:
@@ -407,15 +480,97 @@ class Almacen:
                     todas = list(dict.fromkeys(json.loads(f["evidencia"]) + evidencia))
                     db.execute("UPDATE memoria SET evidencia = ?, veces = ?, actualizado_en = ?, propuesta = ? WHERE id = ?",
                                (json.dumps(todas, ensure_ascii=False), f["veces"] + 1, ahora, propuesta, existente))
+                    if ejemplo_bueno or ejemplo_malo:
+                        db.execute("UPDATE memoria SET ejemplo_bueno = ?, ejemplo_malo = ? WHERE id = ?",
+                                   (ejemplo_bueno, ejemplo_malo, existente))
                     return existente
-            c = db.execute("INSERT INTO memoria (creado_en, actualizado_en, patron, evidencia, propuesta, destino, capa) "
-                           "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                           (ahora, ahora, patron, json.dumps(evidencia, ensure_ascii=False), propuesta, destino, capa))
+            c = db.execute("INSERT INTO memoria (creado_en, actualizado_en, patron, evidencia, propuesta, destino, capa, "
+                           "ejemplo_bueno, ejemplo_malo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                           (ahora, ahora, patron, json.dumps(evidencia, ensure_ascii=False), propuesta, destino, capa,
+                            ejemplo_bueno, ejemplo_malo))
             return c.lastrowid
+
+    def guardar_ficha(self, pid: int, **campos) -> None:
+        """Cambia campos sueltos de una ficha (ejemplos, prueba, encargo)."""
+        validos = {k: v for k, v in campos.items() if k in ("ejemplo_bueno", "ejemplo_malo", "prueba", "encargo", "propuesta", "nota", "origen")}
+        if not validos:
+            return
+        with self._transaccion() as db:
+            db.execute(f"UPDATE memoria SET {', '.join(f'{k} = ?' for k in validos)}, actualizado_en = ? WHERE id = ?",
+                       (*validos.values(), _ahora(), pid))
+
+    def patron(self, pid: int) -> Patron | None:
+        f = self.db.execute("SELECT * FROM memoria WHERE id = ?", (pid,)).fetchone()
+        return Patron(**{**dict(f), "evidencia": json.loads(f["evidencia"])}) if f else None
+
+    # --- Ejemplos de la redacción (libro de estilo vivo, 6/11) -------------------------
+
+    def guardar_ejemplo(self, e: dict) -> bool:
+        """Un par antes/después nuevo, como candidato. False si ya estaba."""
+        with self._transaccion() as db:
+            c = db.execute("INSERT OR IGNORE INTO ejemplos (creado_en, fecha, pieza_id, formato, n, tipo, antes, despues, origen, "
+                           "estado_pieza) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                           (_ahora(), e["fecha"], e["pieza_id"], e.get("formato") or "", e["n"], e["tipo"], e["antes"],
+                            e["despues"], e.get("origen") or "", e.get("estado_pieza") or ""))
+            return c.rowcount > 0
+
+    def ejemplos(self, estado: str | None = None) -> list[Ejemplo]:
+        sql, args = "SELECT * FROM ejemplos", ()
+        if estado:
+            sql, args = sql + " WHERE estado = ?", (estado,)
+        return [Ejemplo(**dict(f)) for f in self.db.execute(sql + " ORDER BY fecha DESC, id DESC", args).fetchall()]
+
+    def decidir_ejemplo(self, eid: int, estado: str, leccion: str | None = None) -> None:
+        with self._transaccion() as db:
+            db.execute("UPDATE ejemplos SET estado = ? WHERE id = ?", (estado, eid))
+            if leccion is not None:
+                db.execute("UPDATE ejemplos SET leccion = ? WHERE id = ?", (leccion, eid))
+
+    def pares_de_edicion(self, desde: str) -> list[dict]:
+        """Las diapositivas que la redacción cambió (a mano o pidiéndolo al chat) en las piezas desde `desde`: la primera
+        versión con guion frente a la última. Sin las piezas descartadas."""
+        out = []
+        for f in self.db.execute(
+                "SELECT p.ejecucion_id, p.pieza_id, p.estado, e.fecha FROM piezas p JOIN ejecuciones e ON e.id = p.ejecucion_id "
+                "WHERE e.fecha >= ? AND p.estado != 'descartada'", (desde,)).fetchall():
+            vs = self.db.execute("SELECT origen, datos FROM versiones WHERE ejecucion_id = ? AND pieza_id = ? ORDER BY n",
+                                 (f["ejecucion_id"], f["pieza_id"])).fetchall()
+            origenes = [v["origen"] for v in vs]
+            if not any(o in ("manual", "chat") for o in origenes):
+                continue
+            con_guion = [(v["origen"], Pieza.model_validate_json(v["datos"])) for v in vs]
+            con_guion = [(o, p) for o, p in con_guion if p.guion]
+            if len(con_guion) < 2:
+                continue
+            primera, ultima = con_guion[0][1], con_guion[-1][1]
+            origen = "manual" if "manual" in origenes else "chat"
+            for a, b in zip(primera.guion.diapositivas, ultima.guion.diapositivas):
+                if a.tipo == b.tipo and a.texto.strip() != b.texto.strip():
+                    out.append({"fecha": f["fecha"], "pieza_id": f["pieza_id"], "formato": ultima.eleccion.formato, "n": b.n,
+                                "tipo": b.tipo, "antes": a.texto.strip(), "despues": b.texto.strip(), "origen": origen,
+                                "estado_pieza": f["estado"]})
+        return out
+
+    # --- Métricas de Instagram (6/11) ---------------------------------------------------
+
+    def guardar_metrica(self, m: Metrica) -> None:
+        with self._transaccion() as db:
+            db.execute("INSERT OR REPLACE INTO metricas (pieza_id, dia, medido_en, media_id, permalink, publicado_en, alcance, "
+                       "guardados, compartidos, me_gusta, comentarios, interacciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       (m.pieza_id, m.dia, m.medido_en, m.media_id, m.permalink, m.publicado_en, m.alcance, m.guardados,
+                        m.compartidos, m.me_gusta, m.comentarios, m.interacciones))
+
+    def metricas(self) -> dict[str, Metrica]:
+        """La última medida de cada pieza."""
+        filas = self.db.execute("SELECT m.* FROM metricas m JOIN (SELECT pieza_id, MAX(dia) AS dia FROM metricas GROUP BY pieza_id) u "
+                                "ON u.pieza_id = m.pieza_id AND u.dia = m.dia").fetchall()
+        return {f["pieza_id"]: Metrica(**dict(f)) for f in filas}
 
     def decidir_patron(self, pid: int, estado: str, nota: str = "", capa: str | None = None) -> None:
         with self._transaccion() as db:
-            db.execute("UPDATE memoria SET estado = ?, nota = ?, actualizado_en = ? WHERE id = ?", (estado, nota, _ahora(), pid))
+            # Una decisión sin nota no borra la que había (6/11: la de la poda guarda qué fichas retira)
+            db.execute("UPDATE memoria SET estado = ?, nota = COALESCE(NULLIF(?, ''), nota), actualizado_en = ? WHERE id = ?",
+                       (estado, nota, _ahora(), pid))
             if capa:
                 db.execute("UPDATE memoria SET capa = ? WHERE id = ?", (capa, pid))
 
@@ -534,6 +689,7 @@ class Almacen:
         """Lo que ha dicho y hecho quien edita desde `desde` (AAAA-MM-DD), por pieza: evaluación, ediciones a mano
         (antes y después), peticiones del chat y si se descartó."""
         out = []
+        metricas = self.metricas()             # lo que hizo cada pieza en Instagram (6/11)
         piezas = self.db.execute(
             "SELECT p.ejecucion_id, p.pieza_id, p.estado, e.fecha FROM piezas p JOIN ejecuciones e ON e.id = p.ejecucion_id "
             "WHERE e.fecha >= ? ORDER BY e.fecha, p.pieza_id", (desde,)).fetchall()
@@ -555,14 +711,17 @@ class Almacen:
             ultima = Pieza.model_validate_json(versiones[-1]["datos"]) if versiones else None
             # «Cinco del libro» con elección (5/11): qué noticias quitó y puso la redacción respecto a las del jefe
             eleccion = [a for a in (ultima.avisos if ultima else []) if a.startswith("Cinco del libro: elección de la redacción: quitó")]
-            if not (ev or pedidos or ediciones or notas or eleccion or f["estado"] == "descartada"):
+            m = metricas.get(pid)
+            if not (ev or pedidos or ediciones or notas or eleccion or m or f["estado"] == "descartada"):
                 continue
             out.append({"pieza": pid, "fecha": f["fecha"], "estado": f["estado"],
                         "formato": ultima.eleccion.formato if ultima else None,
                         "titular": ultima.guion.diapositivas[0].texto if ultima and ultima.guion else (ultima.eleccion.titular if ultima else ""),
                         "evaluacion": ev[0].model_dump() if ev else None, "pedidos_chat": pedidos, "ediciones": ediciones,
                         # Lo que se dijo a cada agente (2/11): el motivo de un descarte, notas sobre una diapositiva
-                        "notas": notas, **({"eleccion_redaccion": eleccion[0]} if eleccion else {})})
+                        "notas": notas, **({"eleccion_redaccion": eleccion[0]} if eleccion else {}),
+                        **({"publico": m.model_dump(include={"alcance", "guardados", "compartidos", "me_gusta", "comentarios"})}
+                           if m else {})})
         return out
 
     # --- Gasto -----------------------------------------------------------------------

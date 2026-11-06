@@ -79,7 +79,10 @@ export function VistaArchivo() {
                   <td className="px-4 py-3">
                     <Link href={`/pieza/${p.ejecucion_id}/${p.pieza_id}`} className="font-semibold hover:text-carmesi">{p.titular}</Link>
                     <span className="dato mt-0.5 block">
-                      {[p.libro && `${p.libro}${p.autor ? ` · ${p.autor}` : ""}`, `v${p.version}`, p.nota != null && `evaluada ${p.nota}`].filter(Boolean).join(" · ")}
+                      {[p.libro && `${p.libro}${p.autor ? ` · ${p.autor}` : ""}`, `v${p.version}`, p.nota != null && `evaluada ${p.nota}`,
+                        // Lo que hizo en Instagram (6/11, el libro de estilo vivo)
+                        p.alcance != null && `alcance ${p.alcance.toLocaleString("es-ES")}`, p.guardados != null && `${p.guardados} guardados`,
+                        p.compartidos != null && `${p.compartidos} compartidos`].filter(Boolean).join(" · ")}
                     </span>
                   </td>
                   <td className="px-4 py-3"><FormatoChip formato={p.formato} /></td>

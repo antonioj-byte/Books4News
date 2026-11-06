@@ -42,7 +42,8 @@ class Trabajo(BaseModel):
 
 NOMBRES_TRABAJO = {"diaria": "Ejecución del día", "fondo-del-mes": "Tanda del fondo del mes",
                    "memoria-analisis": "Análisis de la memoria", "cinco-del-libro": "Cinco del libro",
-                   "cinco-lista": "Cinco del libro: la lista", "newsletter": "La newsletter del jueves"}
+                   "cinco-lista": "Cinco del libro: la lista", "newsletter": "La newsletter del jueves",
+                   "estilo-prueba": "Prueba de una ficha en el banco"}
 
 MAX_DESARROLLOS = 3                    # «Proceder» a la vez (2/11): cada uno es un proceso aparte
 YA_EN_MARCHA = "Esta pieza ya se está escribiendo"
@@ -53,7 +54,7 @@ FIN = "FIN: código "
 DURACION = "DURACION: "
 # Lo que suele tardar cada tipo de trabajo si aún no hay ninguno terminado con su duración (segundos)
 TIPICO_POR_DEFECTO = {"diaria": 300, "pieza": 150, "cinco-del-libro": 300, "cinco-lista": 30, "newsletter": 180, "fondo-del-mes": 900,
-                      "memoria-analisis": 90, "tema": 90}
+                      "memoria-analisis": 90, "tema": 90, "estilo-prueba": 240}
 CANCELADO = "Cancelado por la redacción."
 CODIGO_CANCELADO = -2
 INTERRUMPIDO = "Interrumpido: la API se reinició (un despliegue) antes de que terminara. Vuelve a lanzarlo."

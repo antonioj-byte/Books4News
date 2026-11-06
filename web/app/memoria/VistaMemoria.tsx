@@ -19,6 +19,7 @@ const ESTADOS = [
   { valor: "propuesta", texto: "Propuestas" },
   { valor: "aceptada", texto: "Aceptadas · ya las cumplen sus agentes (las del programa, pendientes)" },
   { valor: "aplicada", texto: "Ya son reglas" },
+  { valor: "retirada", texto: "Retiradas (libro de estilo)" },
   { valor: "rechazada", texto: "Rechazadas" },
 ] as const;
 
@@ -58,6 +59,12 @@ function Tarjeta({ p, decidir }: { p: Patron; decidir: (estado: Patron["estado"]
       </div>
       <h3 className="text-[19px] font-semibold leading-snug">{p.patron}</h3>
       <p className="rounded-[6px] bg-papel-hondo px-3 py-2 text-[14px]"><b>{p.origen === "conversacion" ? "Regla:" : "Regla propuesta:"}</b> {p.propuesta}</p>
+      {(p.ejemplo_bueno || p.ejemplo_malo) && (
+        <div className="grid gap-1.5 text-[13px] sm:grid-cols-2">
+          {p.ejemplo_bueno && <p className="rounded-[6px] border border-borde px-2.5 py-1.5"><b>Así sí:</b> «{p.ejemplo_bueno}»</p>}
+          {p.ejemplo_malo && <p className="rounded-[6px] border border-borde px-2.5 py-1.5"><b>Así no:</b> «{p.ejemplo_malo}»</p>}
+        </div>
+      )}
       <ul className="list-disc pl-5 text-[13px] text-tinta-suave">
         {p.evidencia.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
       </ul>
@@ -77,7 +84,7 @@ function Tarjeta({ p, decidir }: { p: Patron; decidir: (estado: Patron["estado"]
         {p.estado !== "aceptada" && p.estado !== "aplicada" && !confirmar && <button className="boton" onClick={() => setConfirmar(true)}>Aceptar</button>}
         {confirmar && (
           <span className="flex basis-full flex-col items-start gap-2 rounded-[10px] border border-borde bg-papel p-3 text-[13px]">
-            <span>Desde la siguiente pieza, {p.destino === "codigo" ? "queda para una sesión de trabajo (necesita cambiar el código)" : "su agente cumplirá esta regla en producción"}.</span>
+            <span>Desde la siguiente pieza, {p.destino === "codigo" ? "se encarga como cambio de código (una issue en GitHub que recoge la tarea semanal)" : p.origen === "poda" ? "se aplica la poda: las fichas que funde o retira dejan de contar" : "su agente cumplirá esta regla en producción"}.</span>
             <span className="flex gap-2">
               <Boton onClick={async () => { await decidir("aceptada", capa); setConfirmar(false); }} hecho="Aceptada">Sí, aceptarla</Boton>
               <button className="boton-suave" onClick={() => setConfirmar(false)}>Cancelar</button>

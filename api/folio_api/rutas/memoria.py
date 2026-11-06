@@ -49,5 +49,13 @@ def analisis(ctx: Contexto = Depends(contexto)):
 def decidir(pid: int, d: DecisionPatron, ctx: Contexto = Depends(contexto)):
     if pid not in {p.id for p in ctx.almacen.patrones()}:
         raise HTTPException(404, "No existe ese patrón")
+    if d.estado == "retirada":
+        from folio import estilo_vivo
+        estilo_vivo.retirar(ctx.cfg, ctx.almacen, pid, d.nota)
+        return d
     ctx.almacen.decidir_patron(pid, d.estado, d.nota, d.capa)
+    if d.estado == "aceptada":
+        # El libro de estilo vivo (6/11): aceptar una poda retira lo que funde; aceptar una de código abre su encargo
+        from folio import estilo_vivo
+        estilo_vivo.al_aceptar(ctx.cfg, ctx.almacen, pid)
     return d

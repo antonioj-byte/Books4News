@@ -22,7 +22,10 @@ export type TemaCreado = components["schemas"]["TemaCreado"];
 export type Material = components["schemas"]["Material"];
 export type Nota = components["schemas"]["Nota"];
 export type EstadoMemoria = components["schemas"]["EstadoMemoria"];
-export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" };
+export type Patron = components["schemas"]["Patron"] & { estado: "propuesta" | "aceptada" | "rechazada" | "aplicada" | "retirada" };
+// El libro de estilo vivo (6/11)
+export type LibroEstilo = components["schemas"]["LibroEstilo"];
+export type Ejemplo = components["schemas"]["Ejemplo"];
 export type EstadoBuffer = components["schemas"]["EstadoBuffer"];
 export type Fondo = components["schemas"]["Fondo"];
 export type Trabajo = components["schemas"]["Trabajo"];
@@ -76,6 +79,13 @@ export const api = {
   // El análisis va en un proceso aparte (2/11: dentro de la petición, la web cortaba a los 5 minutos)
   analizarMemoria: (dias: number) => pedir<EstadoEjecucion>(`/api/memoria/analizar?dias=${dias}`, { method: "POST" }),
   analisisMemoria: () => pedir<EstadoEjecucion | null>("/api/memoria/analisis"),
+  libroEstilo: () => pedir<LibroEstilo>("/api/estilo"),
+  retirarFicha: (id: number) => pedir<{ avisos: string[] }>(`/api/estilo/fichas/${id}/retirar`, { method: "POST" }),
+  reactivarFicha: (id: number) => pedir<{ avisos: string[] }>(`/api/estilo/fichas/${id}/reactivar`, { method: "POST" }),
+  probarFicha: (id: number) => pedir<EstadoEjecucion>(`/api/estilo/fichas/${id}/probar`, { method: "POST" }),
+  pruebaFicha: () => pedir<EstadoEjecucion | null>("/api/estilo/prueba"),
+  decidirEjemplo: (id: number, estado: "activo" | "retirado") =>
+    pedir<{ avisos: string[] }>(`/api/estilo/ejemplos/${id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado }) }),
   decidirPatron: (id: number, estado: Patron["estado"], nota = "", capa?: Capa) =>
     pedir<unknown>(`/api/memoria/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ estado, nota, ...(capa ? { capa } : {}) }) }),
   archivo: () => pedir<PiezaArchivo[]>("/api/archivo"),

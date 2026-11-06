@@ -19,6 +19,7 @@ modelos:
   estilo: claude-opus-5-5         # editor de estilo (2/11, prueba A/B de la voz de Folio)
   cinco: claude-opus-5-5          # «Cinco del libro» (2/11): las cinco noticias del mundo del libro del día
   cinco_propuesta: claude-haiku-5-5   # «Cinco del libro» con elección (5/11): la lista de unas diez para que elija la redacción
+  estilo_ejemplos: claude-haiku-5-5   # libro de estilo vivo (6/11): elige qué ediciones de la redacción enseñan criterio
   perfil: claude-opus-5-5         # «Perfil de autor» (6/11): la semblanza, la trayectoria, su voz y la prensa
   perfil_correccion: claude-opus-5-5
   newsletter: claude-opus-5-5     # «La newsletter del jueves» (4/11): titular, percha, frases y escenas del ensayo semanal
@@ -35,6 +36,7 @@ esfuerzo:                       # output_config.effort
   guion: high
   cinco: medium                   # «Cinco del libro» (2/11): elegir y titular cinco noticias, sin libro que pensar
   cinco_propuesta: medium         # la lista para elegir (5/11)
+  estilo_ejemplos: low
   perfil: high                    # el primer perfil, como el guion (la calidad del texto no se negocia)
   perfil_correccion: medium       # el reintento, como las correcciones del guion
   newsletter: medium              # «La newsletter del jueves» (4/11): elegir frases literales y escribir las escenas
@@ -223,3 +225,13 @@ ab:
     opus-high: {modelo: claude-opus-5-5, esfuerzo: high}
     # r1 (ganó): voz_folio.md en lugar de la línea de tono; ya es producción.
     # r2 (perdió: más hechos no verificados): repaso de voz antes de devolver, prompts/ab/guionista_r2.md
+
+# El libro de estilo vivo (6/11, a petición del usuario: «activar un proceso de retroalimentación permanente»; folio.estilo_vivo)
+estilo:
+  ejemplos_max: 8                # ediciones de la redacción (antes y después) que entran en el guionista y el chat
+  max_activas_por_rol: 25        # por encima, la poda propone fundir o retirar fichas
+  dias_sin_refuerzo: 45          # una ficha del feedback que no vuelve a salir en este tiempo se propone revisar
+  prueba_piezas: 2               # piezas del banco (aprobadas) que se reescriben con y sin la ficha
+  prueba_max_semana: 2           # fichas que se prueban solas cada semana (~0,30 $ cada una)
+  prueba_umbral: 0.5             # diferencia de idea+voz (de 1 a 5) para decir que mejora o empeora
+  github_repo: antonioj-byte/Books4News   # donde se abren los encargos de código (con FOLIO_GITHUB_TOKEN)
