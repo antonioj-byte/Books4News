@@ -215,11 +215,6 @@ def test_la_lista_marca_las_que_diga_el_jefe(cfg):
     assert sum(c.marcada for c in p.candidatas) == 3 and (p.minimo, p.maximo) == (3, 5)
 
 
-def test_la_lista_pide_al_menos_diez_si_hay(cfg):
-    llm = _LLM(_lista(8), _lista(10))
-    p = cinco.proponer(llm, cfg, "2026-11-05", _historias(20))
-    assert len(p.candidatas) == 10 and "de 10 a" in _texto(llm.prompts[1][-1])
-
 
 def test_las_de_actualidad_sobre_libros_entran(cfg):
     hs = _historias(3)
@@ -253,3 +248,25 @@ def test_rehacer_la_lista_la_amplia_con_lo_leido_en_espanol(cfg):
     assert [h.titular_es for h in nuevas] == [f"Novedad {i} en castellano" for i in range(6)]
     assert len(cinco.candidatas(todas)) == 10
     assert [h.id for h in cinco.con_extra(cfg, "2026-11-05", hs)] == [h.id for h in todas]     # el post las encuentra
+
+
+def test_primero_las_del_mundo_en_espanol(cfg):
+    """6/11: «los breves seleccionan el Femina, pero no el Herralde, que se falló el mismo día»."""
+    hs = _historias(3)
+    hs[0].articulos[0].idioma = "fr"
+    bloque = cinco._bloque(hs)
+    assert bloque.index("[e1]") < bloque.index("[e0]") and "en fr" in bloque and "en es" in bloque
+
+
+def test_una_lista_corta_no_es_un_error(cfg):
+    """6/11: «Rehacer la lista» falló en producción. Si el jefe propone menos de diez, vale."""
+    l = _lista(6)
+    l.publicar = 4
+    p = cinco.proponer(_LLM(l), cfg, "2026-11-05", _historias(20))
+    assert len(p.candidatas) == 6 and sum(c.marcada for c in p.candidatas) == 4
+
+
+def test_lo_que_se_salva_de_una_lista_rota(cfg):
+    mala = _lista(ids=["e1", "e1", "x9", "e2", "e3", "e4"])
+    p = cinco.proponer(_LLM(mala, mala), cfg, "2026-11-05", _historias(20))
+    assert [c.historia for c in p.candidatas] == ["e1", "e2", "e3", "e4"]

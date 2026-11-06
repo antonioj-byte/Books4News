@@ -33,6 +33,7 @@ def bloque_historias(historias: list[Historia], etiqueta: str = "historias") -> 
             f"  resumen: {h.resumen_es}\n"
             f"  sección: {h.seccion}\n"
             f"  medios que la cubren ({h.n_medios}): {', '.join(h.medios)}\n"
+            f"  lenguas de sus medios: {', '.join(sorted({a.idioma for a in h.articulos}))}\n"
             f"  publicada desde: {_desde(h)}\n"
             f"  titulares originales:\n{titulares}"
         )

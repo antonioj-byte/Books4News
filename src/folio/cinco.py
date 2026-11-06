@@ -150,12 +150,20 @@ def cuantas(cfg: Config) -> tuple[int, int]:
     return min(c.minimo, c.maximo, N), min(c.maximo, N)
 
 
+def en_espanol(h: Historia) -> bool:
+    return any(a.idioma == "es" for a in h.articulos)
+
+
 def _bloque(historias: list[Historia]) -> str:
+    """La lista para el modelo, primero las del mundo en español (6/11: el Femina salía y el Herralde, fallado el
+    mismo día, no; el orden por número de medios favorece lo de fuera), con la lengua de sus medios."""
     def linea(h: Historia) -> str:
         desde = min((a.publicado_en for a in h.articulos if a.publicado_en), default=None)
-        return (f"- [{h.id}] {h.n_medios} medio{'s' if h.n_medios != 1 else ''} ({', '.join(h.medios[:4])})"
+        lenguas = ", ".join(sorted({a.idioma for a in h.articulos}))
+        return (f"- [{h.id}] {h.n_medios} medio{'s' if h.n_medios != 1 else ''} ({', '.join(h.medios[:4])}; en {lenguas})"
                 + (f", desde el {desde.date().isoformat()}" if desde else "") + f": {h.titular_es}. {h.resumen_es or ''}")
-    return "<noticias>\n" + "\n".join(linea(h) for h in historias) + "\n</noticias>"
+    orden = sorted(historias, key=lambda h: not en_espanol(h))
+    return "<noticias>\n" + "\n".join(linea(h) for h in orden) + "\n</noticias>"
 
 
 ELEGIDAS_POR_LA_REDACCION = ("La redacción ya ha elegido las noticias: son exactamente las de la lista, todas, y en ese "
@@ -377,11 +385,12 @@ def guardar_propuesta(cfg: Config, p: PropuestaCinco) -> None:
 
 def validar_lista(lista: ListaCinco, ids: set[str], maximo: int = 15, publicar: tuple[int, int] = (3, N)) -> list[str]:
     errores = []
-    minimo = min(N_LISTA, len(ids))
-    if not minimo <= len(lista.candidatas) <= max(maximo, minimo):
-        errores.append(f"Tienen que ser de {minimo} a {max(maximo, minimo)} noticias (hay {len(lista.candidatas)}).")
-    if not publicar[0] <= lista.publicar <= min(publicar[1], len(lista.candidatas)):
-        errores.append(f"`publicar` tiene que ser de {publicar[0]} a {publicar[1]}.")
+    # 6/11: «Rehacer la lista» falló en producción. Pocas noticias no es un error (mejor pocas que relleno): solo
+    # hacen falta las que se publicarían; demasiadas, sí
+    if not publicar[0] <= len(lista.candidatas) <= max(maximo, publicar[0]):
+        errores.append(f"Tienen que ser de {min(N_LISTA, len(ids))} a {maximo} noticias (hay {len(lista.candidatas)}).")
+    if not publicar[0] <= lista.publicar <= min(publicar[1], max(len(lista.candidatas), publicar[0])):
+        errores.append(f"`publicar` tiene que ser de {publicar[0]} a {publicar[1]}, y no más que las noticias de la lista.")
     vistos = set()
     for i, c in enumerate(lista.candidatas, 1):
         if c.historia not in ids:
@@ -427,6 +436,21 @@ def proponer(llm: LLM, cfg: Config, fecha: str, historias: list[Historia]) -> Pr
         mensajes += [{"role": "assistant", "content": json.dumps(r.model_dump(), ensure_ascii=False)},
                      {"role": "user", "content": "No cumple estas condiciones:\n" + "\n".join(f"- {e}" for e in errores)
                       + "\nCorrígelo y devuelve el JSON completo."}]
+    # Lo que se pueda salvar de la última respuesta: sin ids inventados ni repetidos, los titulares largos recortados
+    vistos, buenas = set(), []
+    for c in r.candidatas:
+        if c.historia in ids and c.historia not in vistos:
+            vistos.add(c.historia)
+            buenas.append(c.model_copy(update={"titular": " ".join(c.titular.split()[:12])}))
+    if len(buenas) >= minimo:
+        por_id = {h.id: h for h in lista}
+        publicar = max(minimo, min(r.publicar, maximo, len(buenas)))
+        out = [Candidata(historia=c.historia, titular=c.titular.strip(), por_que=c.por_que.strip(),
+                         medio=por_id[c.historia].articulos[0].medio if por_id[c.historia].articulos else "",
+                         url=por_id[c.historia].articulos[0].url if por_id[c.historia].articulos else "",
+                         n_medios=por_id[c.historia].n_medios, marcada=i < publicar) for i, c in enumerate(buenas[:tope])]
+        return PropuestaCinco(fecha=fecha, candidatas=out, coste_usd=round(sum(t.coste_usd for t in llm.trazas[antes:]), 4),
+                              minimo=minimo, maximo=maximo)
     raise ErrorLLM("Cinco del libro: la lista no cumple las reglas tras un reintento (" + " | ".join(errores) + ")")
 
 

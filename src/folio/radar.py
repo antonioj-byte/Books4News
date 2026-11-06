@@ -59,6 +59,8 @@ def temas(llm: LLM, historias: list[Historia], sel: SeleccionJefe | None,
     p = llm.cfg.pipeline.radar
     elegidas = {e.historia_id for e in (sel.elegidas if sel else [])}
     candidatas = [h for h in historias if h.carril in ("editorial", "radar") and h.id not in elegidas]
+    # 6/11 («los breves seleccionan el Femina, pero no el Herralde»): primero las del mundo en español
+    candidatas.sort(key=lambda h: not any(a.idioma == "es" for a in h.articulos))
     if not p.activo or not candidatas:
         return [], []
     prompt = cargar_prompt(llm.cfg, "radar", {
