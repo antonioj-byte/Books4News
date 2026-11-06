@@ -87,7 +87,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
   const [enlaces, setEnlaces] = useState("");
   const [enviando, setEnviando] = useState<"ahora" | "manana" | null>(null);
   // Lo que pide la redacción (3/11, «si lo que le pido es que me cuente una noticia… no me haga un ensayo»)
-  const [enfoque, setEnfoque] = useState<"elige" | "noticia" | "ensayo" | "newsletter">("elige");
+  const [enfoque, setEnfoque] = useState<"elige" | "noticia" | "ensayo" | "perfil" | "newsletter">("elige");
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
   const { datos: temas, recargar } = useDatos("temas", api.temas);
   const [abierto, setAbierto] = useState<number | null>(null);
@@ -153,7 +153,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
                       aria-label="Enlaces (opcional)"
                       className="resize-y rounded-[12px] border border-borde bg-papel p-3 font-mono text-[13px] outline-none focus:border-tinta" />}
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Qué le pides al jefe">
-              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"], ["ensayo", "Ensayo sin percha"], ["newsletter", "Newsletter del jueves"]] as const).map(([v, txt]) => (
+              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"], ["ensayo", "Ensayo sin percha"], ["perfil", "Perfil de autor"], ["newsletter", "Newsletter del jueves"]] as const).map(([v, txt]) => (
                 <button key={v} aria-pressed={enfoque === v} onClick={() => setEnfoque(v)} disabled={!!enviando}
                         className={`rounded-full border px-3 py-1 text-[13px] ${enfoque === v ? "border-carmesi bg-carmesi text-papel" : "border-borde bg-papel hover:border-tinta"}`}>
                   {txt}
@@ -163,6 +163,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
                 {enfoque === "newsletter" ? "La versión corta en Instagram del ensayo de los jueves, con tus frases literales."
                   : enfoque === "noticia" ? "Contada con su contexto, sin ensayo ni libro ajeno."
                   : enfoque === "ensayo" ? "Un tema literario con su historia, sin noticia ni libro obligatorio. Sigue tu estructura y tu tono."
+                  : enfoque === "perfil" ? "Una escritora o un escritor: trayectoria, sus libros, una frase suya y lo que dice la prensa. Escribe su nombre y la percha, si la hay."
                   : "Lectura lateral, diálogo, tres libros… lo que mejor le vaya."}
               </span>
             </div>

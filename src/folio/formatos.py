@@ -33,6 +33,9 @@ class Formato:
     firma_folio: bool = True          # el cierre acaba con la firma de Folio (la corrección mecánica la añade)
     noticia: bool = True              # tiene una noticia detrás (si no, la diapositiva de actualidad no lleva «Lo cuentan»)
     infografia: bool = True           # la idea puede llevar infografía («Tres libros», no: no cuenta nada que no cuenten ellos)
+    # Propio, pero de la mesa (el perfil, 6/11): lo propone la madrugada o un tema, sus libros se verifican, se escribe con
+    # «Proceder» (su módulo escribe el guion y dirige el arte) y pasa por la comprobación de hechos general
+    en_mesa: bool = False
 
 
 FORMATOS: dict[str, Formato] = {f.id: f for f in (
@@ -51,6 +54,10 @@ FORMATOS: dict[str, Formato] = {f.id: f for f in (
             propone="editor_libro"),
     Formato("noticia", "Noticia", "una noticia", "noticia", libro_obligatorio=False),
     Formato("ensayo", "Ensayo", "un ensayo", "ensayo", libro_obligatorio=False, atemporal=True),
+    # 6/11 («un posible formato nuevo… el perfil de autor»): la obra del autor, sin exigir novedad; en el hueco del
+    # mundo del libro de la mesa (seleccion.ALIAS_REPARTO)
+    Formato("perfil", "Perfil", "un perfil", "perfil de autor", libros=3, candidatos=(1, 5), exige_novedad=False,
+            propone="editor_libro", propio="perfil", firma_folio=False, infografia=False, en_mesa=True),
     Formato("cinco", "Cinco del libro", "cinco del libro", "cinco del libro", libros=0, libro_obligatorio=False,
             propio="cinco", firma_folio=False),
     Formato("newsletter", "La newsletter del jueves", "la newsletter del jueves", "la newsletter del jueves", libros=0,
@@ -73,5 +80,12 @@ def nombre(formato: str | None) -> str:
 SIN_LIBRO_OBLIGATORIO = tuple(f.id for f in FORMATOS.values() if not f.libro_obligatorio)
 # Los que tienen su propio módulo (no pasan por el arte ni por la comprobación general del pipeline)
 PROPIOS = tuple(f.id for f in FORMATOS.values() if f.propio)
+
+
+def fuera_de_la_mesa(formato: str | None) -> bool:
+    """¿Lo escribe entero su módulo, fuera de la mesa («Cinco del libro», la newsletter)? El perfil es propio pero de la
+    mesa: su módulo escribe el guion y el arte, y lo demás (verificar, hechos, historial) es el de siempre."""
+    f = de(formato)
+    return bool(f.propio) and not f.en_mesa
 # El carril del que tiene que salir cada formato que no es de actualidad
 CARRIL_DEL_FORMATO = {f.id: f.carril for f in FORMATOS.values() if f.carril}

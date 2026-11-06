@@ -6,6 +6,7 @@ modelos:
   guion: claude-opus-5-5        # guionista
   guion_correccion: claude-opus-5-5   # reintentos y reescritura del lector sin contexto: el mismo modelo (2/11)
   comprobacion: claude-haiku-5-5  # comprobación de hechos del guion contra las fuentes
+  comprobacion_corta: claude-haiku-5-5   # su reintento si la respuesta se corta (6/11: el razonamiento agotaba el tope)
   arte: claude-haiku-5-5          # director de arte: tono, búsqueda y elección de la imagen
   ilustracion: claude-opus-5-5    # ilustrador: ilustración vectorial de portada (prototipo)
   chat: claude-opus-5-5           # chat de edición de la web
@@ -18,6 +19,8 @@ modelos:
   estilo: claude-opus-5-5         # editor de estilo (2/11, prueba A/B de la voz de Folio)
   cinco: claude-opus-5-5          # «Cinco del libro» (2/11): las cinco noticias del mundo del libro del día
   cinco_propuesta: claude-haiku-5-5   # «Cinco del libro» con elección (5/11): la lista de unas diez para que elija la redacción
+  perfil: claude-opus-5-5         # «Perfil de autor» (6/11): la semblanza, la trayectoria, su voz y la prensa
+  perfil_correccion: claude-opus-5-5
   newsletter: claude-opus-5-5     # «La newsletter del jueves» (4/11): titular, percha, frases y escenas del ensayo semanal
   juez: claude-sonnet-5-5         # juez a ciegas de las rondas de la voz (2/11): otro modelo que el que escribe
 
@@ -32,9 +35,12 @@ esfuerzo:                       # output_config.effort
   guion: high
   cinco: medium                   # «Cinco del libro» (2/11): elegir y titular cinco noticias, sin libro que pensar
   cinco_propuesta: medium         # la lista para elegir (5/11)
+  perfil: high                    # el primer perfil, como el guion (la calidad del texto no se negocia)
+  perfil_correccion: medium       # el reintento, como las correcciones del guion
   newsletter: medium              # «La newsletter del jueves» (4/11): elegir frases literales y escribir las escenas
   guion_correccion: medium        # 2/11 (a petición del usuario, por el gasto): las correcciones, con esfuerzo medio
   comprobacion: medium
+  comprobacion_corta: low
   arte: medium
   ilustracion: medium
   chat: medium

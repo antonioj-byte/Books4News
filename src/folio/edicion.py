@@ -93,6 +93,8 @@ def validar(cfg: Config, p: Pieza, g: GuionLLM) -> list[str]:
     if propio:
         import importlib
         modulo = importlib.import_module(f"folio.{propio}")
+        if hasattr(modulo, "validar_edicion"):              # el perfil (6/11): sus frases, solo las ya verificadas
+            return modulo.validar_edicion(cfg, p, g)
         if hasattr(modulo, "validar_guion"):
             return modulo.validar_guion(g, p.eleccion.encargo)
     return guionista.validar(cfg, g, p.libros, p.fuentes, _citas_ok(p), _citas_ok(p, "critica"), p.eleccion.formato)

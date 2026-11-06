@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{# «Perfil de autor», por dónde empezar (6/11): la frase a tamaño de titular con su remate, la cubierta del libro
+   principal con su ficha y por qué empezar por él. En un obituario, el homenaje #}
+{% block cuerpo %}
+    <div class="antetitulo">{{ pildora }}</div>
+    <h1 class="titular pf-cierre">{{ cierre_remate }}</h1>
+    <div class="pf-empezar">
+      {% if libro %}{% with l = libro %}{% include "_cubierta.html" %}{% endwith %}{% endif %}
+      <div class="pf-empezar__texto">
+        {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
+        {% if libro %}<p class="pf-ficha"><em>{{ libro.titulo }}</em>{% if libro.datos %} · {{ libro.datos }}{% endif %}</p>{% endif %}
+      </div>
+    </div>
+{% endblock %}

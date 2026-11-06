@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{# «Perfil de autor», la trayectoria (6/11): en «revista», una línea horizontal con un punto por hito; en «collage», tiras
+   de papel rasgado sobre el marcador. Solo años que salen de los textos o de las fichas (folio.perfil) #}
+{% block cuerpo %}
+    <div class="antetitulo">Trayectoria</div>
+    <h2 class="pf-titulillo">{{ titulillo }}</h2>
+    <ol class="pf-hitos pf-hitos--{{ hitos|length }}">
+      {% for h in hitos %}<li class="pf-hito"><span class="pf-hito__anio">{{ h.anio }}</span><span class="pf-hito__texto">{{ h.texto }}</span></li>{% endfor %}
+    </ol>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{# «Perfil de autor», la prensa (6/11): una o dos frases de la crítica, verificadas, con su medio; en «collage», como
+   recortes de papel pegados #}
+{% block cuerpo %}
+    <div class="antetitulo">La crítica</div>
+    <div class="pf-prensa">
+      {% for p in prensa %}<blockquote class="pf-recorte pf-recorte--{{ loop.index }}"><p class="pf-recorte__frase">{{ p.frase }}</p>{% if p.medio %}<p class="pf-recorte__medio">{{ p.medio }}</p>{% endif %}</blockquote>{% endfor %}
+    </div>
+{% endblock %}

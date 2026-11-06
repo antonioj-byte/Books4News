@@ -27,7 +27,7 @@ class TemaNuevo(BaseModel):
     cuando: Literal["ahora", "manana"]
     ejecucion: int | None = None          # para «ahora»: la ejecución de la mesa en que entra la pieza
     # 3/11 (a petición del usuario): «elige», el jefe decide el formato; «noticia», contar la noticia, sin ensayo
-    enfoque: Literal["elige", "noticia", "ensayo"] = "elige"
+    enfoque: Literal["elige", "noticia", "ensayo", "perfil"] = "elige"
     segundo_plano: bool = False           # 4/11, usabilidad: responde al momento y el jefe trabaja aparte
 
 
@@ -44,7 +44,7 @@ class TemaCreado(BaseModel):
 class Replica(BaseModel):
     texto: str = Field(min_length=2, max_length=MAX_TEXTO_TEMA)
     ejecucion: int
-    enfoque: Literal["elige", "noticia", "ensayo"] | None = None   # si la réplica cambia lo que se pide (p. ej. «solo la noticia»)
+    enfoque: Literal["elige", "noticia", "ensayo", "perfil"] | None = None   # si la réplica cambia lo que se pide (p. ej. «solo la noticia»)
     segundo_plano: bool = False        # 4/11, usabilidad: responde al momento y el jefe trabaja aparte (trabajo «tema-<id>»)
 
 
@@ -107,9 +107,10 @@ def proponer(t: TemaNuevo, ctx: Contexto = Depends(contexto)):
     if t.cuando == "ahora" and _un_tema.locked():
         # Antes de guardarlo: un 409 dejaba un tema «pendiente» huérfano para siempre (revisión general, 2/11)
         raise HTTPException(409, "El jefe ya está con otro tema; espera a que responda")
-    if t.cuando == "manana" and t.enfoque in temas.SIN_PERCHA:
+    if t.cuando == "manana" and t.enfoque in temas.FORZADOS:
         # La mesa de madrugada no cuenta noticias sueltas ni ensayos: solo propone piezas con libro
-        raise HTTPException(422, ("«Solo la noticia»" if t.enfoque == "noticia" else "Un ensayo") + " se propone ahora, no para la mesa de mañana")
+        raise HTTPException(422, {"noticia": "«Solo la noticia»", "ensayo": "Un ensayo", "perfil": "Un perfil"}[t.enfoque]
+                            + " se propone ahora, no para la mesa de mañana")
     tid = ctx.almacen.guardar_tema(texto, enlaces, t.cuando, t.enfoque)
     if t.cuando == "manana":
         return TemaCreado(tema=next(x for x in ctx.almacen.temas() if x.id == tid))

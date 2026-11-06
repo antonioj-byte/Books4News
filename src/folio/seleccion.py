@@ -46,9 +46,9 @@ def anio_minimo(fecha: str, anios: int) -> int:
 
 
 # «Tres libros» (balda, 2/11) va en el hueco del diálogo: cuenta como él en el reparto
-ALIAS_REPARTO = {"balda": "dialogo"}
+ALIAS_REPARTO = {"balda": "dialogo", "perfil": "edicion"}   # y el perfil de autor, en el del mundo del libro (6/11)
 # Los nombres de los formatos en los prompts y el informe, del registro de formatos (4/11)
-NOMBRES_FORMATO = {f.id: f.en_prompt for f in formatos.FORMATOS.values() if not f.propio}
+NOMBRES_FORMATO = {f.id: f.en_prompt for f in formatos.FORMATOS.values() if not formatos.fuera_de_la_mesa(f.id)}
 _EN_EL_REPARTO = {"lateral": "de lectura lateral", "dialogo": "de diálogo con la actualidad", "edicion": "del mundo del libro",
                   "curiosidad": "de historia editorial (del cajón)", "recomendado": "de libro recomendado"}
 # El carril del que tiene que salir cada formato que no es de actualidad

@@ -30,14 +30,16 @@ from folio.llm import LLM, ErrorLLM, cargar_prompt
 from folio.modelos import Articulo, Historia, HistoriaElegida
 
 PREFIJO = "tema-"
-FORMATOS = ("lateral", "dialogo", "edicion", "balda", "recomendado", "noticia", "ensayo")
+FORMATOS = ("lateral", "dialogo", "edicion", "balda", "recomendado", "noticia", "ensayo", "perfil")
 # Lo que la redacción pide (3/11): que el jefe elija el formato o que cuente la noticia, sin ensayo ni libro ajeno
 ENFOQUES = {
     "elige": "La redacción no ha dicho el formato: elige tú el que mejor le va. Si su texto pide contar una noticia («cuéntame la noticia», «sin ensayo», «solo lo que ha pasado»), es «noticia». Si pide un ensayo, una historia o un explicador de un tema literario o del mundo del libro sin noticia ni libro que lo sostenga (la historia de un premio, una rivalidad, un movimiento), es «ensayo».",
     "noticia": "La redacción pide SOLO LA NOTICIA: el formato es «noticia», sin excepción. No hagas una lectura lateral, un diálogo ni un ensayo, y no busques un libro que la ilumine. Libro, solo si la noticia trata de uno concreto que está en castellano; si no, ninguno.",
     "ensayo": "La redacción pide un ENSAYO SIN PERCHA: el formato es «ensayo», sin excepción. Es un tema literario o del mundo del libro contado con su historia y su contexto, sin noticia del día que lo justifique y sin libro obligatorio. Sigue la estructura, el enfoque y el tono que pide el encargo. No lo conviertas en una lectura lateral ni le busques un libro de pretexto: libro, solo si el tema trata de uno concreto que está en castellano y el encargo lo quiere; si no, ninguno.",
+    "perfil": "La redacción pide un PERFIL DE AUTOR: el formato es «perfil», sin excepción. Una semblanza de la escritora o el escritor del tema: quién es, su trayectoria, de qué van sus libros, una frase suya y lo que ha dicho la prensa. En `protagonista`, su nombre completo; de libros candidatos, de 1 a 5 de sus libros con edición en castellano (no hace falta que sean novedad), el primero el que recomendarías para empezar. Si es un obituario, dilo en `de_que_se_habla`.",
 }
 SIN_PERCHA = ("noticia", "ensayo")      # enfoques que no salen en la mesa de madrugada: solo «ahora»
+FORZADOS = SIN_PERCHA + ("perfil",)     # enfoques que fijan el formato aunque el jefe proponga otro (el perfil, 6/11)
 _MIN_CARACTERES = 600
 MAX_ENLACES = 4
 
@@ -203,7 +205,7 @@ def proponer(llm: LLM, cfg: Config, h: Historia, texto: str, fuentes: list[Fuent
     r.preguntas = [q.strip() for q in r.preguntas if q.strip()][:2]
     if r.propuesta is not None:
         e = r.propuesta
-        if enfoque in SIN_PERCHA:
+        if enfoque in FORZADOS:
             e.formato = enfoque              # lo que pide la redacción manda sobre lo que el jefe proponga
         if e.formato not in FORMATOS:
             e.formato = "dialogo"

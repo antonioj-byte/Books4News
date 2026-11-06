@@ -174,6 +174,56 @@ class Plantillas:
         datos.update(tipo="nl_percha", texto_html=texto_html(d.texto))
         return self.env.get_template("nl_percha.html").render(**datos)
 
+    def _perfil(self, pieza: Pieza, d: Diapositiva, n: int, base_url: str | None) -> str:
+        """«Perfil de autor» (6/11, direcciones B «revista» y C «collage»): la cara, quién es, la trayectoria, su obra,
+        su voz, la prensa y por dónde empezar. El estilo lo eligió el arte (`Arte.recurso`); un obituario, en «revista»
+        y sin color."""
+        from folio import perfil
+        a = pieza.arte
+        grave = bool(a and a.tono == "grave")
+        estilo = a.recurso if a and a.recurso in perfil.ESTILOS else "revista"
+        remates = a.remates_noticias if a else []
+        libros = ficha_libros(pieza, self.medios.cubiertas_de(pieza))
+
+        def remate(i: int, texto: str) -> Markup:
+            return titular_con_remate(texto, remates[i] if i < len(remates) else None)
+
+        datos = {**self._base(base_url), **self._texto(pieza, d, n), "imagen": None, "retrato": None,
+                 "acento": None if grave else (a.acento if a else "pluma"), "tono": "grave" if grave else None,
+                 "sin_foto": None, "infografia": None, "panorama": False, "friso": None, "banda": None, "video": False,
+                 "portada_estilo": None, "ilustracion": None}
+        if d.tipo == "portada":
+            retrato = self.medios.retrato(pieza)
+            datos.update(tipo="pf_portada", imagen=retrato, antetitulo="In memoriam" if grave else "Perfil",
+                         video=bool(retrato) and estilo == "revista",
+                         titular_remate=titular_con_remate(d.texto, a.remate if a else None))
+            plantilla = "pf_portada.html"
+        elif d.tipo == "trayectoria":
+            datos.update(tipo="pf_trayectoria", titulillo=remate(perfil.R_TRAYECTORIA, d.subtitulo or ""),
+                         hitos=[{"anio": anio, "texto": texto_html(t)} for anio, t in perfil.hitos_de(d.texto)])
+            plantilla = "pf_trayectoria.html"
+        elif d.tipo == "cita":
+            datos.update(tipo="pf_voz", cita_remate=remate(perfil.R_VOZ, d.texto),
+                         atribucion=texto_html(d.subtitulo) if d.subtitulo else None)
+            plantilla = "pf_voz.html"
+        elif d.tipo == "prensa":
+            datos.update(tipo="pf_prensa", prensa=[{"frase": texto_html(f), "medio": m} for f, m in perfil.prensa_de(d.texto)])
+            plantilla = "pf_prensa.html"
+        elif d.tipo == "cierre":
+            datos.update(tipo="pf_cierre", pildora="Para recordarla" if grave else "Por dónde empezar",
+                         cierre_remate=titular_con_remate(d.texto, a.remate_cierre if a else None),
+                         subtitulo=texto_html(d.subtitulo) if d.subtitulo else None, libro=libros[0] if libros else None)
+            plantilla = "pf_cierre.html"
+        else:                                       # «actualidad» (quién es) y «libro» (su obra)
+            obra = d.tipo == "libro"
+            datos.update(tipo="pf_obra" if obra else "pf_quien",
+                         pildora="Su obra" if obra else ("La noticia" if grave else "Quién es"),
+                         titulillo=remate(perfil.R_OBRA if obra else perfil.R_PORQUE, d.subtitulo or ""),
+                         cubiertas=libros[:3] if obra else [])
+            plantilla = "pf_texto.html"
+        html = self.env.get_template(plantilla).render(**datos)
+        return html.replace(f"diapositiva--{datos['tipo']}", f"diapositiva--{datos['tipo']} pf pf--{estilo}", 1)
+
     def _base(self, base_url: str | None) -> dict:
         logo = self.tokens["logotipo"].strip()
         return {

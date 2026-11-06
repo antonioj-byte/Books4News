@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{# «Perfil de autor», su voz (6/11): la frase suya, verificada letra por letra, a tamaño grande con su remate; las
+   comillas van por CSS para que no entren en el texto al editarlo #}
+{% block cuerpo %}
+    <span class="pf-comilla" aria-hidden="true">«</span>
+    <p class="texto pf-cita">{{ cita_remate }}</p>
+    {% if atribucion %}<p class="pf-atribucion">{{ atribucion }}</p>{% endif %}
+{% endblock %}

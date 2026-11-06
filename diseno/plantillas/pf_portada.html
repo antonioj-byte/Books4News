@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{# «Perfil de autor», portada (6/11, direcciones B y C del Artifact «El perfil de autor»): en «revista», la foto a sangre en
+   blanco y negro; en «collage», el recorte en trama sobre el campo de color, tal cual. La píldora dice «Perfil» o, en
+   un obituario, «In memoriam» #}
+{% block fondo %}{% if imagen %}<figure class="imagen imagen--sangre pf-foto"><img src="{{ imagen.src }}" alt="" style="object-position: {{ imagen.enfoque[0] }}% {{ imagen.enfoque[1] }}%"></figure>{% endif %}{% endblock %}
+{% block cuerpo %}
+    <div class="titulo">
+      <div class="antetitulo">{{ antetitulo }}</div>
+      <h1 class="titular">{{ titular_remate }}</h1>
+      {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
+    </div>
+{% endblock %}

@@ -50,6 +50,8 @@ const FORMATOS: Record<string, { texto: string; clase: string }> = {
   noticia: { texto: "Noticia", clase: "border border-tinta bg-papel-hondo text-tinta" },
   ensayo: { texto: "Ensayo", clase: "border border-tinta bg-papel-hondo text-tinta" },   // tema literario sin percha (3/11)   // tema contado sin ensayo (3/11)
   cinco: { texto: "Cinco del libro", clase: "bg-carmesi text-subrayador" },   // prueba de formato (2/11)
+  newsletter: { texto: "Newsletter del jueves", clase: "bg-tinta text-papel" },
+  perfil: { texto: "Perfil", clase: "bg-subrayador text-carmesi" },          // perfil de autor (6/11)
 };
 
 export function FormatoChip({ formato }: { formato: string }) {

@@ -807,3 +807,11 @@
   patron: "«En el caso de Asturias, no hay por qué hablar del libro: sirve con la propia noticia, claro.»"
   propuesta: "Una historia del mundo del libro que se sostiene sola (un premio, un homenaje, el regreso de los restos de un autor) se propone sin libro si no hay uno reciente en castellano de quien la protagoniza; no se descarta ni se fuerza un libro."
   evidencia: ["Conversación, 6/11: el editor descartó el regreso de los restos de Asturias a Guatemala por no traer libro nuevo"]
+
+- clave: perfil-de-autor
+  fecha: "2026-11-06"
+  destino: formatos
+  capa: marca
+  patron: "«Un posible formato nuevo es el perfil de autor: una breve semblanza biográfica con un título, un subtítulo y varias diapositivas sobre su trayectoria… al menos una quote de una entrevista del autor, o una cita significativa de un libro, lo que la prensa ha dicho, de qué tratan sus libros… Puede llevar percha o no: un premio, un obituario» («Puede proponer perfiles. Tres libros puede seguir como hasta ahora»; «Me gustan la B y la C»)."
+  propuesta: "Formato «perfil»: portada con la cara, quién es, trayectoria con años sacados de las fuentes o las fichas, su obra, una frase suya verificada letra por letra, de 0 a 2 frases de la prensa verificadas y por dónde empezar. Lo propone el editor del libro en el hueco del mundo del libro (como mucho uno al día) o la redacción con el enfoque «Perfil de autor»; libros de su obra sin exigir novedad. Estilos «revista» (B) y «collage» (C) alternados en el día; un obituario, siempre en «revista», sin color y con el cierre como homenaje."
+  evidencia: ["Conversación, 6/11: Artifact «El perfil de autor»"]

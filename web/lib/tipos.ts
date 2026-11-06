@@ -524,6 +524,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/trabajos/{clave}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancelar Trabajo
+         * @description Cancela un trabajo en marcha (6/11, a petición del usuario: «esto es ridículo, quizá debería haber opción de
+         *     cancelar»; un tema llevaba 57 minutos con el jefe «pensando»). Un tema cancelado queda «fallido» con su motivo.
+         */
+        post: operations["cancelar_trabajo_api_trabajos__clave__cancelar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/trabajos": {
         parameters: {
             query?: never;
@@ -553,7 +574,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Lanzar Cinco */
+        /**
+         * Lanzar Cinco
+         * @description Escribe y monta el post. Con `elegidas`, con esas (de 3 a 5) y en ese orden (5/11: la redacción elige de la lista).
+         */
         post: operations["lanzar_cinco_api_cinco__fecha__post"];
         delete?: never;
         options?: never;
@@ -570,6 +594,41 @@ export interface paths {
         };
         /** Estado Cinco */
         get: operations["estado_cinco_api_cinco_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cinco/{fecha}/lista": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista Cinco */
+        get: operations["lista_cinco_api_cinco__fecha__lista_get"];
+        put?: never;
+        /** Preparar Lista */
+        post: operations["preparar_lista_api_cinco__fecha__lista_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cinco-lista": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado Lista */
+        get: operations["estado_lista_api_cinco_lista_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1280,7 +1339,7 @@ export interface components {
              * Tipo
              * @enum {string}
              */
-            tipo: "portada" | "actualidad" | "libro" | "idea" | "cierre" | "noticia" | "cita";
+            tipo: "portada" | "actualidad" | "libro" | "idea" | "cierre" | "noticia" | "cita" | "trayectoria" | "prensa";
             /** Texto */
             texto: string;
             /**
@@ -1667,11 +1726,11 @@ export interface components {
         HistoriaElegida: {
             /**
              * Formato
-             * @description lateral (lectura lateral), dialogo (diálogo con la actualidad), balda (tres libros para entender algo, en lugar del diálogo), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes)
+             * @description lateral (lectura lateral), dialogo (diálogo con la actualidad), balda (tres libros para entender algo, en lugar del diálogo), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes); perfil (perfil de autor, en lugar de una del mundo del libro)
              * @default lateral
              * @enum {string}
              */
-            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco" | "noticia" | "ensayo" | "newsletter";
+            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco" | "noticia" | "ensayo" | "newsletter" | "perfil";
             /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista
@@ -1705,7 +1764,7 @@ export interface components {
             gancho_libro: string;
             /**
              * Protagonista
-             * @description Solo en historia editorial y radar: nombre completo de la persona real que protagoniza la historia (un autor, un editor, una librera), para buscar su retrato; vacío si no hay una
+             * @description Solo en historia editorial, radar y perfil: nombre completo de la persona real que protagoniza la historia (un autor, un editor, una librera), para buscar su retrato; vacío si no hay una
              * @default
              */
             protagonista: string;
@@ -1849,6 +1908,15 @@ export interface components {
             /** Sinopsis */
             sinopsis: string | null;
         };
+        /** ListaCinco */
+        ListaCinco: {
+            /** Modo */
+            modo: string;
+            /** Propuesta */
+            propuesta?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /**
          * Lomo
          * @description Un libro de la pieza tal como se recomienda: para la estantería de la portada del día.
@@ -1965,6 +2033,14 @@ export interface components {
             mensaje: string;
             /** Para */
             para?: ("guionista" | "director_arte" | "jefe_cultura") | null;
+        };
+        /** MontarCinco */
+        MontarCinco: {
+            /**
+             * Elegidas
+             * @description Las cinco historias elegidas, en orden (5/11)
+             */
+            elegidas?: string[] | null;
         };
         /** NewsletterNueva */
         NewsletterNueva: {
@@ -2404,7 +2480,7 @@ export interface components {
             /** Ejecucion */
             ejecucion: number;
             /** Enfoque */
-            enfoque?: ("elige" | "noticia" | "ensayo") | null;
+            enfoque?: ("elige" | "noticia" | "ensayo" | "perfil") | null;
             /**
              * Segundo Plano
              * @default false
@@ -2637,7 +2713,7 @@ export interface components {
              * @default elige
              * @enum {string}
              */
-            enfoque: "elige" | "noticia" | "ensayo";
+            enfoque: "elige" | "noticia" | "ensayo" | "perfil";
             /**
              * Segundo Plano
              * @default false
@@ -3632,6 +3708,37 @@ export interface operations {
             };
         };
     };
+    cancelar_trabajo_api_trabajos__clave__cancelar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clave: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoTrabajo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     trabajos_api_trabajos_get: {
         parameters: {
             query?: never;
@@ -3653,6 +3760,92 @@ export interface operations {
         };
     };
     lanzar_cinco_api_cinco__fecha__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fecha: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MontarCinco"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estado_cinco_api_cinco_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoEjecucion"];
+                };
+            };
+        };
+    };
+    lista_cinco_api_cinco__fecha__lista_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fecha: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListaCinco"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preparar_lista_api_cinco__fecha__lista_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -3683,7 +3876,7 @@ export interface operations {
             };
         };
     };
-    estado_cinco_api_cinco_get: {
+    estado_lista_api_cinco_lista_get: {
         parameters: {
             query?: never;
             header?: never;

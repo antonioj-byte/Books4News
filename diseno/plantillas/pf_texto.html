@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{# «Perfil de autor»: quién es / por qué hoy y su obra (6/11): una píldora, un titulillo con su remate y el texto; en la
+   de su obra, las cubiertas de sus libros #}
+{% block cuerpo %}
+    <div class="antetitulo">{{ pildora }}</div>
+    <h2 class="pf-titulillo">{{ titulillo }}</h2>
+    {% if cubiertas %}<div class="pf-cubiertas">{% for l in cubiertas %}{% include "_cubierta.html" %}{% endfor %}</div>{% endif %}
+    <p class="texto">{{ texto }}</p>
+{% endblock %}

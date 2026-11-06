@@ -8,10 +8,13 @@ que cita. Lo que no se sostiene se marca en el informe como «hecho no verificad
 
 from __future__ import annotations
 
-from folio.llm import LLM, cargar_prompt, con_cache
+from folio.llm import LLM, RespuestaCortada, cargar_prompt, con_cache
 from folio.guion import fecha_de_pieza, linea_hoy
 from folio.modelos import ComprobacionHechos, FuenteNoticia, GuionLLM, HechoComprobado
 from folio.verificacion_texto import normalizar
+
+
+MAX_TOKENS = 21000        # el máximo sin streaming (6/11: con 16.000, el razonamiento dejaba el JSON a medias)
 
 
 def _bloque_guion(g: GuionLLM) -> str:
@@ -38,9 +41,15 @@ def comprobar(llm: LLM, pieza_id: str, g: GuionLLM, textos: list[tuple[FuenteNot
         "[pegar guion]": linea_hoy(fecha_de_pieza(pieza_id)) + "\n" + _bloque_guion(g),
         "[pegar fuentes]": _bloque_fuentes(textos),
     })
-    res, _ = llm.estructurado(f"hechos:{pieza_id}", [{"role": "user", "content": con_cache(llm.cfg, "comprobador_hechos", prompt)}],
-                              ComprobacionHechos,
-                              etapa_modelo="comprobacion", max_tokens=16000)
+    mensajes = [{"role": "user", "content": con_cache(llm.cfg, "comprobador_hechos", prompt)}]
+    try:
+        res, _ = llm.estructurado(f"hechos:{pieza_id}", mensajes, ComprobacionHechos, etapa_modelo="comprobacion",
+                                  max_tokens=MAX_TOKENS)
+    except RespuestaCortada:
+        # 6/11: en un perfil (siete diapositivas llenas de datos), el razonamiento se comía 12.500 de los 16.000 tokens y el
+        # JSON llegaba sin cerrar; se repite una vez con esfuerzo bajo
+        res, _ = llm.estructurado(f"hechos:{pieza_id}:corta", mensajes, ComprobacionHechos,
+                                  etapa_modelo="comprobacion_corta", max_tokens=MAX_TOKENS)
     for h in res.hechos:
         if h.verificado and not _evidencia_en_fuente(h, textos):
             h.verificado = False

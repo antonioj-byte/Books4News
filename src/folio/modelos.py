@@ -29,7 +29,7 @@ Seccion = Literal[
 ]
 # «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
 EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
-Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia", "ensayo", "newsletter"]
+Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia", "ensayo", "newsletter", "perfil"]
 # Formatos que pueden salir sin libro: la curiosidad del cajón, los temas del radar del libro y, en los temas de la
 # redacción, «noticia» (contada sin ensayo) y «ensayo» (tema literario sin percha), los dos del 3/11
 from folio.formatos import SIN_LIBRO_OBLIGATORIO  # noqa: E402,F401  (el registro de formatos, 4/11)
@@ -37,7 +37,7 @@ from folio.formatos import SIN_LIBRO_OBLIGATORIO  # noqa: E402,F401  (el registr
 # las editoriales independientes (formato «recomendado»); «radar»: historias del mundo del libro que no pasan al jefe
 # pero sí a la lista del radar
 Carril = Literal["actualidad", "editorial", "cajon", "catalogo", "radar", "redaccion"]
-TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre", "noticia", "cita"]   # «noticia»: Cinco del libro (2/11); «cita»: la newsletter (4/11)
+TipoDiapositiva = Literal["portada", "actualidad", "libro", "idea", "cierre", "noticia", "cita", "trayectoria", "prensa"]   # «noticia»: Cinco del libro (2/11); «cita»: la newsletter (4/11)
 
 
 # --- Ingesta -----------------------------------------------------------------
@@ -88,14 +88,14 @@ class LibroCandidato(BaseModel):
 
 
 class HistoriaElegida(BaseModel):
-    formato: Formato = Field(default="lateral", description="lateral (lectura lateral), dialogo (diálogo con la actualidad), balda (tres libros para entender algo, en lugar del diálogo), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes)")
+    formato: Formato = Field(default="lateral", description="lateral (lectura lateral), dialogo (diálogo con la actualidad), balda (tres libros para entender algo, en lugar del diálogo), edicion (mundo del libro), curiosidad (del cajón de curiosidades) o recomendado (del catálogo de las independientes); perfil (perfil de autor, en lugar de una del mundo del libro)")
     historia_id: str = Field(description="Identificador de la historia tal como aparece en la lista")
     titular: str = Field(description="Titular en una línea")
     de_que_se_habla: str = Field(description="De qué se está hablando, en dos frases")
     cuestion_de_fondo: str = Field(description="La cuestión de fondo, en una frase")
     libros_candidatos: list[LibroCandidato] = Field(description="3–4 libros candidatos, por orden de preferencia (en una curiosidad, de 0 a 4)")
     gancho_libro: str = Field(default="", description="En una línea, cómo entra el libro desde la portada: qué vio, explicó o anticipó su autor")
-    protagonista: str = Field(default="", description="Solo en historia editorial y radar: nombre completo de la persona real que protagoniza la historia (un autor, un editor, una librera), para buscar su retrato; vacío si no hay una")
+    protagonista: str = Field(default="", description="Solo en historia editorial, radar y perfil: nombre completo de la persona real que protagoniza la historia (un autor, un editor, una librera), para buscar su retrato; vacío si no hay una")
     repetir: bool = Field(default=False, description="Solo en un tema de la redacción que pide expresamente repetir un libro ya usado; si no, false")
     sin_castellano: bool = Field(default=False, description="Solo en un tema de la redacción que pide expresamente un libro sin traducir al castellano; si no, false")
     potencial: int = Field(default=5, description="De 1 a 10, cuánto puede circular la propuesta (conversación, ganas de compartir); la mesa se ordena por este número")

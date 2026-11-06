@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 import numpy as np
 from folio import formatos
-from folio import cinco
+from folio import cinco, perfil
 from folio import guion as guionista
 from folio import arte, balda, cajon, catalogo, hechos, informe, puentes, radar, seleccion, temas, textos
 from folio.imagenes import cubiertas
@@ -559,10 +559,16 @@ class Pipeline:
         libro = pieza.libros[0]
         autor = libro.autores[0] if libro.autores else ""
         ya = {f.url for f, _ in textos_h}
+        es_perfil = pieza.eleccion.formato == "perfil"
         try:
-            with temas._cliente() as c:
-                encontradas, avisos = temas.buscar_fuentes(self.llm, self.cfg, f"«{libro.titulo_propuesto}», de {autor}", c,
-                                                           plantilla="prensa_libro", excluir=ya)
+            if es_perfil:
+                # El perfil (6/11): la prensa sobre la persona, entrevistas primero (de ahí sale la frase de su voz)
+                autor = perfil.persona_de(pieza) or autor
+                encontradas, avisos = perfil.buscar_prensa(self.llm, self.cfg, pieza, ya, maximo=max(n, 4))
+            else:
+                with temas._cliente() as c:
+                    encontradas, avisos = temas.buscar_fuentes(self.llm, self.cfg, f"«{libro.titulo_propuesto}», de {autor}", c,
+                                                               plantilla="prensa_libro", excluir=ya)
         except Exception as exc:                 # nunca para la pieza: se escribe con lo que había
             pieza.avisos.append(f"Prensa del libro: no se pudo buscar ({type(exc).__name__})")
             return textos_h
@@ -575,7 +581,7 @@ class Pipeline:
             avisos.append(f"descartados {len(fuera)} que no nombran a {autor} ({', '.join(f.medio for f in fuera)})")
         maximo = self.cfg.pipeline.guion.max_caracteres_texto
         extra = [(FuenteNoticia(medio=f.medio, titulo=f.titulo, url=f.url, acceso="abierto", texto_completo=True, prensa=True),
-                  f.texto[:maximo]) for f in encontradas[:n]]
+                  f.texto[:maximo]) for f in encontradas[:max(n, 4) if es_perfil else n]]
         pieza.avisos += [f"Prensa del libro: {a}" for a in avisos if "403" in a or "429" in a or a.startswith("descartados")]
         if extra:
             pieza.avisos.append(f"Prensa del libro: {len(extra)} artículos más ({', '.join(f.medio for f, _ in extra)})")
@@ -590,9 +596,24 @@ class Pipeline:
             self.verificador = Verificador(self.cfg)
         return citas.verificador_google_books(self.verificador.gb) if self.verificador.gb else None
 
+    @property
+    def _cita_de_libro(self):
+        """Para el perfil: ¿está esta frase en el texto de sus libros (Google Books)? None sin clave."""
+        verificar = self._verificar_cita
+        return (lambda frase, libros: verificar(frase, libros) is not None) if verificar else None
+
     def _escribir(self, pieza: Pieza, textos_h: list[tuple[FuenteNoticia, str]], anunciar=None) -> None:
         """Guion de una pieza (se ejecuta en paralelo con los de las demás). `anunciar`: en «Proceder», cada paso del
         guionista como etapa de la web (3/11: «Desarrollando…» se quedaba fijo varios minutos)."""
+        if pieza.eleccion.formato == "perfil":
+            # El perfil de autor (6/11) lo escribe su módulo: siete diapositivas con sus frases comprobadas
+            try:
+                perfil.preparar(self.llm, self.cfg, pieza, textos_h, self._cita_de_libro, anunciar)
+            except Exception as exc:
+                pieza.error = str(exc)
+                return
+            pieza.estado = "propuesta"
+            return
         try:
             extra = {"anunciar": anunciar} if anunciar else {}
             pieza.guion, avisos, pieza.citas = guionista.escribir(self.llm, pieza.id, pieza.eleccion, textos_h, pieza.libros,
@@ -704,8 +725,9 @@ class Pipeline:
         `anunciar=False` no escribe etapas: en «Proceder» va a la vez que el arte, que es el que las anuncia."""
         por_id = {h.id: h for h in al_jefe}
         # «Cinco del libro» comprueba sus hechos al escribirse, con los textos de sus cinco noticias (folio.cinco)
-        con_guion = [(p, self.textos_de_historia(por_id[p.historia_id])) for p in piezas
-                     if p.guion and not formatos.de(p.eleccion.formato).propio]
+        con_guion = [(p, self.textos_de_historia(por_id[p.historia_id])
+                      + (perfil.fichas(p) if p.eleccion.formato == "perfil" else [])) for p in piezas
+                     if p.guion and not formatos.fuera_de_la_mesa(p.eleccion.formato)]
         aviso = progreso if anunciar else (lambda etapa: None)
 
         def una(pieza: Pieza, textos_h) -> None:
@@ -734,7 +756,7 @@ class Pipeline:
         que dos piezas del día no lleven la misma imagen (unos 10 s por pieza). Con `solo`, se dirige
         únicamente esas piezas: las demás cuentan para no repetir imagen ni composición."""
         por_id = {h.id: h for h in al_jefe}
-        con_guion = [p for p in piezas if p.guion and p.estado != "fallida" and not formatos.de(p.eleccion.formato).propio]
+        con_guion = [p for p in piezas if p.guion and p.estado != "fallida" and not formatos.fuera_de_la_mesa(p.eleccion.formato)]
         usadas: set[str] = {x for p in con_guion if solo and p.id not in solo and p.arte
                             for x in (p.arte.imagen, p.arte.imagen_noticia) if x}
         for i, pieza in enumerate(con_guion):
@@ -744,6 +766,15 @@ class Pipeline:
             with self._avisos_pieza:
                 pieza.avisos = [a for a in pieza.avisos if not a.startswith("Director de arte:")]
             h = por_id.get(pieza.historia_id)
+            if pieza.eleccion.formato == "perfil":
+                # El perfil (6/11): la foto de la persona y el estilo del día, «revista» o «collage»
+                try:
+                    pieza.arte = perfil.dirigir_arte(self.llm, self.cfg, pieza, con_guion,
+                                                     self.cache / "prueba" if self.prueba else None)
+                except Exception as exc:
+                    with self._avisos_pieza:
+                        pieza.avisos.append(f"Director de arte: no se pudo ({type(exc).__name__}: {exc}); sale sin foto")
+                continue
             try:
                 pieza.arte = arte.dirigir(self.llm, self.cfg, pieza, h.seccion if h else None, usadas,
                                           [f"{p.arte.portada} en {p.arte.acento or 'blanco y negro'}"
@@ -838,7 +869,7 @@ class Pipeline:
                 n = 1 + max((int(p.id.rsplit("-", 1)[1]) for p in piezas if p.id.rsplit("-", 1)[1].isdigit()), default=0)
                 piezas.append(cinco.preparar(self, al_jefe, f"{self.fecha}-{n}", dibujar=not self.dev))
                 self._guardar_etapa(self.etapas.guardar_piezas, piezas)
-        buenas = [p for p in piezas if p.estado == "propuesta" and not formatos.de(p.eleccion.formato).propio]
+        buenas = [p for p in piezas if p.estado == "propuesta" and not formatos.fuera_de_la_mesa(p.eleccion.formato)]
         if inicio <= 2 and not self.prueba:
             self._registrar_historial(piezas, buenas, al_jefe, vectores)
         previstas = min(self.cfg.pipeline.seleccion.desarrollar_al_inicio, len(sel.elegidas))

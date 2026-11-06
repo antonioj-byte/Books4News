@@ -551,3 +551,101 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .nl-cta { display: flex; flex-direction: column; gap: 14px; }
 .nl-cta__nombre { font-family: var(--fuentes-texto); font-weight: 600; font-size: 30px; opacity: 0.8; }
 .nl-cta__url { font-family: var(--fuentes-texto); font-weight: 700; font-size: 40px; color: var(--colores-marcador); }
+
+/* «Perfil de autor» (6/11, direcciones B y C del Artifact «El perfil de autor»). B, «revista»: la casa en estado puro,
+   oscuro, la cara a sangre en blanco y negro, la trayectoria en una línea con puntos. C, «collage»: el recorte en trama
+   sobre campo de color, la trayectoria en tiras rasgadas sobre marcador, la prensa como recortes pegados. En un obituario
+   (.grave), siempre B, sin color ni marcador. */
+.pf .antetitulo { align-self: flex-start; }
+.pf .cuerpo { justify-content: flex-start; }
+.pf-titulillo { font-family: var(--fuentes-titular); font-weight: 700; font-size: 72px; line-height: 1.02; letter-spacing: -0.05em; text-wrap: balance; padding-bottom: 0.1em; margin-bottom: 40px; }
+.pf-titulillo .remate { color: var(--colores-pluma); }
+.pf .texto { margin-top: auto; }
+/* B · revista */
+.pf--revista { background: var(--colores-tinta-honda); color: var(--colores-papel); }
+.pf--revista .antetitulo { background: var(--colores-papel); color: var(--colores-tinta); }
+.pf--revista.acento .antetitulo { background: var(--colores-pluma); color: var(--colores-papel); }
+.pf--revista .pf-titulillo .remate { color: var(--colores-marcador); }
+.diapositiva--pf_portada .cuerpo { justify-content: flex-end; }
+.diapositiva--pf_portada .titular { font-size: 100px; }
+.diapositiva--pf_portada .subtitulo { color: var(--colores-papel); opacity: 0.9; }
+.pf--revista.diapositiva--pf_portada .remate, .pf--revista.diapositiva--pf_cierre .remate {
+  color: var(--colores-tinta); padding: 0 0.1em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: linear-gradient(transparent 18%, var(--colores-marcador) 18%, var(--colores-marcador) 94%, transparent 94%); }
+.diapositiva--pf_portada:not(.con-imagen) .cuerpo { justify-content: center; }
+.diapositiva--pf_portada:not(.con-imagen) .titular { font-size: 118px; }
+/* C · collage: la portada es el recorte tal cual (ya trae el campo, el círculo y el suelo de tinta) */
+.pf--collage.diapositiva--pf_portada .pf-foto img { filter: none; }
+.pf--collage.diapositiva--pf_portada .pf-foto::after { background: linear-gradient(180deg, transparent 50%, rgba(18, 14, 15, 0.7) 66%, var(--colores-tinta-honda) 84%); }
+.pf--collage.diapositiva--pf_portada .antetitulo { background: var(--colores-papel); color: var(--colores-tinta); }
+.pf--collage.diapositiva--pf_portada { background: var(--colores-pluma); color: var(--colores-papel); }
+.pf--collage.diapositiva--pf_portada .titular { font-size: 84px; }
+.pf--collage.diapositiva--pf_portada .remate { color: var(--colores-marcador); }
+.pf--collage.diapositiva--pf_quien, .pf--collage.diapositiva--pf_obra { background: var(--colores-papel); color: var(--colores-tinta); }
+.pf--collage.diapositiva--pf_trayectoria { background: var(--colores-marcador); color: var(--colores-tinta); }
+.pf--collage.diapositiva--pf_trayectoria .pf-titulillo .remate { color: var(--colores-pluma); }
+.pf--collage.diapositiva--pf_voz { background: var(--colores-pluma); color: var(--colores-papel); }
+.pf--collage.diapositiva--pf_prensa { background: var(--colores-tinta-honda); color: var(--colores-papel); }
+.pf--collage.diapositiva--pf_prensa .antetitulo { background: var(--colores-papel); color: var(--colores-tinta); }
+.pf--collage.diapositiva--pf_cierre { background: var(--colores-rosado); color: var(--colores-tinta); }
+.pf--collage.diapositiva--pf_cierre .remate { color: var(--colores-tinta); padding: 0 0.1em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: linear-gradient(transparent 18%, var(--colores-marcador) 18%, var(--colores-marcador) 94%, transparent 94%); }
+/* Su obra: las cubiertas en fila (en «collage», un poco torcidas) */
+.pf-cubiertas { display: flex; gap: 36px; align-items: flex-end; height: 380px; margin-bottom: 44px; }
+.pf-cubiertas .cubierta { height: 100%; width: auto; max-width: 290px; object-fit: cover; }
+.pf-cubiertas .cubierta__titulo, .pf-empezar .cubierta__titulo { font-size: 34px; }
+.pf-cubiertas .cubierta__autor, .pf-empezar .cubierta__autor { font-size: 14px; }
+.pf--collage .pf-cubiertas .cubierta:nth-child(1) { transform: rotate(-3deg); }
+.pf--collage .pf-cubiertas .cubierta:nth-child(2) { transform: rotate(2deg); }
+.pf--collage .pf-cubiertas .cubierta:nth-child(3) { transform: rotate(-1deg); }
+/* La trayectoria: en B, una línea horizontal con puntos; en C, tiras de papel rasgado */
+.pf-hitos { list-style: none; margin-top: auto; }
+.pf-hito__anio { font-family: var(--fuentes-titular); font-weight: 700; font-size: 64px; line-height: 1; letter-spacing: -0.04em; }
+.pf-hito__texto { font-family: var(--fuentes-texto); font-size: 32px; line-height: 1.3; text-wrap: pretty; }
+.pf--revista .pf-hitos { display: flex; justify-content: space-between; gap: 28px; position: relative; padding-top: 70px; margin-bottom: 40px; }
+.pf--revista .pf-hitos::before { content: ""; position: absolute; left: 0; right: 0; top: 21px; height: 4px; background: var(--colores-papel); opacity: 0.45; }
+.pf--revista .pf-hito { position: relative; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+.pf--revista .pf-hito::before { content: ""; position: absolute; top: -70px; left: 0; width: 46px; height: 46px; border-radius: 50%; background: var(--colores-pluma); }
+.pf--revista.grave .pf-hito::before { background: var(--colores-papel); }
+.pf--revista .pf-hitos--5 .pf-hito__texto { font-size: 27px; }
+.pf--revista .pf-hitos--5 .pf-hito__anio { font-size: 52px; }
+.pf--collage .pf-hitos { display: flex; flex-direction: column; gap: 26px; }
+.pf--collage .pf-hito { display: flex; gap: 32px; align-items: baseline; background: var(--colores-papel); padding: 26px 40px; box-shadow: 0 8px 18px rgba(18, 14, 15, 0.18);
+  clip-path: polygon(0 6%, 7% 0, 16% 5%, 27% 1%, 38% 6%, 49% 0, 61% 5%, 72% 1%, 84% 6%, 93% 0, 100% 5%, 100% 95%, 92% 100%, 81% 94%, 70% 99%, 58% 95%, 46% 100%, 34% 94%, 22% 99%, 11% 95%, 0 100%); }
+.pf--collage .pf-hito:nth-child(odd) { transform: rotate(-1.2deg); }
+.pf--collage .pf-hito:nth-child(even) { transform: rotate(1deg); background: var(--colores-rosado); }
+.pf--collage .pf-hito__anio { color: var(--colores-pluma); flex: none; }
+/* Su voz: la frase enorme con su remate; la comilla, grande */
+.diapositiva--pf_voz .cuerpo { justify-content: center; }
+.pf-comilla { display: block; font-family: var(--fuentes-remate); font-style: italic; font-size: 240px; line-height: 1; color: var(--colores-pluma); margin-bottom: -30px; }
+.pf--collage .pf-comilla { color: var(--colores-marcador); }
+.grave .pf-comilla { color: inherit; opacity: 0.6; }
+.diapositiva--pf_voz .pf-cita { margin-top: 0; font-family: var(--fuentes-titular); font-weight: 700; font-size: 74px; line-height: 1.04; letter-spacing: -0.045em; text-wrap: balance; padding-bottom: 0.08em; }
+.pf-cita::after { content: "»"; font-family: var(--fuentes-remate); font-style: italic; font-weight: 500; color: var(--colores-pluma); }
+.pf--collage .pf-cita::after { color: var(--colores-marcador); }
+.grave .pf-cita::after { color: inherit; }
+.pf-cita .remate, .pf-cita em { font-family: var(--fuentes-remate); font-style: italic; font-weight: 500; letter-spacing: -0.01em; font-size: 1.04em; }
+.pf--revista .pf-cita .remate { color: var(--colores-pluma); }
+.pf--collage .pf-cita .remate { color: var(--colores-tinta); padding: 0 0.08em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: linear-gradient(transparent 18%, var(--colores-marcador) 18%, var(--colores-marcador) 94%, transparent 94%); }
+.pf-atribucion { margin-top: 40px; font-family: var(--fuentes-texto); font-weight: 600; font-size: 30px; opacity: 0.8; }
+/* La prensa: en B, frases grandes con su medio; en C, recortes de papel pegados */
+.pf-prensa { margin: auto 0; display: flex; flex-direction: column; gap: 64px; }
+.pf-recorte__frase { font-family: var(--fuentes-remate); font-style: italic; font-size: 62px; line-height: 1.12; text-wrap: balance; }
+.pf-recorte__frase::before { content: "«"; } .pf-recorte__frase::after { content: "»"; }
+.pf-recorte__medio { margin-top: 16px; font-family: var(--fuentes-texto); font-weight: 700; font-size: 24px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.8; }
+.pf--revista .pf-recorte { border-left: 8px solid var(--colores-pluma); padding-left: 36px; }
+.pf--revista.grave .pf-recorte { border-color: var(--colores-papel); }
+.pf--collage .pf-recorte { background: var(--colores-papel); color: var(--colores-tinta); padding: 40px 48px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  clip-path: polygon(0 3%, 6% 0, 13% 4%, 21% 1%, 30% 5%, 38% 0, 47% 4%, 55% 1%, 64% 5%, 72% 1%, 81% 4%, 90% 0, 100% 3%, 100% 97%, 93% 100%, 85% 96%, 76% 100%, 67% 95%, 58% 99%, 49% 96%, 40% 100%, 31% 96%, 22% 100%, 13% 96%, 5% 100%, 0 97%); }
+.pf--collage .pf-recorte--1 { transform: rotate(-2.2deg); }
+.pf--collage .pf-recorte--2 { transform: rotate(1.8deg); }
+/* Por dónde empezar: la frase a tamaño de titular, la cubierta y la ficha */
+.diapositiva--pf_cierre .pf-cierre { font-size: 86px; margin-top: 10px; }
+.pf-empezar { margin-top: auto; display: flex; gap: 48px; align-items: flex-end; }
+.pf-empezar .cubierta { height: 420px; width: auto; max-width: 300px; flex: none; }
+.pf-empezar .subtitulo { margin-top: 0; font-size: 34px; }
+.pf--revista .pf-empezar .subtitulo { color: var(--colores-papel); }
+.pf-ficha { margin-top: 22px; font-family: var(--fuentes-texto); font-size: 24px; opacity: 0.8; }
+.pf-ficha em { font-family: var(--fuentes-remate); font-size: 1.15em; }
+.grave .pf-titulillo .remate, .grave .remate { color: inherit; }
