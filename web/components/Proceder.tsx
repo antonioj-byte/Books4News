@@ -24,13 +24,14 @@ export function Proceder({ eid, pid, onHecho, texto = "Proceder" }: {
     },
     onHecho: () => { if (!avisada.current) onHecho(); },
     siFalla: "No se pudo escribir la pieza.",
+    clave: pid,
   });
   const pintandoVideos = t.estado?.etapa?.startsWith("La pieza ya está en la mesa");
 
   return (
     <span className="flex flex-col items-start gap-2" onClick={(e) => e.stopPropagation()}>
       {t.enMarcha && !pintandoVideos ? (
-        <Trabajando etapa={t.estado?.etapa ?? "Trabajando…"} pasos={PASOS_PIEZA} inicio={t.estado?.inicio} tipico={t.estado?.tipico_s} />
+        <Trabajando etapa={t.estado?.etapa ?? "Trabajando…"} pasos={PASOS_PIEZA} inicio={t.estado?.inicio} tipico={t.estado?.tipico_s} onCancelar={t.cancelar} />
       ) : t.enMarcha ? (
         <span className="dato">En la mesa · pintando los vídeos<span className="puntos-vivos" aria-hidden /></span>
       ) : (

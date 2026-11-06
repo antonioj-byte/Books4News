@@ -799,3 +799,11 @@
   patron: "«Solo hay premios internacionales. No tienen por qué ser cinco, a lo mejor un día son 3 y otro 4; hagámoslo flexible. Metamos más propuestas: tipo 10 propuestas o así para elegir.»"
   propuesta: "«Cinco del libro» lleva de 3 a 5 noticias, las que valgan ese día; la lista para elegir trae de 10 a 15, con lo de España y Latinoamérica con su peso y como mucho un premio nacional de otro país."
   evidencia: ["Conversación, 5/11: la lista con Janosch, el Baillie Gifford, el Renaudot, el Médicis y el Femina"]
+
+- clave: mundo-del-libro-sin-libro
+  fecha: "2026-11-06"
+  destino: jefe_cultura
+  capa: celda
+  patron: "«En el caso de Asturias, no hay por qué hablar del libro: sirve con la propia noticia, claro.»"
+  propuesta: "Una historia del mundo del libro que se sostiene sola (un premio, un homenaje, el regreso de los restos de un autor) se propone sin libro si no hay uno reciente en castellano de quien la protagoniza; no se descarta ni se fuerza un libro."
+  evidencia: ["Conversación, 6/11: el editor descartó el regreso de los restos de Asturias a Guatemala por no traer libro nuevo"]

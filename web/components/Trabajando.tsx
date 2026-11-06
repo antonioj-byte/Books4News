@@ -53,12 +53,14 @@ function cuanto(s: number) {
   return s < 90 ? `${Math.round(s / 10) * 10 || 10} s` : `${Math.round(s / 60)} min`;
 }
 
-export function Trabajando({ etapa, pasos, rotulo = "Escribiendo", inicio, tipico, nota = true }: {
+export function Trabajando({ etapa, pasos, rotulo = "Escribiendo", inicio, tipico, nota = true, onCancelar }: {
   etapa: string; pasos?: Paso[]; rotulo?: string;
   inicio?: string | null;           // cuándo empezó en el servidor (ISO); sin él, desde que se montó
   tipico?: number | null;           // lo que suele tardar, en segundos
   nota?: boolean;                   // «Puedes salir de la página…»
+  onCancelar?: () => void;          // 6/11: «quizá debería haber opción de cancelar»
 }) {
+  const [cancelando, setCancelando] = useState(false);
   const [desde] = useState(() => Date.now());
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
@@ -96,7 +98,17 @@ export function Trabajando({ etapa, pasos, rotulo = "Escribiendo", inicio, tipic
       <span className="dato">
         {tarde ? "Tarda más de lo normal, pero sigue en marcha" : etapa.replace(/…$/, "")}<span className="puntos-vivos" aria-hidden />
       </span>
-      {nota && <span className="text-[12px] text-tinta-suave">Puedes salir de la página: te aviso al acabar.</span>}
+      {(nota || onCancelar) && (
+        <span className="flex flex-wrap items-baseline gap-3 text-[12px] text-tinta-suave">
+          {nota && <span>Puedes salir de la página: te aviso al acabar.</span>}
+          {onCancelar && (
+            <button className={`underline underline-offset-2 hover:text-carmesi ${tarde ? "font-semibold text-carmesi" : ""}`} disabled={cancelando}
+                    onClick={() => { setCancelando(true); onCancelar(); }}>
+              {cancelando ? "Cancelando…" : "Cancelar"}
+            </button>
+          )}
+        </span>
+      )}
     </div>
   );
 }

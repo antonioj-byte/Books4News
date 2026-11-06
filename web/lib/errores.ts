@@ -37,6 +37,7 @@ export function yaEnMarcha(e: unknown): boolean {
 
 // Las últimas líneas del registro de un trabajo que falló, en una frase y con el detalle aparte
 const PATRONES: [RegExp, string][] = [
+  [/Cancelado por la redacción/i, "Cancelado."],
   [/Interrumpido/i, "Se cortó porque la API se reinició (un despliegue). Vuelve a lanzarlo."],
   [/Magnific[^\n]*(40[13]|429)|bloquead/i, "Magnific ha bloqueado las peticiones por hoy: las ilustraciones quedan para mañana."],
   [/Magnific|La tarea \S+ (falló|no terminó)/i, "Magnific no pudo dibujar. Suele ser pasajero: vuelve a intentarlo."],

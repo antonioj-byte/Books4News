@@ -50,6 +50,18 @@ def un_trabajo(clave: str, ctx: Contexto = Depends(contexto)):
     return EstadoTrabajo(**e.model_dump(), resultado=json.loads(r) if r else None)
 
 
+@router.post("/api/trabajos/{clave}/cancelar", response_model=EstadoTrabajo)
+def cancelar_trabajo(clave: str, ctx: Contexto = Depends(contexto)):
+    """Cancela un trabajo en marcha (6/11, a petición del usuario: «esto es ridículo, quizá debería haber opción de
+    cancelar»; un tema llevaba 57 minutos con el jefe «pensando»). Un tema cancelado queda «fallido» con su motivo."""
+    if not ctx.ejecutor.cancelar(clave):
+        raise HTTPException(409, "Ese trabajo ya no está en marcha")
+    if clave.startswith("tema-") and clave.removeprefix("tema-").isdigit():
+        ctx.almacen.actualizar_tema(int(clave.removeprefix("tema-")), estado="fallido", nota="Cancelado por la redacción")
+    e = ctx.ejecutor.estado_desarrollo(clave)
+    return EstadoTrabajo(**(e.model_dump() if e else {"en_marcha": False}))
+
+
 @router.get("/api/trabajos", response_model=list[Trabajo])
 def trabajos(ctx: Contexto = Depends(contexto)):
     """Los trabajos en segundo plano de esta sesión de la API (la web avisa cuando acaba cada uno)."""

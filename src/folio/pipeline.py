@@ -503,7 +503,9 @@ class Pipeline:
             if ficha:
                 libros = [catalogo.libro_de_ficha(ficha)]
         pieza.libros, pieza.libros_descartados = libros, descartes
-        if not libros and e.formato in SIN_LIBRO_OBLIGATORIO:
+        # El mundo del libro va sin libro solo si el editor no propuso ninguno (6/11, Asturias): si lo propuso y no pasa,
+        # como siempre (que la pieza diga por qué, y «Volver a verificar» si fue un catálogo caído)
+        if not libros and e.formato in SIN_LIBRO_OBLIGATORIO and not (e.formato == "edicion" and e.libros_candidatos):
             # La curiosidad del cajón, los temas del radar y las noticias de la redacción no necesitan libro (1/11 y 3/11)
             if e.libros_candidatos:
                 pieza.avisos.append("Ningún libro candidato se pudo verificar: la pieza sale sin libro")
@@ -550,7 +552,8 @@ class Pipeline:
         demás textos de la historia, así que la comprobación de hechos la ve y relanzar no vuelve a buscar."""
         n = self.cfg.pipeline.guion.prensa_del_libro
         # En todas las piezas con libro (2/11): de la prensa salen también las citas compartibles, comprobadas
-        if (not n or self.dev or pieza.eleccion.formato in SIN_LIBRO_OBLIGATORIO or not pieza.libros
+        if (not n or self.dev or (pieza.eleccion.formato in SIN_LIBRO_OBLIGATORIO and pieza.eleccion.formato != "edicion")
+                or not pieza.libros
                 or any(f.prensa for f, _ in textos_h)):
             return textos_h
         libro = pieza.libros[0]

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { EstadoEjecucion } from "@/lib/api";
+import { api, type EstadoEjecucion } from "@/lib/api";
 import { fraseDeFallo, mensajeError, yaEnMarcha, type Fallo } from "@/lib/errores";
 import { mirarTrabajos } from "@/lib/trabajos";
 
@@ -11,13 +11,14 @@ import { mirarTrabajos } from "@/lib/trabajos";
 // - lanzar: si responde «ya se está…», se engancha en vez de dar error;
 // - aguanta cortes de red (seis consultas fallidas antes de rendirse);
 // - si falla, el motivo en una frase con el registro aparte.
-export function useTrabajo({ consultar, lanzar, onHecho, onProgreso, pausa = 4000, siFalla = "No ha salido bien." }: {
+export function useTrabajo({ consultar, lanzar, onHecho, onProgreso, pausa = 4000, siFalla = "No ha salido bien.", clave }: {
   consultar: () => Promise<EstadoEjecucion | null>;
   lanzar: () => Promise<unknown>;
   onHecho?: (e: EstadoEjecucion) => void;
   onProgreso?: (e: EstadoEjecucion) => void;
   pausa?: number;
   siFalla?: string;
+  clave?: string;                  // la del trabajo en la API: con ella se puede cancelar (6/11)
 }) {
   const [estado, setEstado] = useState<EstadoEjecucion | null>(null);
   const [siguiendo, setSiguiendo] = useState(false);
@@ -69,5 +70,7 @@ export function useTrabajo({ consultar, lanzar, onHecho, onProgreso, pausa = 400
   }, [lanzar, vigilar]);
 
   const enMarcha = siguiendo || !!estado?.en_marcha;
-  return { estado, enMarcha, error, lanzar: empezar, limpiarError: () => setError(null) };
+  // 6/11 («esto es ridículo, quizá debería haber opción de cancelar»): el seguimiento ve después que acabó cancelado
+  const cancelar = clave ? async () => { try { await api.cancelarTrabajo(clave); } catch { /* ya había acabado */ } mirarTrabajos(); } : undefined;
+  return { estado, enMarcha, error, lanzar: empezar, cancelar, limpiarError: () => setError(null) };
 }

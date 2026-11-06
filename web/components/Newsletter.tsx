@@ -20,6 +20,7 @@ export function Newsletter({ texto, onHecho }: { texto: string; onHecho: () => v
     lanzar: () => api.lanzarNewsletter(texto.trim()),
     onHecho: (e) => { if (e.codigo === 0) onHecho(); },
     siFalla: "No se pudo escribir la newsletter.",
+    clave: "newsletter",
   });
 
   const subir = async (f: File | undefined) => {
@@ -51,7 +52,7 @@ export function Newsletter({ texto, onHecho }: { texto: string; onHecho: () => v
       </div>
       {errorFoto && <p className="text-[13px] text-carmesi" role="alert">{errorFoto}</p>}
       {t.enMarcha
-        ? <Trabajando etapa={t.estado?.etapa ?? "Trabajando…"} pasos={PASOS_NEWSLETTER} inicio={t.estado?.inicio} tipico={t.estado?.tipico_s} />
+        ? <Trabajando etapa={t.estado?.etapa ?? "Trabajando…"} pasos={PASOS_NEWSLETTER} inicio={t.estado?.inicio} tipico={t.estado?.tipico_s} onCancelar={t.cancelar} />
         : <Boton onClick={t.lanzar} motivo={faltan > 0 ? `Pega arriba el texto entero de la newsletter (faltan ${faltan} caracteres)` : null}
                  coste={`~${Math.round((t.estado?.tipico_s ?? 180) / 60)} min · ~0,10 $ y ~125 créditos`} hecho={null}>
             Escribir la newsletter →

@@ -74,3 +74,52 @@ def test_un_tema_en_segundo_plano_responde_al_momento(cfg, monkeypatch):
         time.sleep(0.02)
     assert t["codigo"] == 0 and t["resultado"]["respuesta"] == "Lo llevo a la mesa" and llamadas
     assert c.get("/api/trabajos/no-existe").status_code == 404
+
+
+def test_cancelar_un_tema_lo_para_y_no_deja_resultado(tmp_path):
+    """6/11: «esto es ridículo, quizá debería haber opción de cancelar» (57 minutos con el jefe «pensando»)."""
+    import threading
+    e = Ejecutor(tmp_path)
+    sigue = threading.Event()
+    pasos = []
+    def lento(anunciar):
+        anunciar("El jefe de cultura piensa")
+        sigue.wait(2)                     # la llamada que no vuelve
+        anunciar("Verificando los libros")
+        pasos.append("después")
+        return {"pieza": "x"}
+    e.en_hilo("tema-3", "Tema", lento)
+    assert e.cancelar("tema-3") is True
+    estado = e.estado_desarrollo("tema-3")
+    assert not estado.en_marcha and estado.codigo == ej.CODIGO_CANCELADO and ej.CANCELADO in estado.ultimas_lineas
+    sigue.set()
+    time.sleep(0.2)
+    assert pasos == [] and e.resultado("tema-3") is None          # no sigue ni deja nada en la mesa
+    assert e.cancelar("tema-3") is False                           # ya no está en marcha
+
+
+def test_cancelar_un_proceso_lo_termina(tmp_path):
+    import sys
+    e = Ejecutor(tmp_path)
+    e.desarrollar("2026-11-06-3", [[sys.executable, "-c", "import time; time.sleep(30)"], [sys.executable, "-c", "print(1)"]])
+    assert e.cancelar("2026-11-06-3") is True
+    estado = _esperar(e, "2026-11-06-3")
+    assert estado.codigo == ej.CODIGO_CANCELADO
+
+
+def test_la_api_cancela_y_el_tema_queda_fallido(cfg, tmp_path):
+    import threading
+    from folio import render
+    from folio_api.main import crear_app
+    (cfg.raiz / "diseno").symlink_to(render.dir_diseno(type(cfg)(pipeline={}, fuentes=[])).resolve())
+    alm = Almacen(cfg.ruta_db)
+    ejec = Ejecutor(tmp_path)
+    c = TestClient(crear_app(cfg, alm, importar=False, ejecutor=ejec))
+    tid = alm.guardar_tema("Un tema", [], "ahora")
+    sigue = threading.Event()
+    ejec.en_hilo(f"tema-{tid}", "Tema", lambda anunciar: (anunciar("El jefe piensa"), sigue.wait(2))[1])
+    assert c.post(f"/api/trabajos/tema-{tid}/cancelar").status_code == 200
+    assert c.post(f"/api/trabajos/tema-{tid}/cancelar").status_code == 409
+    t = next(t for t in alm.temas() if t.id == tid)
+    assert t.estado == "fallido" and "Cancelado" in t.nota
+    sigue.set()

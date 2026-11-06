@@ -102,6 +102,7 @@ export const api = {
   descartarDelFondo: (id: number) => pedir<PropuestaDelFondo>(`/api/fondo/${id}/descartar`, { method: "POST" }),
   // Un trabajo aparte por su clave (4/11): temas, réplicas y lo del fondo, que siguen aunque se salga de la página
   trabajo: (clave: string) => pedir<EstadoTrabajo>(`/api/trabajos/${encodeURIComponent(clave)}`),
+  cancelarTrabajo: (clave: string) => pedir<EstadoTrabajo>(`/api/trabajos/${encodeURIComponent(clave)}/cancelar`, { method: "POST" }),
   newsletter: () => pedir<EstadoNewsletter>("/api/newsletter"),
   lanzarNewsletter: (texto: string) => pedir<EstadoNewsletter>("/api/newsletter", { method: "POST", body: JSON.stringify({ texto }) }),
   subirFotoNewsletter: (archivo: File) =>

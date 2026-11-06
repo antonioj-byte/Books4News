@@ -54,6 +54,8 @@ DURACION = "DURACION: "
 # Lo que suele tardar cada tipo de trabajo si aún no hay ninguno terminado con su duración (segundos)
 TIPICO_POR_DEFECTO = {"diaria": 300, "pieza": 150, "cinco-del-libro": 300, "cinco-lista": 30, "newsletter": 180, "fondo-del-mes": 900,
                       "memoria-analisis": 90, "tema": 90}
+CANCELADO = "Cancelado por la redacción."
+CODIGO_CANCELADO = -2
 INTERRUMPIDO = "Interrumpido: la API se reinició (un despliegue) antes de que terminara. Vuelve a lanzarlo."
 
 
@@ -77,16 +79,32 @@ class _Trabajo:
             salida.flush()
             self.proceso = subprocess.Popen(self.pendientes.pop(0), stdout=salida, stderr=subprocess.STDOUT)
         fin = datetime.now(timezone.utc)
-        salida.write(f"\n{DURACION}{round((fin - datetime.fromisoformat(self.inicio)).total_seconds())}\n{FIN}{self.proceso.returncode}\n")
+        cancelado = getattr(self, "cancelado", False)
+        codigo = CODIGO_CANCELADO if cancelado else self.proceso.returncode
+        salida.write(("\n" + CANCELADO if cancelado else "")
+                     + f"\n{DURACION}{round((fin - datetime.fromisoformat(self.inicio)).total_seconds())}\n{FIN}{codigo}\n")
         salida.close()
+        self.codigo_final = codigo
         self.fin = fin.isoformat(timespec="seconds")
+
+    def cancelar(self) -> None:
+        """6/11 («esto es ridículo, quizá debería haber opción de cancelar»): para el proceso y no lanza los pasos que
+        quedaban."""
+        self.cancelado = True
+        self.pendientes = []
+        if self.proceso.poll() is None:
+            self.proceso.terminate()
 
     def vivo(self) -> bool:
         return self.proceso.poll() is None or self.fin is None
 
     def estado(self) -> EstadoEjecucion:
         return _estado(self.registro, self.vivo(), self.inicio, self.fin,
-                       None if self.vivo() else self.proceso.returncode)
+                       None if self.vivo() else getattr(self, "codigo_final", self.proceso.returncode))
+
+
+class _Cancelado(Exception):
+    pass
 
 
 class _Hilo:
@@ -108,14 +126,39 @@ class _Hilo:
         with self.registro.open("a", encoding="utf-8") as f:
             f.write(texto.rstrip("\n") + "\n")
 
+    cancelado = False
+
+    def _anunciar(self, etapa: str) -> None:
+        if self.cancelado:                 # entre paso y paso: lo cancelado no sigue ni deja nada en la mesa
+            raise _Cancelado()
+        self._linea(f"ETAPA: {etapa}")
+
+    def cancelar(self) -> None:
+        """6/11: un hilo no se puede matar; se da por terminado ya (cancelado) y, cuando el paso en curso acabe, se para
+        en el siguiente anuncio y no guarda su resultado."""
+        if self.fin is not None:
+            return
+        self.cancelado = True
+        fin = datetime.now(timezone.utc)
+        self._linea(CANCELADO)
+        self._linea(f"{DURACION}{round((fin - datetime.fromisoformat(self.inicio)).total_seconds())}")
+        self._linea(f"{FIN}{CODIGO_CANCELADO}")
+        self.codigo, self.fin = CODIGO_CANCELADO, fin.isoformat(timespec="seconds")
+
     def _correr(self, fn) -> None:
         codigo = 0
         try:
-            resultado = fn(lambda etapa: self._linea(f"ETAPA: {etapa}"))
+            resultado = fn(self._anunciar)
+            if self.cancelado:
+                return
             if resultado is not None:
                 self.resultado_ruta.write_text(resultado.model_dump_json() if hasattr(resultado, "model_dump_json")
                                                else json.dumps(resultado, ensure_ascii=False), encoding="utf-8")
+        except _Cancelado:
+            return
         except Exception as exc:       # el motivo, en una línea, como la última de un proceso que falla
+            if self.cancelado:
+                return
             codigo = 1
             self._linea(str(getattr(exc, "detail", None) or f"{type(exc).__name__}: {exc}"))
         fin = datetime.now(timezone.utc)
@@ -272,6 +315,14 @@ class Ejecutor:
 
     def _registro_de(self, pid: str) -> Path:
         return self.dir_desarrollos / ("".join(c if c.isalnum() or c in "-_" else "_" for c in pid) + ".log")
+
+    def cancelar(self, clave: str) -> bool:
+        """Cancela un trabajo en marcha de esta sesión de la API (la diaria, «Proceder», un tema…). False si no lo hay."""
+        t = self._trabajo if clave == "diaria" else self._desarrollos.get(clave)
+        if not t or not t.vivo():
+            return False
+        t.cancelar()
+        return True
 
     def estado_desarrollo(self, pid: str) -> EstadoEjecucion | None:
         """El estado de un trabajo aparte; si no es de esta sesión de la API, lo que diga su registro (también

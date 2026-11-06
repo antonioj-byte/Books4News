@@ -31,12 +31,14 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
     lanzar: () => api.lanzarCinco(fecha, lista?.propuesta ? elegidas : undefined),
     onHecho: () => onHecho(),
     siFalla: "No se pudo montar «Cinco del libro».",
+    clave: "cinco-del-libro",
   });
   const preparar = useTrabajo({
     consultar: () => api.estadoListaCinco(),
     lanzar: () => api.prepararListaCinco(fecha),
     onHecho: (e) => { if (e.codigo === 0) cargar(); },
     siFalla: "No se pudo preparar la lista de noticias.",
+    clave: "cinco-lista",
   });
 
   const marcar = (id: string) => setOrden(elegidas.includes(id) ? elegidas.filter((x) => x !== id) : [...elegidas, id]);
@@ -54,10 +56,10 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
     <>
       {montar.enMarcha ? (
         <Trabajando etapa={montar.estado?.etapa ?? "Trabajando…"} pasos={PASOS_CINCO} rotulo="Montando el post"
-                    inicio={montar.estado?.inicio} tipico={montar.estado?.tipico_s} />
+                    inicio={montar.estado?.inicio} tipico={montar.estado?.tipico_s} onCancelar={montar.cancelar} />
       ) : preparar.enMarcha ? (
         <Trabajando etapa={preparar.estado?.etapa ?? "Trabajando…"} rotulo="Preparando la lista"
-                    inicio={preparar.estado?.inicio} tipico={preparar.estado?.tipico_s} />
+                    inicio={preparar.estado?.inicio} tipico={preparar.estado?.tipico_s} onCancelar={preparar.cancelar} />
       ) : lista?.propuesta && candidatas.length ? (
         <>
           <p className="max-w-[62ch] text-[14px] text-tinta-suave">
@@ -101,7 +103,7 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
         </>
       ) : preparar.enMarcha ? (
         <Trabajando etapa={preparar.estado?.etapa ?? "Trabajando…"} rotulo="Preparando la lista"
-                    inicio={preparar.estado?.inicio} tipico={preparar.estado?.tipico_s} />
+                    inicio={preparar.estado?.inicio} tipico={preparar.estado?.tipico_s} onCancelar={preparar.cancelar} />
       ) : lista?.modo === "propuesta" ? (
         <>
           <p className="max-w-[62ch] text-[14px] text-tinta-suave">

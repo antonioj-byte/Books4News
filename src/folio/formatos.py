@@ -40,7 +40,9 @@ FORMATOS: dict[str, Formato] = {f.id: f for f in (
     Formato("dialogo", "Diálogo con la actualidad", "un diálogo", "diálogo con la actualidad"),
     Formato("balda", "Tres libros", "tres libros", "tres libros", libros=3, candidatos=(3, 6), exige_novedad=False, friso=True,
             infografia=False),
-    Formato("edicion", "Mundo del libro", "una del mundo del libro", "mundo del libro", propone="editor_libro"),
+    # 6/11 («en el caso de Asturias, no hay por qué hablar del libro: sirve con la propia noticia»): el libro, si lo hay
+    Formato("edicion", "Mundo del libro", "una del mundo del libro", "mundo del libro", libro_obligatorio=False,
+            candidatos=(0, 4), propone="editor_libro"),
     Formato("curiosidad", "Historia editorial", "una historia editorial", "historia editorial", libro_obligatorio=False,
             candidatos=(0, 4), atemporal=True, carril="cajon", propone="editor_libro"),
     Formato("recomendado", "Libro recomendado", "un libro recomendado", "libro recomendado", candidatos=(1, 4),

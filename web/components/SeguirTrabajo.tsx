@@ -19,8 +19,9 @@ export function SeguirTrabajo({ clave, pasos, rotulo, onHecho, siFalla }: {
     lanzar: async () => {},
     onHecho: (e) => onHecho((e as EstadoTrabajo).resultado ?? null, e as EstadoTrabajo),
     siFalla,
+    clave,
   });
-  if (t.enMarcha) return <Trabajando etapa={t.estado?.etapa ?? "Empezando…"} pasos={pasos} rotulo={rotulo} inicio={t.estado?.inicio} tipico={t.estado?.tipico_s} />;
+  if (t.enMarcha) return <Trabajando etapa={t.estado?.etapa ?? "Empezando…"} pasos={pasos} rotulo={rotulo} inicio={t.estado?.inicio} tipico={t.estado?.tipico_s} onCancelar={t.cancelar} />;
   if (t.error) return <FalloTrabajo fallo={t.error} />;
   return null;
 }
