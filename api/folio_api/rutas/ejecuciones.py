@@ -77,7 +77,7 @@ TRABAJO_LISTA = "cinco-lista"
 
 
 class MontarCinco(BaseModel):
-    elegidas: list[str] | None = Field(default=None, description="Las cinco historias elegidas, en orden (5/11)")
+    elegidas: list[str] | None = Field(default=None, description="Las historias elegidas, en orden (de 1 a 7)")
 
 
 def _fecha(fecha: str) -> None:
@@ -87,7 +87,7 @@ def _fecha(fecha: str) -> None:
 
 @router.post("/api/cinco/{fecha}", response_model=EstadoEjecucion, status_code=202)
 def lanzar_cinco(fecha: str, cuerpo: MontarCinco | None = None, ctx: Contexto = Depends(contexto)):
-    """Escribe y monta el post. Con `elegidas`, con esas (de 3 a 5) y en ese orden (5/11: la redacción elige de la lista)."""
+    """Escribe y monta el post. Con `elegidas`, con esas (de 1 a 7 desde el 7/11) y en ese orden (5/11: la redacción elige de la lista)."""
     _fecha(fecha)
     orden = [sys.executable, "-m", "folio.cli", "cinco", "--fecha", fecha, "--quiet"]
     if cuerpo and cuerpo.elegidas is not None:

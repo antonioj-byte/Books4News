@@ -98,7 +98,7 @@ export function VistaDia() {
           {pestana === "elegir" && (
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap gap-1.5" role="group" aria-label="Qué enseñar">
-                {([["todo", "Todo"], ["propuestas", `Propuestas · ${propuestas.length}`], ["breves", `Breves · ${radar.length}`], ["encargos", "Encargos"], ["cinco", "Cinco del libro"]] as const).map(([v, txt]) => (
+                {([["todo", "Todo"], ["propuestas", `Propuestas · ${propuestas.length}`], ["breves", `Breves · ${radar.length}`], ["encargos", "Encargos"], ["cinco", "Breves del libro"]] as const).map(([v, txt]) => (
                   <button key={v} aria-pressed={filtro === v} onClick={() => setFiltro(v)}
                           className={`rounded-full border px-3 py-1 text-[13px] ${filtro === v ? "border-carmesi bg-carmesi text-papel" : "border-borde bg-panel hover:border-tinta"}`}>
                     {txt}
@@ -152,9 +152,9 @@ export function VistaDia() {
 
               {ver("cinco") && (!cincoHecha || filtro === "cinco") && (
                 <TarjetaPorElegir
-                  etiquetas={<span className="chip bg-subrayador text-tinta">Cinco del libro</span>}
+                  etiquetas={<span className="chip bg-subrayador text-tinta">Breves del libro</span>}
                   titulo="Elige las noticias del post de hoy"
-                  linea="De tres a cinco noticias del mundo del libro, cada una con su ilustración. El jefe deja marcadas las que publicaría.">
+                  linea="Las noticias del mundo del libro que valgan hoy, de una a siete, cada una con su ilustración. El jefe deja marcadas las que publicaría; si hoy no hay ninguna, ninguna.">
                   <CincoDelLibro fecha={fecha} onHecho={recargarDia} yaHecha={cincoHecha} />
                 </TarjetaPorElegir>
               )}

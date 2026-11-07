@@ -87,7 +87,7 @@ def test_render_portada_y_noticias_con_su_ilustracion(cfg_diseno):
                                                     local=f"{clave}.jpg", fuente=""), clave, d)
     pl = render.Plantillas(cfg_diseno, url_medio=lambda r: "/api/medios/" + r.name)
     portada = pl.html_diapositiva(p, 1)
-    assert "diapositiva--cinco" in portada and "2026-11-02-9-cinco-1.jpg" in portada and "Cinco del libro · 2 nov" in portada
+    assert "diapositiva--cinco" in portada and "2026-11-02-9-cinco-1.jpg" in portada and "Breves del libro · 2 nov" in portada
     n2, n6 = pl.html_diapositiva(p, 3), pl.html_diapositiva(p, 6)
     assert "2026-11-02-9-cinco-2.jpg" in n2 and "Una explicación" in n2 and 'class="remate"' in n2 and "El País" in n2
     assert "cinco-ilus" not in n6 and "cinco-numero" in n6       # sin ilustración, el número grande
@@ -163,9 +163,10 @@ def test_con_elegidas_escribe_esas_y_en_su_orden(cfg):
     assert "en su orden" in avisos[0]
 
 
-def test_con_elegidas_que_no_llegan_a_tres_no_llama_al_modelo(cfg):
+def test_con_mas_elegidas_de_las_que_caben_no_llama_al_modelo(cfg):
+    # 7/11 («Breves del libro»): de una a siete
     with pytest.raises(cinco.ErrorLLM):
-        cinco.escribir(_LLM(), cfg, "2026-11-05", _historias(12), elegidas=["e1", "e2"])
+        cinco.escribir(_LLM(), cfg, "2026-11-05", _historias(12), elegidas=[f"e{i}" for i in range(8)])
 
 
 def test_lo_que_cambia_la_redaccion_queda_apuntado(cfg):
@@ -191,7 +192,8 @@ def test_la_api_da_la_lista_y_monta_con_las_elegidas(cfg_diseno, monkeypatch):
     assert lanzados[-1][0] == "cinco-lista" and "--proponer" in lanzados[-1][1][0]
     cinco.guardar_propuesta(cfg_diseno, cinco.proponer(_LLM(_lista()), cfg_diseno, "2026-11-05", _historias(12)))
     assert len(c.get("/api/cinco/2026-11-05/lista").json()["propuesta"]["candidatas"]) == 10
-    assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2"]}).status_code == 422
+    assert c.post("/api/cinco/2026-11-05", json={"elegidas": []}).status_code == 422
+    assert c.post("/api/cinco/2026-11-05", json={"elegidas": [f"e{i}" for i in range(8)]}).status_code == 422
     assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2", "e3"]}).status_code == 202
     assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2", "e3", "e4", "e5;rm"]}).status_code == 422
     assert c.post("/api/cinco/2026-11-05", json={"elegidas": ["e1", "e2", "e3", "e4", "e5"]}).status_code == 202
@@ -205,14 +207,14 @@ def test_tres_noticias_tambien_valen(cfg):
     assert cinco.validar(_guion(noticias=_guion().noticias[:2]), {f"e{i}" for i in range(6)})
     llm = _LLM(g)
     g2, _ = cinco.escribir(llm, cfg, "2026-11-05", _historias(12), elegidas=["e0", "e1", "e2"])
-    assert len(g2.noticias) == 3 and "de 3 a 5" in _texto(llm.prompts[0][0])
+    assert len(g2.noticias) == 3 and "de 1 a 7" in _texto(llm.prompts[0][0])
 
 
 def test_la_lista_marca_las_que_diga_el_jefe(cfg):
     l = _lista(12)
     l.publicar = 3
     p = cinco.proponer(_LLM(l), cfg, "2026-11-05", _historias(20))
-    assert sum(c.marcada for c in p.candidatas) == 3 and (p.minimo, p.maximo) == (3, 5)
+    assert sum(c.marcada for c in p.candidatas) == 3 and (p.minimo, p.maximo) == (1, 7)
 
 
 
@@ -270,3 +272,11 @@ def test_lo_que_se_salva_de_una_lista_rota(cfg):
     mala = _lista(ids=["e1", "e1", "x9", "e2", "e3", "e4"])
     p = cinco.proponer(_LLM(mala, mala), cfg, "2026-11-05", _historias(20))
     assert [c.historia for c in p.candidatas] == ["e1", "e2", "e3", "e4"]
+
+
+def test_un_dia_sin_breves_que_publicar(cfg):
+    """7/11 («un día habrá cinco, otro tres, otro ninguna y otro siete»): la lista puede no marcar ninguna."""
+    lista = cinco.ListaCinco(candidatas=[cinco.CandidataCinco(historia=f"e{i}", titular=f"Pasa algo en e{i}", por_que="Porque sí, y lo cuentan varios medios a la vez.") for i in range(4)], publicar=0)
+    assert cinco.validar_lista(lista, {f"e{i}" for i in range(12)}, 15, (0, 7)) == []
+    p = cinco.proponer(_LLM(lista), cfg, "2026-11-05", _historias(12))
+    assert len(p.candidatas) == 4 and not any(c.marcada for c in p.candidatas)

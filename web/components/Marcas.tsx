@@ -49,7 +49,7 @@ const FORMATOS: Record<string, { texto: string; clase: string }> = {
   radar: { texto: "Radar del libro", clase: "border border-carmesi text-carmesi" },
   noticia: { texto: "Noticia", clase: "border border-tinta bg-papel-hondo text-tinta" },
   ensayo: { texto: "Ensayo", clase: "border border-tinta bg-papel-hondo text-tinta" },   // tema literario sin percha (3/11)   // tema contado sin ensayo (3/11)
-  cinco: { texto: "Cinco del libro", clase: "bg-carmesi text-subrayador" },   // prueba de formato (2/11)
+  cinco: { texto: "Breves del libro", clase: "bg-carmesi text-subrayador" },   // prueba de formato (2/11)
   newsletter: { texto: "Newsletter del jueves", clase: "bg-tinta text-papel" },
   perfil: { texto: "Perfil", clase: "bg-subrayador text-carmesi" },          // perfil de autor (6/11)
   opinion: { texto: "Opinión", clase: "bg-tinta text-papel" },             // opinión de otra firma (7/11)

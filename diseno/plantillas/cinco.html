@@ -3,7 +3,7 @@
 {% block fondo %}{% if ilustracion %}<div class="cinco-ilus" aria-hidden="true" style="background-image: url('{{ ilustracion }}')"></div>{% endif %}<div class="cinco-gigante" aria-hidden="true">{{ total_noticias or 5 }}</div><div class="cinco-velo" aria-hidden="true"></div>{% endblock %}
 {% block cuerpo %}
     <div class="titulo">
-      <div class="antetitulo">Cinco del libro · {{ fecha_corta }}</div>
+      <div class="antetitulo">Breves del libro · {{ fecha_corta }}</div>
       <h1 class="titular">{{ titular_remate }}</h1>
       {% if subtitulo %}<p class="subtitulo">{{ subtitulo }}</p>{% endif %}
     </div>

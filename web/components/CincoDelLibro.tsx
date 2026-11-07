@@ -30,7 +30,7 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
     consultar: () => api.estadoCinco(),
     lanzar: () => api.lanzarCinco(fecha, lista?.propuesta ? elegidas : undefined),
     onHecho: () => onHecho(),
-    siFalla: "No se pudo montar «Cinco del libro».",
+    siFalla: "No se pudo montar «Breves del libro».",
     clave: "cinco-del-libro",
   });
   const preparar = useTrabajo({
@@ -47,7 +47,7 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
     if (i > 0) setOrden([...elegidas.slice(0, i - 1), id, elegidas[i - 1], ...elegidas.slice(i + 1)]);
   };
   const n = elegidas.length;
-  const min = lista?.propuesta?.minimo ?? 3, max = lista?.propuesta?.maximo ?? 5;
+  const min = lista?.propuesta?.minimo ?? 1, max = lista?.propuesta?.maximo ?? 7;
   const motivo = n < min ? `Marca ${min - n} más: el post lleva de ${min} a ${max} noticias`
     : n > max ? `Sobran ${n - max}: el post lleva como mucho ${max} noticias` : null;
   const cambiada = orden !== null && orden.join() !== delJefe.join();
@@ -116,8 +116,8 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
         </>
       ) : lista ? (
         <>
-          <p className="text-[14px] text-tinta-suave">Las cinco noticias del mundo del libro de hoy, cada una con su ilustración. Se hace sobre las noticias que ya leyó la madrugada, sin rehacer la mesa.</p>
-          <Boton onClick={montar.lanzar} hecho={null} coste={`~${Math.round((montar.estado?.tipico_s ?? 300) / 60)} min · ~0,20 $`}>Escribir «Cinco del libro» →</Boton>
+          <p className="text-[14px] text-tinta-suave">Las noticias del mundo del libro que valgan hoy, cada una con su ilustración. Se hace sobre las noticias que ya leyó la madrugada, sin rehacer la mesa.</p>
+          <Boton onClick={montar.lanzar} hecho={null} coste={`~${Math.round((montar.estado?.tipico_s ?? 300) / 60)} min · ~0,20 $`}>Escribir «Breves del libro» →</Boton>
         </>
       ) : null}
       {montar.error && !montar.enMarcha && <FalloTrabajo fallo={montar.error} reintentar={montar.lanzar} />}
@@ -128,7 +128,7 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
     return (
       <details className="mt-10 rounded-[12px] border border-borde bg-panel p-5" open={montar.enMarcha || preparar.enMarcha || undefined}>
         <summary className="cursor-pointer">
-          <span className="antetitulo">Cinco del libro</span>
+          <span className="antetitulo">Breves del libro</span>
           <span className="ml-2 text-[14px] text-tinta-suave">Elegir tú las noticias y montar otro post</span>
         </summary>
         <div className="mt-3 flex flex-col items-start gap-3">{cuerpo}</div>
@@ -137,7 +137,7 @@ export function CincoDelLibro({ fecha, onHecho, yaHecha = false }: { fecha: stri
   }
   return (
     <div className="mt-10 flex flex-col items-start gap-3 rounded-[12px] border border-borde bg-panel p-5">
-      <div className="antetitulo">Cinco del libro</div>
+      <div className="antetitulo">Breves del libro</div>
       {cuerpo}
     </div>
   );

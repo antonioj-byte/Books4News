@@ -78,7 +78,7 @@ export function Portada() {
             </ol>
           )}
           {fecha && primera && (
-            <Link href={`/dia/${fecha}?filtro=cinco`} className="boton-suave self-start">Elegir las noticias de «Cinco del libro» →</Link>
+            <Link href={`/dia/${fecha}?filtro=cinco`} className="boton-suave self-start">Elegir los breves del libro →</Link>
           )}
         </section>
 

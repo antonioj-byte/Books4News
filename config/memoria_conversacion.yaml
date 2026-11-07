@@ -903,3 +903,11 @@
   patron: "«No hay una URL principal… me gustaría un panel general» y «veo muy feo que presente las noticias con algunas diapositivas sí, otras no… primero tiene que presentar los temas sin un desarrollo, yo lo selecciono» (eligió la portada del día, dos pestañas y que se deje de escribir de madrugada)."
   propuesta: "La web abre en una portada (lo más importante del libro hoy, lo que hay por publicar y por elegir); «Hoy» separa «Por elegir» (todo sin escribir, con una sola tarjeta) de «En la mesa» (lo escrito); de madrugada no se escribe ninguna pieza: la redacción elige cuáles."
   evidencia: ["Conversación, 7/11: Artifact «La portada de Folio»"]
+
+- clave: breves-del-libro
+  fecha: "2026-11-07"
+  destino: jefe_cultura
+  capa: marca
+  patron: "«Lo de 5 del libro no está bien. Tiene que ser una selección de noticias breves del libro, porque un día habrá 5, otra 3, otra ninguna y otra 7.»"
+  propuesta: "«Breves del libro»: las noticias del mundo del libro que valgan ese día, de una a siete en el post; si un día no hay ninguna que merezca el post, no se marca ninguna."
+  evidencia: ["Conversación, 7/11"]
