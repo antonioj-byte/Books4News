@@ -6,10 +6,19 @@ Diseño en `docs/videos/diseno.html`.
 
 ## Estado
 
-- Hecho: 1 Libro (EPUB, PDF, TXT por capítulos y páginas) → 2 Conceptos (12 candidatos, pasaje literal comprobado,
-  crítico independiente que deja 5, juez del gancho que lo reescribe si saca menos de 8) → 3 Guion (planos con
-  reglas en código, chat, edición directa, aprobación y bloqueo).
-- Siguiente: voz con tiempos (ElevenLabs), biblia de estilo e imágenes (Magnific), montaje (FFmpeg) y revisión por plano.
+Hecho de punta a punta (8/8 pasos), con modo simulado para Magnific y ElevenLabs:
+1. **Fuente**: libro (EPUB, PDF por su índice, TXT), artículo, ensayo, texto pegado o nota de voz (transcrita con
+   ElevenLabs Scribe; las citas se refieren por minuto).
+2. **Conceptos**: candidatos según lo que da de sí la fuente (12 en un libro, 6–8 en un artículo), pasaje literal
+   comprobado, crítico independiente que deja hasta 5, juez del gancho que lo reescribe si saca menos de 8.
+3. **Guion**: planos con reglas en código, chat, edición directa, aprobación y bloqueo.
+4. **Estilo**: tres predefinidos (`estilos.json`) con muestras reales, o uno propio escrito por Claude.
+5. **Voz**: ElevenLabs con tiempos por carácter (fuente de verdad del montaje); voz al azar estable por proyecto.
+6. **Imágenes**: escena por plano (Claude), 2 variantes con Flux 2 Pro, revisor de letras falsas, clips de Kling O1
+   en los planos clave (como mucho `VIDEOS_MAX_CLIPS`, 2). La consulta de Kling O1 va por `/kling-o1/{id}`.
+7. **Montaje**: FFmpeg, Ken Burns, subtítulos palabra a palabra (ASS), texto en pantalla y cita con referencia en
+   zonas seguras, tarjeta final, música de ElevenLabs con ducking. MP4 1080×1920 y .srt.
+8. **Revisión**: rehacer la imagen, el texto en pantalla o la voz de un plano sin rehacer lo demás.
 
 ## Cómo se usa
 
@@ -18,7 +27,7 @@ cd videos
 uv sync
 cp .env.example .env            # y rellenar ANTHROPIC_API_KEY
 uv run videos web               # asistente en http://127.0.0.1:8100
-uv run videos ingesta libro.epub --titulo "…" --autor "…"
+uv run videos ingesta libro.epub --titulo "…" --autor "…" [--tipo articulo|ensayo|texto|nota_de_voz]
 uv run videos conceptos <proyecto> [--indicaciones "más polémicos"]
 uv run videos guion <proyecto> <concepto>
 uv run pytest                   # tests sin red ni gasto
@@ -41,3 +50,9 @@ uv run pytest                   # tests sin red ni gasto
 
 Conceptos: 1 min 38 s, 0,48 $ (0,44 $ con la escritura de la caché del libro y 11.700 tokens de salida). Guion: 42 s,
 0,10 $ leyendo el libro de la caché; cada turno de chat, ~0,07 $.
+
+## Medido el 7/11 con *antimarkfisher.pdf* (40 págs., ~25.000 tokens)
+
+Conceptos: 2 min 15 s, 0,70 $. Guion: 34 s, 0,08 $ (libro de la caché). Un capítulo como artículo suelto: 1 min 26 s,
+0,36 $, 4 conceptos. Imagen Flux 2 Pro: 15 s. Clip Kling O1 Standard (5 s, 720×1276, 24 fps): unos minutos; el
+precio no lo da la API (mirar el panel). Montaje de 62 s en simulado: menos de 1 min.
