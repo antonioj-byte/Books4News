@@ -106,3 +106,28 @@ def test_editar_a_mano_con_sus_reglas_sin_firma_ni_comillas_dentro(cfg):
     assert any("letra por letra" in a for a in avisos)    # las frases siguen siendo literales
     # «COMO SEA» en mayúsculas no hace de «sea» un nombre propio que las escenas no puedan usar
     assert "sea" not in nombres_de_pieza(p)
+
+
+def test_opinion_de_otra_firma_con_su_foto_y_sin_enlace(cfg_diseno):
+    """7/11 («quiero meter un tema de opinión de Diego… es básicamente como la newsletter del jueves»): el mismo carrusel
+    con otra firma; sin enlace, el cierre enseña su nombre y su cargo y el pie no inventa una dirección."""
+    cfg = cfg_diseno
+    f = newsletter.guardar_firmante(cfg, "Diego Prueba", "Fundador de Alighieria")
+    assert newsletter.firmante(cfg, f.slug).nombre == "Diego Prueba"
+    assert [x.slug for x in newsletter.firmantes(cfg)] == [newsletter.CASA, "diego-prueba"]
+    newsletter.guardar_foto(cfg, _jpg((800, 1000)), f.slug)
+    assert newsletter.ruta_foto(cfg, f.slug).exists() and not newsletter.ruta_foto(cfg).exists()
+    p = newsletter.a_pieza(cfg, _guion(), "2026-11-07-3", "2026-11-07", TEXTO, firma=f, formato=newsletter.OPINION)
+    assert p.eleccion.formato == "opinion" and p.firmante.slug == "diego-prueba"
+    assert "Léelo entero" not in p.guion.pie_instagram and "substack" not in p.guion.pie_instagram
+    pl = render.Plantillas(cfg)
+    portada = pl.html_diapositiva(p, 1)
+    assert "Diego Prueba" in portada and "Fundador de Alighieria" in portada and "Antonio J." not in portada
+    assert "firmantes/diego-prueba" in portada                       # su foto, no la de la casa
+    cierre = pl.html_diapositiva(p, 7)
+    assert "Léelo entero" not in cierre and "Diego Prueba" in cierre and "Fundador de Alighieria" in cierre
+    # Con dónde se publica, el cierre lo dice
+    g = newsletter.guardar_firmante(cfg, "Diego Prueba", "Fundador", "El blog de Diego", "https://diego.example/")
+    p2 = newsletter.a_pieza(cfg, _guion(), "2026-11-07-4", "2026-11-07", TEXTO, firma=g, formato=newsletter.OPINION)
+    assert "Léelo entero en diego.example" in pl.html_diapositiva(p2, 7)
+    assert p2.guion.pie_instagram.endswith("Léelo entero en diego.example (enlace en la bio).")

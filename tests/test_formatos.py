@@ -15,7 +15,7 @@ def test_los_propios_tienen_su_modulo_sus_plantillas_y_sus_reglas():
     for f in formatos.FORMATOS.values():
         if f.propio:
             modulo = importlib.import_module(f"folio.{f.propio}")
-            assert modulo.FORMATO == f.id
+            assert f.id in getattr(modulo, "FORMATOS", (modulo.FORMATO,))
             assert hasattr(Plantillas, f"_{f.propio}"), f"falta Plantillas._{f.propio}"
             assert not f.firma_folio                    # firman ellos, no la corrección mecánica
 

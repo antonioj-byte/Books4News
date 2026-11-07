@@ -60,6 +60,10 @@ FORMATOS: dict[str, Formato] = {f.id: f for f in (
             propone="editor_libro", propio="perfil", firma_folio=False, infografia=False, en_mesa=True),
     Formato("cinco", "Cinco del libro", "cinco del libro", "cinco del libro", libros=0, libro_obligatorio=False,
             propio="cinco", firma_folio=False),
+    # 7/11 («quiero meter un tema de opinión de Diego, de Alighieria… es básicamente como la newsletter del jueves»): el
+    # mismo módulo y las mismas plantillas, con otra firma
+    Formato("opinion", "Opinión", "una opinión", "pieza de opinión", libros=0, libro_obligatorio=False, atemporal=True,
+            propio="newsletter", firma_folio=False, propone="redaccion"),
     Formato("newsletter", "La newsletter del jueves", "la newsletter del jueves", "la newsletter del jueves", libros=0,
             libro_obligatorio=False, atemporal=True, propio="newsletter", firma_folio=False, propone="redaccion"),
 )}

@@ -847,3 +847,11 @@
   patron: "«¿Cómo que no puede cambiar el tamaño? Permitamos que eso pase» (una cubierta salía cortada arriba con el borde rasgado y el chat decía que no podía cambiar su tamaño)."
   propuesta: "La foto de la diapositiva de la noticia puede ir arriba, a sangre o entera sin recortar; el chat la cambia en el turno cuando no se ve bien, y una cubierta, un cartel o una foto con letras va entera."
   evidencia: ["Conversación, 7/11: la cubierta de la biografía de McCarthy en la diapositiva 2"]
+
+- clave: opinion-con-firma
+  fecha: "2026-11-07"
+  destino: formatos
+  capa: marca
+  patron: "«Quiero meter un tema de opinión de Diego, de Alighieria, pero no tiene formato de pieza de opinión. Es básicamente como la newsletter del jueves… habría que poner la foto de la persona, etcétera.»"
+  propuesta: "Formato «Opinión»: el carrusel de la newsletter (titular y frases literales, percha, cierre) con la firma de otra persona, su nombre, su cargo, su foto y, si se publica entero en otro sitio, dónde leerlo; sin enlace, el cierre enseña quién lo firma."
+  evidencia: ["Conversación, 7/11: el artículo de opinión de Diego"]

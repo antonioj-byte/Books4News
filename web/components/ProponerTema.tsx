@@ -87,7 +87,8 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
   const [enlaces, setEnlaces] = useState("");
   const [enviando, setEnviando] = useState<"ahora" | "manana" | null>(null);
   // Lo que pide la redacción (3/11, «si lo que le pido es que me cuente una noticia… no me haga un ensayo»)
-  const [enfoque, setEnfoque] = useState<"elige" | "noticia" | "ensayo" | "perfil" | "newsletter">("elige");
+  const [enfoque, setEnfoque] = useState<"elige" | "noticia" | "ensayo" | "perfil" | "newsletter" | "opinion">("elige");
+  const largo = enfoque === "newsletter" || enfoque === "opinion";   // se pega el texto entero (7/11: también la opinión)
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
   const { datos: temas, recargar } = useDatos("temas", api.temas);
   const [abierto, setAbierto] = useState<number | null>(null);
@@ -110,7 +111,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
     setEnviando(cuando); setMensaje(null);
     try {
       const r = await api.proponerTema({ texto: texto.trim(), enlaces: enlaces.split(/\s+/).filter(Boolean), cuando, ejecucion: eid ?? null,
-                                         enfoque: enfoque === "newsletter" ? "elige" : enfoque, segundo_plano: cuando === "ahora" });
+                                         enfoque: enfoque === "newsletter" || enfoque === "opinion" ? "elige" : enfoque, segundo_plano: cuando === "ahora" });
       setTexto(""); setEnlaces("");
       if (cuando === "manana") setMensaje({ ok: true, texto: "Guardado: el jefe lo verá en la mesa de mañana." });
       else setSiguiendo(r.tema.id);
@@ -128,7 +129,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
   };
   const recientes = (temas ?? []).filter((t) => !ocultos.has(t.id)).slice(0, 6);
 
-  const abiertoForm = texto.length > 0 || !!enviando || enlaces.length > 0 || enfoque === "newsletter";
+  const abiertoForm = texto.length > 0 || !!enviando || enlaces.length > 0 || largo;
   const pendientes = recientes.filter((t) => t.estado === "pregunta").length;
   // 6/11 («¿no es un poco feo ver todo el historial de peticiones?»): a la vista, solo lo de hoy y lo que pide algo
   // (una pregunta del jefe, un tema en marcha o uno que falló); lo demás, plegado en «Anteriores», en una línea
@@ -143,17 +144,17 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
       <div className="panel flex flex-col gap-3 p-3 sm:p-4">
         <label id="h-tema" htmlFor="tema-texto" className="sr-only">Proponer un tema al jefe de cultura</label>
         <textarea id="tema-texto" value={texto} onChange={(e) => setTexto(e.target.value)} rows={abiertoForm ? 3 : 1} disabled={!!enviando}
-                  maxLength={enfoque === "newsletter" ? MAX_NEWSLETTER : MAX_TEXTO}
-                  placeholder={enfoque === "newsletter" ? "Pega aquí el texto entero de la newsletter." : "¿De qué quieres que hablemos hoy? El jefe de cultura le busca el ángulo y el libro."}
+                  maxLength={largo ? MAX_NEWSLETTER : MAX_TEXTO}
+                  placeholder={enfoque === "newsletter" ? "Pega aquí el texto entero de la newsletter." : enfoque === "opinion" ? "Pega aquí el artículo de opinión entero." : "¿De qué quieres que hablemos hoy? El jefe de cultura le busca el ángulo y el libro."}
                   className="resize-none rounded-[12px] border border-borde bg-papel px-3 py-2.5 text-[16px] outline-none focus:border-tinta" />
         {abiertoForm && (
           <>
-            {enfoque !== "newsletter" && <textarea id="tema-enlaces" value={enlaces} onChange={(e) => setEnlaces(e.target.value)} rows={2} disabled={!!enviando}
+            {!largo && <textarea id="tema-enlaces" value={enlaces} onChange={(e) => setEnlaces(e.target.value)} rows={2} disabled={!!enviando}
                       placeholder={enfoque === "ensayo" ? "Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las fuentes." : "Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las noticias."}
                       aria-label="Enlaces (opcional)"
                       className="resize-y rounded-[12px] border border-borde bg-papel p-3 font-mono text-[13px] outline-none focus:border-tinta" />}
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Qué le pides al jefe">
-              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"], ["ensayo", "Ensayo sin percha"], ["perfil", "Perfil de autor"], ["newsletter", "Newsletter del jueves"]] as const).map(([v, txt]) => (
+              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"], ["ensayo", "Ensayo sin percha"], ["perfil", "Perfil de autor"], ["newsletter", "Newsletter del jueves"], ["opinion", "Opinión"]] as const).map(([v, txt]) => (
                 <button key={v} aria-pressed={enfoque === v} onClick={() => setEnfoque(v)} disabled={!!enviando}
                         className={`rounded-full border px-3 py-1 text-[13px] ${enfoque === v ? "border-carmesi bg-carmesi text-papel" : "border-borde bg-papel hover:border-tinta"}`}>
                   {txt}
@@ -161,13 +162,14 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
               ))}
               <span className="text-[12.5px] text-tinta-suave">
                 {enfoque === "newsletter" ? "La versión corta en Instagram del ensayo de los jueves, con tus frases literales."
+                  : enfoque === "opinion" ? "Un artículo de otra firma con el carrusel de la newsletter: su foto, su nombre y sus frases literales."
                   : enfoque === "noticia" ? "Contada con su contexto, sin ensayo ni libro ajeno."
                   : enfoque === "ensayo" ? "Un tema literario con su historia, sin noticia ni libro obligatorio. Sigue tu estructura y tu tono."
                   : enfoque === "perfil" ? "Una escritora o un escritor: trayectoria, sus libros, una frase suya y lo que dice la prensa. Escribe su nombre y la percha, si la hay."
                   : "Lectura lateral, diálogo, tres libros… lo que mejor le vaya."}
               </span>
             </div>
-            {enfoque === "newsletter" ? <Newsletter texto={texto} onHecho={() => { setTexto(""); onPieza(); }} /> : <>
+            {largo ? <Newsletter key={enfoque} formato={enfoque === "opinion" ? "opinion" : "newsletter"} texto={texto} onHecho={() => { setTexto(""); onPieza(); }} /> : <>
             {texto.length > MAX_TEXTO * 0.8 && (
               <span className={`dato ${texto.length >= MAX_TEXTO ? "text-carmesi" : ""}`}>{texto.length} de {MAX_TEXTO} caracteres</span>
             )}
@@ -184,8 +186,8 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
             </>}
           </>
         )}
-        {abiertoForm && enfoque !== "newsletter" && !eid && <span className="motivo">Para proponerlo ahora hace falta la mesa del día (lanza antes la ejecución); para mañana, sí se puede</span>}
-        {abiertoForm && enfoque !== "newsletter" && eid && texto.trim().length > 0 && texto.trim().length < 8 && <span className="motivo">Escribe un poco más: al menos una frase</span>}
+        {abiertoForm && !largo && !eid && <span className="motivo">Para proponerlo ahora hace falta la mesa del día (lanza antes la ejecución); para mañana, sí se puede</span>}
+        {abiertoForm && !largo && eid && texto.trim().length > 0 && texto.trim().length < 8 && <span className="motivo">Escribe un poco más: al menos una frase</span>}
         {siguiendo && <SeguirTrabajo clave={`tema-${siguiendo}`} pasos={PASOS_TEMA} rotulo="El jefe piensa" siFalla="El jefe no ha podido proponer el tema."
                                      onHecho={(r) => alAcabar(siguiendo, r as TemaCreado | null)} />}
         {mensaje && <p className={mensaje.ok ? "text-[14px]" : "text-[14px] text-carmesi"} role={mensaje.ok ? "status" : "alert"}>{mensaje.texto}</p>}

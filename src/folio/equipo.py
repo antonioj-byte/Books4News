@@ -94,6 +94,9 @@ def _proponente(p: Pieza) -> list[tuple[str, str, str]]:
                 ("jefe_cultura", "Jefe de cultura", f"lo planteó como {_FORMATOS.get(f, f)}")]
     if f == "cinco":
         return [("jefe_cultura", "Jefe de cultura", "eligió y tituló las cinco")]
+    if f == "opinion":
+        return [("redaccion", "Redacción", f"pegó la opinión de {p.firmante.nombre if p.firmante else 'su firma'}"),
+                ("guionista", "Guionista", "eligió titular, percha y frases")]
     if f == "newsletter":
         return [("redaccion", "Redacción", "pegó el ensayo de la newsletter"), ("guionista", "Guionista", "eligió titular, percha y frases")]
     if p.radar or formatos.de(f).propone == "editor_libro":

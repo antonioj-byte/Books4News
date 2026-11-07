@@ -29,7 +29,7 @@ Seccion = Literal[
 ]
 # «pendiente»: propuesta de la mesa del día con su libro verificado, aún sin guion (se desarrolla al pulsar «Proceder»)
 EstadoPieza = Literal["pendiente", "propuesta", "en_edicion", "aprobada", "descartada", "publicada", "fallida"]
-Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia", "ensayo", "newsletter", "perfil"]
+Formato = Literal["lateral", "dialogo", "edicion", "curiosidad", "recomendado", "radar", "balda", "cinco", "noticia", "ensayo", "newsletter", "perfil", "opinion"]
 # Formatos que pueden salir sin libro: la curiosidad del cajón, los temas del radar del libro y, en los temas de la
 # redacción, «noticia» (contada sin ensayo) y «ensayo» (tema literario sin percha), los dos del 3/11
 from folio.formatos import SIN_LIBRO_OBLIGATORIO  # noqa: E402,F401  (el registro de formatos, 4/11)
@@ -403,6 +403,15 @@ class CitaVerificada(BaseModel):
     fuente: str | None = None            # citas de la crítica: URL del texto donde aparece
 
 
+class Firmante(BaseModel):
+    """Quien firma una pieza de opinión o la newsletter del jueves (7/11): su nombre, cargo y dónde se lee entero."""
+    slug: str
+    nombre: str
+    cargo: str = ""
+    publicacion: str = ""              # «La newsletter de Folio», «el blog de Alighieria»… (vacío: solo aquí)
+    url: str = ""                      # dónde se lee entero, sin https:// (vacío: no se invita a leerlo fuera)
+
+
 class Pieza(BaseModel):
     id: str
     fecha: str
@@ -427,6 +436,8 @@ class Pieza(BaseModel):
     hechos: list[HechoComprobado] = Field(default_factory=list)
     # Citas literales del guion, verificadas en el texto del libro
     citas: list[CitaVerificada] = Field(default_factory=list)
+    # Quien firma (opinión y newsletter, 7/11); sin él, la firma de la newsletter de config/pipeline.yaml
+    firmante: Firmante | None = None
     # Imagen, cifra destacada y tono (etapa de arte)
     arte: Arte | None = None
     error: str | None = None

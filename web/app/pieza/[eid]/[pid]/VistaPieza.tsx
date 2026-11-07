@@ -162,7 +162,7 @@ export function VistaPieza() {
                         setAvisosEdicion(r.avisos);
                         cargar();
                       }}
-                      onQuitar={["cinco", "newsletter"].includes(d.pieza.eleccion.formato ?? "") ? undefined : async (n) => {
+                      onQuitar={["cinco", "newsletter", "opinion"].includes(d.pieza.eleccion.formato ?? "") ? undefined : async (n) => {
                         // Al momento, con «Deshacer» (vuelve a la versión de antes como versión nueva)
                         const antes = d.version;
                         try {

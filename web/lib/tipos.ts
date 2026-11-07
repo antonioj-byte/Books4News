@@ -298,6 +298,30 @@ export interface paths {
          */
         put: operations["editar_diapositiva_api_ejecuciones__eid__piezas__pid__diapositivas__n__put"];
         post?: never;
+        /**
+         * Quitar Diapositiva
+         * @description Quita una diapositiva (6/11): una versión nueva («manual»); se deshace volviendo a la versión anterior.
+         */
+        delete: operations["quitar_diapositiva_api_ejecuciones__eid__piezas__pid__diapositivas__n__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ejecuciones/{eid}/piezas/{pid}/versiones/{n}/restaurar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restaurar Version
+         * @description Vuelve a una versión anterior como versión nueva («deshacer»: las versiones solo se añaden).
+         */
+        post: operations["restaurar_version_api_ejecuciones__eid__piezas__pid__versiones__n__restaurar_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -964,6 +988,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/firmantes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Nueva Firma
+         * @description Una firma para las piezas de opinión (7/11). Con el mismo nombre, la actualiza.
+         */
+        post: operations["nueva_firma_api_firmantes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firmantes/{slug}/foto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Foto Firma */
+        put: operations["foto_firma_api_firmantes__slug__foto_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ejecuciones/{eid}/piezas/{pid}/notas": {
         parameters: {
             query?: never;
@@ -1165,6 +1226,8 @@ export interface components {
             imagen_noticia: string | null;
             /** Credito Noticia */
             credito_noticia: string | null;
+            /** Encaje Noticia */
+            encaje_noticia: ("arriba" | "sangre" | "entera") | null;
             sin_foto: components["schemas"]["SinFoto"] | null;
             infografia: components["schemas"]["Infografia"] | null;
             /** Esquema */
@@ -1616,6 +1679,11 @@ export interface components {
             autor: string;
             /** Cargo */
             cargo: string;
+            /**
+             * Firmantes
+             * @default []
+             */
+            firmantes: components["schemas"]["FirmaWeb"][];
         };
         /** EstadoProgramada */
         EstadoProgramada: {
@@ -1719,6 +1787,75 @@ export interface components {
              * @default
              */
             comentario_arte: string;
+        };
+        /** FirmaNueva */
+        FirmaNueva: {
+            /** Nombre */
+            nombre: string;
+            /**
+             * Cargo
+             * @default
+             */
+            cargo: string;
+            /**
+             * Publicacion
+             * @default
+             */
+            publicacion: string;
+            /**
+             * Url
+             * @default
+             */
+            url: string;
+        };
+        /** FirmaWeb */
+        FirmaWeb: {
+            /** Slug */
+            slug: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Cargo
+             * @default
+             */
+            cargo: string;
+            /**
+             * Publicacion
+             * @default
+             */
+            publicacion: string;
+            /**
+             * Url
+             * @default
+             */
+            url: string;
+            /** Foto */
+            foto?: string | null;
+        };
+        /**
+         * Firmante
+         * @description Quien firma una pieza de opinión o la newsletter del jueves (7/11): su nombre, cargo y dónde se lee entero.
+         */
+        Firmante: {
+            /** Slug */
+            slug: string;
+            /** Nombre */
+            nombre: string;
+            /**
+             * Cargo
+             * @default
+             */
+            cargo: string;
+            /**
+             * Publicacion
+             * @default
+             */
+            publicacion: string;
+            /**
+             * Url
+             * @default
+             */
+            url: string;
         };
         /** Fondo */
         Fondo: {
@@ -1877,7 +2014,7 @@ export interface components {
              * @default lateral
              * @enum {string}
              */
-            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco" | "noticia" | "ensayo" | "newsletter" | "perfil";
+            formato: "lateral" | "dialogo" | "edicion" | "curiosidad" | "recomendado" | "radar" | "balda" | "cinco" | "noticia" | "ensayo" | "newsletter" | "perfil" | "opinion";
             /**
              * Historia Id
              * @description Identificador de la historia tal como aparece en la lista
@@ -2208,6 +2345,14 @@ export interface components {
             texto: string;
             /** Fecha */
             fecha?: string | null;
+            /**
+             * Formato
+             * @default newsletter
+             * @enum {string}
+             */
+            formato: "newsletter" | "opinion";
+            /** Firmante */
+            firmante?: string | null;
         };
         /** Nota */
         Nota: {
@@ -2393,6 +2538,7 @@ export interface components {
             hechos: components["schemas"]["HechoComprobado"][];
             /** Citas */
             citas: components["schemas"]["CitaVerificada"][];
+            firmante: components["schemas"]["Firmante"] | null;
             arte: components["schemas"]["Arte"] | null;
             /** Error */
             error: string | null;
@@ -3488,6 +3634,72 @@ export interface operations {
                 "application/json": components["schemas"]["EdicionDiapositiva"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoEdicion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    quitar_diapositiva_api_ejecuciones__eid__piezas__pid__diapositivas__n__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+                n: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoEdicion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restaurar_version_api_ejecuciones__eid__piezas__pid__versiones__n__restaurar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eid: number;
+                pid: string;
+                n: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -4610,6 +4822,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EstadoNewsletter"];
+                };
+            };
+        };
+    };
+    nueva_firma_api_firmantes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FirmaNueva"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoNewsletter"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    foto_firma_api_firmantes__slug__foto_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoNewsletter"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

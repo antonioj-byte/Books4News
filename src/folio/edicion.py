@@ -122,7 +122,7 @@ def editar_diapositiva(cfg: Config, p: Pieza, n: int, texto: str, subtitulo: str
 
 
 # Formatos en que cada diapositiva va atada por su posición a una ilustración y a un remate (quitar una los desordena)
-SIN_QUITAR = ("cinco", "newsletter")
+SIN_QUITAR = ("cinco", "newsletter", "opinion")
 
 
 def quitar_diapositiva(cfg: Config, p: Pieza, n: int) -> tuple[Pieza, list[str]]:

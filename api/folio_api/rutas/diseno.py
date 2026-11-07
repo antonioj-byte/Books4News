@@ -19,7 +19,7 @@ def tokens_css(ctx: Contexto = Depends(contexto)):
 
 
 # Solo se sirven las imágenes de las piezas y las cubiertas; nada más de data/cache.
-_MEDIO = re.compile(r"^(cubiertas/[\w.-]+|\d{4}-\d{2}-\d{2}/imagenes/[\w.-]+|newsletter/autor)\.(jpg|jpeg|png)$")   # newsletter: la foto de quien firma (4/11)
+_MEDIO = re.compile(r"^(cubiertas/[\w.-]+|\d{4}-\d{2}-\d{2}/imagenes/[\w.-]+|newsletter/autor|firmantes/[a-z0-9-]+)\.(jpg|jpeg|png)$")   # newsletter: la foto de quien firma (4/11); firmantes: las de la opinión (7/11)
 
 
 def ruta_medio(raiz_cache: Path, ruta: str) -> Path | None:

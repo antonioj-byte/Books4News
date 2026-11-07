@@ -25,10 +25,13 @@ from pydantic import BaseModel, Field
 
 from folio.config import Config
 from folio.llm import LLM, ErrorLLM, cache_al_final, cargar_prompt
-from folio.modelos import Arte, Diapositiva, FuenteNoticia, GuionLLM, HistoriaElegida, Pieza
+from folio.modelos import Arte, Diapositiva, Firmante, FuenteNoticia, GuionLLM, HistoriaElegida, Pieza
 
 FORMATO = "newsletter"
+OPINION = "opinion"            # 7/11: el mismo formato con otra firma («una pieza de opinión de Diego, de Alighieria»)
+FORMATOS = (FORMATO, OPINION)  # los que escribe este módulo
 PREFIJO = "newsletter-"
+CASA = "casa"                  # la firma de config/pipeline.yaml (newsletter), con su foto de siempre
 SUFIJO_FRASE = "-frase"          # <pieza>-frase-1.jpg … <pieza>-frase-4.jpg (la portada es <pieza>.jpg)
 ARCHIVO_FRASE = "magnific:newsletter"   # no cuentan para el tope diario de ilustraciones editoriales
 N_FRASES = 4
@@ -145,13 +148,71 @@ def validar_guion(g: GuionLLM, texto: str) -> list[str]:
 
 # --- Escribir -------------------------------------------------------------------------------------
 
-def escribir(llm: LLM, cfg: Config, fecha: str, texto: str) -> tuple[GuionNewsletter, list[str]]:
+# --- Quien firma (7/11) ------------------------------------------------------------------------
+
+def _slug(nombre: str) -> str:
+    t = unicodedata.normalize("NFKD", nombre.lower())
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", "-", t).strip("-")[:40] or "firma"
+
+
+def dir_firmantes(cfg: Config) -> Path:
+    return cfg.dir_cache("x").parent / "firmantes"
+
+
+def de_la_casa(cfg: Config) -> Firmante:
+    nl = cfg.pipeline.newsletter
+    return Firmante(slug=CASA, nombre=nl.autor, cargo=nl.cargo, publicacion=nl.nombre, url=nl.url)
+
+
+def firmantes(cfg: Config) -> list[Firmante]:
+    """La firma de la casa y las que se han añadido desde la web (data/cache/firmantes/<slug>.json)."""
+    otros = []
+    d = dir_firmantes(cfg)
+    if d.exists():
+        for f in sorted(d.glob("*.json")):
+            try:
+                otros.append(Firmante.model_validate_json(f.read_text(encoding="utf-8")))
+            except ValueError:
+                continue
+    return [de_la_casa(cfg), *otros]
+
+
+def firmante(cfg: Config, slug: str | None) -> Firmante:
+    return next((f for f in firmantes(cfg) if f.slug == (slug or CASA)), de_la_casa(cfg))
+
+
+def guardar_firmante(cfg: Config, nombre: str, cargo: str = "", publicacion: str = "", url: str = "") -> Firmante:
+    """Una firma nueva (o la misma, actualizada, si ya existe con ese nombre)."""
+    f = Firmante(slug=_slug(nombre), nombre=" ".join(nombre.split()), cargo=" ".join(cargo.split()),
+                 publicacion=" ".join(publicacion.split()),
+                 url=re.sub(r"^https?://", "", url.strip()).rstrip("/"))
+    if f.slug == CASA:
+        f.slug = "casa-2"
+    d = dir_firmantes(cfg)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"{f.slug}.json").write_text(f.model_dump_json(indent=1), encoding="utf-8")
+    return f
+
+
+def donde(f: Firmante) -> str:
+    """Lo que dice el cierre y el pie sobre dónde leerlo entero."""
+    if f.url:
+        return f"la invitación a leerlo entero en {f.publicacion or f.url}"
+    return "quién lo firma (no se publica entero en otro sitio: no invites a leerlo fuera)"
+
+
+def escribir(llm: LLM, cfg: Config, fecha: str, texto: str, firma: Firmante | None = None,
+             formato: str = FORMATO) -> tuple[GuionNewsletter, list[str]]:
     """El guion de la newsletter. ErrorLLM si el texto es demasiado corto o si no valida tras un reintento."""
     from folio.guion import linea_hoy
     if len(texto.strip()) < MIN_TEXTO:
         raise ErrorLLM(f"El texto de la newsletter es demasiado corto ({len(texto.strip())} caracteres)")
-    nl = cfg.pipeline.newsletter
-    prompt = cargar_prompt(cfg, "newsletter", {"[pegar autor]": nl.autor, "[pegar cargo]": nl.cargo,
+    f = firma or de_la_casa(cfg)
+    que = ("«La newsletter del jueves»: la versión corta en Instagram del ensayo largo que publica cada jueves la newsletter de Folio"
+           if formato == FORMATO else f"una pieza de opinión: la versión corta en Instagram de un texto de {f.nombre}")
+    prompt = cargar_prompt(cfg, "newsletter", {"[pegar que]": que, "[pegar donde]": donde(f),
+                                               "[pegar autor]": f.nombre, "[pegar cargo]": f.cargo or "sin cargo",
                                                "[pegar hoy]": linea_hoy(fecha), "[pegar texto]": texto.strip()})
     mensajes = [{"role": "user", "content": prompt}]
     avisos, errores = [], []
@@ -168,42 +229,44 @@ def escribir(llm: LLM, cfg: Config, fecha: str, texto: str) -> tuple[GuionNewsle
     raise ErrorLLM("Newsletter: el guion no cumple las reglas tras un reintento (" + " | ".join(errores) + ")")
 
 
-def pie_completo(cfg: Config, pie: str) -> str:
-    nl = cfg.pipeline.newsletter
-    return f"{pie.strip()}\n\nLéelo entero en {nl.url} (enlace en la bio)."
+def pie_completo(cfg: Config, pie: str, firma: Firmante | None = None) -> str:
+    f = firma or de_la_casa(cfg)
+    return f"{pie.strip()}\n\nLéelo entero en {f.url} (enlace en la bio)." if f.url else pie.strip()
 
 
-def a_pieza(cfg: Config, g: GuionNewsletter, pieza_id: str, fecha: str, texto: str) -> Pieza:
-    nl = cfg.pipeline.newsletter
+def a_pieza(cfg: Config, g: GuionNewsletter, pieza_id: str, fecha: str, texto: str, firma: Firmante | None = None,
+            formato: str = FORMATO) -> Pieza:
+    f = firma or de_la_casa(cfg)
+    nombre_formato = "La newsletter del jueves" if formato == FORMATO else f"Opinión de {f.nombre}"
     frases = g.frases[:N_FRASES]
     diapositivas = [Diapositiva(n=1, tipo="portada", texto=_mayuscula(g.titular), subtitulo=g.subtitulo.strip() or None)]
     if g.percha.strip():
         diapositivas.append(Diapositiva(n=len(diapositivas) + 1, tipo="actualidad", texto=g.percha.strip()))
-    for f in frases:
-        diapositivas.append(Diapositiva(n=len(diapositivas) + 1, tipo="cita", texto=_mayuscula(f.texto)))
+    for fr in frases:
+        diapositivas.append(Diapositiva(n=len(diapositivas) + 1, tipo="cita", texto=_mayuscula(fr.texto)))
     diapositivas.append(Diapositiva(n=len(diapositivas) + 1, tipo="cierre", texto=_mayuscula(g.cierre)))
-    fuentes = [FuenteNoticia(medio=nl.nombre, titulo=g.titular.strip(), url=f"https://{nl.url}", acceso="abierto",
-                             publicado=fecha)]
+    fuentes = [FuenteNoticia(medio=f.publicacion or f.nombre, titulo=g.titular.strip(),
+                             url=f"https://{f.url}" if f.url else "", acceso="abierto", publicado=fecha)]
     if g.percha_url.strip():
         fuentes.append(FuenteNoticia(medio=_medio_de(g.percha_url), titulo=g.percha.strip(), url=g.percha_url.strip(),
                                      acceso="abierto"))
-    guion = GuionLLM(idea_nueva_candidatas=[], idea_elegida="", por_que=f"Versión corta del ensayo de {nl.nombre}",
-                     diapositivas=diapositivas, pie_instagram=pie_completo(cfg, g.pie_instagram), libros=[],
-                     fuentes_noticia=[f"{f.medio} {f.url}" for f in fuentes])
-    eleccion = HistoriaElegida(formato=FORMATO, historia_id=PREFIJO + fecha, titular=g.titular.strip(),
+    guion = GuionLLM(idea_nueva_candidatas=[], idea_elegida="", por_que=f"Versión corta del texto de {f.nombre}",
+                     diapositivas=diapositivas, pie_instagram=pie_completo(cfg, g.pie_instagram, f), libros=[],
+                     fuentes_noticia=[f"{x.medio} {x.url}" for x in fuentes])
+    eleccion = HistoriaElegida(formato=formato, historia_id=PREFIJO + fecha, titular=g.titular.strip(),
                                de_que_se_habla=g.subtitulo.strip() or g.titular.strip(),
                                cuestion_de_fondo=g.subtitulo.strip(), libros_candidatos=[], gancho_libro="",
-                               por_que=f"El ensayo del jueves de {nl.nombre}, firmado por {nl.autor}",
+                               por_que=f"{nombre_formato}, firmada por {f.nombre}", protagonista=f.nombre,
                                encargo=texto.strip())
-    reserva = [f"«{f.texto.strip()}»" for f in g.frases[N_FRASES:]]
+    reserva = [f"«{fr.texto.strip()}»" for fr in g.frases[N_FRASES:]]
     return Pieza(id=pieza_id, fecha=fecha, estado="propuesta", historia_id=PREFIJO + fecha, eleccion=eleccion, n_medios=1,
                  guion=guion, fuentes=fuentes,
-                 avisos=[f"La newsletter del jueves: firmada por {nl.autor}, en primera persona (excepción del formato)"]
+                 firmante=f, avisos=[f"{nombre_formato}: firmada por {f.nombre}, en primera persona (excepción del formato)"]
                  + ([f"Frases de reserva: {' · '.join(reserva)}"] if reserva else []),
                  arte=Arte(tono="reflexivo", recurso="ilustracion", portada="sangre", remate=g.remate.strip(),
                            remate_cierre=g.remate_cierre.strip(),
-                           escena=g.escena_portada.strip(), remates_noticias=[f.remate.strip() for f in frases],
-                           escenas_noticias=[f.escena.strip() for f in frases]))
+                           escena=g.escena_portada.strip(), remates_noticias=[fr.remate.strip() for fr in frases],
+                           escenas_noticias=[fr.escena.strip() for fr in frases]))
 
 
 def _mayuscula(frase: str) -> str:
@@ -266,21 +329,23 @@ def ilustrar(llm: LLM, cfg: Config, pieza: Pieza) -> list[str]:
 
 # --- La foto de quien firma -------------------------------------------------------------------------
 
-def ruta_foto(cfg: Config) -> Path:
-    """En data/cache/newsletter/: la web sirve las imágenes de data/cache/ (/api/medios/)."""
-    return cfg.dir_cache("x").parent / "newsletter" / FOTO_AUTOR
+def ruta_foto(cfg: Config, slug: str = CASA) -> Path:
+    """En data/cache/: la web sirve las imágenes de data/cache/ (/api/medios/). La de la casa, la de siempre."""
+    if not slug or slug == CASA:
+        return cfg.dir_cache("x").parent / "newsletter" / FOTO_AUTOR
+    return dir_firmantes(cfg) / f"{slug}.jpg"
 
 
-def guardar_foto(cfg: Config, datos: bytes) -> Path:
+def guardar_foto(cfg: Config, datos: bytes, slug: str = CASA) -> Path:
     """La foto de quien firma, vuelta a codificar en JPEG cuadrado de 600 px (comprueba que es una imagen y quita los
-    metadatos). Se sube una vez y vale para todos los jueves."""
+    metadatos). Se sube una vez y vale para todas sus piezas."""
     from io import BytesIO
 
     from PIL import Image, ImageOps
     with Image.open(BytesIO(datos)) as im:
         im = ImageOps.exif_transpose(im).convert("RGB")
         im = ImageOps.fit(im, (600, 600), centering=(0.5, 0.35))
-    ruta = ruta_foto(cfg)
+    ruta = ruta_foto(cfg, slug)
     ruta.parent.mkdir(parents=True, exist_ok=True)
     tmp = ruta.with_suffix(".tmp")
     im.save(tmp, "JPEG", quality=88)
@@ -290,19 +355,21 @@ def guardar_foto(cfg: Config, datos: bytes) -> Path:
 
 # --- Todo junto -------------------------------------------------------------------------------------
 
-def preparar(tuberia, texto: str, pieza_id: str, dibujar: bool = True) -> Pieza:
+def preparar(tuberia, texto: str, pieza_id: str, dibujar: bool = True, firma: Firmante | None = None,
+             formato: str = FORMATO) -> Pieza:
     """Escribe, ilustra y comprueba la pieza. Si falla el guion, sale «fallida» con el motivo; las ilustraciones y la
     comprobación nunca la paran."""
     from folio import hechos
     cfg, llm, fecha = tuberia.cfg, tuberia.llm, tuberia.fecha
     try:
-        g, avisos = escribir(llm, cfg, fecha, texto)
+        g, avisos = escribir(llm, cfg, fecha, texto, firma, formato)
     except ErrorLLM as exc:
-        e = HistoriaElegida(formato=FORMATO, historia_id=PREFIJO + fecha, titular="La newsletter del jueves",
+        e = HistoriaElegida(formato=formato, historia_id=PREFIJO + fecha,
+                            titular="La newsletter del jueves" if formato == FORMATO else "Opinión",
                             de_que_se_habla="", cuestion_de_fondo="", libros_candidatos=[], por_que="")
         return Pieza(id=pieza_id, fecha=fecha, estado="fallida", historia_id=PREFIJO + fecha, eleccion=e, n_medios=0,
                      error=str(exc)[:400])
-    pieza = a_pieza(cfg, g, pieza_id, fecha, texto)
+    pieza = a_pieza(cfg, g, pieza_id, fecha, texto, firma, formato)
     pieza.avisos += avisos
     from folio.pipeline import progreso
     if dibujar:
@@ -311,8 +378,10 @@ def preparar(tuberia, texto: str, pieza_id: str, dibujar: bool = True) -> Pieza:
             pieza.avisos.append(f"Newsletter: sin ilustración en la {motivo}")
     # La percha y el pie, contra el texto de la newsletter con quien firma (y la noticia de la percha, si se lee)
     progreso("La newsletter: comprobando la percha y el pie")
-    nl = cfg.pipeline.newsletter
-    firma = f"Firma el ensayo {nl.autor}, {nl.cargo[:1].lower() + nl.cargo[1:]}, en {nl.nombre}.\n\n"
+    f = pieza.firmante or de_la_casa(cfg)
+    cargo = f", {f.cargo[:1].lower() + f.cargo[1:]}" if f.cargo else ""
+    donde_se = f", en {f.publicacion}" if f.publicacion else ""
+    firma = f"Firma el texto {f.nombre}{cargo}{donde_se}.\n\n"
     try:
         textos = [(pieza.fuentes[0], firma + texto.strip())] + _texto_de_la_percha(pieza)
         pieza.hechos = hechos.comprobar(llm, pieza.id, pieza.guion, textos)

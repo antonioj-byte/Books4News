@@ -118,7 +118,12 @@ export const api = {
   trabajo: (clave: string) => pedir<EstadoTrabajo>(`/api/trabajos/${encodeURIComponent(clave)}`),
   cancelarTrabajo: (clave: string) => pedir<EstadoTrabajo>(`/api/trabajos/${encodeURIComponent(clave)}/cancelar`, { method: "POST" }),
   newsletter: () => pedir<EstadoNewsletter>("/api/newsletter"),
-  lanzarNewsletter: (texto: string) => pedir<EstadoNewsletter>("/api/newsletter", { method: "POST", body: JSON.stringify({ texto }) }),
+  lanzarNewsletter: (texto: string, formato: "newsletter" | "opinion" = "newsletter", firmante?: string) =>
+    pedir<EstadoNewsletter>("/api/newsletter", { method: "POST", body: JSON.stringify({ texto, formato, firmante: firmante ?? null }) }),
+  nuevaFirma: (f: { nombre: string; cargo: string; publicacion: string; url: string }) =>
+    pedir<EstadoNewsletter>("/api/firmantes", { method: "POST", body: JSON.stringify(f) }),
+  subirFotoFirma: (slug: string, archivo: File) =>
+    pedir<EstadoNewsletter>(`/api/firmantes/${encodeURIComponent(slug)}/foto`, { method: "PUT", body: archivo, headers: { "Content-Type": archivo.type || "application/octet-stream" } }),
   subirFotoNewsletter: (archivo: File) =>
     pedir<EstadoNewsletter>("/api/newsletter/foto", { method: "PUT", body: archivo, headers: { "Content-Type": archivo.type || "application/octet-stream" } }),
   lanzarCinco: (fecha: string, elegidas?: string[]) =>

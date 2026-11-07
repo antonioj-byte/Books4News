@@ -157,9 +157,12 @@ def cinco_del_libro(fecha: str | None = typer.Option(None, help="AAAA-MM-DD; por
 def newsletter_del_jueves(archivo: Path = typer.Argument(..., help="El texto de la newsletter (markdown o texto)"),
                           fecha: str | None = typer.Option(None, help="AAAA-MM-DD; por defecto, hoy"),
                           sin_dibujo: bool = typer.Option(False, "--sin-dibujo", help="Sin ilustraciones (gratis en Magnific)"),
+                          formato: str = typer.Option("newsletter", help="newsletter u opinion (7/11: otras firmas)"),
+                          firmante: str | None = typer.Option(None, help="slug de la firma (folio newsletter-firmas); por defecto, la de la casa"),
                           quiet: bool = typer.Option(False, "--quiet")):
     """«La newsletter del jueves» (4/11): la versión corta en Instagram del ensayo de la newsletter. La escribe, la
-    ilustra, comprueba la percha, la añade a la última ejecución del día y pinta sus PNG."""
+    ilustra, comprueba la percha, la añade a la última ejecución del día y pinta sus PNG. Con `--formato opinion`
+    (7/11), una pieza de opinión de otra firma con el mismo carrusel."""
     _logging(quiet)
     from folio import newsletter
     from folio.almacen import Almacen
@@ -173,13 +176,22 @@ def newsletter_del_jueves(archivo: Path = typer.Argument(..., help="El texto de 
     if not eid:
         typer.echo(f"No hay ejecución del {fecha}: lanza antes la del día", err=True)
         raise typer.Exit(1)
+    if formato not in (newsletter.FORMATO, newsletter.OPINION):
+        typer.echo(f"Formato desconocido: {formato}", err=True)
+        raise typer.Exit(1)
+    firma = newsletter.firmante(cfg, firmante)
+    if firmante and firma.slug != firmante:
+        typer.echo(f"No hay ninguna firma «{firmante}»", err=True)
+        raise typer.Exit(1)
+    from folio import formatos
+    nombre = formatos.de(formato).nombre
     texto = archivo.read_text(encoding="utf-8")
     tuberia = Pipeline(cfg, fecha)
     tuberia.embedder.liberar = True
     pid = f"{fecha}-{almacen.siguiente_numero(eid, fecha)}"
-    progreso("La newsletter: titular, percha y frases")
-    pieza = newsletter.preparar(tuberia, texto, pid, dibujar=not sin_dibujo)
-    almacen.anadir_pieza(eid, pieza, "La newsletter del jueves")
+    progreso(f"{nombre}: titular, percha y frases")
+    pieza = newsletter.preparar(tuberia, texto, pid, dibujar=not sin_dibujo, firma=firma, formato=formato)
+    almacen.anadir_pieza(eid, pieza, nombre)
     coste = round(sum(t.coste_usd for t in tuberia.llm.trazas), 4)
     if pieza.estado != "propuesta":
         typer.echo(f"No se pudo escribir: {pieza.error}", err=True)
@@ -188,7 +200,7 @@ def newsletter_del_jueves(archivo: Path = typer.Argument(..., help="El texto de 
     destino = cfg.dir_informes / fecha / "render"
     renderizar(cfg, [pieza], destino)
     marcar_render(destino / pid, eid, 1)
-    typer.echo(f"{pid}: La newsletter del jueves, {coste} $" + ("".join(f"\n· {a}" for a in pieza.avisos)))
+    typer.echo(f"{pid}: {nombre}, {coste} $" + ("".join(f"\n· {a}" for a in pieza.avisos)))
 
 
 @app.command("fuentes-editoriales")

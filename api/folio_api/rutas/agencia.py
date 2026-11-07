@@ -162,6 +162,8 @@ def ver_marca(ctx: Contexto = Depends(contexto)):
                                      descripcion="Las cinco noticias del mundo del libro del día, cada una con su ilustración."))
     formatos.append(FormatoMarca(id="newsletter", nombre=NOMBRES_FORMATO["newsletter"],
                                  descripcion="La versión corta del ensayo de los jueves: titular entre comillas, percha, cuatro frases ilustradas y el enlace a la newsletter."))
+    formatos.append(FormatoMarca(id="opinion", nombre=NOMBRES_FORMATO["opinion"],
+                                 descripcion="Un artículo de opinión de otra firma con el carrusel de la newsletter: su foto, nombre y cargo, cuatro frases suyas ilustradas y dónde leerlo entero."))
 
     def contar(nombre: str, clave: str) -> int:
         f = raiz / "config" / nombre

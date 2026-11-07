@@ -147,14 +147,15 @@ class Plantillas:
     def _newsletter(self, pieza: Pieza, d: Diapositiva, n: int, base_url: str | None) -> str:
         """«La newsletter del jueves» (4/11, opción C): portada con quien firma, percha, frases ilustradas y cierre."""
         from folio import newsletter
-        a, nl = pieza.arte, self.cfg.pipeline.newsletter
+        a = pieza.arte
+        f = pieza.firmante or newsletter.de_la_casa(self.cfg)   # la opinión (7/11) lleva su firma; la newsletter, la de la casa
         datos = {**self._base(base_url), **self._texto(pieza, d, n), "imagen": None, "retrato": None, "acento": None,
                  "tono": None, "sin_foto": None, "infografia": None, "panorama": False, "friso": None, "banda": None,
                  "video": False, "portada_estilo": None, "ilustracion": None}
         if d.tipo == "portada":
             img = self.medios.imagen(pieza)
-            foto = newsletter.ruta_foto(self.cfg)
-            datos.update(tipo="nl_portada", ilustracion=img["src"] if img else None, autor=nl.autor, cargo=nl.cargo,
+            foto = newsletter.ruta_foto(self.cfg, f.slug)
+            datos.update(tipo="nl_portada", ilustracion=img["src"] if img else None, autor=f.nombre, cargo=f.cargo,
                          foto_autor=self.url_medio(foto) if foto.exists() else None,
                          titular_remate=titular_con_remate(d.texto, a.remate if a else None),
                          subtitulo=texto_html(d.subtitulo) if d.subtitulo else None)
@@ -168,7 +169,8 @@ class Plantillas:
             html = self.env.get_template("nl_cita.html").render(**datos)
             return html.replace("diapositiva--nl_cita", "diapositiva--nl_cita nl-par", 1) if k % 2 else html
         if d.tipo == "cierre":
-            datos.update(tipo="nl_cierre", nombre=nl.nombre, url=nl.url,
+            datos.update(tipo="nl_cierre", nombre=f.publicacion or f.nombre, url=f.url,
+                         firma=None if f.publicacion or f.url else f.cargo,
                          cierre_remate=titular_con_remate(d.texto, a.remate_cierre if a else None))
             return self.env.get_template("nl_cierre.html").render(**datos)
         datos.update(tipo="nl_percha", texto_html=texto_html(d.texto))

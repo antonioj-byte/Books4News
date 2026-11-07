@@ -52,6 +52,7 @@ const FORMATOS: Record<string, { texto: string; clase: string }> = {
   cinco: { texto: "Cinco del libro", clase: "bg-carmesi text-subrayador" },   // prueba de formato (2/11)
   newsletter: { texto: "Newsletter del jueves", clase: "bg-tinta text-papel" },
   perfil: { texto: "Perfil", clase: "bg-subrayador text-carmesi" },          // perfil de autor (6/11)
+  opinion: { texto: "Opinión", clase: "bg-tinta text-papel" },             // opinión de otra firma (7/11)
 };
 
 export function FormatoChip({ formato }: { formato: string }) {
