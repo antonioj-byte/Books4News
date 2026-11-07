@@ -21,9 +21,16 @@
     <div class="estante">
       {% for l in libros %}
       {# La cubierta sale una sola vez en el carrusel, en la diapositiva del libro (1/11, a petición del usuario):
-         en la tarjeta, la foto del autor del libro principal si la hay; si no, solo la ficha #}
+         en la tarjeta, la foto del autor del libro principal si la hay; si no, solo la ficha. Si la pieza no tiene
+         diapositiva de libro, la cubierta va aquí, en lugar de la cara (7/11: «no se sube», la cubierta subida no
+         salía en ningún sitio) #}
+      {% if cubierta_en_cierre and (l.cubierta or loop.first) %}
+      <div class="tarjeta tarjeta--cara tarjeta--cubierta">
+        {% include "_cubierta.html" %}
+      {% else %}
       <div class="tarjeta{% if loop.first and retrato %} tarjeta--cara{% endif %}">
         {% if loop.first and retrato %}<figure class="tarjeta__cara"><img src="{{ retrato.src }}" alt="" style="object-position: {{ retrato.enfoque[0] }}% {{ retrato.enfoque[1] }}%"></figure>{% endif %}
+      {% endif %}
         <div class="tarjeta__ficha"><b>{{ l.titulo }}</b><i>{{ l.autor }}</i>{% if l.datos %}<span>{{ l.datos }}</span>{% endif %}</div>
       </div>
       {% endfor %}

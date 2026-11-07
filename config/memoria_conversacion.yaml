@@ -871,3 +871,11 @@
   patron: "«Hay 3 diapos seguidas con la ilustración arriba y el texto abajo. Quizá se puede barajar para que la vista vaya arriba y abajo.»"
   propuesta: "En las frases de la newsletter y de la opinión, la ilustración alterna: arriba en las de pluma, abajo en las de papel."
   evidencia: ["Conversación, 7/11: captura de la opinión de Diego"]
+
+- clave: cubierta-en-el-cierre
+  fecha: "2026-11-07"
+  destino: director_arte
+  capa: marca
+  patron: "«Algo ha pasado aquí que no se sube» (la cubierta subida no salía: la pieza no tenía diapositiva de libro y el cierre llevaba la cara del autor)."
+  propuesta: "Si la pieza no tiene diapositiva de libro, la cubierta va en la tarjeta del cierre en lugar de la cara del autor."
+  evidencia: ["Conversación, 7/11: la cubierta de Random House de La carretera"]

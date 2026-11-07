@@ -298,7 +298,9 @@ def usar(cfg: Config, p: Pieza, nueva: Pieza, ar, mid: str, como: str, libro: st
             archivo=PREFIJO + m.id, pagina="", url="", ancho=m.ancho or 0, alto=m.alto or 0, licencia="", licencia_url=None,
             autor=m.credito, descripcion=p.libros[i].titulo_propuesto, libre=True, motivo="", local=f"{clave}.jpg",
             fuente=""), clave, dir_fecha)
-        return nueva, f"(La cubierta subida va en «{p.libros[i].titulo_propuesto}»: en su diapositiva de libro y en el cierre.)"
+        donde = ("en su diapositiva de libro" if p.guion and any(d.tipo == "libro" for d in p.guion.diapositivas)
+                 else "en la tarjeta del cierre (la pieza no tiene diapositiva de libro)")
+        return nueva, f"(La cubierta subida va en «{p.libros[i].titulo_propuesto}»: {donde}.)"
     if como not in ("portada", "retrato"):
         return None, "(Una foto subida va en la portada, como retrato, en la noticia o como cubierta de un libro.)"
     persona = direccion.autor_principal(p) if como == "retrato" else None

@@ -167,6 +167,8 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .tarjeta__ficha span { font-size: 22px; color: var(--colores-tinta-60); }
 /* Cierre de «Tres libros» (2/11): tres tarjetas iguales con la cubierta pequeña y la ficha debajo */
 .estante--tres { gap: 22px; }
+.tarjeta--cubierta .cubierta { flex: none; height: 230px; width: auto; max-width: 170px; }
+.tarjeta--cubierta .cubierta--dibujada { width: 154px; }
 .tarjeta--tres { padding: 22px; gap: 16px; align-items: flex-start; }
 .tarjeta--tres .cubierta { height: 250px; width: auto; max-width: 100%; }
 .tarjeta--tres .cubierta--dibujada { width: 166px; }

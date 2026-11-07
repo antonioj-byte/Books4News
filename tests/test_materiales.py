@@ -99,6 +99,16 @@ def test_usar_una_foto_subida_como_cubierta(cfg):
     pl = render.Plantillas(cfg, url_medio=lambda r: "/api/medios/" + r.name)
     n = next(i for i, d in enumerate(nueva.guion.diapositivas, 1) if d.tipo == "libro")
     assert f"{p.id}-cubierta-0.jpg" in pl.html_diapositiva(nueva, n)
+    cierre = next(i for i, d in enumerate(nueva.guion.diapositivas, 1) if d.tipo == "cierre")
+    assert f"{p.id}-cubierta-0.jpg" not in pl.html_diapositiva(nueva, cierre)        # la cubierta sale una vez
+    # 7/11 («no se sube»): sin diapositiva de libro, la cubierta subida va en el cierre
+    sin_libro = nueva.model_copy(deep=True)
+    sin_libro.guion.diapositivas = [d for d in sin_libro.guion.diapositivas if d.tipo != "libro"]
+    for i, d in enumerate(sin_libro.guion.diapositivas, 1):
+        d.n = i
+    cierre = next(i for i, d in enumerate(sin_libro.guion.diapositivas, 1) if d.tipo == "cierre")
+    html = pl.html_diapositiva(sin_libro, cierre)
+    assert f"{p.id}-cubierta-0.jpg" in html and "tarjeta--cubierta" in html
 
 
 def test_la_foto_de_la_persona_desde_la_ficha(cfg, monkeypatch):

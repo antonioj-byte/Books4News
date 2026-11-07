@@ -438,6 +438,8 @@ class Plantillas:
         return {
             "imagen": imagen, "retrato": retrato, "portada_estilo": estilo, "ilustracion": svg,
             "libros": libros if d.tipo == "cierre" else [], "libros_pieza": libros,
+            # Sin diapositiva de libro, la cubierta va en el cierre (7/11)
+            "cubierta_en_cierre": d.tipo == "cierre" and not any(x.tipo == "libro" for x in pieza.guion.diapositivas),
             "libro": libro, "sin_foto": sin_foto, "infografia": info, "contar": contar, "interferencia": interferencia,
             # Las diapositivas que también salen en vídeo (folio.render.video): la portada con imagen o con
             # interferencia, la noticia con cifra que cuenta o con palabra gigante, la idea con infografía
