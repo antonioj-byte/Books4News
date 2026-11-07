@@ -120,7 +120,7 @@ export const api = {
   newsletter: () => pedir<EstadoNewsletter>("/api/newsletter"),
   lanzarNewsletter: (texto: string, formato: "newsletter" | "opinion" = "newsletter", firmante?: string) =>
     pedir<EstadoNewsletter>("/api/newsletter", { method: "POST", body: JSON.stringify({ texto, formato, firmante: firmante ?? null }) }),
-  nuevaFirma: (f: { nombre: string; cargo: string; publicacion: string; url: string }) =>
+  nuevaFirma: (f: { nombre: string; cargo: string; publicacion: string; url: string; slug?: string | null }) =>
     pedir<EstadoNewsletter>("/api/firmantes", { method: "POST", body: JSON.stringify(f) }),
   subirFotoFirma: (slug: string, archivo: File) =>
     pedir<EstadoNewsletter>(`/api/firmantes/${encodeURIComponent(slug)}/foto`, { method: "PUT", body: archivo, headers: { "Content-Type": archivo.type || "application/octet-stream" } }),

@@ -44,6 +44,7 @@ class FirmaNueva(BaseModel):
     cargo: str = Field("", max_length=120)
     publicacion: str = Field("", max_length=80)
     url: str = Field("", max_length=200)
+    slug: str | None = None            # para corregir una firma que ya existe (7/11)
 
 
 class EstadoNewsletter(BaseModel):
@@ -114,10 +115,12 @@ async def subir_foto(request: Request, ctx: Contexto = Depends(contexto)):
 
 @router.post("/api/firmantes", response_model=EstadoNewsletter)
 def nueva_firma(cuerpo: FirmaNueva, ctx: Contexto = Depends(contexto)):
-    """Una firma para las piezas de opinión (7/11). Con el mismo nombre, la actualiza."""
+    """Una firma para las piezas de opinión (7/11). Con su `slug` (o el mismo nombre), la corrige: las piezas ya hechas la toman al pintarse."""
     if not cuerpo.nombre.strip():
         raise HTTPException(422, "Falta el nombre")
-    newsletter.guardar_firmante(ctx.cfg, cuerpo.nombre, cuerpo.cargo, cuerpo.publicacion, cuerpo.url)
+    if cuerpo.slug == newsletter.CASA:
+        raise HTTPException(422, "La firma de la casa se cambia en la configuración")
+    newsletter.guardar_firmante(ctx.cfg, cuerpo.nombre, cuerpo.cargo, cuerpo.publicacion, cuerpo.url, slug=cuerpo.slug)
     return _estado(ctx)
 
 

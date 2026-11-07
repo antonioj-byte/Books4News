@@ -21,7 +21,8 @@ export function Newsletter({ texto, onHecho, formato = "newsletter" }: { texto: 
   const [elegida, setElegida] = useState<string | null>(null);
   const [subiendo, setSubiendo] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
-  const [nueva, setNueva] = useState<{ nombre: string; cargo: string; publicacion: string; url: string } | null>(null);
+  // Con slug, se corrige una firma que ya existe (7/11: «no puedo cambiar la firma»); sin él, es una nueva
+  const [nueva, setNueva] = useState<{ nombre: string; cargo: string; publicacion: string; url: string; slug?: string | null } | null>(null);
   const [guardando, setGuardando] = useState(false);
   const archivo = useRef<HTMLInputElement>(null);
 
@@ -54,7 +55,7 @@ export function Newsletter({ texto, onHecho, formato = "newsletter" }: { texto: 
       const e = await api.nuevaFirma(nueva);
       setInfo(e);
       const n = nueva.nombre.trim().toLowerCase();
-      setElegida(e.firmantes.find((f) => f.nombre.toLowerCase() === n)?.slug ?? null);
+      setElegida(nueva.slug ?? e.firmantes.find((f) => f.nombre.toLowerCase() === n)?.slug ?? null);
       setNueva(null);
     } catch (err) {
       setErrorFoto(mensajeError(err, "No se pudo guardar la firma."));
@@ -75,9 +76,16 @@ export function Newsletter({ texto, onHecho, formato = "newsletter" }: { texto: 
             </button>
           ))}
           <button className="rounded-full border border-dashed border-borde px-3 py-1 text-[13px] hover:border-tinta"
-                  onClick={() => setNueva(nueva ? null : { nombre: "", cargo: "", publicacion: "", url: "" })} aria-expanded={!!nueva}>
+                  onClick={() => setNueva(nueva && !nueva.slug ? null : { nombre: "", cargo: "", publicacion: "", url: "" })} aria-expanded={!!nueva && !nueva.slug}>
             + Otra firma
           </button>
+          {firma && firma.slug !== CASA && (
+            <button className="rounded-full border border-borde px-3 py-1 text-[13px] hover:border-tinta"
+                    onClick={() => setNueva(nueva?.slug ? null : { nombre: firma.nombre, cargo: firma.cargo ?? "", publicacion: firma.publicacion ?? "", url: firma.url ?? "", slug: firma.slug })}
+                    aria-expanded={!!nueva?.slug}>
+              Corregir la firma
+            </button>
+          )}
         </div>
       )}
       {nueva && (
@@ -92,9 +100,11 @@ export function Newsletter({ texto, onHecho, formato = "newsletter" }: { texto: 
                  onChange={(e) => setNueva({ ...nueva, url: e.target.value })} aria-label="Enlace" />
           <div className="flex items-center gap-2 sm:col-span-2">
             <button className="boton-suave" onClick={guardarFirma} disabled={guardando || nueva.nombre.trim().length < 2} aria-busy={guardando || undefined}>
-              {guardando ? "Guardando…" : "Guardar la firma"}
+              {guardando ? "Guardando…" : nueva.slug ? "Guardar los cambios" : "Guardar la firma"}
             </button>
-            <span className="text-[12.5px] text-tinta-suave">Sin enlace, el cierre enseña su nombre y su cargo en vez de «Léelo entero en…».</span>
+            <span className="text-[12.5px] text-tinta-suave">{nueva.slug
+              ? "Las piezas ya escritas con esta firma la toman al momento."
+              : "Sin enlace, el cierre enseña su nombre y su cargo en vez de «Léelo entero en…»."}</span>
           </div>
         </div>
       )}

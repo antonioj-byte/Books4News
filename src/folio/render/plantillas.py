@@ -148,7 +148,7 @@ class Plantillas:
         """«La newsletter del jueves» (4/11, opción C): portada con quien firma, percha, frases ilustradas y cierre."""
         from folio import newsletter
         a = pieza.arte
-        f = pieza.firmante or newsletter.de_la_casa(self.cfg)   # la opinión (7/11) lleva su firma; la newsletter, la de la casa
+        f = newsletter.firma_al_dia(self.cfg, pieza.firmante)   # la opinión (7/11) lleva su firma, al día; la newsletter, la de la casa
         datos = {**self._base(base_url), **self._texto(pieza, d, n), "imagen": None, "retrato": None, "acento": None,
                  "tono": None, "sin_foto": None, "infografia": None, "panorama": False, "friso": None, "banda": None,
                  "video": False, "portada_estilo": None, "ilustracion": None}

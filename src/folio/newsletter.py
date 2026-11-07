@@ -182,13 +182,24 @@ def firmante(cfg: Config, slug: str | None) -> Firmante:
     return next((f for f in firmantes(cfg) if f.slug == (slug or CASA)), de_la_casa(cfg))
 
 
-def guardar_firmante(cfg: Config, nombre: str, cargo: str = "", publicacion: str = "", url: str = "") -> Firmante:
-    """Una firma nueva (o la misma, actualizada, si ya existe con ese nombre)."""
-    f = Firmante(slug=_slug(nombre), nombre=" ".join(nombre.split()), cargo=" ".join(cargo.split()),
+def firma_al_dia(cfg: Config, f: Firmante | None) -> Firmante:
+    """La firma de una pieza tal como está ahora en el registro (7/11: «no puedo cambiar la firma»: la pieza guardaba
+    su copia y un cambio de cargo no llegaba); si ya no está, la que guardó la pieza."""
+    if f is None:
+        return de_la_casa(cfg)
+    return next((x for x in firmantes(cfg) if x.slug == f.slug), f)
+
+
+def guardar_firmante(cfg: Config, nombre: str, cargo: str = "", publicacion: str = "", url: str = "",
+                     slug: str | None = None) -> Firmante:
+    """Una firma nueva (o la misma, actualizada, si ya existe con ese nombre o se da su `slug`)."""
+    f = Firmante(slug=slug or _slug(nombre), nombre=" ".join(nombre.split()), cargo=" ".join(cargo.split()),
                  publicacion=" ".join(publicacion.split()),
                  url=re.sub(r"^https?://", "", url.strip()).rstrip("/"))
     if f.slug == CASA:
         f.slug = "casa-2"
+    if slug and not (dir_firmantes(cfg) / f"{slug}.json").exists():
+        f.slug = _slug(nombre)
     d = dir_firmantes(cfg)
     d.mkdir(parents=True, exist_ok=True)
     (d / f"{f.slug}.json").write_text(f.model_dump_json(indent=1), encoding="utf-8")
@@ -378,7 +389,7 @@ def preparar(tuberia, texto: str, pieza_id: str, dibujar: bool = True, firma: Fi
             pieza.avisos.append(f"Newsletter: sin ilustración en la {motivo}")
     # La percha y el pie, contra el texto de la newsletter con quien firma (y la noticia de la percha, si se lee)
     progreso("La newsletter: comprobando la percha y el pie")
-    f = pieza.firmante or de_la_casa(cfg)
+    f = firma_al_dia(cfg, pieza.firmante)
     cargo = f", {f.cargo[:1].lower() + f.cargo[1:]}" if f.cargo else ""
     donde_se = f", en {f.publicacion}" if f.publicacion else ""
     firma = f"Firma el texto {f.nombre}{cargo}{donde_se}.\n\n"

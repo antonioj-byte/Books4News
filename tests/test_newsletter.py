@@ -131,3 +131,14 @@ def test_opinion_de_otra_firma_con_su_foto_y_sin_enlace(cfg_diseno):
     p2 = newsletter.a_pieza(cfg, _guion(), "2026-11-07-4", "2026-11-07", TEXTO, firma=g, formato=newsletter.OPINION)
     assert "Léelo entero en diego.example" in pl.html_diapositiva(p2, 7)
     assert p2.guion.pie_instagram.endswith("Léelo entero en diego.example (enlace en la bio).")
+
+
+def test_corregir_la_firma_llega_a_las_piezas_ya_escritas(cfg_diseno):
+    """7/11 («no puedo cambiar la firma: quiero que diga Producto, en mayúscula»): la pieza toma la firma al día."""
+    cfg = cfg_diseno
+    f = newsletter.guardar_firmante(cfg, "Diego Prueba", "Director de producto de Alighieria")
+    p = newsletter.a_pieza(cfg, _guion(), "2026-11-07-3", "2026-11-07", TEXTO, firma=f, formato=newsletter.OPINION)
+    newsletter.guardar_firmante(cfg, "Diego Prueba", "Director de Producto de Alighieria", slug=f.slug)
+    assert [x.slug for x in newsletter.firmantes(cfg)] == [newsletter.CASA, "diego-prueba"]   # la misma, corregida
+    portada = render.Plantillas(cfg).html_diapositiva(p, 1)
+    assert "Director de Producto de Alighieria" in portada and "Director de producto" not in portada

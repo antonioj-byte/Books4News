@@ -999,7 +999,7 @@ export interface paths {
         put?: never;
         /**
          * Nueva Firma
-         * @description Una firma para las piezas de opinión (7/11). Con el mismo nombre, la actualiza.
+         * @description Una firma para las piezas de opinión (7/11). Con su `slug` (o el mismo nombre), la corrige: las piezas ya hechas la toman al pintarse.
          */
         post: operations["nueva_firma_api_firmantes_post"];
         delete?: never;
@@ -1807,6 +1807,8 @@ export interface components {
              * @default
              */
             url: string;
+            /** Slug */
+            slug?: string | null;
         };
         /** FirmaWeb */
         FirmaWeb: {
@@ -1916,6 +1918,11 @@ export interface components {
             prensa: boolean;
             /** Publicado */
             publicado: string | null;
+            /**
+             * Redaccion
+             * @default false
+             */
+            redaccion: boolean;
         };
         /** GuionLLM */
         GuionLLM: {

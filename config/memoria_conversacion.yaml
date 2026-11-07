@@ -879,3 +879,11 @@
   patron: "«Algo ha pasado aquí que no se sube» (la cubierta subida no salía: la pieza no tenía diapositiva de libro y el cierre llevaba la cara del autor)."
   propuesta: "Si la pieza no tiene diapositiva de libro, la cubierta va en la tarjeta del cierre en lugar de la cara del autor."
   evidencia: ["Conversación, 7/11: la cubierta de Random House de La carretera"]
+
+- clave: corregir-la-firma
+  fecha: "2026-11-07"
+  destino: codigo
+  capa: marca
+  patron: "«Tengo un problema que es que no puedo cambiar la firma: quiero que diga Producto (en mayúscula).»"
+  propuesta: "Las firmas de opinión se corrigen desde la web y las piezas ya escritas toman la firma al día."
+  evidencia: ["Conversación, 7/11: la opinión de Diego Álvarez"]
