@@ -30,8 +30,8 @@ def prompt_imagen(estilo: Estilo, escena: str) -> str:
 
 def _guardar(cfg: Config, pid: str, e: Estilo) -> Estilo:
     with almacen.editar(cfg, pid) as p:
-        if p.etapas["guion"].estado != "bloqueado":
-            raise ValueError("Aprueba antes el guion")
+        if not p.concepto_elegido:          # el estilo no depende del guion: se puede fijar antes de aprobarlo
+            raise ValueError("Elige antes un concepto")
         cambia = p.estilo is not None and p.estilo.model_dump() != e.model_dump()
         p.estilo = e
         p.etapas["estilo"].estado = "hecha"

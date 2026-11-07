@@ -182,9 +182,7 @@ def crear_app(cfg: Config | None = None) -> FastAPI:
 
     @app.post("/api/proyectos/{pid}/estilo")
     def elegir_estilo(pid: str, e: EleccionEstilo):
-        p = proyecto(pid)
-        if p.etapas["guion"].estado != "bloqueado":
-            raise HTTPException(409, "Aprueba antes el guion")
+        proyecto(pid)
         if e.preset:
             try:
                 estilo.elegir(cfg, pid, e.preset)

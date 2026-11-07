@@ -95,7 +95,7 @@ function pintarPasos() {
     libro: !!p, conceptos: !!p?.concepto_elegido, guion: bloqueado, estilo: !!p?.estilo,
     media: !!(p?.voz && listas), montaje: !!p?.montajes?.length,
   };
-  const abierto = { libro: true, conceptos: !!p, guion: !!p?.concepto_elegido, estilo: bloqueado,
+  const abierto = { libro: true, conceptos: !!p, guion: !!p?.concepto_elegido, estilo: !!p?.concepto_elegido,
     media: bloqueado && !!p?.estilo, montaje: !!(p?.voz && listas) || !!p?.montajes?.length };
   $("#pasos").innerHTML = PASOS.map((x) => `<button class="paso ${x.id === estado.paso ? "activo" : ""} ${hecho[x.id] ? "hecho" : ""}"
       data-paso="${x.id}" ${abierto[x.id] ? "" : "disabled"} ${x.id === estado.paso ? 'aria-current="step"' : ""}>
