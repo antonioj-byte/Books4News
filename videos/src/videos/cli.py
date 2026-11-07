@@ -14,6 +14,8 @@ from videos.llm import LLM
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    for ruidoso in ("pypdf", "httpx", "httpx2"):
+        logging.getLogger(ruidoso).setLevel(logging.ERROR)
     ap = argparse.ArgumentParser(prog="videos")
     sub = ap.add_subparsers(dest="cmd", required=True)
     w = sub.add_parser("web", help="la API y el asistente en http://127.0.0.1:8100")

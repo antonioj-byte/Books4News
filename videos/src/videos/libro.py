@@ -165,6 +165,11 @@ def _pdf(ruta: Path) -> Libro:
     except Exception:
         inicios = []
     inicios = sorted({p: t for p, t in inicios}.items())
+    info = lector.metadata or {}
+    if len(inicios) < 2:
+        por_indice = _capitulos_por_indice(paginas)
+        if por_indice:
+            return Libro(str(info.get("/Title") or ""), str(info.get("/Author") or ""), "pdf", por_indice)
     if len(inicios) < 2:
         inicios = [(i, f"Páginas {paginas[i][1]}–{paginas[min(i + PAGINAS_POR_TRAMO, len(paginas)) - 1][1]}")
                    for i in range(0, len(paginas), PAGINAS_POR_TRAMO)]
@@ -178,8 +183,54 @@ def _pdf(ruta: Path) -> Libro:
             marcas.append([len(texto), etiqueta])
             texto += texto_pag + "\n\n"
         capitulos.append(Capitulo(0, str(titulo)[:120], texto.strip(), marcas))
-    info = lector.metadata or {}
     return Libro(str(info.get("/Title") or ""), str(info.get("/Author") or ""), "pdf", capitulos)
+
+
+def _titulos_del_indice(paginas: list[tuple[str, str]]) -> tuple[int, dict[str, str]] | None:
+    """Si hay una página «Índice» al principio, sus líneas son los títulos de los capítulos."""
+    lineas = lambda t: [l.strip() for l in t.splitlines() if l.strip()]
+    k = next((i for i, (t, _) in enumerate(paginas[:15]) if lineas(t) and normalizar(lineas(t)[0]) in ("indice", "sumario", "contenido")), None)
+    if k is None:
+        return None
+    titulos = {}
+    for l in lineas(paginas[k][0])[1:]:
+        n = re.sub(r"\s\d+$", "", normalizar(l)).replace(" ", "")   # sin número de página ni espacios («El V alle»)
+        if n and len(l) < 120 and not n.isdigit():
+            titulos[n] = re.sub(r"[\s.]+\d+$", "", l)
+    return (k, titulos) if len(titulos) >= 2 else None
+
+
+def _capitulos_por_indice(paginas: list[tuple[str, str]]) -> list[Capitulo]:
+    """PDF sin marcadores: los capítulos empiezan donde una línea suelta (o dos seguidas) es un título del índice."""
+    r = _titulos_del_indice(paginas)
+    if r is None:
+        return []
+    k, pendientes = r
+    capitulos = [Capitulo(0, "Preliminares", "", [])]
+    for texto_pag, etiqueta in paginas[k + 1:]:
+        ls = texto_pag.splitlines()
+        actual = capitulos[-1]
+        actual.paginas.append([len(actual.texto), etiqueta])
+        i = 0
+        while i < len(ls):
+            encontrado = None
+            for ancho in (1, 2):
+                n = normalizar(" ".join(ls[i:i + ancho])).replace(" ", "")
+                if n and n in pendientes:
+                    encontrado = (ancho, pendientes.pop(n))
+                    break
+            if encontrado:
+                ancho, titulo = encontrado
+                actual = Capitulo(0, titulo, "", [[0, etiqueta]])
+                capitulos.append(actual)
+                i += ancho
+                continue
+            actual.texto += ls[i] + "\n"
+            i += 1
+        actual.texto += "\n"
+    for c in capitulos:
+        c.texto = c.texto.strip()
+    return capitulos if len(capitulos) > 2 else []
 
 
 _RE_CABECERA = re.compile(r"^(cap[ií]tulo\s+\S+.*|parte\s+\S+.*|[IVXLC]{1,6}\.?|\d{1,3}\.?|pr[oó]logo|ep[ií]logo|introducci[oó]n)$",
@@ -250,11 +301,14 @@ class Referencia:
 
 def buscar_literal(libro: Libro, pasaje: str) -> Referencia | None:
     """Dónde está `pasaje` letra por letra en el libro (salvo mayúsculas, tildes y signos), o None."""
-    aguja = normalizar(pasaje.replace("…", " ").replace("...", " "))
+    # Sin espacios: la extracción de texto de los PDF parte palabras por el interletrado («El V alle»)
+    aguja = normalizar(pasaje.replace("…", " ").replace("...", " ")).replace(" ", "")
     if len(aguja) < 8:
         return None
     for c in libro.capitulos:
         norm, mapa = _normalizar_con_mapa(c.texto)
+        sin = [(ch, m) for ch, m in zip(norm, mapa) if ch != " "]
+        norm, mapa = "".join(ch for ch, _ in sin), [m for _, m in sin]
         pos = norm.find(aguja)
         if pos >= 0:
             return Referencia(c.n, c.titulo, c.pagina_en(mapa[pos] if pos < len(mapa) else 0))
