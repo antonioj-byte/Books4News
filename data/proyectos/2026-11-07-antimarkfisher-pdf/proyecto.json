@@ -1,0 +1,2494 @@
+{
+ "esquema": 1,
+ "id": "2026-11-07-antimarkfisher-pdf",
+ "creado": "2026-11-07T15:44:22+00:00",
+ "libro": {
+  "tipo": "libro",
+  "titulo": "antimarkfisher.pdf",
+  "autor": "Antonio J. Rodríguez",
+  "formato": "pdf",
+  "archivo": "libro/original.pdf",
+  "huella": "sha256:3c8a4b814c6faed8daebca9694ade90ee1738eaf7843fe463d34029b6687d510",
+  "capitulos": [
+   {
+    "n": 1,
+    "titulo": "¡Jonrón! Fin de una clase media (¿e inicio de otra?)",
+    "paginas": "págs. 3–5",
+    "caracteres": 5460
+   },
+   {
+    "n": 2,
+    "titulo": "El Valle, despixelado: ¿leería Marx el FT?",
+    "paginas": "págs. 5–9",
+    "caracteres": 8367
+   },
+   {
+    "n": 3,
+    "titulo": "Capitalismo marxista",
+    "paginas": "págs. 9–13",
+    "caracteres": 8147
+   },
+   {
+    "n": 4,
+    "titulo": "Contra Mark Fisher, a favor de él",
+    "paginas": "págs. 13–18",
+    "caracteres": 10183
+   },
+   {
+    "n": 5,
+    "titulo": "Pompeya siliciana",
+    "paginas": "págs. 18–21",
+    "caracteres": 5824
+   },
+   {
+    "n": 6,
+    "titulo": "Teoría y practica del ragebaiting",
+    "paginas": "págs. 21–26",
+    "caracteres": 11145
+   },
+   {
+    "n": 7,
+    "titulo": "La cuarta herida",
+    "paginas": "págs. 26–29",
+    "caracteres": 5641
+   },
+   {
+    "n": 8,
+    "titulo": "Libros guillotinados: breve historia de un meme",
+    "paginas": "págs. 29–32",
+    "caracteres": 6907
+   },
+   {
+    "n": 9,
+    "titulo": "Libido y capitalismo",
+    "paginas": "págs. 32–40",
+    "caracteres": 14262
+   }
+  ],
+  "caracteres": 75936
+ },
+ "etapas": {
+  "ingesta": {
+   "estado": "hecha",
+   "actualizado": "2026-11-07T15:44:22+00:00",
+   "trabajo": null,
+   "error": null
+  },
+  "conceptos": {
+   "estado": "aprobada",
+   "actualizado": "2026-11-07T15:46:54+00:00",
+   "trabajo": null,
+   "error": null
+  },
+  "guion": {
+   "estado": "bloqueado",
+   "actualizado": "2026-11-07T16:16:38+00:00",
+   "trabajo": null,
+   "error": null
+  },
+  "estilo": {
+   "estado": "hecha",
+   "actualizado": "2026-11-07T16:10:20+00:00",
+   "trabajo": null,
+   "error": null
+  },
+  "voz": {
+   "estado": "hecha",
+   "actualizado": "2026-11-07T16:16:39+00:00",
+   "trabajo": null,
+   "error": null
+  },
+  "imagenes": {
+   "estado": "propuesta",
+   "actualizado": "2026-11-07T16:20:11+00:00",
+   "trabajo": null,
+   "error": null
+  },
+  "montaje": {
+   "estado": "hecha",
+   "actualizado": "2026-11-07T16:23:49+00:00",
+   "trabajo": null,
+   "error": null
+  }
+ },
+ "conceptos": [
+  {
+   "id": "r1c1",
+   "ronda": 1,
+   "titulo": "El Internet de tu juventud no era mejor",
+   "idea": "Echas de menos un Internet más puro, pero quizá lo que añoras es una etapa de tu vida en la que la política te pesaba menos: aquel Internet también era negocio desde el principio.",
+   "gancho": "Internet nunca fue mejor: eras tú",
+   "por_que": "Choca de frente con la nostalgia del 'Internet de antes', una creencia casi unánime en los mayores de 30. Abre una discusión generacional y se la mandas al amigo que siempre dice que las redes eran mejores en 2010.",
+   "pasaje": {
+    "texto": "¿Podría ser que el Internet de tu juventud no fuese más puro, sino que tu recuerdo del mismo esté enterrado en un periodo de tu vida donde la política tenía menos peso?",
+    "capitulo": 5,
+    "titulo_capitulo": "Pompeya siliciana",
+    "pagina": "19",
+    "verificado": true
+   },
+   "notas": {
+    "sorpresa": 8,
+    "utilidad": 6,
+    "polemica": 8,
+    "visualidad": 8
+   },
+   "notas_critico": {
+    "sorpresa": 8,
+    "utilidad": 6,
+    "polemica": 8,
+    "visualidad": 8
+   },
+   "motivo_critico": "Ataca una nostalgia casi universal con una explicación personal y verificable en uno mismo. El pasaje lo plantea como pregunta, así que el vídeo debe mantener el «quizá» y no venderlo como certeza.",
+   "juicio_gancho": {
+    "original": "Internet nunca fue mejor: eras tú",
+    "nota": 8,
+    "motivo": "Desmonta una nostalgia muy compartida con un giro personal que interpela directamente, aunque no adelanta el ángulo del negocio ni de la política, que es lo más sorprendente.",
+    "intentos": 1,
+    "historial": [
+     {
+      "gancho": "Internet nunca fue mejor: eras tú",
+      "nota": 8,
+      "palabras": 6,
+      "motivo": "Desmonta una nostalgia muy compartida con un giro personal que interpela directamente, aunque no adelanta el ángulo del negocio ni de la política, que es lo más sorprendente."
+     }
+    ]
+   },
+   "prompt": "conceptos@2"
+  },
+  {
+   "id": "r1c2",
+   "ronda": 1,
+   "titulo": "A nadie le importan tus contradicciones",
+   "idea": "El ensayo de izquierdas ha creado un superyó vigilante que te culpa por comprar en Amazon o tener seguro privado, pero la política sirve para transformar lo colectivo, no para expiar culpas personales.",
+   "gancho": "Tu culpa por Amazon no cambia nada.",
+   "por_que": "Alivia la culpa cotidiana del progresista y a la vez irrita a quienes creen que lo personal es político. Se la mandas a ese amigo que se fustiga por cada pedido online.",
+   "pasaje": {
+    "texto": "¡A nadie le importan [/ deberían importarle] tus contradicciones personales! Precisamente, la gracia del pensamiento político es su poder transformador colectivo.",
+    "capitulo": 5,
+    "titulo_capitulo": "Pompeya siliciana",
+    "pagina": "21",
+    "verificado": true
+   },
+   "notas": {
+    "sorpresa": 6,
+    "utilidad": 8,
+    "polemica": 7,
+    "visualidad": 5
+   },
+   "notas_critico": {
+    "sorpresa": 6,
+    "utilidad": 8,
+    "polemica": 8,
+    "visualidad": 5
+   },
+   "motivo_critico": "Es aplicable hoy mismo a la culpa de quien compra en Amazon, provoca a quienes creen que lo personal es político y el pasaje lo sostiene literalmente.",
+   "juicio_gancho": {
+    "original": "A nadie le importan tus contradicciones",
+    "nota": 8,
+    "motivo": "Interpela directamente una culpa reconocible y la desmonta con provocación, aunque podría ser más punzante señalando el contraste entre culpa individual y acción colectiva.",
+    "intentos": 3,
+    "historial": [
+     {
+      "gancho": "A nadie le importan tus contradicciones",
+      "nota": 7,
+      "palabras": 6,
+      "motivo": "Es provocador y libera de culpa, pero abstracto: «contradicciones» no evoca nada visual ni concreto como Amazon o el seguro privado."
+     },
+     {
+      "gancho": "¿Compras en Amazon? Nadie te pide expiación.",
+      "nota": 6,
+      "palabras": 7,
+      "motivo": "Amazon engancha por concreto, pero «expiación» suena abstracta y religiosa, y «nadie te pide» rebaja la tensión cuando el vídeo justo denuncia que alguien sí la pide."
+     },
+     {
+      "gancho": "Tu culpa por Amazon no cambia nada.",
+      "nota": 8,
+      "palabras": 7,
+      "motivo": "Interpela directamente una culpa reconocible y la desmonta con provocación, aunque podría ser más punzante señalando el contraste entre culpa individual y acción colectiva."
+     }
+    ]
+   },
+   "prompt": "conceptos@2"
+  },
+  {
+   "id": "r1c3",
+   "ronda": 1,
+   "titulo": "Tu miedo a la IA es miedo al paro",
+   "idea": "Muchas críticas a la IA se visten de anticapitalismo, pero en el fondo son el viejo miedo a quedarse obsoleto en tu propio trabajo.",
+   "gancho": "Temes al paro, no a la IA",
+   "por_que": "Desenmascara una postura muy extendida y desafía a quien critica la IA a reconocer su motivo personal. Genera respuestas airadas y se manda al compañero de trabajo que vive angustiado con ChatGPT.",
+   "pasaje": {
+    "texto": "la mayoría de las reacciones contra la IA revisten de causa marxista-anticapitalista lo que no es más que un atávico temor a la obsolescencia individual",
+    "capitulo": 7,
+    "titulo_capitulo": "La cuarta herida",
+    "pagina": "27",
+    "verificado": true
+   },
+   "notas": {
+    "sorpresa": 6,
+    "utilidad": 7,
+    "polemica": 8,
+    "visualidad": 5
+   },
+   "notas_critico": {
+    "sorpresa": 6,
+    "utilidad": 7,
+    "polemica": 8,
+    "visualidad": 4
+   },
+   "motivo_critico": "Desenmascara un motivo personal tras una postura ideológica, el pasaje lo dice sin matices y genera debate inmediato.",
+   "juicio_gancho": {
+    "original": "Temes al paro, no a la IA",
+    "nota": 7,
+    "motivo": "La acusación directa en segunda persona engancha y se entiende al instante, pero «paro» suena a economía genérica y no apunta al giro del vídeo: el disfraz anticapitalista del miedo a quedarse obsoleto.",
+    "intentos": 3,
+    "historial": [
+     {
+      "gancho": "Temes al paro, no a la IA",
+      "nota": 7,
+      "palabras": 7,
+      "motivo": "La acusación directa en segunda persona engancha y se entiende al instante, pero «paro» suena a economía genérica y no apunta al giro del vídeo: el disfraz anticapitalista del miedo a quedarse obsoleto."
+     },
+     {
+      "gancho": "Tu anticapitalismo contra la IA es miedo",
+      "nota": 7,
+      "palabras": 7,
+      "motivo": "Es provocador y acusa directamente al espectador, pero «miedo» es vago: no dice miedo a qué, y ahí está lo jugoso (quedarte obsoleto)."
+     },
+     {
+      "gancho": "Tu anticapitalismo contra la IA es miedo a sobrar",
+      "nota": 7,
+      "palabras": 9,
+      "motivo": "Es una acusación directa en segunda persona, provoca y el vídeo puede cumplirla, pero tiene 9 palabras y «contra la IA» frena el golpe final."
+     }
+    ]
+   },
+   "prompt": "conceptos@2"
+  },
+  {
+   "id": "r1c4",
+   "ronda": 1,
+   "titulo": "Por qué la IA no imitará a tu escritor",
+   "idea": "El estilo literario consiste en apartarse de la media del lenguaje, y la IA, que funciona por interpolación estadística, apunta justo a la media; por eso no puede reproducir el estilo de tu autor favorito.",
+   "gancho": "La IA escribe como nadie. Literalmente.",
+   "por_que": "Contesta al miedo de que la IA acabe con los escritores con un argumento sencillo y discutible. Los que usan IA a diario querrán rebatirlo y los lectores lo compartirán aliviados.",
+   "pasaje": {
+    "texto": "si el estilo literario es, por definición, una consecuencia del extrañamiento lingüístico (algo que va contra la media del lenguaje), la interpolación estadística de la IA apunta a la mismísima media, y esa es la razón por la que (aunque lo deseáramos) una IA no puede escribir un libro que reproduzca el estilo de nuestro escritor favorito.",
+    "capitulo": 8,
+    "titulo_capitulo": "Libros guillotinados: breve historia de un meme",
+    "pagina": "31",
+    "verificado": true
+   },
+   "notas": {
+    "sorpresa": 7,
+    "utilidad": 5,
+    "polemica": 7,
+    "visualidad": 5
+   },
+   "notas_critico": {
+    "sorpresa": 7,
+    "utilidad": 4,
+    "polemica": 7,
+    "visualidad": 5
+   },
+   "motivo_critico": "Es un argumento técnico sencillo (el estilo se aparta de la media y la IA apunta a ella), es discutible y cabe en un minuto. Se distingue del 3 porque habla de estética, no de miedo laboral.",
+   "juicio_gancho": {
+    "original": "Ninguna IA escribirá como tu escritor favorito",
+    "nota": 8,
+    "motivo": "El doble sentido de «como nadie» (genial / como ninguna persona) encaja con la idea de la media sin estilo, pero «literalmente» está muy gastado y el giro puede pasar desapercibido a velocidad de scroll.",
+    "intentos": 2,
+    "historial": [
+     {
+      "gancho": "Ninguna IA escribirá como tu escritor favorito",
+      "nota": 7,
+      "palabras": 7,
+      "motivo": "Es una afirmación tajante y personal que invita a discutir y se entiende sin contexto, pero no insinúa el porqué (la media estadística) y suena a opinión que ya se ha oído."
+     },
+     {
+      "gancho": "La IA escribe como nadie. Literalmente.",
+      "nota": 8,
+      "palabras": 6,
+      "motivo": "El doble sentido de «como nadie» (genial / como ninguna persona) encaja con la idea de la media sin estilo, pero «literalmente» está muy gastado y el giro puede pasar desapercibido a velocidad de scroll."
+     }
+    ]
+   },
+   "prompt": "conceptos@2"
+  },
+  {
+   "id": "r1c5",
+   "ronda": 1,
+   "titulo": "Tu indignación es exactamente lo que buscan",
+   "idea": "Roy Cohn enseñó a Trump a provocar a sus enemigos para que dieran lo peor de sí y salir él como el bueno; cuando compartes indignado sus frases, les haces el trabajo.",
+   "gancho": "Tu indignación con Trump es su estrategia",
+   "por_que": "Interpela a cualquiera que comparte con rabia las barbaridades de Trump, Musk o Karp. Abre el debate de si informar de ellos es amplificarlos.",
+   "pasaje": {
+    "texto": "Siempre intentaba provocar a sus enemigos para que fueran lo peor que pudieran ser y luego usar eso en su contra, para que Roy Cohn pareciera el bueno, cosa que prácticamente nunca fue",
+    "capitulo": 6,
+    "titulo_capitulo": "Teoría y practica del ragebaiting",
+    "pagina": "21",
+    "verificado": true
+   },
+   "notas": {
+    "sorpresa": 6,
+    "utilidad": 8,
+    "polemica": 6,
+    "visualidad": 7
+   },
+   "notas_critico": {
+    "sorpresa": 6,
+    "utilidad": 8,
+    "polemica": 6,
+    "visualidad": 7
+   },
+   "motivo_critico": "Tiene alta utilidad para quien comparte con rabia. Pero el pasaje solo describe la táctica de Cohn, así que el vídeo debe presentar la aplicación al espectador como inferencia y no como cita del autor.",
+   "juicio_gancho": {
+    "original": "Tu indignación es exactamente lo que buscan",
+    "nota": 8,
+    "motivo": "Interpela directamente al espectador y le da la vuelta a su emoción, pero «estrategia» es algo abstracto y no señala el gesto concreto (compartir) que el vídeo denuncia.",
+    "intentos": 3,
+    "historial": [
+     {
+      "gancho": "Tu indignación es exactamente lo que buscan",
+      "nota": 7,
+      "palabras": 7,
+      "motivo": "Interpela directamente y abre la pregunta de quién busca qué, pero «lo que buscan» es vago y podría encabezar cualquier vídeo sobre manipulación o algoritmos."
+     },
+     {
+      "gancho": "Compartir sus barbaridades indignado le hace campaña",
+      "nota": 7,
+      "palabras": 7,
+      "motivo": "La idea contraintuitiva que acusa al espectador engancha, pero el «sus» ambiguo no dice de quién se habla y la frase es algo torpe al oído."
+     },
+     {
+      "gancho": "Tu indignación con Trump es su estrategia",
+      "nota": 8,
+      "palabras": 7,
+      "motivo": "Interpela directamente al espectador y le da la vuelta a su emoción, pero «estrategia» es algo abstracto y no señala el gesto concreto (compartir) que el vídeo denuncia."
+     }
+    ]
+   },
+   "prompt": "conceptos@2"
+  }
+ ],
+ "concepto_elegido": "r1c1",
+ "guion": [
+  {
+   "n": 1,
+   "concepto": "r1c1",
+   "origen": "guionista",
+   "creado": "2026-11-07T15:47:27+00:00",
+   "titulo": "El Internet de tu juventud no era mejor",
+   "planos": [
+    {
+     "id": "p01",
+     "rol": "gancho",
+     "locucion": "Internet nunca fue mejor: eras tú.",
+     "pantalla": "",
+     "visual": "Silueta de un adolescente de espaldas en un cuarto a oscuras, iluminado solo por el resplandor azulado de un viejo monitor de tubo",
+     "movimiento": "clip animado: el resplandor del monitor parpadea y la silueta se va desvaneciendo hasta quedar el cuarto vacío",
+     "duracion_estimada": 2.4,
+     "cita": null
+    },
+    {
+     "id": "p02",
+     "rol": "tension",
+     "locucion": "Seguro que añoras los blogs, los foros, aquel Internet tranquilo.",
+     "pantalla": "",
+     "visual": "Un módem antiguo con sus lucecitas verdes encendidas sobre un escritorio polvoriento",
+     "movimiento": "zoom lento hacia las luces del módem",
+     "duracion_estimada": 4.0,
+     "cita": null
+    },
+    {
+     "id": "p03",
+     "rol": "tension",
+     "locucion": "Y sientes que ahora todo es basura y algoritmo.",
+     "pantalla": "",
+     "visual": "Un pulgar deslizando sin fin sobre un móvil, rodeado de una montaña de bolsas de basura",
+     "movimiento": "alejamiento lento",
+     "duracion_estimada": 3.6,
+     "cita": null
+    },
+    {
+     "id": "p04",
+     "rol": "desarrollo",
+     "locucion": "Antonio J. Rodríguez lo discute en su libro Antimarkfisher.",
+     "pantalla": "Antimarkfisher · Antonio J. Rodríguez",
+     "visual": "Una mano retirando la sábana que cubre un viejo ordenador guardado en un trastero",
+     "movimiento": "travelling lateral hacia la derecha",
+     "duracion_estimada": 3.6,
+     "cita": null
+    },
+    {
+     "id": "p05",
+     "rol": "desarrollo",
+     "locucion": "Responde a Cory Doctorow y su idea de Mierdificación.",
+     "pantalla": "",
+     "visual": "Un río limpio que, aguas abajo, se vuelve turbio y lleno de desechos",
+     "movimiento": "paneo vertical hacia abajo",
+     "duracion_estimada": 3.6,
+     "cita": null
+    },
+    {
+     "id": "p06",
+     "rol": "desarrollo",
+     "locucion": "Para el autor, ese Internet feliz es una Arcadia.",
+     "pantalla": "",
+     "visual": "Un prado idílico con ovejas al atardecer, demasiado perfecto, como un decorado de cartón",
+     "movimiento": "zoom lento hacia el horizonte",
+     "duracion_estimada": 3.6,
+     "cita": null
+    },
+    {
+     "id": "p07",
+     "rol": "desarrollo",
+     "locucion": "Ya era un agregado de directorios construidos con propósitos publicitarios y comerciales.",
+     "pantalla": "",
+     "visual": "Un archivador metálico interminable cuyos cajones se abren y dejan caer monedas",
+     "movimiento": "travelling lateral hacia la izquierda",
+     "duracion_estimada": 4.8,
+     "cita": {
+      "texto": "agregado de directorios construidos con propósitos publicitarios y comerciales",
+      "capitulo": 5,
+      "pagina": "19"
+     }
+    },
+    {
+     "id": "p08",
+     "rol": "desarrollo",
+     "locucion": "Yahoo, Google, eBay, Amazon: todas nacieron del capital privado.",
+     "pantalla": "Negocio desde el primer día",
+     "visual": "Semillas brotando de un montón de billetes en una maceta sobre una mesa de oficina",
+     "movimiento": "zoom lento hacia los brotes",
+     "duracion_estimada": 3.6,
+     "cita": null
+    },
+    {
+     "id": "p09",
+     "rol": "desarrollo",
+     "locucion": "Las revistas virales de los 2010 fueron la mierdificación de su época.",
+     "pantalla": "",
+     "visual": "Ruinas cubiertas de ceniza de una antigua ciudad, con cables y circuitos asomando entre las piedras",
+     "movimiento": "alejamiento lento",
+     "duracion_estimada": 4.8,
+     "cita": null
+    },
+    {
+     "id": "p10",
+     "rol": "giro",
+     "locucion": "Entonces, ¿qué echas de menos de verdad?",
+     "pantalla": "",
+     "visual": "Una caja de cartón abierta con objetos de juventud: auriculares enredados, una cámara compacta, entradas de concierto",
+     "movimiento": "zoom lento hacia el interior de la caja",
+     "duracion_estimada": 2.8,
+     "cita": null
+    },
+    {
+     "id": "p11",
+     "rol": "giro",
+     "locucion": "Quizá una etapa de tu vida donde la política pesaba menos.",
+     "pantalla": "Nostalgia no es pureza",
+     "visual": "Un chaval de espaldas tumbado en la hierba, una mochila ligera a su lado; al fondo, un adulto cargando una mochila enorme",
+     "movimiento": "clip animado: la mochila del adulto se hace cada vez más pesada y lo encorva",
+     "duracion_estimada": 4.4,
+     "cita": null
+    },
+    {
+     "id": "p12",
+     "rol": "giro",
+     "locucion": "Según el autor, lo que añoras es tu vida, no la red.",
+     "pantalla": "",
+     "visual": "Un espejo empañado en el que una mano limpia un círculo y aparece un reflejo desenfocado",
+     "movimiento": "giro leve",
+     "duracion_estimada": 4.4,
+     "cita": null
+    },
+    {
+     "id": "p13",
+     "rol": "cierre",
+     "locucion": "¿En qué año crees que Internet fue mejor?",
+     "pantalla": "¿Tu año dorado de Internet?",
+     "visual": "Un calendario de pared con hojas arrancadas volando por una habitación vacía",
+     "movimiento": "paneo vertical hacia arriba",
+     "duracion_estimada": 3.2,
+     "cita": null
+    },
+    {
+     "id": "p14",
+     "rol": "cierre",
+     "locucion": "Mándaselo a quien siempre dice que 2010 era mejor.",
+     "pantalla": "",
+     "visual": "Dos manos anónimas pasándose un móvil por encima de una mesa de bar",
+     "movimiento": "travelling lateral hacia la derecha",
+     "duracion_estimada": 3.6,
+     "cita": null
+    }
+   ],
+   "avisos": [],
+   "prompt": "guion@2"
+  }
+ ],
+ "chat": [],
+ "gasto": [
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.4872,
+   "detalle": "conceptos · 1333+34554w+0r → 10274 tokens · 86.1 s",
+   "creado": "2026-11-07T15:45:57+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0726,
+   "detalle": "critico · 5931+0w+0r → 2446 tokens · 23.4 s",
+   "creado": "2026-11-07T15:46:21+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0073,
+   "detalle": "juez-gancho · 1174+0w+0r → 132 tokens · 2.5 s",
+   "creado": "2026-11-07T15:46:24+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0072,
+   "detalle": "juez-gancho · 1182+0w+0r → 125 tokens · 2.7 s",
+   "creado": "2026-11-07T15:46:24+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0129,
+   "detalle": "juez-gancho · 1163+0w+0r → 410 tokens · 5.6 s",
+   "creado": "2026-11-07T15:46:27+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0074,
+   "detalle": "juez-gancho · 1170+0w+0r → 135 tokens · 1.9 s",
+   "creado": "2026-11-07T15:46:29+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0135,
+   "detalle": "juez-gancho · 1190+0w+0r → 438 tokens · 5.1 s",
+   "creado": "2026-11-07T15:46:29+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.015,
+   "detalle": "juez-gancho · 1187+0w+0r → 512 tokens · 6.5 s",
+   "creado": "2026-11-07T15:46:30+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0073,
+   "detalle": "juez-gancho · 1186+0w+0r → 129 tokens · 2.3 s",
+   "creado": "2026-11-07T15:46:31+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0074,
+   "detalle": "juez-gancho · 1181+0w+0r → 136 tokens · 2.5 s",
+   "creado": "2026-11-07T15:46:34+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0177,
+   "detalle": "juez-gancho · 1175+0w+0r → 648 tokens · 7.1 s",
+   "creado": "2026-11-07T15:46:36+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0144,
+   "detalle": "juez-gancho · 1184+0w+0r → 485 tokens · 6.3 s",
+   "creado": "2026-11-07T15:46:36+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0119,
+   "detalle": "juez-gancho · 1184+0w+0r → 358 tokens · 4.6 s",
+   "creado": "2026-11-07T15:46:38+00:00"
+  },
+  {
+   "etapa": "conceptos",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0127,
+   "detalle": "juez-gancho · 1180+0w+0r → 399 tokens · 6.5 s",
+   "creado": "2026-11-07T15:46:45+00:00"
+  },
+  {
+   "etapa": "guion",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.0839,
+   "detalle": "guion · 1665+0w+34554r → 3514 tokens · 32.9 s",
+   "creado": "2026-11-07T15:47:26+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-opus-5-5",
+   "usd": 0.035,
+   "detalle": "escenas · 2829+0w+0r → 1183 tokens · 12.2 s",
+   "creado": "2026-11-07T16:16:51+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p03 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:04+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.8 s",
+   "creado": "2026-11-07T16:17:04+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p02 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:06+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p01 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:07+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 229 tokens · 2.6 s",
+   "creado": "2026-11-07T16:17:09+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0003,
+   "detalle": "revisor-letras · 1185+0w+0r → 263 tokens · 2.6 s",
+   "creado": "2026-11-07T16:17:09+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p03 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:16+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 213 tokens · 1.8 s",
+   "creado": "2026-11-07T16:17:18+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p02 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:21+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.7 s",
+   "creado": "2026-11-07T16:17:22+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p01 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:24+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.8 s",
+   "creado": "2026-11-07T16:17:24+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p03 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:29+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.7 s",
+   "creado": "2026-11-07T16:17:30+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p01 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:36+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p02 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:36+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.6 s",
+   "creado": "2026-11-07T16:17:37+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.7 s",
+   "creado": "2026-11-07T16:17:37+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p04 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:48+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.8 s",
+   "creado": "2026-11-07T16:17:48+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p05 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:48+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 121 tokens · 1.2 s",
+   "creado": "2026-11-07T16:17:50+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p06 · 25 créditos (€)",
+   "creado": "2026-11-07T16:17:51+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.6 s",
+   "creado": "2026-11-07T16:17:52+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p05 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:01+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p04 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:03+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.6 s",
+   "creado": "2026-11-07T16:18:04+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0003,
+   "detalle": "revisor-letras · 1185+0w+0r → 341 tokens · 2.6 s",
+   "creado": "2026-11-07T16:18:04+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p06 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:07+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.9 s",
+   "creado": "2026-11-07T16:18:08+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p05 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:15+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p07 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:15+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.7 s",
+   "creado": "2026-11-07T16:18:16+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.6 s",
+   "creado": "2026-11-07T16:18:16+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p08 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:19+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 245 tokens · 2.1 s",
+   "creado": "2026-11-07T16:18:21+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p09 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:27+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p07 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:27+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.8 s",
+   "creado": "2026-11-07T16:18:28+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 185 tokens · 2.4 s",
+   "creado": "2026-11-07T16:18:30+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p08 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:33+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 116 tokens · 1.4 s",
+   "creado": "2026-11-07T16:18:34+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p10 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:40+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.8 s",
+   "creado": "2026-11-07T16:18:41+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p09 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:41+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.7 s",
+   "creado": "2026-11-07T16:18:42+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p08 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:46+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.9 s",
+   "creado": "2026-11-07T16:18:47+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p11 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:53+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.7 s",
+   "creado": "2026-11-07T16:18:54+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p10 · 25 créditos (€)",
+   "creado": "2026-11-07T16:18:55+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 83 tokens · 1.0 s",
+   "creado": "2026-11-07T16:18:56+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p12 · 25 créditos (€)",
+   "creado": "2026-11-07T16:19:01+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.6 s",
+   "creado": "2026-11-07T16:19:02+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p10 · 25 créditos (€)",
+   "creado": "2026-11-07T16:19:07+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p11 · 25 créditos (€)",
+   "creado": "2026-11-07T16:19:09+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 95 tokens · 1.8 s",
+   "creado": "2026-11-07T16:19:09+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.8 s",
+   "creado": "2026-11-07T16:19:09+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p12 · 25 créditos (€)",
+   "creado": "2026-11-07T16:19:17+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.7 s",
+   "creado": "2026-11-07T16:19:17+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p14 · 25 créditos (€)",
+   "creado": "2026-11-07T16:19:21+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.7 s",
+   "creado": "2026-11-07T16:19:21+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p13 · 25 créditos (€)",
+   "creado": "2026-11-07T16:19:24+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 111 tokens · 1.4 s",
+   "creado": "2026-11-07T16:19:25+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p14 · 25 créditos (€)",
+   "creado": "2026-11-07T16:19:33+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0001,
+   "detalle": "revisor-letras · 1185+0w+0r → 20 tokens · 0.7 s",
+   "creado": "2026-11-07T16:19:33+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p13 · 25 créditos (€)",
+   "creado": "2026-11-07T16:19:37+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 91 tokens · 1.4 s",
+   "creado": "2026-11-07T16:19:38+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p13 · 25 créditos (€)",
+   "creado": "2026-11-07T16:19:53+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 106 tokens · 1.7 s",
+   "creado": "2026-11-07T16:19:55+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "flux-2-pro",
+   "usd": 0.025,
+   "detalle": "p13 · 25 créditos (€)",
+   "creado": "2026-11-07T16:20:09+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "anthropic",
+   "modelo": "claude-haiku-5-5",
+   "usd": 0.0002,
+   "detalle": "revisor-letras · 1185+0w+0r → 101 tokens · 1.5 s",
+   "creado": "2026-11-07T16:20:11+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "kling-o1-std",
+   "usd": 0.0,
+   "detalle": "p01 · clip de 5 s (créditos por medir en el panel)",
+   "creado": "2026-11-07T16:21:27+00:00"
+  },
+  {
+   "etapa": "imagenes",
+   "servicio": "magnific",
+   "modelo": "kling-o1-std",
+   "usd": 0.0,
+   "detalle": "p11 · clip de 5 s (créditos por medir en el panel)",
+   "creado": "2026-11-07T16:22:34+00:00"
+  }
+ ],
+ "libro_en_cache": "2026-11-07T15:47:26+00:00",
+ "estilo": {
+  "id": "grabado",
+  "nombre": "Grabado a dos tintas",
+  "tecnica": "grabado en madera del siglo XIX en tinta negra sobre papel crema, con bloques planos de color",
+  "paleta": [
+   "#1C1618",
+   "#F3EBDC",
+   "#D40549",
+   "#FFF500"
+  ],
+  "luz": "la del grabado: sombras hechas con trama de líneas finas, sin degradados",
+  "encuadres": "el motivo grande y legible en miniatura, centrado, recortado contra el fondo",
+  "prohibido": [
+   "texto, letras y números",
+   "logotipos",
+   "cartelas y filacterias",
+   "marcos o bordes",
+   "caras reconocibles de personas reales"
+  ],
+  "prefijo": "Nineteenth-century woodcut engraving",
+  "sufijo": "black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background",
+  "musica": "sparse plucked strings and soft piano, intelligent and slightly mischievous mood, moderate tempo, no vocals",
+  "descripcion": "Grabado en madera del XIX en tinta sobre crema, con dos bloques planos de magenta y amarillo detrás.",
+  "peticion": ""
+ },
+ "voz": {
+  "modelo": "simulada",
+  "voz_id": "simulada",
+  "voz_nombre": "Voz simulada",
+  "simulada": true,
+  "audio": "voz/voz-1.wav",
+  "audio_mp3": "voz/voz-1.mp3",
+  "duracion": 59.867,
+  "palabras": [
+   {
+    "t": "Internet",
+    "i": 0.0,
+    "f": 0.533,
+    "plano": "p01"
+   },
+   {
+    "t": "nunca",
+    "i": 0.6,
+    "f": 0.933,
+    "plano": "p01"
+   },
+   {
+    "t": "fue",
+    "i": 1.0,
+    "f": 1.2,
+    "plano": "p01"
+   },
+   {
+    "t": "mejor:",
+    "i": 1.267,
+    "f": 1.867,
+    "plano": "p01"
+   },
+   {
+    "t": "eras",
+    "i": 1.933,
+    "f": 2.2,
+    "plano": "p01"
+   },
+   {
+    "t": "tú.",
+    "i": 2.267,
+    "f": 2.817,
+    "plano": "p01"
+   },
+   {
+    "t": "Seguro",
+    "i": 2.883,
+    "f": 3.283,
+    "plano": "p02"
+   },
+   {
+    "t": "que",
+    "i": 3.35,
+    "f": 3.55,
+    "plano": "p02"
+   },
+   {
+    "t": "añoras",
+    "i": 3.617,
+    "f": 4.017,
+    "plano": "p02"
+   },
+   {
+    "t": "los",
+    "i": 4.083,
+    "f": 4.283,
+    "plano": "p02"
+   },
+   {
+    "t": "blogs,",
+    "i": 4.35,
+    "f": 4.9,
+    "plano": "p02"
+   },
+   {
+    "t": "los",
+    "i": 4.967,
+    "f": 5.167,
+    "plano": "p02"
+   },
+   {
+    "t": "foros,",
+    "i": 5.233,
+    "f": 5.783,
+    "plano": "p02"
+   },
+   {
+    "t": "aquel",
+    "i": 5.85,
+    "f": 6.183,
+    "plano": "p02"
+   },
+   {
+    "t": "Internet",
+    "i": 6.25,
+    "f": 6.783,
+    "plano": "p02"
+   },
+   {
+    "t": "tranquilo.",
+    "i": 6.85,
+    "f": 7.867,
+    "plano": "p02"
+   },
+   {
+    "t": "Y",
+    "i": 7.933,
+    "f": 8.0,
+    "plano": "p03"
+   },
+   {
+    "t": "sientes",
+    "i": 8.067,
+    "f": 8.533,
+    "plano": "p03"
+   },
+   {
+    "t": "que",
+    "i": 8.6,
+    "f": 8.8,
+    "plano": "p03"
+   },
+   {
+    "t": "ahora",
+    "i": 8.867,
+    "f": 9.2,
+    "plano": "p03"
+   },
+   {
+    "t": "todo",
+    "i": 9.267,
+    "f": 9.533,
+    "plano": "p03"
+   },
+   {
+    "t": "es",
+    "i": 9.6,
+    "f": 9.733,
+    "plano": "p03"
+   },
+   {
+    "t": "basura",
+    "i": 9.8,
+    "f": 10.2,
+    "plano": "p03"
+   },
+   {
+    "t": "y",
+    "i": 10.267,
+    "f": 10.333,
+    "plano": "p03"
+   },
+   {
+    "t": "algoritmo.",
+    "i": 10.4,
+    "f": 11.417,
+    "plano": "p03"
+   },
+   {
+    "t": "Antonio",
+    "i": 11.483,
+    "f": 11.95,
+    "plano": "p04"
+   },
+   {
+    "t": "J.",
+    "i": 12.017,
+    "f": 12.5,
+    "plano": "p04"
+   },
+   {
+    "t": "Rodríguez",
+    "i": 12.567,
+    "f": 13.167,
+    "plano": "p04"
+   },
+   {
+    "t": "lo",
+    "i": 13.233,
+    "f": 13.367,
+    "plano": "p04"
+   },
+   {
+    "t": "discute",
+    "i": 13.433,
+    "f": 13.9,
+    "plano": "p04"
+   },
+   {
+    "t": "en",
+    "i": 13.967,
+    "f": 14.1,
+    "plano": "p04"
+   },
+   {
+    "t": "su",
+    "i": 14.167,
+    "f": 14.3,
+    "plano": "p04"
+   },
+   {
+    "t": "libro",
+    "i": 14.367,
+    "f": 14.7,
+    "plano": "p04"
+   },
+   {
+    "t": "Antimarkfisher.",
+    "i": 14.767,
+    "f": 16.117,
+    "plano": "p04"
+   },
+   {
+    "t": "Responde",
+    "i": 16.183,
+    "f": 16.717,
+    "plano": "p05"
+   },
+   {
+    "t": "a",
+    "i": 16.783,
+    "f": 16.85,
+    "plano": "p05"
+   },
+   {
+    "t": "Cory",
+    "i": 16.917,
+    "f": 17.183,
+    "plano": "p05"
+   },
+   {
+    "t": "Doctorow",
+    "i": 17.25,
+    "f": 17.783,
+    "plano": "p05"
+   },
+   {
+    "t": "y",
+    "i": 17.85,
+    "f": 17.917,
+    "plano": "p05"
+   },
+   {
+    "t": "su",
+    "i": 17.983,
+    "f": 18.117,
+    "plano": "p05"
+   },
+   {
+    "t": "idea",
+    "i": 18.183,
+    "f": 18.45,
+    "plano": "p05"
+   },
+   {
+    "t": "de",
+    "i": 18.517,
+    "f": 18.65,
+    "plano": "p05"
+   },
+   {
+    "t": "Mierdificación.",
+    "i": 18.717,
+    "f": 20.067,
+    "plano": "p05"
+   },
+   {
+    "t": "Para",
+    "i": 20.133,
+    "f": 20.4,
+    "plano": "p06"
+   },
+   {
+    "t": "el",
+    "i": 20.467,
+    "f": 20.6,
+    "plano": "p06"
+   },
+   {
+    "t": "autor,",
+    "i": 20.667,
+    "f": 21.217,
+    "plano": "p06"
+   },
+   {
+    "t": "ese",
+    "i": 21.283,
+    "f": 21.483,
+    "plano": "p06"
+   },
+   {
+    "t": "Internet",
+    "i": 21.55,
+    "f": 22.083,
+    "plano": "p06"
+   },
+   {
+    "t": "feliz",
+    "i": 22.15,
+    "f": 22.483,
+    "plano": "p06"
+   },
+   {
+    "t": "es",
+    "i": 22.55,
+    "f": 22.683,
+    "plano": "p06"
+   },
+   {
+    "t": "una",
+    "i": 22.75,
+    "f": 22.95,
+    "plano": "p06"
+   },
+   {
+    "t": "Arcadia.",
+    "i": 23.017,
+    "f": 23.9,
+    "plano": "p06"
+   },
+   {
+    "t": "Ya",
+    "i": 23.967,
+    "f": 24.1,
+    "plano": "p07"
+   },
+   {
+    "t": "era",
+    "i": 24.167,
+    "f": 24.367,
+    "plano": "p07"
+   },
+   {
+    "t": "un",
+    "i": 24.433,
+    "f": 24.567,
+    "plano": "p07"
+   },
+   {
+    "t": "agregado",
+    "i": 24.633,
+    "f": 25.167,
+    "plano": "p07"
+   },
+   {
+    "t": "de",
+    "i": 25.233,
+    "f": 25.367,
+    "plano": "p07"
+   },
+   {
+    "t": "directorios",
+    "i": 25.433,
+    "f": 26.167,
+    "plano": "p07"
+   },
+   {
+    "t": "construidos",
+    "i": 26.233,
+    "f": 26.967,
+    "plano": "p07"
+   },
+   {
+    "t": "con",
+    "i": 27.033,
+    "f": 27.233,
+    "plano": "p07"
+   },
+   {
+    "t": "propósitos",
+    "i": 27.3,
+    "f": 27.967,
+    "plano": "p07"
+   },
+   {
+    "t": "publicitarios",
+    "i": 28.033,
+    "f": 28.9,
+    "plano": "p07"
+   },
+   {
+    "t": "y",
+    "i": 28.967,
+    "f": 29.033,
+    "plano": "p07"
+   },
+   {
+    "t": "comerciales.",
+    "i": 29.1,
+    "f": 30.25,
+    "plano": "p07"
+   },
+   {
+    "t": "Yahoo,",
+    "i": 30.317,
+    "f": 30.867,
+    "plano": "p08"
+   },
+   {
+    "t": "Google,",
+    "i": 30.933,
+    "f": 31.55,
+    "plano": "p08"
+   },
+   {
+    "t": "eBay,",
+    "i": 31.617,
+    "f": 32.1,
+    "plano": "p08"
+   },
+   {
+    "t": "Amazon:",
+    "i": 32.167,
+    "f": 32.833,
+    "plano": "p08"
+   },
+   {
+    "t": "todas",
+    "i": 32.9,
+    "f": 33.233,
+    "plano": "p08"
+   },
+   {
+    "t": "nacieron",
+    "i": 33.3,
+    "f": 33.833,
+    "plano": "p08"
+   },
+   {
+    "t": "del",
+    "i": 33.9,
+    "f": 34.1,
+    "plano": "p08"
+   },
+   {
+    "t": "capital",
+    "i": 34.167,
+    "f": 34.633,
+    "plano": "p08"
+   },
+   {
+    "t": "privado.",
+    "i": 34.7,
+    "f": 35.583,
+    "plano": "p08"
+   },
+   {
+    "t": "Las",
+    "i": 35.65,
+    "f": 35.85,
+    "plano": "p09"
+   },
+   {
+    "t": "revistas",
+    "i": 35.917,
+    "f": 36.45,
+    "plano": "p09"
+   },
+   {
+    "t": "virales",
+    "i": 36.517,
+    "f": 36.983,
+    "plano": "p09"
+   },
+   {
+    "t": "de",
+    "i": 37.05,
+    "f": 37.183,
+    "plano": "p09"
+   },
+   {
+    "t": "los",
+    "i": 37.25,
+    "f": 37.45,
+    "plano": "p09"
+   },
+   {
+    "t": "2010",
+    "i": 37.517,
+    "f": 37.783,
+    "plano": "p09"
+   },
+   {
+    "t": "fueron",
+    "i": 37.85,
+    "f": 38.25,
+    "plano": "p09"
+   },
+   {
+    "t": "la",
+    "i": 38.317,
+    "f": 38.45,
+    "plano": "p09"
+   },
+   {
+    "t": "mierdificación",
+    "i": 38.517,
+    "f": 39.45,
+    "plano": "p09"
+   },
+   {
+    "t": "de",
+    "i": 39.517,
+    "f": 39.65,
+    "plano": "p09"
+   },
+   {
+    "t": "su",
+    "i": 39.717,
+    "f": 39.85,
+    "plano": "p09"
+   },
+   {
+    "t": "época.",
+    "i": 39.917,
+    "f": 40.667,
+    "plano": "p09"
+   },
+   {
+    "t": "Entonces,",
+    "i": 40.733,
+    "f": 41.483,
+    "plano": "p10"
+   },
+   {
+    "t": "¿qué",
+    "i": 41.55,
+    "f": 41.817,
+    "plano": "p10"
+   },
+   {
+    "t": "echas",
+    "i": 41.883,
+    "f": 42.217,
+    "plano": "p10"
+   },
+   {
+    "t": "de",
+    "i": 42.283,
+    "f": 42.417,
+    "plano": "p10"
+   },
+   {
+    "t": "menos",
+    "i": 42.483,
+    "f": 42.817,
+    "plano": "p10"
+   },
+   {
+    "t": "de",
+    "i": 42.883,
+    "f": 43.017,
+    "plano": "p10"
+   },
+   {
+    "t": "verdad?",
+    "i": 43.083,
+    "f": 43.9,
+    "plano": "p10"
+   },
+   {
+    "t": "Quizá",
+    "i": 43.967,
+    "f": 44.3,
+    "plano": "p11"
+   },
+   {
+    "t": "una",
+    "i": 44.367,
+    "f": 44.567,
+    "plano": "p11"
+   },
+   {
+    "t": "etapa",
+    "i": 44.633,
+    "f": 44.967,
+    "plano": "p11"
+   },
+   {
+    "t": "de",
+    "i": 45.033,
+    "f": 45.167,
+    "plano": "p11"
+   },
+   {
+    "t": "tu",
+    "i": 45.233,
+    "f": 45.367,
+    "plano": "p11"
+   },
+   {
+    "t": "vida",
+    "i": 45.433,
+    "f": 45.7,
+    "plano": "p11"
+   },
+   {
+    "t": "donde",
+    "i": 45.767,
+    "f": 46.1,
+    "plano": "p11"
+   },
+   {
+    "t": "la",
+    "i": 46.167,
+    "f": 46.3,
+    "plano": "p11"
+   },
+   {
+    "t": "política",
+    "i": 46.367,
+    "f": 46.9,
+    "plano": "p11"
+   },
+   {
+    "t": "pesaba",
+    "i": 46.967,
+    "f": 47.367,
+    "plano": "p11"
+   },
+   {
+    "t": "menos.",
+    "i": 47.433,
+    "f": 48.183,
+    "plano": "p11"
+   },
+   {
+    "t": "Según",
+    "i": 48.25,
+    "f": 48.583,
+    "plano": "p12"
+   },
+   {
+    "t": "el",
+    "i": 48.65,
+    "f": 48.783,
+    "plano": "p12"
+   },
+   {
+    "t": "autor,",
+    "i": 48.85,
+    "f": 49.4,
+    "plano": "p12"
+   },
+   {
+    "t": "lo",
+    "i": 49.467,
+    "f": 49.6,
+    "plano": "p12"
+   },
+   {
+    "t": "que",
+    "i": 49.667,
+    "f": 49.867,
+    "plano": "p12"
+   },
+   {
+    "t": "añoras",
+    "i": 49.933,
+    "f": 50.333,
+    "plano": "p12"
+   },
+   {
+    "t": "es",
+    "i": 50.4,
+    "f": 50.533,
+    "plano": "p12"
+   },
+   {
+    "t": "tu",
+    "i": 50.6,
+    "f": 50.733,
+    "plano": "p12"
+   },
+   {
+    "t": "vida,",
+    "i": 50.8,
+    "f": 51.283,
+    "plano": "p12"
+   },
+   {
+    "t": "no",
+    "i": 51.35,
+    "f": 51.483,
+    "plano": "p12"
+   },
+   {
+    "t": "la",
+    "i": 51.55,
+    "f": 51.683,
+    "plano": "p12"
+   },
+   {
+    "t": "red.",
+    "i": 51.75,
+    "f": 52.367,
+    "plano": "p12"
+   },
+   {
+    "t": "¿En",
+    "i": 52.433,
+    "f": 52.633,
+    "plano": "p13"
+   },
+   {
+    "t": "qué",
+    "i": 52.7,
+    "f": 52.9,
+    "plano": "p13"
+   },
+   {
+    "t": "año",
+    "i": 52.967,
+    "f": 53.167,
+    "plano": "p13"
+   },
+   {
+    "t": "crees",
+    "i": 53.233,
+    "f": 53.567,
+    "plano": "p13"
+   },
+   {
+    "t": "que",
+    "i": 53.633,
+    "f": 53.833,
+    "plano": "p13"
+   },
+   {
+    "t": "Internet",
+    "i": 53.9,
+    "f": 54.433,
+    "plano": "p13"
+   },
+   {
+    "t": "fue",
+    "i": 54.5,
+    "f": 54.7,
+    "plano": "p13"
+   },
+   {
+    "t": "mejor?",
+    "i": 54.767,
+    "f": 55.517,
+    "plano": "p13"
+   },
+   {
+    "t": "Mándaselo",
+    "i": 55.583,
+    "f": 56.183,
+    "plano": "p14"
+   },
+   {
+    "t": "a",
+    "i": 56.25,
+    "f": 56.317,
+    "plano": "p14"
+   },
+   {
+    "t": "quien",
+    "i": 56.383,
+    "f": 56.717,
+    "plano": "p14"
+   },
+   {
+    "t": "siempre",
+    "i": 56.783,
+    "f": 57.25,
+    "plano": "p14"
+   },
+   {
+    "t": "dice",
+    "i": 57.317,
+    "f": 57.583,
+    "plano": "p14"
+   },
+   {
+    "t": "que",
+    "i": 57.65,
+    "f": 57.85,
+    "plano": "p14"
+   },
+   {
+    "t": "2010",
+    "i": 57.917,
+    "f": 58.183,
+    "plano": "p14"
+   },
+   {
+    "t": "era",
+    "i": 58.25,
+    "f": 58.45,
+    "plano": "p14"
+   },
+   {
+    "t": "mejor.",
+    "i": 58.517,
+    "f": 59.267,
+    "plano": "p14"
+   }
+  ],
+  "planos": {
+   "p01": {
+    "inicio": 0.0,
+    "fin": 2.883
+   },
+   "p02": {
+    "inicio": 2.883,
+    "fin": 7.933
+   },
+   "p03": {
+    "inicio": 7.933,
+    "fin": 11.483
+   },
+   "p04": {
+    "inicio": 11.483,
+    "fin": 16.183
+   },
+   "p05": {
+    "inicio": 16.183,
+    "fin": 20.133
+   },
+   "p06": {
+    "inicio": 20.133,
+    "fin": 23.967
+   },
+   "p07": {
+    "inicio": 23.967,
+    "fin": 30.317
+   },
+   "p08": {
+    "inicio": 30.317,
+    "fin": 35.65
+   },
+   "p09": {
+    "inicio": 35.65,
+    "fin": 40.733
+   },
+   "p10": {
+    "inicio": 40.733,
+    "fin": 43.967
+   },
+   "p11": {
+    "inicio": 43.967,
+    "fin": 48.25
+   },
+   "p12": {
+    "inicio": 48.25,
+    "fin": 52.433
+   },
+   "p13": {
+    "inicio": 52.433,
+    "fin": 55.583
+   },
+   "p14": {
+    "inicio": 55.583,
+    "fin": 59.867
+   }
+  },
+  "huella": "45c736d91c2401aa",
+  "version": 1,
+  "creado": "2026-11-07T16:16:39+00:00"
+ },
+ "imagenes": {
+  "p01": {
+   "escena": "Silhouette of a teenager seen from behind, sitting in a dark bedroom, lit only by the bluish glow of an old bulky CRT monitor, centered in the frame, shadows filling the corners.",
+   "animacion": "The monitor glow flickers while the teenager's silhouette slowly fades away until the room is empty; the camera stays still with a very subtle push in.",
+   "prompt": "Nineteenth-century woodcut engraving: Silhouette of a teenager seen from behind, sitting in a dark bedroom, lit only by the bluish glow of an old bulky CRT monitor, centered in the frame, shadows filling the corners. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p01-1.jpg",
+     "semilla": 643658488,
+     "simulada": false,
+     "aviso": "Letras falsas en En la pantalla del monitor CRT (líneas de texto borrosas) y en el pequeño aparato sobre el escritorio, a la derecha, que tiene un visor con dígitos o caracteres."
+    },
+    {
+     "archivo": "img/p01-2.jpg",
+     "semilla": 643566404,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 1,
+   "clip": "clips/p01-2.mp4",
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p02": {
+   "escena": "Close-up of an old dial-up modem on a dusty wooden desk, its small green lights glowing, a tangled phone cable trailing off, dust particles floating in the air around it.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: Close-up of an old dial-up modem on a dusty wooden desk, its small green lights glowing, a tangled phone cable trailing off, dust particles floating in the air around it. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p02-1.jpg",
+     "semilla": 1209970834,
+     "simulada": false,
+     "aviso": "Letras falsas en En la parte superior izquierda de la carcasa del aparato (video-reproductor), hay una línea de texto diminuto e ilegible."
+    },
+    {
+     "archivo": "img/p02-2.jpg",
+     "semilla": 1209878750,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 1,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p03": {
+   "escena": "A thumb endlessly scrolling a glowing smartphone held in a hand, the phone emerging from a huge mountain of black garbage bags piled high around it, centered composition.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: A thumb endlessly scrolling a glowing smartphone held in a hand, the phone emerging from a huge mountain of black garbage bags piled high around it, centered composition. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p03-1.jpg",
+     "semilla": 1361049977,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p03-2.jpg",
+     "semilla": 1361157899,
+     "simulada": false,
+     "aviso": "Letras falsas en En la esquina inferior derecha, debajo de la ilustración, hay una pequeña firma manuscrita del artista."
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p04": {
+   "escena": "A hand pulling a dusty white sheet off an old beige desktop computer stored in a cluttered attic storeroom, boxes and forgotten furniture in the background, dust swirling.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: A hand pulling a dusty white sheet off an old beige desktop computer stored in a cluttered attic storeroom, boxes and forgotten furniture in the background, dust swirling. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p04-1.jpg",
+     "semilla": 1446058202,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p04-2.jpg",
+     "semilla": 1446066121,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p05": {
+   "escena": "A winding river seen from above, crystal clear at the top, gradually turning murky and choked with plastic waste, old keyboards and tangled cables further downstream.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: A winding river seen from above, crystal clear at the top, gradually turning murky and choked with plastic waste, old keyboards and tangled cables further downstream. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p05-1.jpg",
+     "semilla": 557197388,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p05-2.jpg",
+     "semilla": 557305310,
+     "simulada": false,
+     "aviso": "Letras falsas en En la parte inferior, sobre el aparato blanco cerca del borde inferior de la imagen, hay marcas que parecen letras o garabatos imitando texto. También hay una pequeña marca similar a la derecha, cerca de la mitad inferior, sobre una botella."
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p06": {
+   "escena": "An idyllic meadow at sunset with grazing sheep, too perfect, revealed as a flat cardboard stage set propped up by wooden supports, the edges of the painted backdrop visible.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: An idyllic meadow at sunset with grazing sheep, too perfect, revealed as a flat cardboard stage set propped up by wooden supports, the edges of the painted backdrop visible. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p06-1.jpg",
+     "semilla": 1091167734,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p06-2.jpg",
+     "semilla": 1091175653,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p07": {
+   "escena": "An endless row of metal filing cabinets stretching into the distance, drawers sliding open and spilling streams of gold coins onto the floor, centered in the frame.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: An endless row of metal filing cabinets stretching into the distance, drawers sliding open and spilling streams of gold coins onto the floor, centered in the frame. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p07-1.jpg",
+     "semilla": 1476572512,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p07-2.jpg",
+     "semilla": 1476580431,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p08": {
+   "escena": "A flowerpot on an office desk filled with a pile of banknotes, green sprouts growing out of the money, office chair and blinds softly visible behind.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: A flowerpot on an office desk filled with a pile of banknotes, green sprouts growing out of the money, office chair and blinds softly visible behind. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p08-1.jpg",
+     "semilla": 1602804628,
+     "simulada": false,
+     "aviso": "Letras falsas en En las líneas finas y bloques de texto tipo garabato en la parte inferior izquierda, bajo la silla, y en el lado derecho de la franja vertical superior derecha, que imitan texto impreso; también en los billetes de dólar del macetero, donde se distinguen números y letras. (se rehízo una vez y siguen)"
+    },
+    {
+     "archivo": "img/p08-2.jpg",
+     "semilla": 1602712544,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 1,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p09": {
+   "escena": "Ash-covered ruins of an ancient city, broken columns and stone walls with tangled cables and circuit boards sticking out between the cracked stones, gray sky above.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: Ash-covered ruins of an ancient city, broken columns and stone walls with tangled cables and circuit boards sticking out between the cracked stones, gray sky above. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p09-1.jpg",
+     "semilla": 679502951,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p09-2.jpg",
+     "semilla": 679510870,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p10": {
+   "escena": "An open cardboard box seen from above, holding youthful keepsakes: tangled earphones, a compact digital camera, faded concert tickets without text, a friendship bracelet, centered on a wooden floor.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: An open cardboard box seen from above, holding youthful keepsakes: tangled earphones, a compact digital camera, faded concert tickets without text, a friendship bracelet, centered on a wooden floor. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p10-1.jpg",
+     "semilla": 1212673410,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p10-2.jpg",
+     "semilla": 1212781332,
+     "simulada": false,
+     "aviso": "Letras falsas en En los boletos o entradas de la caja, con la palabra 'CONCERT' y otras letras y números impresos, y también en el boleto de la izquierda con texto como 'DILLE' y en los números del boleto de la derecha. (se rehízo una vez y siguen)"
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p11": {
+   "escena": "A boy seen from behind lying relaxed in the grass with a small light backpack beside him; in the background an adult, also seen from behind, carrying an enormous overloaded backpack.",
+   "animacion": "The adult's backpack swells and grows heavier, bending him further forward, while the boy stays still in the grass; the camera slowly pushes in toward the adult.",
+   "prompt": "Nineteenth-century woodcut engraving: A boy seen from behind lying relaxed in the grass with a small light backpack beside him; in the background an adult, also seen from behind, carrying an enormous overloaded backpack. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p11-1.jpg",
+     "semilla": 1061215508,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p11-2.jpg",
+     "semilla": 1061223427,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 0,
+   "clip": "clips/p11-1.mp4",
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p12": {
+   "escena": "A fogged-up bathroom mirror where a hand wipes a clear circle, revealing a blurred, unrecognizable reflection of a person behind the condensation, water droplets running down the glass.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: A fogged-up bathroom mirror where a hand wipes a clear circle, revealing a blurred, unrecognizable reflection of a person behind the condensation, water droplets running down the glass. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p12-1.jpg",
+     "semilla": 789837998,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p12-2.jpg",
+     "semilla": 789845917,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p13": {
+   "escena": "A wall calendar in an empty room, its pages torn off and fluttering through the air like birds, blank sheets scattered across the floor, a single window letting in light.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: A wall calendar in an empty room, its pages torn off and fluttering through the air like birds, blank sheets scattered across the floor, a single window letting in light. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p13-1.jpg",
+     "semilla": 1511698139,
+     "simulada": false,
+     "aviso": "Letras falsas en En el calendario de pared, con los días de la semana y los números de los días del mes (1 a 31); también hay texto ilegible tipo garabato en las hojas sueltas del suelo y en las hojas que vuelan. (se rehízo una vez y siguen)"
+    },
+    {
+     "archivo": "img/p13-2.jpg",
+     "semilla": 1511706058,
+     "simulada": false,
+     "aviso": "Letras falsas en En el calendario o planning colgado en el centro de la imagen, con las palabras 'Diet Plan' (o similar) y 'Prices' escritas en la parte superior izquierda de la hoja, y también en las líneas de la cuadrícula. (se rehízo una vez y siguen)"
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  },
+  "p14": {
+   "escena": "Two anonymous hands passing a glowing smartphone across a wooden bar table, half-empty glasses and a small bowl of snacks around them, warm bar ambience behind.",
+   "animacion": "",
+   "prompt": "Nineteenth-century woodcut engraving: Two anonymous hands passing a glowing smartphone across a wooden bar table, half-empty glasses and a small bowl of snacks around them, warm bar ambience behind. black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background. Vertical 9:16 composition, the main subject inside the central area of the frame, calm empty areas at the top and bottom. No text, no letters, no numbers, no logos, no signs, no captions, no watermark, no frame or border.",
+   "variantes": [
+    {
+     "archivo": "img/p14-1.jpg",
+     "semilla": 1328163227,
+     "simulada": false,
+     "aviso": ""
+    },
+    {
+     "archivo": "img/p14-2.jpg",
+     "semilla": 1328171146,
+     "simulada": false,
+     "aviso": ""
+    }
+   ],
+   "elegida": 0,
+   "clip": null,
+   "clip_simulado": false,
+   "estado": "lista",
+   "error": null
+  }
+ },
+ "musica": null,
+ "musica_activa": false,
+ "montajes": [
+  {
+   "version": 1,
+   "archivo": "salida/video-1.mp4",
+   "srt": "salida/video-1.srt",
+   "duracion": 62.067,
+   "con_musica": false,
+   "creado": "2026-11-07T16:23:49+00:00"
+  }
+ ]
+}
