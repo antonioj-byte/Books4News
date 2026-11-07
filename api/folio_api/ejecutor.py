@@ -202,9 +202,7 @@ class Ejecutor:
         # La ejecución diaria programada: el pipeline y, si sale bien, PNG y vídeos
         # y, al final, la nevera del cajón: historias editoriales nuevas (2/11; nunca hace fallar la diaria)
         # y, los lunes, el análisis semanal del feedback para la Memoria (2/11; tampoco falla nunca)
-        # y el informe del libro por Telegram (7/11; sin TELEGRAM_BOT_TOKEN no hace nada y nunca falla)
         self.diaria = [self.comando, [sys.executable, "-m", "folio.cli", "render", "--video"],
-                       [sys.executable, "-m", "folio.cli", "telegram", "informe", "--enviar"],
                        [sys.executable, "-m", "folio.cli", "cajon", "buscar"],
                        [sys.executable, "-m", "folio.cli", "memoria", "analizar", "--si-toca"]]
         # El fondo del mes (2/11): el primer día del mes (o el primero en que esté vacío), después de la mesa, las seis

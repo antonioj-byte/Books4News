@@ -896,14 +896,6 @@
   propuesta: "El nombre y el cargo de quien firma se editan sobre la portada como el titular, o pidiéndoselo al chat, solo en esa pieza."
   evidencia: ["Conversación, 7/11: la opinión de Diego Álvarez"]
 
-- clave: telegram-desde-folio
-  fecha: "2026-11-07"
-  destino: codigo
-  capa: marca
-  patron: "«Tengo un repositorio que es un bot de Telegram que uso para las noticias literarias… mira a ver si se puede integrar, porque toda la parte de selección de noticias y búsqueda ya está montado aquí. Lo dejo en tus manos.»"
-  propuesta: "Folio manda por Telegram cada mañana lo que ya ha seleccionado (lista de Cinco del libro, breves y mesa); el bot de publishing-monitor pasa a ser un canal de Folio en vez de un sistema aparte."
-  evidencia: ["Conversación, 7/11"]
-
 - clave: portada-y-hoy-en-dos-pestanas
   fecha: "2026-11-07"
   destino: codigo

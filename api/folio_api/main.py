@@ -41,7 +41,7 @@ def crear_app(cfg: Config | None = None, almacen: Almacen | None = None, importa
         ejecutor = Ejecutor(cfg.dir_datos)
         if lectura_de_entorno():
             # Con lectura periódica, la nevera y la Memoria van de día con ella (2/11): la madrugada solo hace la mesa
-            ejecutor.diaria = ejecutor.diaria[:3] + [ejecutor.fondo_mensual]   # la mesa, el render y Telegram (7/11)
+            ejecutor.diaria = ejecutor.diaria[:2] + [ejecutor.fondo_mensual]
     if programador is None:                     # FOLIO_EJECUCION_DIARIA; sin ella, no se programa nada
         programador = Programador(ejecutor, *hora_de_entorno(), cfg.dir_datos)
         programador.arrancar()

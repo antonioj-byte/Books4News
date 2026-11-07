@@ -203,25 +203,6 @@ def newsletter_del_jueves(archivo: Path = typer.Argument(..., help="El texto de 
     typer.echo(f"{pid}: {nombre}, {coste} $" + ("".join(f"\n· {a}" for a in pieza.avisos)))
 
 
-telegram_app = typer.Typer(help="El informe del libro por Telegram (7/11)")
-app.add_typer(telegram_app, name="telegram")
-
-
-@telegram_app.command("informe")
-def telegram_informe(fecha: str | None = typer.Option(None, help="AAAA-MM-DD; por defecto, hoy"),
-                     enviar: bool = typer.Option(False, "--enviar", help="Mandarlo al chat (sin esto, solo lo enseña)"),
-                     forzar: bool = typer.Option(False, "--forzar", help="Aunque ya haya salido hoy")):
-    """El informe del día (lista de «Cinco del libro», breves del radar y la mesa) para Telegram. Con `--enviar`, lo
-    manda una vez al día; nunca falla (es un paso de la ejecución diaria)."""
-    from folio import telegram
-    cfg = config.cargar()
-    fecha = fecha or date.today().isoformat()
-    if not enviar:
-        typer.echo(telegram.informe(cfg, fecha) or f"Nada que contar el {fecha}")
-        return
-    typer.echo(telegram.enviar_informe(cfg, fecha, forzar=forzar))
-
-
 @app.command("fuentes-editoriales")
 def fuentes_editoriales(csv_medios: Path = typer.Argument(..., help="medios.csv de publishing-monitor")):
     """Importa los feeds RSS activos de publishing-monitor a config/fuentes_editoriales.yaml (carril editorial)."""
