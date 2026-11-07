@@ -550,6 +550,12 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .nl-cita .remate, .nl-cita em { font-family: var(--fuentes-remate); font-style: italic; font-weight: 500; letter-spacing: -0.01em; color: inherit; }
 .nl-par .nl-cita .remate { color: var(--colores-pluma); }
 .diapositiva--nl_percha .antetitulo, .diapositiva--nl_portada .antetitulo { align-self: flex-start; }
+/* 7/11 (a petición del usuario: «hay 3 diapos seguidas con la ilustración arriba y el texto abajo… que la vista vaya
+   arriba y abajo»): en las frases de papel, la ilustración baja y la frase sube, con la comilla encima */
+.diapositiva--nl_cita.nl-par .nl-ilus { top: auto; bottom: 0; }
+.diapositiva--nl_cita.nl-par .nl-rasgado { top: calc(100% - var(--nl-corte) - 4px); transform: scaleY(-1); }
+.diapositiva--nl_cita.nl-par .nl-comilla:not(.nl-comilla--sola) { top: 46px; background: transparent; width: auto; height: auto; padding: 0; font-size: 150px; }
+.diapositiva--nl_cita.nl-par.con-ilus .cuerpo { margin-top: 0; margin-bottom: auto; padding-top: 196px; }
 .diapositiva--nl_cierre .cuerpo { justify-content: space-between; }
 .nl-cierre { font-size: 108px; margin-top: 40px; }
 .nl-cta { display: flex; flex-direction: column; gap: 14px; }

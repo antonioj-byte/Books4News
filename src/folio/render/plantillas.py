@@ -167,7 +167,9 @@ class Plantillas:
             remate = a.remates_noticias[k] if a and k < len(a.remates_noticias) else None
             datos.update(tipo="nl_cita", ilustracion=img["src"] if img else None, cita_remate=titular_con_remate(d.texto, remate))
             html = self.env.get_template("nl_cita.html").render(**datos)
-            return html.replace("diapositiva--nl_cita", "diapositiva--nl_cita nl-par", 1) if k % 2 else html
+            # Alternan pluma y papel; en las de papel, la ilustración va abajo (7/11: «que la vista vaya arriba y abajo»)
+            par = "nl-par con-ilus" if img else "nl-par"
+            return html.replace("diapositiva--nl_cita", f"diapositiva--nl_cita {par}", 1) if k % 2 else html
         if d.tipo == "cierre":
             datos.update(tipo="nl_cierre", nombre=f.publicacion or f.nombre, url=f.url,
                          firma=None if f.publicacion or f.url else f.cargo,

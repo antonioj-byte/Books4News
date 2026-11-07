@@ -215,6 +215,7 @@ class FuenteNoticia(BaseModel):
     critica: bool = False                # texto de crítica: lo único que se puede citar entre comillas además del libro
     prensa: bool = False                 # prensa sobre el libro buscada aparte (entrevistas, reseñas; 2/11)
     publicado: str | None = None         # fecha de publicación (AAAA-MM-DD), si se sabe: para no contar lo viejo como nuevo (2/11)
+    redaccion: bool = False              # la añadió quien edita y responde de ella, aunque no se pudiera leer (muro; 7/11)
 
 
 class Traza(BaseModel):

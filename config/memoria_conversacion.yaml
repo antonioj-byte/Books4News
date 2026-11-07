@@ -855,3 +855,19 @@
   patron: "«Quiero meter un tema de opinión de Diego, de Alighieria, pero no tiene formato de pieza de opinión. Es básicamente como la newsletter del jueves… habría que poner la foto de la persona, etcétera.»"
   propuesta: "Formato «Opinión»: el carrusel de la newsletter (titular y frases literales, percha, cierre) con la firma de otra persona, su nombre, su cargo, su foto y, si se publica entero en otro sitio, dónde leerlo; sin enlace, el cierre enseña quién lo firma."
   evidencia: ["Conversación, 7/11: el artículo de opinión de Diego"]
+
+- clave: fuente-de-la-redaccion
+  fecha: "2026-11-07"
+  destino: codigo
+  capa: marca
+  patron: "«Le pido que meta un link verificado humanamente por mí y no me deja» (un artículo del Financial Times con muro de pago; el chat decía que el código solo acepta fuentes que haya podido leer)."
+  propuesta: "Un enlace que da la redacción entra en las fuentes de la pieza (colofón y «Lo cuentan») aunque no se pueda leer: quien edita responde de él. Sin su texto no se cita entre comillas."
+  evidencia: ["Conversación, 7/11: el enlace del FT en la pieza de Cormac McCarthy"]
+
+- clave: frases-arriba-y-abajo
+  fecha: "2026-11-07"
+  destino: director_arte
+  capa: marca
+  patron: "«Hay 3 diapos seguidas con la ilustración arriba y el texto abajo. Quizá se puede barajar para que la vista vaya arriba y abajo.»"
+  propuesta: "En las frases de la newsletter y de la opinión, la ilustración alterna: arriba en las de pluma, abajo en las de papel."
+  evidencia: ["Conversación, 7/11: captura de la opinión de Diego"]

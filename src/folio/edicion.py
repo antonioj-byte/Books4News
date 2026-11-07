@@ -39,7 +39,7 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado", "recorte", "usar_material", "formato", "cubierta", "friso", "banda", "cambiar_libro", "libros"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "recorte", "usar_material", "formato", "cubierta", "friso", "banda", "cambiar_libro", "libros", "fuente"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
@@ -55,7 +55,9 @@ class AccionImagen(BaseModel):
                     "con el texto en blanco encima; puede llevar a una persona real, pintada a partir de su foto libre (o quitarla); "
                     "cambiar_libro: cambiar el libro de la pieza por otro (se verifica) y dejarla lista para reescribirla; "
                     "libros: fijar la lista de libros de la pieza (añadir, quitar u ordenar), que el código verifica al momento, "
-                    "sin dejarla pendiente: en el mismo turno puedes reescribir en `guion` las diapositivas que los nombran")
+                    "sin dejarla pendiente: en el mismo turno puedes reescribir en `guion` las diapositivas que los nombran; "
+                    "fuente: añadir a las fuentes de la pieza (colofón y «Lo cuentan») un enlace que da quien edita, aunque el "
+                    "código no lo haya podido leer (muro de pago): quien edita responde de él")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
@@ -76,6 +78,9 @@ class AccionImagen(BaseModel):
     isbn: str = Field(description="Solo cubierta: el ISBN de esa edición, si lo da quien edita; si no, vacío")
     encaje: str = Field(default="", description="Solo formato: cómo va la foto de la diapositiva de la noticia: «arriba» (arriba con el borde rasgado, lo de siempre), «sangre» (a toda la diapositiva, con el texto encima) o «entera» (entera, sin recortar, más pequeña: para una cubierta, un cartel o una foto con texto); vacío, no se toca")
     libros: list[str] = Field(default_factory=list, description="Solo libros: la lista completa de libros de la pieza, en orden (el primero es el principal), cada uno como «Título — Autor»; los que ya tiene la pieza, tal cual; si no, vacía")
+    fuente_url: str = Field(default="", description="Solo fuente: el enlace tal como lo pega quien edita; si no, vacío")
+    fuente_medio: str = Field(default="", description="Solo fuente: el medio («Financial Times»); si no, vacío")
+    fuente_titulo: str = Field(default="", description="Solo fuente: el título del artículo si lo sabes por la conversación o el material; si no, vacío")
     desde: int = Field(description="Solo banda: la primera de las tres diapositivas seguidas que cruza (la 4 cubre 4, 5 y 6); si no, 0")
 
 
@@ -386,8 +391,14 @@ def chat(llm: LLM, cfg: Config, p: Pieza, historial: list[tuple[str, str]], mens
     base, nota_libros = p, ""                   # con «libros», la pieza con los libros nuevos (una vez por turno)
     for intento in range(cfg.pipeline.guion.reintentos + 1):
         r, contenido = llm.estructurado(f"chat:{p.id}:{intento + 1}", cache_al_final(mensajes), RespuestaChat, etapa_modelo="chat")
-        if r.imagen is not None and r.imagen.tipo == "libros":
-            # 6/11: los libros se verifican antes de mirar el guion, para que el mismo turno pueda nombrarlos
+        if r.imagen is not None and r.imagen.tipo == "fuente" and not r.imagen.fuente_url.strip().startswith("http"):
+            # 7/11: el editor a veces deja el enlace vacío o sin https; vale el que pegó quien edita en este mensaje
+            pegados = [u.rstrip(".,);") for u in _URL.findall(mensaje or "")]
+            if pegados:
+                r.imagen.fuente_url = pegados[0]
+        if r.imagen is not None and r.imagen.tipo in ("libros", "fuente"):
+            # 6/11: los libros se verifican antes de mirar el guion, para que el mismo turno pueda nombrarlos; 7/11: y
+            # la fuente de la redacción entra antes, para que el guion pueda citar ese medio
             if base is p:
                 con_libros, nota_libros = _imagen_sin_romper(llm, cfg, p, r.imagen)
                 if con_libros is None:
@@ -489,7 +500,8 @@ def leer_enlaces(cfg: Config, p: Pieza, mensaje: str, cliente=None) -> list[str]
                 continue
             f, motivo = temas.descargar(url, c)
             if not f:
-                avisos.append(f"Enlace sin leer ({url[:60]}…): {motivo}")
+                avisos.append(f"Enlace sin leer ({url[:60]}…): {motivo}. Si quien edita lo da como fuente, añádelo "
+                              "igualmente con la acción «fuente»: responde de él")
                 continue
             try:
                 materiales.guardar(cfg, p, url, f"{f.titulo}\n\n{f.texto}".encode(), "text/plain", credito=f.medio,
@@ -497,6 +509,30 @@ def leer_enlaces(cfg: Config, p: Pieza, mensaje: str, cliente=None) -> list[str]
             except materiales.NoValido as exc:
                 avisos.append(f"Enlace sin guardar: {exc}")
     return avisos
+
+
+_MEDIOS = {"ft.com": "Financial Times", "nytimes.com": "The New York Times", "elpais.com": "El País",
+           "theguardian.com": "The Guardian", "lemonde.fr": "Le Monde", "newyorker.com": "The New Yorker"}
+
+
+def _fuente(nueva: Pieza, a: AccionImagen) -> tuple[Pieza | None, str]:
+    """Un enlace que da quien edita, a las fuentes de la pieza aunque el código no lo haya podido leer (7/11, a petición
+    del usuario: «le pido que meta un link verificado humanamente por mí y no me deja»; el FT tiene muro). Quien edita
+    responde de él: sale en el colofón y en «Lo cuentan», pero sin texto no sirve para comprobar hechos."""
+    from urllib.parse import urlparse
+
+    from folio.modelos import FuenteNoticia
+    url = a.fuente_url.strip().rstrip(".,);")
+    if url and not url.startswith(("http://", "https://")) and "." in url.split("/")[0]:
+        url = "https://" + url
+    host = (urlparse(url).hostname or "").lower().removeprefix("www.")
+    if not url.startswith(("http://", "https://")) or not host:
+        return None, "(Para añadir la fuente necesito el enlace completo, con https://.)"
+    if any(f.url.rstrip("/") == url.rstrip("/") for f in nueva.fuentes):
+        return None, "(Ese enlace ya está entre las fuentes.)"
+    medio = a.fuente_medio.strip() or next((m for d, m in _MEDIOS.items() if host == d or host.endswith("." + d)), host)
+    nueva.fuentes.append(FuenteNoticia(medio=medio, titulo=a.fuente_titulo.strip(), url=url, acceso="muro", redaccion=True))
+    return nueva, f"(Fuente añadida: {medio}. Sale en el colofón y en «Lo cuentan»; la pones tú, no se ha podido leer.)"
 
 
 def _cambiar_libro(cfg: Config, llm: LLM, nueva: Pieza, a: AccionImagen) -> tuple[Pieza | None, str]:
@@ -755,6 +791,8 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return _cambiar_libro(cfg, llm, nueva, a)
     if a.tipo == "libros":
         return _libros(cfg, llm, nueva, a)
+    if a.tipo == "fuente":
+        return _fuente(nueva, a)
     if a.tipo == "encuadre":
         usa_retrato = retrato and ar.registro in (*CARAS, None) and ar.portada != "panorama"
         img, clave = (retrato, f"{p.id}-retrato") if usa_retrato else (archivo, p.id)
