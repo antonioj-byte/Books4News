@@ -364,6 +364,9 @@ class Arte(BaseModel):
     # (1/11, regla del usuario: «no se puede repetir imagen de archivo»)
     imagen_noticia: str | None = None
     credito_noticia: str | None = None
+    # Cómo va la foto en la diapositiva de la noticia (7/11, a petición del usuario: «¿cómo que no puede cambiar el
+    # tamaño? permitamos que eso pase»): arriba con el borde rasgado (lo de siempre), a sangre o entera sin recortar
+    encaje_noticia: Literal["arriba", "sangre", "entera"] | None = None
     sin_foto: SinFoto | None = None    # recurso de la diapositiva de actualidad sin foto ni cifra
     infografia: Infografia | None = None  # infografía de la diapositiva de la idea
     esquema: str | None = None           # crédito de la ilustración técnica de Magnific (infografía «esquema»)

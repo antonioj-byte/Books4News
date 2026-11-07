@@ -74,6 +74,7 @@ class AccionImagen(BaseModel):
     sin_castellano: str = Field(description="Solo cambiar_libro: «si» solo si quien edita pide expresamente ese libro aunque no tenga edición en castellano; si no, vacío")
     editorial: str = Field(description="Solo cubierta: la editorial de la edición en castellano que se quiere («Mondadori»); si no, vacío")
     isbn: str = Field(description="Solo cubierta: el ISBN de esa edición, si lo da quien edita; si no, vacío")
+    encaje: str = Field(default="", description="Solo formato: cómo va la foto de la diapositiva de la noticia: «arriba» (arriba con el borde rasgado, lo de siempre), «sangre» (a toda la diapositiva, con el texto encima) o «entera» (entera, sin recortar, más pequeña: para una cubierta, un cartel o una foto con texto); vacío, no se toca")
     libros: list[str] = Field(default_factory=list, description="Solo libros: la lista completa de libros de la pieza, en orden (el primero es el principal), cada uno como «Título — Autor»; los que ya tiene la pieza, tal cual; si no, vacía")
     desde: int = Field(description="Solo banda: la primera de las tres diapositivas seguidas que cruza (la 4 cubre 4, 5 y 6); si no, 0")
 
@@ -714,6 +715,14 @@ def _formato(nueva: Pieza, ar, a: AccionImagen) -> tuple[Pieza | None, str]:
                 notas.append(f"color de la pieza: {'rojo (pluma)' if v == 'pluma' else 'amarillo (marcador)'}")
         else:
             notas.append("el color de la pieza es pluma (rojo) o marcador (amarillo)")
+    if a.encaje.strip():
+        v = a.encaje.strip().lower()
+        if v in ("arriba", "sangre", "entera"):
+            ar.encaje_noticia, cambios = (None if v == "arriba" else v), cambios + 1
+            notas.append({"arriba": "la foto de la noticia, arriba como siempre", "sangre": "la foto de la noticia, a sangre",
+                          "entera": "la foto de la noticia, entera y sin recortar"}[v])
+        else:
+            notas.append("la foto de la noticia va «arriba», «sangre» o «entera»")
     texto = "(" + "; ".join(notas or ["no hay ningún cambio de formato que aplicar"]) + ".)"
     return (nueva if cambios else None), texto
 

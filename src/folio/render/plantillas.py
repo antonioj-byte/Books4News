@@ -447,6 +447,7 @@ class Plantillas:
             "video": (d.tipo == "portada" and ((bool(imagen) and estilo != "panorama") or interferencia or bool(buscador)))
                      or (d.tipo == "actualidad" and (contar or bool(sin_foto and sin_foto["recurso"] == "gigante")))
                      or bool(info),
+            "encaje": (a.encaje_noticia if a and d.tipo == "actualidad" else None) or "arriba",
             "tono": a.tono if a else None, "acento": a.acento if a else None, "antetitulo": a.antetitulo if a else None,
             "cifra": cifra, "cifra_rotulo": cifra_rotulo,
             "campo": campos.get(a.tono if a else "", campos.get("sereno")),

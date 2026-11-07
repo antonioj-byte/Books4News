@@ -831,3 +831,19 @@
   patron: "«Me interesa mucho activar un proceso de retroalimentación permanente, de tal forma que el equipo editorial vaya recursivamente mejorando su sistema editorial… al final, cada línea de código es un nuevo if sobre las consideraciones editoriales» («adelante con todo»)."
   propuesta: "Cada regla de criterio es una ficha con ejemplo bueno y malo que se prueba en el banco, se poda si sobra y se retira si deja de servir; las ediciones de la redacción entran como ejemplos en el guionista y el chat; lo que necesita código se encarga en GitHub y lo recoge una tarea semanal; y las métricas de Instagram llegan a la Memoria."
   evidencia: ["Conversación, 6/11: propuesta en seis puntos aprobada con «adelante con todo»"]
+
+- clave: para-por-detras
+  fecha: "2026-11-07"
+  destino: codigo
+  capa: marca
+  patron: "«Lo de para quién es debería suprimirse: es una decisión que va por detrás, pero que no tiene que ver el user.»"
+  propuesta: "Quien edita no elige a qué rol va su mensaje: lo decide el chat; la web solo enseña qué rol hizo cada cambio."
+  evidencia: ["Conversación, 7/11: captura del chat con el selector «Para»"]
+
+- clave: tamano-foto-noticia
+  fecha: "2026-11-07"
+  destino: director_arte
+  capa: oficio
+  patron: "«¿Cómo que no puede cambiar el tamaño? Permitamos que eso pase» (una cubierta salía cortada arriba con el borde rasgado y el chat decía que no podía cambiar su tamaño)."
+  propuesta: "La foto de la diapositiva de la noticia puede ir arriba, a sangre o entera sin recortar; el chat la cambia en el turno cuando no se ve bien, y una cubierta, un cartel o una foto con letras va entera."
+  evidencia: ["Conversación, 7/11: la cubierta de la biografía de McCarthy en la diapositiva 2"]
