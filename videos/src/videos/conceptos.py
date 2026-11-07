@@ -13,7 +13,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
-from videos import almacen
+from videos import almacen, fuente
 from videos import libro as lib
 from videos.config import Config
 from videos.llm import LLM, ErrorLLM, bloque_libro
@@ -95,10 +95,12 @@ def proponer(cfg: Config, llm: LLM, pid: str, indicaciones: str = "", anunciar=l
     p = almacen.cargar(cfg, pid)
     libro = almacen.libro(cfg, pid)
     ronda = max((c.ronda for c in p.conceptos), default=0) + 1
-    instrucciones, version = cargar(cfg, "conceptos", cuantos=str(CANDIDATOS), ronda=_ronda(p, indicaciones))
+    desc = fuente.descripcion(p.libro.tipo, p.libro.titulo, p.libro.autor)
+    instrucciones, version = cargar(cfg, "conceptos", cuantos=str(fuente.candidatos(p.libro.caracteres)),
+                                    ronda=_ronda(p, indicaciones), fuente=desc)
     mensajes = mensajes_con_libro(lib.texto_para_modelo(libro), instrucciones)
 
-    anunciar("La editora de ideas lee el libro")
+    anunciar("La editora de ideas lee la fuente")
     cands, contenido = llm.estructurado("conceptos", mensajes, SalidaLibroLLM, modelo=cfg.modelo_conceptos,
                                         esfuerzo="high", max_tokens=20000)
     cands = _conceptos_de(cands)
@@ -106,7 +108,7 @@ def proponer(cfg: Config, llm: LLM, pid: str, indicaciones: str = "", anunciar=l
         q.libro_en_cache = ahora()
     verificados = [(c, *_verificar(libro, c)) for c in cands]
     fallidos = [(i, c, motivo) for i, (c, ref, motivo) in enumerate(verificados) if ref is None]
-    if fallidos and len(verificados) - len(fallidos) < ELEGIDOS + 2:
+    if fallidos and len(verificados) - len(fallidos) < min(ELEGIDOS + 2, len(verificados)):
         anunciar("Corrigiendo los pasajes que no son literales")
         errores = "\n".join(f"- Candidato {i} («{c.titulo}»): el pasaje {m}." for i, c, m in fallidos)
         correccion, _ = cargar(cfg, "correccion_pasajes", errores=errores, cuantos=str(len(cands)))
@@ -120,11 +122,10 @@ def proponer(cfg: Config, llm: LLM, pid: str, indicaciones: str = "", anunciar=l
     if not validos:
         raise ErrorLLM("Ningún concepto trae un pasaje literal del libro. " + "; ".join(descartados[:3]))
 
-    anunciar("El crítico elige los cinco mejores")
+    anunciar("El crítico elige los mejores")
     lista = [{"indice": i, "titulo": c.titulo, "idea": c.idea, "gancho": c.gancho, "por_que": c.por_que,
               "pasaje": c.pasaje, "notas": c.notas.model_dump()} for i, (c, _) in enumerate(validos)]
-    critica_prompt, _ = cargar(cfg, "critico_conceptos", cuantos=str(min(ELEGIDOS, len(validos))), titulo=p.libro.titulo,
-                               autor=p.libro.autor or "autor desconocido",
+    critica_prompt, _ = cargar(cfg, "critico_conceptos", cuantos=str(min(ELEGIDOS, len(validos))), fuente=desc,
                                candidatos=json.dumps(lista, ensure_ascii=False, indent=1))
     critica, _ = llm.estructurado("critico", [{"role": "user", "content": critica_prompt}], CriticaLLM,
                                   modelo=cfg.modelo_critico, esfuerzo="high", max_tokens=12000)
@@ -167,7 +168,7 @@ def chat(cfg: Config, llm: LLM, pid: str, mensaje: str, anunciar=lambda _: None)
     """Una pregunta o una petición sobre los conceptos. Si pide otros, lanza otra ronda con esas indicaciones."""
     p = almacen.cargar(cfg, pid)
     resumen = "\n".join(f"- [{c.id}] {c.titulo} — {c.idea} (gancho: «{c.gancho}»)" for c in p.conceptos)
-    prompt, _ = cargar(cfg, "conceptos_chat", titulo=p.libro.titulo, autor=p.libro.autor or "autor desconocido",
+    prompt, _ = cargar(cfg, "conceptos_chat", fuente=fuente.descripcion(p.libro.tipo, p.libro.titulo, p.libro.autor),
                        conceptos=resumen or "(todavía ninguno)", mensaje=mensaje)
     r, _ = llm.estructurado("conceptos-chat", [{"role": "user", "content": prompt}], RespuestaChatConceptosLLM,
                             modelo=cfg.modelo_critico, esfuerzo="medium", max_tokens=4000)

@@ -1,5 +1,5 @@
-<!-- version: 2 -->
-Eres guionista de vídeos verticales para Alighieria. Arriba tienes el libro entero. Escribe el guion por planos de un vídeo de 30 a 60 segundos sobre este concepto del libro:
+<!-- version: 3 -->
+Eres guionista de vídeos verticales para Alighieria. Arriba tienes la fuente entera. Escribe el guion por planos de un vídeo de 30 a 60 segundos sobre este concepto de la fuente:
 
 <concepto>
 Título: {{titulo}}
@@ -9,14 +9,14 @@ Por qué genera conversación: {{por_que}}
 Pasaje que lo sostiene ({{referencia}}): «{{pasaje}}»
 </concepto>
 
-Libro: «{{libro_titulo}}», de {{libro_autor}}.
+La fuente: {{fuente}}.
 
 ## Estructura
 
 Los planos van en este orden de roles: **gancho → tensión → desarrollo → giro → cierre**.
 - **gancho** (solo el primer plano): la locución es el gancho, tal cual: «{{gancho}}».
 - **tension**: la pregunta o el problema que el gancho abre. Por qué importa, qué está en juego para el espectador.
-- **desarrollo**: lo que dice el libro. Aquí se nombra al autor y el libro, con lo que argumenta y, si ayuda, un ejemplo o un dato del libro.
+- **desarrollo**: lo que dice la fuente. Aquí se nombra al autor y la obra (el libro, el artículo, el ensayo; en una nota de voz, quién habla), con lo que argumenta y, si ayuda, un ejemplo o un dato de la fuente.
 - **giro**: la vuelta que el espectador no esperaba; la consecuencia que cambia cómo mira su propia vida.
 - **cierre** (el último plano o los dos últimos): una pregunta concreta que invite a comentar, o a mandárselo a alguien concreto. Nada de «dale a like» ni «suscríbete».
 
@@ -30,16 +30,16 @@ Los planos van en este orden de roles: **gancho → tensión → desarrollo → 
 
 - Escribe para el oído, en español de España, de tú. Frases cortas, una idea por frase, sin incisos ni paréntesis.
 - Inteligente y directo, sin condescendencia y sin tono de anuncio.
-- **Fidelidad:** nada que el libro no diga. Lo que es opinión del autor se atribuye («Según X…», «X sostiene que…»). No inventes datos, nombres ni anécdotas.
+- **Fidelidad:** nada que la fuente no diga. Lo que es opinión del autor se atribuye («Según X…», «X sostiene que…»). No inventes datos, nombres ni anécdotas.
 
 ## Cita
 
-Como mucho **una** cita literal del libro, de 4 a 25 palabras, copiada letra por letra del texto (el código lo comprueba). Va en el campo `cita` del plano donde suena y puede decirse en la locución. No pongas entre comillas nada que no sea esa cita.
+Como mucho **una** cita literal de la fuente, de 4 a 25 palabras, copiada letra por letra del texto (el código lo comprueba). Va en el campo `cita` del plano donde suena y puede decirse en la locución. No pongas entre comillas nada que no sea esa cita.
 
 ## Texto en pantalla
 
 - `pantalla`: como mucho 8 palabras. Complementa la voz, no la repite (los subtítulos ya la muestran). Un dato, una palabra clave, la pregunta del cierre. No en todos los planos: en 3 a 6.
-- El título del libro y el autor aparecen en pantalla en algún plano del desarrollo o del cierre.
+- El título de la obra o el autor aparecen en pantalla en algún plano del desarrollo o del cierre.
 
 ## Lo que se ve
 

@@ -2,7 +2,7 @@
 "use strict";
 
 const PASOS = [
-  { id: "libro", n: 1, nombre: "Libro" },
+  { id: "libro", n: 1, nombre: "Fuente" },
   { id: "conceptos", n: 2, nombre: "Concepto" },
   { id: "guion", n: 3, nombre: "Guion" },
   { id: "estilo", n: 4, nombre: "Estilo" },
@@ -10,6 +10,7 @@ const PASOS = [
   { id: "montaje", n: 6, nombre: "Montaje y revisión" },
 ];
 const NOTAS = [["sorpresa", "Sorpresa"], ["utilidad", "Utilidad"], ["polemica", "Polémica"], ["visualidad", "Visualidad"]];
+const TIPOS = { libro: "Libro", articulo: "Artículo", ensayo: "Ensayo", texto: "Texto", nota_de_voz: "Nota de voz" };
 const ROLES = { gancho: "Gancho", tension: "Tensión", desarrollo: "Desarrollo", giro: "Giro", cierre: "Cierre" };
 
 const estado = { proyecto: null, paso: "libro", siguiendo: null, ediciones: {} };
@@ -118,32 +119,41 @@ function errorEtapa(etapa) {
 
 async function pintarInicio(c) {
   c.innerHTML = `
-    <h1>Un libro entra, <em>un vídeo sale</em></h1>
-    <p class="entradilla">Sube el libro y la herramienta busca en él cinco conceptos conversacionales: ideas que dan ganas de mandar a alguien con un «mira esto». Eliges uno, apruebas el guion y después vienen el estilo, la voz, las imágenes y el montaje.</p>
+    <h1>Una idea entra, <em>un vídeo sale</em></h1>
+    <p class="entradilla">Sube un libro, un artículo, un ensayo o una nota de voz, o pega el texto, y la herramienta busca ahí conceptos conversacionales: ideas que dan ganas de mandar a alguien con un «mira esto». Eliges uno, apruebas el guion y después vienen el estilo, la voz, las imágenes y el montaje.</p>
     <form id="subida" class="subida">
-      <div class="zona-subida">
-        <label class="campo" for="archivo">EPUB, PDF o TXT</label>
-        <input id="archivo" name="archivo" type="file" accept=".epub,.pdf,.txt" required>
+      <div class="fila" role="radiogroup" aria-label="Qué es">
+        ${[["libro", "Libro"], ["articulo", "Artículo"], ["ensayo", "Ensayo"], ["texto", "Otro texto"], ["nota_de_voz", "Nota de voz"]].map(([v, n], i) =>
+          `<label class="fila" style="gap:6px;font-size:14px"><input type="radio" name="tipo" value="${v}" ${i === 0 ? "checked" : ""}> ${n}</label>`).join("")}
       </div>
+      <div class="zona-subida">
+        <label class="campo" for="archivo">EPUB, PDF, TXT o audio (MP3, M4A, WAV, OGG…)</label>
+        <input id="archivo" name="archivo" type="file" accept=".epub,.pdf,.txt,.md,.mp3,.m4a,.wav,.ogg,.oga,.opus,.webm,.aac,.flac">
+      </div>
+      <label class="campo">O pega el texto<textarea id="texto" name="texto" rows="5" placeholder="Pega aquí un artículo, un ensayo o unas notas (al menos 600 caracteres)"></textarea></label>
       <div class="fila">
         <label class="campo" style="flex:1">Título (si el archivo no lo trae)<input id="titulo" name="titulo" type="text"></label>
         <label class="campo" style="flex:1">Autor<input id="autor" name="autor" type="text"></label>
       </div>
-      <div><button class="boton" type="submit">Subir y trocear el libro</button></div>
+      <div><button class="boton" type="submit">Empezar</button><div class="motivo">Una nota de voz se transcribe con ElevenLabs antes de seguir.</div></div>
     </form>
     <div id="proyectos" class="lista-proyectos"></div>`;
   $("#subida").addEventListener("submit", async (ev) => {
     ev.preventDefault();
-    const b = ev.submitter; b.disabled = true; b.textContent = "Leyendo el libro…";
+    const b = ev.submitter;
+    const datos = new FormData(ev.target);
+    if (!$("#archivo").files.length && !$("#texto").value.trim()) return avisar("Sube un archivo o pega el texto.", true);
+    if (!$("#archivo").files.length) datos.delete("archivo");
+    b.disabled = true; b.textContent = $("#archivo").files[0]?.type.startsWith("audio") ? "Transcribiendo…" : "Leyendo…";
     try {
-      const p = await api("/api/proyectos", { method: "POST", body: new FormData(ev.target) });
+      const p = await api("/api/proyectos", { method: "POST", body: datos });
       ir(p.id, "libro");
-    } catch (e) { avisar(e.message, true); b.disabled = false; b.textContent = "Subir y trocear el libro"; }
+    } catch (e) { avisar(e.message, true); b.disabled = false; b.textContent = "Empezar"; }
   });
   try {
     const ps = await api("/api/proyectos");
     if (ps.length) $("#proyectos").innerHTML = `<p class="rotulo">Proyectos</p>` + ps.map((x) =>
-      `<a href="#${esc(x.id)}"><span><b>${esc(x.titulo)}</b> · ${esc(x.autor || "")}</span><span class="motivo">${esc(x.creado.slice(0, 10))}</span></a>`).join("");
+      `<a href="#${esc(x.id)}"><span><b>${esc(x.titulo)}</b> · ${esc(x.autor || "")} <span class="chip">${esc(TIPOS[x.tipo] || "Libro")}</span></span><span class="motivo">${esc(x.creado.slice(0, 10))}</span></a>`).join("");
   } catch { /* sin lista */ }
 }
 
@@ -152,15 +162,15 @@ function pintarLibro(c) {
   const tokens = Math.round(l.caracteres / 3.6);
   const enMarcha = !!estado.siguiendo?.conceptos;
   c.innerHTML = `
-    <p class="rotulo">Paso 1 · Libro</p>
+    <p class="rotulo">Paso 1 · Fuente · ${esc(TIPOS[l.tipo] || "Libro")}</p>
     <h1>${esc(l.titulo)} <em>${esc(l.autor)}</em></h1>
-    <p class="entradilla">${l.capitulos.length} capítulos · ${l.caracteres.toLocaleString("es-ES")} caracteres (unos ${tokens.toLocaleString("es-ES")} tokens) · ${esc(l.formato.toUpperCase())}</p>
+    <p class="entradilla">${l.capitulos.length} ${l.capitulos.length === 1 ? "sección" : "secciones"} · ${l.caracteres.toLocaleString("es-ES")} caracteres (unos ${tokens.toLocaleString("es-ES")} tokens) · ${esc(l.formato.toUpperCase())}</p>
     ${tarjetaTrabajo("conceptos")}
     <div class="fila" style="margin-bottom:20px">
       <button id="buscar" class="boton" ${enMarcha ? "disabled" : ""}>${p.conceptos.length ? "Ver los conceptos →" : "Buscar conceptos"}<span class="coste">${p.conceptos.length ? "" : "~1–3 min · ~0,60–1,20 $"}</span></button>
     </div>
-    <details><summary>Capítulos detectados</summary>
-      <table><thead><tr><th>#</th><th>Capítulo</th><th>Páginas</th><th class="num">Caracteres</th></tr></thead><tbody>
+    <details><summary>Secciones detectadas</summary>
+      <table><thead><tr><th>#</th><th>Sección</th><th>Lugar</th><th class="num">Caracteres</th></tr></thead><tbody>
       ${l.capitulos.map((x) => `<tr><td class="num">${x.n}</td><td>${esc(x.titulo)}</td><td>${esc(x.paginas || "—")}</td><td class="num">${x.caracteres.toLocaleString("es-ES")}</td></tr>`).join("")}
       </tbody></table></details>`;
   $("#buscar").addEventListener("click", async () => {
@@ -182,10 +192,10 @@ function pintarConceptos(c) {
   c.innerHTML = `
     <p class="rotulo">Paso 2 · Concepto · aprobación 1</p>
     <h1>Elige <em>la idea</em></h1>
-    <p class="entradilla">Cada concepto trae el pasaje del libro que lo sostiene, comprobado letra por letra. La barra es la nota de la editora de ideas; la raya roja, la del crítico. El gancho ya lo ha revisado un juez aparte.</p>
+    <p class="entradilla">Cada concepto trae el pasaje de la fuente que lo sostiene, comprobado letra por letra. La barra es la nota de la editora de ideas; la raya roja, la del crítico. El gancho ya lo ha revisado un juez aparte.</p>
     ${tarjetaTrabajo("conceptos")}${errorEtapa("conceptos")}
     <div class="fila" style="margin-bottom:18px">
-      <input id="indicaciones" type="text" placeholder="Opcional: qué tienen que tener los nuevos (más polémicos, para padres, del capítulo 3…)" style="flex:1;min-width:240px" ${enMarcha ? "disabled" : ""}>
+      <input id="indicaciones" type="text" placeholder="Opcional: qué tienen que tener los nuevos (más polémicos, para padres, de la segunda parte…)" style="flex:1;min-width:240px" ${enMarcha ? "disabled" : ""}>
       <button id="otros" class="boton-suave" ${enMarcha ? "disabled" : ""}>${p.conceptos.length ? "Pedir otros cinco" : "Buscar conceptos"}<span class="coste">${p.conceptos.length ? "~1–2 min · ~0,40 $" : "~1–3 min · ~0,60–1,20 $"}</span></button>
     </div>
     ${rondas.map((r) => `<p class="rotulo" style="margin-top:20px">Ronda ${r}</p><div class="rejilla">${p.conceptos.filter((x) => x.ronda === r).map(tarjetaConcepto).join("")}</div>`).join("")}`;
@@ -199,11 +209,20 @@ function pintarConceptos(c) {
   }));
 }
 
+function referencia(cap, pagina, titulo) {
+  const l = estado.proyecto.libro;
+  if (l.tipo === "nota_de_voz") return pagina ? `min. ${pagina}` : "";
+  const partes = [];
+  if (l.capitulos.length > 1 && cap) partes.push(`${l.tipo === "libro" ? "cap." : "parte"} ${cap}${titulo ? ` («${titulo}»)` : ""}`);
+  if (pagina) partes.push(`pág. ${pagina}`);
+  return partes.join(", ");
+}
+
 function tarjetaConcepto(x) {
   const p = estado.proyecto;
   const elegido = p.concepto_elegido === x.id;
   const j = x.juicio_gancho;
-  const ref = `cap. ${x.pasaje.capitulo}${x.pasaje.titulo_capitulo ? ` («${x.pasaje.titulo_capitulo}»)` : ""}${x.pasaje.pagina ? `, pág. ${x.pasaje.pagina}` : ""}`;
+  const ref = referencia(x.pasaje.capitulo, x.pasaje.pagina, x.pasaje.titulo_capitulo);
   const bloqueado = p.etapas.guion.estado === "bloqueado" && !elegido;
   return `<article class="tarjeta concepto ${elegido ? "elegido" : ""}">
     <div class="titulo-concepto">${esc(x.titulo)}</div>
@@ -279,7 +298,7 @@ function filaPlano(x, bloqueado) {
     <div class="rejilla" style="gap:6px">
       <label class="campo">Locución <span class="cuenta">${palabras(x.locucion)} palabras</span>${campo("locucion", x.locucion, 2, "voz")}</label>
       <label class="campo">Texto en pantalla${campo("pantalla", x.pantalla, 1)}</label>
-      <label class="campo">Cita literal del libro${campo("cita", x.cita?.texto || "", 1)}${x.cita ? `<span class="meta">cap. ${x.cita.capitulo}${x.cita.pagina ? `, pág. ${x.cita.pagina}` : ""}</span>` : ""}</label>
+      <label class="campo">Cita literal de la fuente${campo("cita", x.cita?.texto || "", 1)}${x.cita ? `<span class="meta">${esc(referencia(x.cita.capitulo, x.cita.pagina))}</span>` : ""}</label>
     </div>
     <div class="rejilla" style="gap:6px">
       <label class="campo">Lo que se ve${campo("visual", x.visual, 3)}</label>

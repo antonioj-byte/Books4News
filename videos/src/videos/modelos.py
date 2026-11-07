@@ -285,6 +285,7 @@ class Gasto(BaseModel):
 
 
 class LibroInfo(BaseModel):
+    tipo: str = "libro"          # libro, articulo, ensayo, texto o nota_de_voz (ver `fuente.TIPOS`)
     titulo: str
     autor: str
     formato: str

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import re
 
-from videos import almacen
+from videos import almacen, fuente
 from videos import libro as lib
 from videos.conceptos import cache_caliente, mensajes_con_libro
 from videos.config import Config
@@ -150,10 +150,10 @@ def escribir(cfg: Config, llm: LLM, pid: str, anunciar=lambda _: None) -> Versio
     p = almacen.cargar(cfg, pid)
     c = _concepto(p)
     libro = almacen.libro(cfg, pid)
-    ref = f"cap. {c.pasaje.capitulo}" + (f", pág. {c.pasaje.pagina}" if c.pasaje.pagina else "")
+    ref = fuente.referencia(p.libro.tipo, c.pasaje.capitulo, c.pasaje.pagina, len(p.libro.capitulos) > 1) or "sin lugar"
     instrucciones, version = cargar(cfg, "guion", titulo=c.titulo, idea=c.idea, gancho=c.gancho, por_que=c.por_que,
-                                    referencia=ref, pasaje=c.pasaje.texto, libro_titulo=p.libro.titulo,
-                                    libro_autor=p.libro.autor or "autor desconocido",
+                                    referencia=ref, pasaje=c.pasaje.texto,
+                                    fuente=fuente.descripcion(p.libro.tipo, p.libro.titulo, p.libro.autor),
                                     min_palabras=str(MIN_PALABRAS), max_palabras=str(MAX_PALABRAS))
     mensajes = mensajes_con_libro(lib.texto_para_modelo(libro), instrucciones)
     anunciar("La guionista escribe los planos")

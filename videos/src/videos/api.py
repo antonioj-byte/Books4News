@@ -6,11 +6,12 @@ from __future__ import annotations
 import logging
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from videos import almacen, conceptos, estilo, guion, imagenes, montaje, musica, trabajos, voz
+from videos import almacen, conceptos, estilo, guion, imagenes, montaje, musica, trabajos, transcripcion, voz
 from videos.config import RAIZ, Config
 from videos.llm import LLM
 
@@ -82,13 +83,20 @@ def crear_app(cfg: Config | None = None) -> FastAPI:
         return almacen.lista(cfg)
 
     @app.post("/api/proyectos")
-    async def crear(archivo: UploadFile = File(...), titulo: str = Form(""), autor: str = Form("")):
-        contenido = await archivo.read()
+    async def crear(archivo: UploadFile | None = File(None), texto: str = Form(""), titulo: str = Form(""),
+                    autor: str = Form(""), tipo: str = Form("libro")):
+        """La fuente: un archivo (EPUB, PDF, TXT o una nota de voz) o un texto pegado."""
+        if archivo is not None and archivo.filename:
+            contenido, nombre = await archivo.read(), archivo.filename
+        elif texto.strip():
+            contenido, nombre = texto.encode("utf-8"), almacen.PEGADO
+        else:
+            raise HTTPException(422, "Sube un archivo o pega el texto.")
         if len(contenido) > MAX_LIBRO:
-            raise HTTPException(413, "El libro pasa de 60 MB.")
+            raise HTTPException(413, "El archivo pasa de 60 MB.")
         try:
-            p = almacen.crear(cfg, archivo.filename or "libro.txt", contenido, titulo, autor)
-        except ValueError as e:
+            p = await run_in_threadpool(almacen.crear, cfg, nombre, contenido, titulo, autor, tipo)
+        except (ValueError, transcripcion.ErrorTranscripcion) as e:
             raise HTTPException(422, str(e))
         except Exception as e:
             log.exception("Ingesta fallida")

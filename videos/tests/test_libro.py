@@ -43,4 +43,4 @@ def test_epub_con_marcas_de_pagina(tmp_path):
 
 def test_texto_para_modelo_no_mete_paginas_en_el_texto(libro_txt):
     t = lib.texto_para_modelo(lib.leer(libro_txt))
-    assert t.count("<capitulo") == 2 and "PAG:" not in t
+    assert t.count("<seccion") == 2 and "PAG:" not in t

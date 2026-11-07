@@ -14,4 +14,4 @@ def test_marcadores_que_faltan_fallan(cfg):
     with pytest.raises(ErrorPrompt):
         cargar(cfg, "juez_gancho", gancho="x")
     texto, version = cargar(cfg, "juez_gancho", gancho="Descansar cansa", idea="x")
-    assert version == "juez_gancho@1" and "Descansar cansa" in texto and "{{" not in texto
+    assert version == "juez_gancho@2" and "Descansar cansa" in texto and "{{" not in texto

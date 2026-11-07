@@ -24,6 +24,7 @@ def main() -> None:
     i.add_argument("archivo", type=Path)
     i.add_argument("--titulo", default="")
     i.add_argument("--autor", default="")
+    i.add_argument("--tipo", default="libro", choices=["libro", "articulo", "ensayo", "texto", "nota_de_voz"])
     c = sub.add_parser("conceptos", help="propone cinco conceptos")
     c.add_argument("proyecto")
     c.add_argument("--indicaciones", default="")
@@ -39,7 +40,7 @@ def main() -> None:
         from videos.api import crear_app
         uvicorn.run(crear_app(cfg), host="127.0.0.1", port=a.puerto)
     elif a.cmd == "ingesta":
-        p = almacen.crear(cfg, a.archivo.name, a.archivo.read_bytes(), a.titulo, a.autor)
+        p = almacen.crear(cfg, a.archivo.name, a.archivo.read_bytes(), a.titulo, a.autor, a.tipo)
         print(json.dumps({"id": p.id, "titulo": p.libro.titulo, "autor": p.libro.autor, "capitulos": len(p.libro.capitulos),
                           "caracteres": p.libro.caracteres}, ensure_ascii=False, indent=1))
     elif a.cmd == "conceptos":

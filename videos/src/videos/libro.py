@@ -33,15 +33,20 @@ class Capitulo:
         if not self.paginas:
             return ""
         a, b = self.paginas[0][1], self.paginas[-1][1]
+        if ":" in str(a):                                  # minutos de una nota de voz
+            return f"min. {a}" if a == b else f"min. {a}–{b}"
         return f"pág. {a}" if a == b else f"págs. {a}–{b}"
 
 
 @dataclass
 class Libro:
+    """La fuente del vídeo (el nombre viene de cuando solo había libros): un libro, un artículo, un ensayo, un
+    texto pegado o una nota de voz transcrita, troceada en secciones."""
     titulo: str
     autor: str
     formato: str
     capitulos: list[Capitulo]
+    tipo: str = "libro"
 
     def guardar(self, ruta: Path) -> None:
         ruta.parent.mkdir(parents=True, exist_ok=True)
@@ -50,7 +55,7 @@ class Libro:
     @classmethod
     def cargar(cls, ruta: Path) -> "Libro":
         d = json.loads(ruta.read_text(encoding="utf-8"))
-        return cls(d["titulo"], d["autor"], d["formato"], [Capitulo(**c) for c in d["capitulos"]])
+        return cls(d["titulo"], d["autor"], d["formato"], [Capitulo(**c) for c in d["capitulos"]], d.get("tipo", "libro"))
 
     @property
     def caracteres(self) -> int:
@@ -62,7 +67,24 @@ class Libro:
 
 # ── Lectura ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
-def leer(ruta: Path, titulo: str = "", autor: str = "") -> Libro:
+MIN_FUENTE = 600            # caracteres: por debajo no da para un vídeo de un minuto con su pasaje
+
+
+def de_texto(texto: str, titulo: str = "", autor: str = "", tipo: str = "texto") -> Libro:
+    """Un texto pegado (un artículo, un ensayo, unas notas): por secciones si trae encabezados; si no, una sola."""
+    texto = _limpiar(texto)
+    if len(texto) < MIN_FUENTE:
+        raise ValueError(f"El texto es muy corto ({len(texto)} caracteres): hacen falta al menos {MIN_FUENTE}.")
+    l = _trocear_txt(texto)
+    l.titulo, l.autor, l.formato, l.tipo = titulo.strip(), autor.strip(), "texto", tipo
+    if len(l.capitulos) == 1:
+        l.capitulos[0].titulo = titulo.strip() or "Texto"
+    for i, c in enumerate(l.capitulos, 1):
+        c.n = i
+    return l
+
+
+def leer(ruta: Path, titulo: str = "", autor: str = "", tipo: str = "libro") -> Libro:
     ext = ruta.suffix.lower()
     if ext == ".epub":
         libro = _epub(ruta)
@@ -74,11 +96,13 @@ def leer(ruta: Path, titulo: str = "", autor: str = "") -> Libro:
         raise ValueError(f"Formato no admitido: {ext}. Sube un EPUB, un PDF o un TXT.")
     libro.titulo = titulo.strip() or libro.titulo or ruta.stem
     libro.autor = autor.strip() or libro.autor
-    libro.capitulos = [c for c in libro.capitulos if len(c.texto) >= MIN_CAPITULO]
+    libro.tipo = tipo
+    breve = libro.caracteres < 20000          # un artículo: no se tiran sus secciones cortas
+    libro.capitulos = [c for c in libro.capitulos if len(c.texto) >= (40 if breve else MIN_CAPITULO)]
     for i, c in enumerate(libro.capitulos, 1):
         c.n = i
-    if not libro.capitulos:
-        raise ValueError("No se ha podido sacar texto del libro (¿un PDF escaneado sin capa de texto?).")
+    if not libro.capitulos or libro.caracteres < MIN_FUENTE:
+        raise ValueError("No se ha podido sacar texto suficiente (¿un PDF escaneado sin capa de texto?).")
     return libro
 
 
@@ -238,7 +262,10 @@ _RE_CABECERA = re.compile(r"^(cap[ií]tulo\s+\S+.*|parte\s+\S+.*|[IVXLC]{1,6}\.?
 
 
 def _txt(ruta: Path) -> Libro:
-    texto = _limpiar(ruta.read_text(encoding="utf-8", errors="replace"))
+    return _trocear_txt(_limpiar(ruta.read_text(encoding="utf-8", errors="replace")))
+
+
+def _trocear_txt(texto: str) -> Libro:
     lineas = texto.split("\n")
     capitulos, titulo, actual = [], "Inicio", []
     for i, l in enumerate(lineas):
@@ -259,11 +286,11 @@ def _txt(ruta: Path) -> Libro:
 def texto_para_modelo(libro: Libro) -> str:
     """El libro entero, con la cabecera de cada capítulo. Las páginas van en la cabecera del capítulo, no dentro del
     texto, para que un pasaje copiado del texto sea literal."""
-    partes = [f'<libro titulo="{libro.titulo}" autor="{libro.autor}">']
+    partes = [f'<fuente tipo="{libro.tipo}" titulo="{libro.titulo}" autor="{libro.autor}">']
     for c in libro.capitulos:
-        rango = f" · {c.rango}" if c.rango else ""
-        partes.append(f'<capitulo n="{c.n}" titulo="{c.titulo}"{rango and f" paginas={chr(34)}{c.rango}{chr(34)}"}>\n{c.texto}\n</capitulo>')
-    partes.append("</libro>")
+        lugar = f' lugar="{c.rango}"' if c.rango else ""
+        partes.append(f'<seccion n="{c.n}" titulo="{c.titulo}"{lugar}>\n{c.texto}\n</seccion>')
+    partes.append("</fuente>")
     return "\n\n".join(partes)
 
 

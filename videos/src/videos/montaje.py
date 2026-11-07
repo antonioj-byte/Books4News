@@ -18,7 +18,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-from videos import almacen
+from videos import almacen, fuente
 from videos.config import RAIZ, Config
 from videos.modelos import Montaje, Palabra, ahora
 
@@ -235,7 +235,8 @@ def montar(cfg: Config, pid: str, anunciar=lambda _: None) -> Montaje:
     for x in v.planos:
         t = voz.planos[x.id]
         if x.cita and x.cita.texto:
-            ref = f"— {p.libro.autor}, cap. {x.cita.capitulo}" + (f", pág. {x.cita.pagina}" if x.cita.pagina else "")
+            lugar = fuente.referencia(p.libro.tipo, x.cita.capitulo, x.cita.pagina, len(p.libro.capitulos) > 1)
+            ref = "— " + ", ".join(y for y in (p.libro.autor or p.libro.titulo, lugar) if y)
             citas.append((t.inicio, t.fin, x.cita.texto, ref))
         elif x.pantalla:
             pantallas.append((t.inicio, t.fin, x.pantalla))

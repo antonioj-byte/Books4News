@@ -12,11 +12,13 @@ from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 
+from videos import fuente
 from videos import libro as lib
 from videos.config import Config
 from videos.llm import Uso
 from videos.modelos import Gasto, LibroInfo, Proyecto, ahora
 
+PEGADO = "__texto_pegado__.txt"
 _cerrojos: dict[str, threading.RLock] = {}
 _cerrojo_global = threading.Lock()
 
@@ -37,13 +39,26 @@ def carpeta(cfg: Config, pid: str) -> Path:
     return cfg.proyectos / pid
 
 
-def crear(cfg: Config, nombre_archivo: str, contenido: bytes, titulo: str = "", autor: str = "") -> Proyecto:
+def crear(cfg: Config, nombre_archivo: str, contenido: bytes, titulo: str = "", autor: str = "",
+          tipo: str = "libro") -> Proyecto:
+    """Un proyecto a partir de la fuente: un archivo (EPUB, PDF, TXT o una nota de voz) o un texto pegado (se pasa
+    como `texto.txt` con su contenido)."""
+    from videos import transcripcion
+    if tipo not in fuente.TIPOS:
+        raise ValueError(f"Tipo de fuente desconocido: {tipo}")
     ext = Path(nombre_archivo).suffix.lower()
     huella = hashlib.sha256(contenido).hexdigest()
     tmp = cfg.datos / "subidas" / f"{huella}{ext}"
     tmp.parent.mkdir(parents=True, exist_ok=True)
     tmp.write_bytes(contenido)
-    libro = lib.leer(tmp, titulo, autor)
+    if ext in transcripcion.EXTENSIONES:
+        tipo = "nota_de_voz"
+        libro = transcripcion.a_libro(transcripcion.transcribir(cfg, tmp), titulo.strip() or Path(nombre_archivo).stem,
+                                      autor.strip())
+    elif nombre_archivo == PEGADO:
+        libro = lib.de_texto(contenido.decode("utf-8", errors="replace"), titulo, autor, tipo)
+    else:
+        libro = lib.leer(tmp, titulo, autor, tipo)
     base = f"{date.today().isoformat()}-{_slug(libro.titulo)}"
     pid, k = base, 2
     while (cfg.proyectos / pid).exists():
@@ -53,7 +68,7 @@ def crear(cfg: Config, nombre_archivo: str, contenido: bytes, titulo: str = "", 
     (dir_ / "libro" / f"original{ext}").write_bytes(contenido)
     libro.guardar(dir_ / "libro" / "capitulos.json")
     p = Proyecto(id=pid, libro=LibroInfo(
-        titulo=libro.titulo, autor=libro.autor, formato=libro.formato, archivo=f"libro/original{ext}",
+        tipo=libro.tipo, titulo=libro.titulo, autor=libro.autor, formato=libro.formato, archivo=f"libro/original{ext}",
         huella=f"sha256:{huella}", caracteres=libro.caracteres,
         capitulos=[{"n": c.n, "titulo": c.titulo, "paginas": c.rango, "caracteres": len(c.texto)} for c in libro.capitulos]))
     p.etapas["ingesta"].estado = "hecha"
@@ -94,6 +109,7 @@ def lista(cfg: Config) -> list[dict]:
         try:
             d = json.loads(r.read_text(encoding="utf-8"))
             salida.append({"id": d["id"], "titulo": d["libro"]["titulo"], "autor": d["libro"]["autor"], "creado": d["creado"],
+                           "tipo": d["libro"].get("tipo", "libro"),
                            "etapas": {k: v["estado"] for k, v in d["etapas"].items()}})
         except Exception:
             continue
