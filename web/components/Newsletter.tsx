@@ -15,8 +15,11 @@ const CASA = "casa";
 // entra escrita en la mesa. La foto de quien firma se sube una vez y vale para todos los jueves.
 // «Opinión» (7/11, a petición del usuario: «quiero meter un tema de opinión de Diego… es básicamente como la newsletter
 // del jueves»): el mismo carrusel con otra firma, que se elige o se añade aquí (nombre, cargo, dónde se publica y foto).
-export function Newsletter({ texto, onHecho, formato = "newsletter" }: { texto: string; onHecho: () => void; formato?: "newsletter" | "opinion" }) {
-  const opinion = formato === "opinion";
+// «auto» (7/11, a petición del usuario: «el jefe ya debe poder saber discriminar… dárselo me parece un paso innecesario»):
+// sin elegir formato; lo decide quien firma: la firma de la casa es la newsletter del jueves, otra firma es una opinión.
+export function Newsletter({ texto, onHecho, formato: pedido = "newsletter" }: { texto: string; onHecho: () => void; formato?: "newsletter" | "opinion" | "auto" }) {
+  const auto = pedido === "auto";
+  const conFirmas = pedido !== "newsletter";      // se elige o se añade quién firma
   const [info, setInfo] = useState<EstadoNewsletter | null>(null);
   const [elegida, setElegida] = useState<string | null>(null);
   const [subiendo, setSubiendo] = useState(false);
@@ -28,9 +31,11 @@ export function Newsletter({ texto, onHecho, formato = "newsletter" }: { texto: 
 
   const firmas = info?.firmantes ?? [];
   const otras = firmas.filter((f) => f.slug !== CASA);
-  const firma: Firma | undefined = opinion
-    ? firmas.find((f) => f.slug === elegida) ?? otras[0] ?? firmas[0]
-    : firmas.find((f) => f.slug === CASA);
+  const firma: Firma | undefined = !conFirmas
+    ? firmas.find((f) => f.slug === CASA)
+    : firmas.find((f) => f.slug === elegida) ?? (auto ? firmas.find((f) => f.slug === CASA) : otras[0]) ?? firmas[0];
+  const formato = auto ? (firma && firma.slug !== CASA ? "opinion" : "newsletter") : pedido;
+  const opinion = formato === "opinion";
 
   const t = useTrabajo({
     consultar: async () => { const e = await api.newsletter(); setInfo(e); return e.trabajo; },
@@ -66,13 +71,13 @@ export function Newsletter({ texto, onHecho, formato = "newsletter" }: { texto: 
   const campo = "rounded-[10px] border border-borde bg-papel px-2.5 py-1.5 text-[14px] outline-none focus:border-tinta";
   return (
     <div className="flex flex-col gap-3">
-      {opinion && (
+      {conFirmas && (
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Quién firma">
           <span className="text-[13px] text-tinta-suave">Firma:</span>
           {firmas.map((f) => (
             <button key={f.slug} aria-pressed={firma?.slug === f.slug} onClick={() => { setElegida(f.slug); setNueva(null); }}
                     className={`rounded-full border px-3 py-1 text-[13px] ${firma?.slug === f.slug ? "border-tinta bg-tinta text-papel" : "border-borde bg-papel hover:border-tinta"}`}>
-              {f.nombre}
+              {f.nombre}{auto && f.slug === CASA ? " · newsletter" : ""}
             </button>
           ))}
           <button className="rounded-full border border-dashed border-borde px-3 py-1 text-[13px] hover:border-tinta"
@@ -119,9 +124,9 @@ export function Newsletter({ texto, onHecho, formato = "newsletter" }: { texto: 
           {info && firma && !firma.foto && <span className="block text-carmesi">
             Falta la foto de quien firma: súbela una vez y vale para todas sus piezas.</span>}
         </span>
-        <input ref={archivo} id={`foto-firma-${formato}`} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only"
+        <input ref={archivo} id={`foto-firma-${pedido}`} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only"
                onChange={(e) => subir(e.target.files?.[0])} />
-        {firma && <label htmlFor={`foto-firma-${formato}`} className="boton-suave cursor-pointer" aria-busy={subiendo || undefined}>
+        {firma && <label htmlFor={`foto-firma-${pedido}`} className="boton-suave cursor-pointer" aria-busy={subiendo || undefined}>
           {subiendo ? <><span className="girando" aria-hidden />Subiendo…</> : firma.foto ? "Cambiar la foto" : "Subir la foto"}
         </label>}
       </div>
@@ -130,7 +135,7 @@ export function Newsletter({ texto, onHecho, formato = "newsletter" }: { texto: 
         ? <Trabajando etapa={t.estado?.etapa ?? "Trabajando…"} pasos={PASOS_NEWSLETTER} inicio={t.estado?.inicio} tipico={t.estado?.tipico_s} onCancelar={t.cancelar} />
         : <Boton onClick={t.lanzar}
                  motivo={faltan > 0 ? `Pega arriba el texto entero (faltan ${faltan} caracteres)`
-                   : opinion && !otras.length && !elegida ? "Añade antes la firma con «+ Otra firma»" : null}
+                   : pedido === "opinion" && !otras.length && !elegida ? "Añade antes la firma con «+ Otra firma»" : null}
                  coste={`~${Math.round((t.estado?.tipico_s ?? 180) / 60)} min · ~0,10 $ y ~125 créditos`} hecho={null}>
             {opinion ? "Escribir la opinión →" : "Escribir la newsletter →"}
           </Boton>}

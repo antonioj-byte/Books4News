@@ -911,3 +911,11 @@
   patron: "«Lo de 5 del libro no está bien. Tiene que ser una selección de noticias breves del libro, porque un día habrá 5, otra 3, otra ninguna y otra 7.»"
   propuesta: "«Breves del libro»: las noticias del mundo del libro que valgan ese día, de una a siete en el post; si un día no hay ninguna que merezca el post, no se marca ninguna."
   evidencia: ["Conversación, 7/11"]
+
+- clave: sin-chips-de-formato
+  fecha: "2026-11-07"
+  destino: jefe_cultura
+  capa: marca
+  patron: "«El jefe de cultura ya debe de poder saber discriminar si una cosa es un perfil, si es un ensayo sin percha, es un tema de opinión… dárselo me parece un paso innecesario» (sobre los botones de formato bajo «¿De qué quieres que hablemos hoy?»)."
+  propuesta: "La redacción no elige el formato de un tema: el jefe lo deduce de cómo está contada la idea (noticia, ensayo, perfil, lectura lateral…). Un texto entero pegado con firma es newsletter si firma la casa y opinión si firma otra persona."
+  evidencia: ["Conversación, 7/11"]

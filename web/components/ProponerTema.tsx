@@ -82,6 +82,7 @@ function mensajeError(e: unknown): string {
 }
 
 const MAX_NEWSLETTER = 40000;
+const MIN_FIRMADO = 1500;   // a partir de aquí lo pegado puede ser un artículo entero
 
 // `modo` (7/11, «Hoy» en dos pestañas): «caja», solo el cuadro de arriba; «lista», solo los encargos, con la tarjeta
 // común de «Por elegir»; sin él, los dos (como antes)
@@ -89,9 +90,12 @@ export function ProponerTema({ eid, onPieza, modo, onTema }: { eid?: number; onP
   const [texto, setTexto] = useState("");
   const [enlaces, setEnlaces] = useState("");
   const [enviando, setEnviando] = useState<"ahora" | "manana" | null>(null);
-  // Lo que pide la redacción (3/11, «si lo que le pido es que me cuente una noticia… no me haga un ensayo»)
-  const [enfoque, setEnfoque] = useState<"elige" | "noticia" | "ensayo" | "perfil" | "newsletter" | "opinion">("elige");
-  const largo = enfoque === "newsletter" || enfoque === "opinion";   // se pega el texto entero (7/11: también la opinión)
+  // Sin elegir formato (7/11, a petición del usuario: «el jefe de cultura ya debe poder saber discriminar si una cosa es
+  // un perfil, un ensayo sin percha o un tema de opinión… dárselo me parece un paso innecesario»): el jefe lo deduce del
+  // texto. Lo único que no puede deducir es si lo pegado es un texto ya escrito para publicar con su firma (newsletter u
+  // opinión, que no pasan por él): pasado el largo de un encargo, lo es; antes, se ofrece en una línea.
+  const [firmadoPedido, setFirmado] = useState(false);
+  const largo = texto.length > MAX_TEXTO || (firmadoPedido && texto.length >= MIN_FIRMADO);
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
   const { datos: temas, recargar } = useDatos("temas", api.temas);
   const [abierto, setAbierto] = useState<number | null>(null);
@@ -114,8 +118,8 @@ export function ProponerTema({ eid, onPieza, modo, onTema }: { eid?: number; onP
     setEnviando(cuando); setMensaje(null);
     try {
       const r = await api.proponerTema({ texto: texto.trim(), enlaces: enlaces.split(/\s+/).filter(Boolean), cuando, ejecucion: eid ?? null,
-                                         enfoque: enfoque === "newsletter" || enfoque === "opinion" ? "elige" : enfoque, segundo_plano: cuando === "ahora" });
-      setTexto(""); setEnlaces("");
+                                         enfoque: "elige", segundo_plano: cuando === "ahora" });
+      setTexto(""); setEnlaces(""); setFirmado(false);
       if (cuando === "manana") setMensaje({ ok: true, texto: "Guardado: el jefe lo verá en la mesa de mañana." });
       else setSiguiendo(r.tema.id);
     } catch (e) {
@@ -163,32 +167,23 @@ export function ProponerTema({ eid, onPieza, modo, onTema }: { eid?: number; onP
       <div className="panel flex flex-col gap-3 p-3 sm:p-4">
         <label id="h-tema" htmlFor="tema-texto" className="sr-only">Proponer un tema al jefe de cultura</label>
         <textarea id="tema-texto" value={texto} onChange={(e) => setTexto(e.target.value)} rows={abiertoForm ? 3 : 1} disabled={!!enviando}
-                  maxLength={largo ? MAX_NEWSLETTER : MAX_TEXTO}
-                  placeholder={enfoque === "newsletter" ? "Pega aquí el texto entero de la newsletter." : enfoque === "opinion" ? "Pega aquí el artículo de opinión entero." : "¿De qué quieres que hablemos hoy? El jefe de cultura le busca el ángulo y el libro."}
+                  maxLength={MAX_NEWSLETTER}
+                  placeholder="¿De qué quieres que hablemos hoy? Un tema, una noticia, un perfil, un ensayo… o pega entera la newsletter o una opinión."
                   className="resize-none rounded-[12px] border border-borde bg-papel px-3 py-2.5 text-[16px] outline-none focus:border-tinta" />
         {abiertoForm && (
           <>
             {!largo && <textarea id="tema-enlaces" value={enlaces} onChange={(e) => setEnlaces(e.target.value)} rows={2} disabled={!!enviando}
-                      placeholder={enfoque === "ensayo" ? "Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las fuentes." : "Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las noticias."}
+                      placeholder="Enlaces, si los tienes (uno por línea). Sin enlaces, busca él las noticias o las fuentes."
                       aria-label="Enlaces (opcional)"
                       className="resize-y rounded-[12px] border border-borde bg-papel p-3 font-mono text-[13px] outline-none focus:border-tinta" />}
-            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Qué le pides al jefe">
-              {([["elige", "Que el jefe elija"], ["noticia", "Solo la noticia"], ["ensayo", "Ensayo sin percha"], ["perfil", "Perfil de autor"], ["newsletter", "Newsletter del jueves"], ["opinion", "Opinión"]] as const).map(([v, txt]) => (
-                <button key={v} aria-pressed={enfoque === v} onClick={() => setEnfoque(v)} disabled={!!enviando}
-                        className={`rounded-full border px-3 py-1 text-[13px] ${enfoque === v ? "border-carmesi bg-carmesi text-papel" : "border-borde bg-papel hover:border-tinta"}`}>
-                  {txt}
-                </button>
-              ))}
-              <span className="text-[12.5px] text-tinta-suave">
-                {enfoque === "newsletter" ? "La versión corta en Instagram del ensayo de los jueves, con tus frases literales."
-                  : enfoque === "opinion" ? "Un artículo de otra firma con el carrusel de la newsletter: su foto, su nombre y sus frases literales."
-                  : enfoque === "noticia" ? "Contada con su contexto, sin ensayo ni libro ajeno."
-                  : enfoque === "ensayo" ? "Un tema literario con su historia, sin noticia ni libro obligatorio. Sigue tu estructura y tu tono."
-                  : enfoque === "perfil" ? "Una escritora o un escritor: trayectoria, sus libros, una frase suya y lo que dice la prensa. Escribe su nombre y la percha, si la hay."
-                  : "Lectura lateral, diálogo, tres libros… lo que mejor le vaya."}
-              </span>
-            </div>
-            {largo ? <Newsletter key={enfoque} formato={enfoque === "opinion" ? "opinion" : "newsletter"} texto={texto} onHecho={() => { setTexto(""); onPieza(); }} /> : <>
+            {texto.length >= MIN_FIRMADO && texto.length <= MAX_TEXTO && (
+              <button onClick={() => setFirmado(!firmadoPedido)} disabled={!!enviando}
+                      className="self-start text-[13px] text-tinta-suave underline underline-offset-2 hover:text-tinta">
+                {largo ? "No, es un encargo para el jefe de cultura" : "¿Es un texto ya escrito para publicar con su firma (newsletter u opinión)?"}
+              </button>
+            )}
+            {largo && <span className="text-[12.5px] text-tinta-suave">Carrusel de frases literales con quien firma: con la firma de la casa, la newsletter del jueves; con otra, una opinión.</span>}
+            {largo ? <Newsletter formato="auto" texto={texto} onHecho={() => { setTexto(""); setFirmado(false); onPieza(); }} /> : <>
             {texto.length > MAX_TEXTO * 0.8 && (
               <span className={`dato ${texto.length >= MAX_TEXTO ? "text-carmesi" : ""}`}>{texto.length} de {MAX_TEXTO} caracteres</span>
             )}
@@ -197,8 +192,7 @@ export function ProponerTema({ eid, onPieza, modo, onTema }: { eid?: number; onP
                       aria-busy={enviando === "ahora" || undefined}>
                 Proponer ahora<span className="boton__coste">~1–2 min · ~0,10 $</span>
               </button>
-              <button className="boton-suave" onClick={() => proponer("manana")} disabled={!!enviando || texto.trim().length < 8 || enfoque !== "elige"}
-                      title={enfoque !== "elige" ? "La mesa de mañana solo propone piezas con libro" : undefined}>
+              <button className="boton-suave" onClick={() => proponer("manana")} disabled={!!enviando || texto.trim().length < 8}>
                 {enviando === "manana" ? "Guardando…" : "Para la mesa de mañana"}
               </button>
             </div>
