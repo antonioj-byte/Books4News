@@ -59,8 +59,10 @@ async function cargar() {
 window.addEventListener("hashchange", cargar);
 
 function pasoNatural() {
-  const e = estado.proyecto.etapas;
-  if (e.guion.estado === "bloqueado") return "guion";
+  const p = estado.proyecto, e = p.etapas;
+  if (p.montajes?.length) return "montaje";
+  if (p.estilo) return "media";
+  if (e.guion.estado === "bloqueado") return "estilo";
   if (estado.proyecto.concepto_elegido) return "guion";
   if (estado.proyecto.conceptos.length || e.conceptos.estado === "en_curso") return "conceptos";
   return "libro";
@@ -78,16 +80,22 @@ function pintar() {
   if (estado.paso === "libro") pintarLibro(c);
   else if (estado.paso === "conceptos") pintarConceptos(c);
   else if (estado.paso === "guion") pintarGuion(c);
-  else c.innerHTML = `<h1>${esc(PASOS.find((x) => x.id === estado.paso).nombre)}</h1><p class="entradilla">Este paso llega después de aprobar el guion: biblia de estilo, voz con ElevenLabs, imágenes con Magnific y montaje.</p>`;
+  else if (estado.paso === "estilo") pintarEstilo(c);
+  else if (estado.paso === "media") pintarMedia(c);
+  else if (estado.paso === "montaje") pintarMontaje(c);
   if (conChat) pintarChat();
 }
 
 function pintarPasos() {
   const p = estado.proyecto;
+  const bloqueado = p?.etapas.guion.estado === "bloqueado";
+  const listas = p && Object.keys(p.imagenes || {}).length && Object.values(p.imagenes).every((x) => x.elegida !== null);
   const hecho = {
-    libro: !!p, conceptos: !!p?.concepto_elegido, guion: p?.etapas.guion.estado === "bloqueado",
+    libro: !!p, conceptos: !!p?.concepto_elegido, guion: bloqueado, estilo: !!p?.estilo,
+    media: !!(p?.voz && listas), montaje: !!p?.montajes?.length,
   };
-  const abierto = { libro: true, conceptos: !!p, guion: !!p?.concepto_elegido, estilo: false, media: false, montaje: false };
+  const abierto = { libro: true, conceptos: !!p, guion: !!p?.concepto_elegido, estilo: bloqueado,
+    media: bloqueado && !!p?.estilo, montaje: !!(p?.voz && listas) || !!p?.montajes?.length };
   $("#pasos").innerHTML = PASOS.map((x) => `<button class="paso ${x.id === estado.paso ? "activo" : ""} ${hecho[x.id] ? "hecho" : ""}"
       data-paso="${x.id}" ${abierto[x.id] ? "" : "disabled"} ${x.id === estado.paso ? 'aria-current="step"' : ""}>
       <b>${hecho[x.id] ? "✓" : x.n}</b>${esc(x.nombre)}</button>`).join("");
@@ -231,7 +239,7 @@ function pintarGuion(c) {
     <h1>${esc(v.titulo)}</h1>
     <p class="entradilla">${v.planos.length} planos · ${total} palabras · unos ${Math.round(total / 2.5)} s de voz. Los tiempos definitivos los dará la locución.</p>
     ${tarjetaTrabajo("guion")}${errorEtapa("guion")}
-    ${bloqueado ? `<div class="bloqueado">Guion aprobado y bloqueado. Lo siguiente es la biblia de estilo.</div>` : ""}
+    ${bloqueado ? `<div class="bloqueado">Guion aprobado y bloqueado. <a href="#${esc(p.id)}/estilo">Siguiente: la biblia de estilo →</a></div>` : ""}
     ${v.avisos.length ? `<div class="avisos"><b>Antes de aprobarlo:</b><ul>${v.avisos.map((a) => `<li>${esc(a)}</li>`).join("")}</ul></div>` : ""}
     <div class="fila" style="margin-bottom:8px">
       ${bloqueado ? `<button id="desbloquear" class="boton-suave">Desbloquear para editar</button>`
@@ -280,6 +288,158 @@ function filaPlano(x, bloqueado) {
         <button class="boton-suave" style="padding:4px 12px;font-size:12.5px" data-quitar="${x.id}">Quitar</button></div>`}
     </div>
   </div>`;
+}
+
+// ── Paso 4: estilo ────────────────────────────────────────────────────────────────────────────────────────────────
+const archivo = (ruta) => `/api/proyectos/${estado.proyecto.id}/archivo/${ruta}?v=${encodeURIComponent(estado.proyecto.etapas.imagenes.actualizado || "")}`;
+let ESTILOS = null;
+
+async function pintarEstilo(c) {
+  const p = estado.proyecto;
+  ESTILOS ||= await api("/api/estilos");
+  const enMarcha = !!estado.siguiendo?.estilo;
+  const e = p.estilo;
+  c.innerHTML = `
+    <p class="rotulo">Paso 4 · Biblia de estilo</p>
+    <h1>Que todos los planos sean <em>la misma obra</em></h1>
+    <p class="entradilla">La biblia fija técnica, paleta, luz, encuadres y lo prohibido, y va en todos los prompts de imagen. Las muestras son el primer plano de tu guion dibujado en cada estilo.</p>
+    ${tarjetaTrabajo("estilo")}${errorEtapa("estilo")}
+    ${e ? `<div class="tarjeta" style="margin-bottom:18px"><p class="rotulo">Estilo elegido</p><h2>${esc(e.nombre)}</h2>
+      <p style="margin:0 0 6px">${esc(e.tecnica)}. ${esc(e.luz)}. ${esc(e.encuadres)}.</p>
+      <div class="fila">${e.paleta.map((h) => `<span title="${esc(h)}" style="width:28px;height:28px;border-radius:50%;background:${esc(h)};border:1px solid var(--borde)"></span>`).join("")}</div>
+      <p class="motivo">Prohibido: ${esc(e.prohibido.join(" · "))}</p>
+      <a class="boton" href="#${esc(p.id)}/media" style="display:inline-block;text-decoration:none;margin-top:6px">Siguiente: voz e imágenes →</a></div>` : ""}
+    <div class="fila" style="margin-bottom:14px">
+      <button id="muestras" class="boton-suave" ${enMarcha ? "disabled" : ""}>${p.muestras.length ? "Rehacer las muestras" : "Ver muestras de los tres estilos"}<span class="coste">3 imágenes · ~75 créditos</span></button>
+    </div>
+    <div class="rejilla" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+      ${Object.entries(ESTILOS).map(([k, x]) => `<article class="tarjeta concepto ${e?.id === k ? "elegido" : ""}">
+        ${p.muestras.includes(k) ? `<img src="/api/proyectos/${esc(p.id)}/archivo/muestras/${k}.jpg?t=${Date.now()}" alt="Muestra del estilo ${esc(x.nombre)}" style="width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:10px">`
+          : `<div style="aspect-ratio:9/16;border-radius:10px;background:${esc(x.paleta[0])};display:grid;place-items:center;color:${esc(x.paleta[1])};font-size:13px">sin muestra</div>`}
+        <h2 style="margin:4px 0 0">${esc(x.nombre)}</h2><p class="motivo" style="margin:0">${esc(x.descripcion)}</p>
+        <button class="${e?.id === k ? "boton-suave" : "boton"}" data-preset="${k}" ${e?.id === k ? "disabled" : ""}>${e?.id === k ? "Elegido ✓" : "Usar este estilo"}</button>
+      </article>`).join("")}
+    </div>
+    <div class="tarjeta" style="margin-top:16px"><h2>O define el tuyo</h2>
+      <textarea id="peticion" rows="2" placeholder="P. ej.: linograbado en tinta azul sobre papel kraft, con mucho aire" ${enMarcha ? "disabled" : ""}></textarea>
+      <div class="fila" style="margin-top:8px"><button id="propio" class="boton-suave" ${enMarcha ? "disabled" : ""}>Crear mi estilo<span class="coste">~0,03 $</span></button></div></div>`;
+  $("#muestras").addEventListener("click", () => lanzar(`/api/proyectos/${p.id}/estilo/muestras`, json("POST"), "estilo"));
+  $("#propio").addEventListener("click", () => lanzar(`/api/proyectos/${p.id}/estilo`, json("POST", { peticion: $("#peticion").value }), "estilo"));
+  c.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", async () => {
+    try { await api(`/api/proyectos/${p.id}/estilo`, json("POST", { preset: b.dataset.preset })); await recargar(); avisar("Estilo elegido."); }
+    catch (x) { avisar(x.message, true); }
+  }));
+}
+
+// ── Paso 5: voz e imágenes ────────────────────────────────────────────────────────────────────────────────────────
+function seg(t) { return `${t.toFixed(1)} s`; }
+
+function pintarMedia(c) {
+  const p = estado.proyecto, v = p.guion_actual, voz = p.voz;
+  const ocupadoVoz = !!estado.siguiendo?.voz, ocupadoImg = !!estado.siguiendo?.imagenes;
+  const imgs = p.imagenes || {};
+  const hayImgs = Object.values(imgs).some((x) => x.variantes.length);
+  const clipsPend = Object.entries(imgs).filter(([, x]) => x.animacion && x.elegida !== null && !x.clip);
+  const listas = Object.keys(imgs).length && Object.values(imgs).every((x) => x.elegida !== null);
+  c.innerHTML = `
+    <p class="rotulo">Paso 5 · Voz e imágenes</p>
+    <h1>La voz manda <em>el ritmo</em></h1>
+    <p class="entradilla">Los tiempos de la locución deciden cuándo empieza y acaba cada plano. Cada plano trae dos imágenes para elegir; los planos clave pueden animarse.</p>
+    <div class="tarjeta" style="margin-bottom:16px">
+      <h2>Locución</h2>${tarjetaTrabajo("voz")}${errorEtapa("voz")}
+      ${voz ? `<audio controls src="${archivo(voz.audio_mp3)}" style="width:100%"></audio>
+        <p class="motivo">${esc(voz.voz_nombre)}${voz.simulada ? " (simulada: pon ELEVENLABS_API_KEY para la de verdad)" : ""} · ${seg(voz.duracion)} · versión ${voz.version}</p>` : ""}
+      <div class="fila"><button id="voz" class="${voz ? "boton-suave" : "boton"}" ${ocupadoVoz ? "disabled" : ""}>${voz ? "Rehacer la locución entera" : "Generar la locución"}<span class="coste">~10–20 s · ~0,06 $</span></button>
+        ${voz ? `<button id="musica" class="boton-suave" ${ocupadoVoz ? "disabled" : ""}>${p.musica ? "Otra cama musical" : "Añadir cama musical"}<span class="coste">ElevenLabs Music</span></button>` : ""}
+        ${p.musica ? `<label class="fila" style="gap:6px;font-size:14px"><input id="musica-activa" type="checkbox" ${p.musica_activa ? "checked" : ""}> Con música</label>` : ""}</div>
+      ${p.musica ? `<audio controls src="${archivo(p.musica)}" style="width:100%;margin-top:8px"></audio>` : ""}
+    </div>
+    <div class="tarjeta">
+      <h2>Imágenes · ${esc(p.estilo?.nombre || "")}</h2>${tarjetaTrabajo("imagenes")}${errorEtapa("imagenes")}
+      <div class="fila" style="margin-bottom:10px">
+        ${hayImgs ? "" : `<button id="imagenes" class="boton" ${ocupadoImg ? "disabled" : ""}>Generar las imágenes<span class="coste">${v.planos.length} planos × 2 · ~${v.planos.length * 50} créditos</span></button>`}
+        ${clipsPend.length ? `<button id="clips" class="boton-suave" ${ocupadoImg ? "disabled" : ""}>Animar ${clipsPend.length} plano${clipsPend.length > 1 ? "s" : ""} clave<span class="coste">Kling O1 · 5 s cada uno</span></button>` : ""}
+        ${listas && voz ? `<a class="boton" href="#${esc(p.id)}/montaje" style="text-decoration:none">Siguiente: montaje →</a>` : ""}
+      </div>
+      ${v.planos.map((x) => filaImagen(x, imgs[x.id], voz?.planos?.[x.id], ocupadoImg)).join("")}
+    </div>`;
+  $("#voz").addEventListener("click", () => lanzar(`/api/proyectos/${p.id}/voz`, json("POST"), "voz"));
+  $("#musica")?.addEventListener("click", () => lanzar(`/api/proyectos/${p.id}/musica`, json("POST"), "voz"));
+  $("#musica-activa")?.addEventListener("change", async (ev) => { await api(`/api/proyectos/${p.id}/musica`, json("PUT", { activa: ev.target.checked })); await recargar(); });
+  $("#imagenes")?.addEventListener("click", () => lanzar(`/api/proyectos/${p.id}/imagenes`, json("POST"), "imagenes"));
+  $("#clips")?.addEventListener("click", () => lanzar(`/api/proyectos/${p.id}/clips`, json("POST"), "imagenes"));
+  c.querySelectorAll("[data-variante]").forEach((b) => b.addEventListener("click", async () => {
+    const [plano, i] = b.dataset.variante.split(":");
+    try { await api(`/api/proyectos/${p.id}/planos/${plano}/elegir`, json("POST", { indice: Number(i) })); await recargar(); }
+    catch (x) { avisar(x.message, true); }
+  }));
+  c.querySelectorAll("[data-otras]").forEach((b) => b.addEventListener("click", () => lanzar(`/api/proyectos/${p.id}/planos/${b.dataset.otras}/imagenes`, json("POST"), "imagenes")));
+}
+
+function filaImagen(x, ip, t, ocupado) {
+  const vars = ip?.variantes || [];
+  return `<div class="plano" style="grid-template-columns:90px minmax(0,1fr)">
+    <div><span class="chip rol-${x.rol}">${ROLES[x.rol]}</span><div class="meta" style="margin-top:6px">${x.id}${t ? `<br>${seg(t.inicio)}–${seg(t.fin)}` : ""}</div>
+      ${ip?.animacion ? `<div class="chip" style="margin-top:6px">${ip.clip ? "clip ✓" : "clip"}</div>` : ""}</div>
+    <div>
+      <div class="voz" style="margin-bottom:6px">${esc(x.locucion)}${x.pantalla ? ` <span class="chip">${esc(x.pantalla)}</span>` : ""}</div>
+      ${ip ? `<div class="motivo" style="margin:0 0 8px">${esc(ip.escena)}</div>` : ""}
+      <div class="fila" style="align-items:flex-start">
+        ${vars.map((va, i) => `<button data-variante="${x.id}:${i}" aria-pressed="${ip.elegida === i}" title="${esc(va.aviso || "")}"
+            style="padding:0;border:3px solid ${ip.elegida === i ? "var(--pluma)" : "transparent"};border-radius:10px;background:none;cursor:pointer;position:relative">
+            <img src="${archivo(va.archivo)}" alt="Variante ${i + 1} del plano ${x.id}" loading="lazy" style="width:108px;aspect-ratio:9/16;object-fit:cover;border-radius:7px;display:block">
+            ${va.aviso ? `<span class="chip" style="position:absolute;left:4px;bottom:4px;background:var(--pluma);color:#fff;border-color:var(--pluma)">letras</span>` : ""}</button>`).join("")}
+        ${ip?.error ? `<span class="error">${esc(ip.error)}</span>` : ""}
+        ${vars.length ? `<button class="boton-suave" style="padding:4px 12px;font-size:12.5px" data-otras="${x.id}" ${ocupado ? "disabled" : ""}>Otras dos<span class="coste">~50 créditos</span></button>` : ""}
+      </div>
+    </div></div>`;
+}
+
+// ── Paso 6: montaje y revisión ────────────────────────────────────────────────────────────────────────────────────
+function pintarMontaje(c) {
+  const p = estado.proyecto, v = p.guion_actual, m = p.montajes?.[p.montajes.length - 1];
+  const ocupado = !!estado.siguiendo?.montaje || !!estado.siguiendo?.voz || !!estado.siguiendo?.imagenes;
+  const desfasado = p.etapas.montaje.estado === "desfasada";
+  c.innerHTML = `
+    <p class="rotulo">Paso 6 · Montaje y revisión</p>
+    <h1>El vídeo <em>${m ? `versión ${m.version}` : ""}</em></h1>
+    ${tarjetaTrabajo("montaje")}${tarjetaTrabajo("voz")}${tarjetaTrabajo("imagenes")}${errorEtapa("montaje")}
+    <div class="fila" style="margin-bottom:14px">
+      <button id="montar" class="${m && !desfasado ? "boton-suave" : "boton"}" ${ocupado ? "disabled" : ""}>${m ? "Volver a montar" : "Montar el vídeo"}<span class="coste">~30–60 s · sin coste</span></button>
+      ${m ? `<a class="boton-suave" href="${archivo(m.archivo)}" download style="text-decoration:none">Descargar el MP4</a>
+        <a class="boton-suave" href="${archivo(m.srt)}" download style="text-decoration:none">Subtítulos (.srt)</a>` : ""}
+    </div>
+    ${desfasado ? `<div class="avisos">Has cambiado algo después del último montaje: vuelve a montar para verlo.</div>` : ""}
+    <div style="display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:20px;align-items:start" class="revision">
+      <div>${m ? `<video controls playsinline src="${archivo(m.archivo)}" style="width:100%;aspect-ratio:9/16;background:#000;border-radius:14px"></video>
+        <p class="motivo">${seg(m.duracion)} · ${m.con_musica ? "con música" : "sin música"} · 1080×1920</p>` : `<div style="aspect-ratio:9/16;border-radius:14px;background:var(--hueco)"></div>`}</div>
+      <div><p class="rotulo">Rehacer un plano</p>
+        ${v.planos.map((x) => {
+          const ip = p.imagenes[x.id], va = ip?.variantes?.[ip.elegida];
+          return `<div class="plano" style="grid-template-columns:70px minmax(0,1fr)">
+            <div>${va ? `<img src="${archivo(va.archivo)}" alt="" style="width:64px;aspect-ratio:9/16;object-fit:cover;border-radius:6px">` : ""}<div class="meta">${x.id}</div></div>
+            <div class="rejilla" style="gap:6px">
+              <label class="campo">Locución<textarea rows="2" data-voz="${x.id}">${esc(x.locucion)}</textarea></label>
+              <label class="campo">Texto en pantalla<input type="text" data-pantalla="${x.id}" value="${esc(x.pantalla)}"></label>
+              <div class="fila">
+                <button class="boton-suave" style="padding:4px 12px;font-size:12.5px" data-rehacer-voz="${x.id}" ${ocupado ? "disabled" : ""}>Rehacer la voz de este plano</button>
+                <button class="boton-suave" style="padding:4px 12px;font-size:12.5px" data-guardar-pantalla="${x.id}">Cambiar el texto en pantalla</button>
+                <button class="boton-suave" style="padding:4px 12px;font-size:12.5px" data-otras="${x.id}" ${ocupado ? "disabled" : ""}>Otra imagen</button>
+              </div></div></div>`; }).join("")}
+      </div></div>`;
+  $("#montar").addEventListener("click", () => lanzar(`/api/proyectos/${p.id}/montaje`, json("POST"), "montaje"));
+  c.querySelectorAll("[data-rehacer-voz]").forEach((b) => b.addEventListener("click", () => {
+    const id = b.dataset.rehacerVoz, texto = c.querySelector(`[data-voz="${id}"]`).value;
+    lanzar(`/api/proyectos/${p.id}/planos/${id}/voz`, json("POST", { texto }), "voz");
+  }));
+  c.querySelectorAll("[data-guardar-pantalla]").forEach((b) => b.addEventListener("click", async () => {
+    const id = b.dataset.guardarPantalla, texto = c.querySelector(`[data-pantalla="${id}"]`).value;
+    try { await api(`/api/proyectos/${p.id}/planos/${id}/pantalla`, json("PUT", { texto })); avisar("Texto cambiado: vuelve a montar."); await recargar(); }
+    catch (x) { avisar(x.message, true); }
+  }));
+  c.querySelectorAll("[data-otras]").forEach((b) => b.addEventListener("click", async () => {
+    if (await lanzar(`/api/proyectos/${p.id}/planos/${b.dataset.otras}/imagenes`, json("POST"), "imagenes")) ir(p.id, "media");
+  }));
 }
 
 async function guardarEdicion(cuerpo) {
@@ -347,7 +507,9 @@ async function seguir(tid, etapa) {
       continue;
     }
     delete estado.siguiendo[etapa];
-    if (t.estado === "hecho") avisar(etapa === "conceptos" ? "Listo: conceptos al día." : "Listo: guion al día.");
+    const listo = { conceptos: "Listo: conceptos al día.", guion: "Listo: guion al día.", estilo: "Listo: estilo al día.",
+      voz: "Listo: audio al día.", imagenes: "Listo: imágenes al día.", montaje: "Listo: vídeo montado." };
+    if (t.estado === "hecho") avisar(listo[etapa] || "Listo.");
     else avisar(t.error || "El trabajo no ha terminado bien.", true);
     break;
   }

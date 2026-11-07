@@ -1,0 +1,38 @@
+{
+  "collage": {
+    "nombre": "Collage de papel",
+    "descripcion": "El de la casa: papel rasgado, fragmentos de foto en trama, magenta y amarillo planos sobre negro.",
+    "tecnica": "collage conceptual de papel rasgado con fragmentos de fotografía en trama de puntos",
+    "paleta": ["#120E0F", "#F6F3EE", "#D40549", "#FFF500"],
+    "luz": "plana, de estudio, sin brillos; el contraste lo dan los papeles",
+    "encuadres": "pocas piezas grandes en torno a un objeto claro; el sujeto en el tercio central; mucho espacio vacío",
+    "prohibido": ["texto, letras y números", "logotipos", "papel impreso (periódicos, recibos, billetes)", "marcos o bordes alrededor de la imagen", "caras reconocibles de personas reales"],
+    "prefijo": "Conceptual paper collage",
+    "sufijo": "torn paper edges, halftone photo fragments, flat magenta (#D40549) and lemon yellow (#FFF500) paper shapes, deep black background, visible paper grain, a few large pieces arranged around one clear central object, generous empty space",
+    "musica": "minimal instrumental electronic pulse, warm analog synth, curious and confident mood, steady tempo, no vocals"
+  },
+  "grabado": {
+    "nombre": "Grabado a dos tintas",
+    "descripcion": "Grabado en madera del XIX en tinta sobre crema, con dos bloques planos de magenta y amarillo detrás.",
+    "tecnica": "grabado en madera del siglo XIX en tinta negra sobre papel crema, con bloques planos de color",
+    "paleta": ["#1C1618", "#F3EBDC", "#D40549", "#FFF500"],
+    "luz": "la del grabado: sombras hechas con trama de líneas finas, sin degradados",
+    "encuadres": "el motivo grande y legible en miniatura, centrado, recortado contra el fondo",
+    "prohibido": ["texto, letras y números", "logotipos", "cartelas y filacterias", "marcos o bordes", "caras reconocibles de personas reales"],
+    "prefijo": "Nineteenth-century woodcut engraving",
+    "sufijo": "black ink on cream paper, fine cross-hatching, bold and legible motif, two large flat blocks of magenta (#D40549) and lemon yellow (#FFF500) behind the motif, no gradients, plain background",
+    "musica": "sparse plucked strings and soft piano, intelligent and slightly mischievous mood, moderate tempo, no vocals"
+  },
+  "cine": {
+    "nombre": "Fotografía cinematográfica",
+    "descripcion": "Blanco y negro de película, grano de 35 mm, claroscuro y poca profundidad de campo.",
+    "tecnica": "fotografía cinematográfica en blanco y negro con grano de película",
+    "paleta": ["#0B0B0B", "#3A3A3A", "#BDBDBD", "#F4F4F4"],
+    "luz": "claroscuro, una sola fuente de luz lateral, negros profundos",
+    "encuadres": "planos cerrados y detalles; poca profundidad de campo; el sujeto en el tercio central",
+    "prohibido": ["texto, letras y números", "logotipos", "pantallas o carteles con texto", "caras reconocibles de personas reales"],
+    "prefijo": "Cinematic black and white film still",
+    "sufijo": "35mm film grain, low-key chiaroscuro lighting from a single side source, deep blacks, shallow depth of field, anamorphic look, strong negative space, high contrast",
+    "musica": "dark ambient cinematic drone with a slow heartbeat pulse, tense and reflective mood, no vocals"
+  }
+}

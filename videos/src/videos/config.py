@@ -38,6 +38,10 @@ class Config:
     modelo_critico: str = field(default_factory=lambda: os.environ.get("VIDEOS_MODELO_CRITICO", "claude-opus-5-5"))
     modelo_gancho: str = field(default_factory=lambda: os.environ.get("VIDEOS_MODELO_GANCHO", "claude-opus-5-5"))
     modelo_guion: str = field(default_factory=lambda: os.environ.get("VIDEOS_MODELO_GUION", "claude-opus-5-5"))
+    modelo_revisor: str = field(default_factory=lambda: os.environ.get("VIDEOS_MODELO_REVISOR", "claude-haiku-5-5"))
+    max_clips: int = field(default_factory=lambda: int(os.environ.get("VIDEOS_MAX_CLIPS", "2")))
+    voz_modelo: str = field(default_factory=lambda: os.environ.get("VIDEOS_VOZ_MODELO", "eleven_multilingual_v2"))
+    voz_id: str = field(default_factory=lambda: os.environ.get("VIDEOS_VOZ_ID", ""))   # vacío: una al azar
     # Simulación: sin clave de un servicio, ese servicio va simulado; VIDEOS_SIMULADO=1 lo fuerza para los dos
     forzar_simulado: bool = field(default_factory=lambda: _bool("VIDEOS_SIMULADO"))
 

@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from videos import almacen, conceptos, guion, trabajos
+from videos import almacen, conceptos, estilo, guion, imagenes, montaje, musica, trabajos, voz
 from videos.config import RAIZ, Config
 from videos.llm import LLM
 
@@ -29,6 +29,23 @@ class Peticion(BaseModel):
 
 class Eleccion(BaseModel):
     concepto: str
+
+
+class EleccionEstilo(BaseModel):
+    preset: str | None = None
+    peticion: str = Field(default="", max_length=2000)
+
+
+class EleccionVariante(BaseModel):
+    indice: int
+
+
+class Texto(BaseModel):
+    texto: str = Field(default="", max_length=400)
+
+
+class Musica(BaseModel):
+    activa: bool
 
 
 class Edicion(BaseModel):
@@ -84,6 +101,8 @@ def crear_app(cfg: Config | None = None) -> FastAPI:
         d = p.model_dump()
         d["guion_actual"] = p.guion_actual.model_dump() if p.guion_actual else None
         d["gasto_total_usd"] = round(sum(g.usd for g in p.gasto), 3)
+        dir_m = almacen.carpeta(cfg, pid) / "muestras"
+        d["muestras"] = sorted(f.stem for f in dir_m.glob("*.jpg")) if dir_m.exists() else []
         return d
 
     @app.post("/api/proyectos/{pid}/conceptos")
@@ -143,6 +162,110 @@ def crear_app(cfg: Config | None = None) -> FastAPI:
         proyecto(pid)
         guion.desbloquear(cfg, pid)
         return {"ok": True}
+
+    # ── Estilo ──
+    @app.get("/api/estilos")
+    def estilos():
+        return estilo.predefinidos()
+
+    @app.post("/api/proyectos/{pid}/estilo/muestras")
+    def muestras(pid: str):
+        return lanzar(pid, "estilo", lambda llm, a: imagenes.muestras(cfg, llm, pid, a))
+
+    @app.post("/api/proyectos/{pid}/estilo")
+    def elegir_estilo(pid: str, e: EleccionEstilo):
+        p = proyecto(pid)
+        if p.etapas["guion"].estado != "bloqueado":
+            raise HTTPException(409, "Aprueba antes el guion")
+        if e.preset:
+            try:
+                estilo.elegir(cfg, pid, e.preset)
+            except ValueError as x:
+                raise HTTPException(409, str(x))
+            return {"ok": True}
+        if len(e.peticion.strip()) < 8:
+            raise HTTPException(422, "Describe el estilo que quieres en una frase")
+        return lanzar(pid, "estilo", lambda llm, a: estilo.propio(cfg, llm, pid, e.peticion, a).nombre)
+
+    # ── Voz ──
+    @app.post("/api/proyectos/{pid}/voz")
+    def generar_voz(pid: str):
+        p = proyecto(pid)
+        if p.etapas["guion"].estado != "bloqueado":
+            raise HTTPException(409, "Aprueba antes el guion")
+        return lanzar(pid, "voz", lambda llm, a: voz.generar(cfg, pid, a).duracion)
+
+    @app.post("/api/proyectos/{pid}/planos/{plano}/voz")
+    def rehacer_voz(pid: str, plano: str, t: Texto):
+        if len(t.texto.strip()) < 2:
+            raise HTTPException(422, "Escribe la locución nueva")
+        return lanzar(pid, "voz", lambda llm, a: voz.rehacer_plano(cfg, pid, plano, t.texto, a).duracion)
+
+    # ── Imágenes ──
+    @app.post("/api/proyectos/{pid}/imagenes")
+    def generar_imagenes(pid: str):
+        p = proyecto(pid)
+        if p.estilo is None:
+            raise HTTPException(409, "Elige antes el estilo")
+        return lanzar(pid, "imagenes", lambda llm, a: imagenes.generar_todas(cfg, llm, pid, a))
+
+    @app.post("/api/proyectos/{pid}/planos/{plano}/imagenes")
+    def otras_imagenes(pid: str, plano: str):
+        return lanzar(pid, "imagenes", lambda llm, a: imagenes.generar_plano(cfg, llm, pid, plano, a))
+
+    @app.post("/api/proyectos/{pid}/planos/{plano}/elegir")
+    def elegir_variante(pid: str, plano: str, e: EleccionVariante):
+        proyecto(pid)
+        try:
+            imagenes.elegir(cfg, pid, plano, e.indice)
+        except ValueError as x:
+            raise HTTPException(409, str(x))
+        return {"ok": True}
+
+    @app.post("/api/proyectos/{pid}/clips")
+    def generar_clips(pid: str):
+        return lanzar(pid, "imagenes", lambda llm, a: imagenes.clips(cfg, llm, pid, a))
+
+    @app.put("/api/proyectos/{pid}/planos/{plano}/pantalla")
+    def cambiar_pantalla(pid: str, plano: str, t: Texto):
+        """Revisión: cambia el texto en pantalla de un plano sin desbloquear el guion (versión «manual»)."""
+        from videos.modelos import VersionGuion
+        with almacen.editar(cfg, pid) as p:
+            v = p.guion_actual
+            if v is None or plano not in {x.id for x in v.planos}:
+                raise HTTPException(404, "Ese plano no existe")
+            nuevos = [x.model_copy(deep=True) for x in v.planos]
+            for x in nuevos:
+                if x.id == plano:
+                    x.pantalla = t.texto.strip()
+            p.guion.append(VersionGuion(n=len(p.guion) + 1, concepto=v.concepto, origen="manual", titulo=v.titulo,
+                                        planos=nuevos, avisos=[f"Texto en pantalla del plano {plano} cambiado en la revisión"]))
+            if p.etapas["montaje"].estado == "hecha":
+                p.etapas["montaje"].estado = "desfasada"
+        return {"ok": True}
+
+    # ── Música y montaje ──
+    @app.post("/api/proyectos/{pid}/musica")
+    def generar_musica(pid: str):
+        return lanzar(pid, "voz", lambda llm, a: musica.generar(cfg, pid, a))
+
+    @app.put("/api/proyectos/{pid}/musica")
+    def activar_musica(pid: str, m: Musica):
+        with almacen.editar(cfg, pid) as p:
+            p.musica_activa = m.activa and bool(p.musica)
+        return {"ok": True}
+
+    @app.post("/api/proyectos/{pid}/montaje")
+    def montar(pid: str):
+        return lanzar(pid, "montaje", lambda llm, a: montaje.montar(cfg, pid, a).archivo)
+
+    @app.get("/api/proyectos/{pid}/archivo/{ruta:path}")
+    def archivo(pid: str, ruta: str):
+        base = almacen.carpeta(cfg, pid).resolve()
+        destino = (base / ruta).resolve()
+        if base not in destino.parents or not destino.is_file():
+            raise HTTPException(404, "No existe ese archivo")
+        return FileResponse(destino)
 
     @app.get("/api/trabajos/{tid}")
     def trabajo(tid: str):

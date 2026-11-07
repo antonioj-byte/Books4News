@@ -88,3 +88,4 @@ details summary { cursor: pointer; font-size: 13px; color: var(--suave); }
 .lista-proyectos { display: grid; gap: 8px; margin-top: 28px; }
 .lista-proyectos a { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 1px solid var(--borde); border-radius: 12px; color: var(--tinta); text-decoration: none; background: var(--panel); }
 .lista-proyectos a:hover { border-color: var(--tinta); }
+@media (max-width: 760px) { .revision { grid-template-columns: 1fr !important; } }

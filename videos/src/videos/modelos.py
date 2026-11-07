@@ -92,6 +92,33 @@ class RespuestaChatConceptosLLM(BaseModel):
     indicaciones: str = Field(description="Si hay otra ronda: qué tienen que tener los nuevos, en una frase")
 
 
+class EstiloLLM(BaseModel):
+    nombre: str
+    tecnica: str
+    paleta: list[str]
+    luz: str
+    encuadres: str
+    prohibido: list[str]
+    prefijo: str
+    sufijo: str
+    musica: str
+
+
+class EscenaLLM(BaseModel):
+    id: str
+    escena: str = Field(description="En inglés, de 15 a 45 palabras")
+    animacion: str = Field(description="En inglés, si el plano es un clip animado; si no, vacío")
+
+
+class EscenasLLM(BaseModel):
+    escenas: list[EscenaLLM]
+
+
+class RevisionLLM(BaseModel):
+    tiene_texto: bool
+    donde: str = Field(description="Dónde está el texto; vacío si no hay")
+
+
 # ── El proyecto ───────────────────────────────────────────────────────────────────────────────────────────────────
 
 class Etapa(BaseModel):
@@ -178,6 +205,76 @@ class MensajeChat(BaseModel):
     creado: str = Field(default_factory=ahora)
 
 
+class Estilo(BaseModel):
+    id: str                      # collage, grabado, cine o propio
+    nombre: str
+    tecnica: str
+    paleta: list[str]
+    luz: str
+    encuadres: str
+    prohibido: list[str]
+    prefijo: str
+    sufijo: str
+    musica: str
+    descripcion: str = ""
+    peticion: str = ""
+
+
+class Palabra(BaseModel):
+    t: str
+    i: float
+    f: float
+    plano: str
+
+
+class TiempoPlano(BaseModel):
+    inicio: float
+    fin: float
+
+
+class Voz(BaseModel):
+    modelo: str
+    voz_id: str
+    voz_nombre: str
+    simulada: bool
+    audio: str                  # relativo a la carpeta del proyecto (WAV, la fuente de verdad)
+    audio_mp3: str
+    duracion: float
+    palabras: list[Palabra]
+    planos: dict[str, TiempoPlano]
+    huella: str                 # de las locuciones: si cambian, la voz queda desfasada
+    version: int = 1
+    creado: str = Field(default_factory=ahora)
+
+
+class Variante(BaseModel):
+    archivo: str
+    semilla: int
+    simulada: bool = False
+    aviso: str = ""
+
+
+class ImagenPlano(BaseModel):
+    escena: str
+    animacion: str = ""
+    prompt: str
+    variantes: list[Variante] = Field(default_factory=list)
+    elegida: int | None = None
+    clip: str | None = None
+    clip_simulado: bool = False
+    estado: Literal["pendiente", "generando", "lista", "elegida", "fallida"] = "pendiente"
+    error: str | None = None
+
+
+class Montaje(BaseModel):
+    version: int
+    archivo: str
+    srt: str
+    duracion: float
+    con_musica: bool
+    creado: str = Field(default_factory=ahora)
+
+
 class Gasto(BaseModel):
     etapa: str
     servicio: str
@@ -210,6 +307,12 @@ class Proyecto(BaseModel):
     chat: list[MensajeChat] = Field(default_factory=list)
     gasto: list[Gasto] = Field(default_factory=list)
     libro_en_cache: str | None = None      # última vez que se mandó el libro con caché de 1 h (ISO)
+    estilo: Estilo | None = None
+    voz: Voz | None = None
+    imagenes: dict[str, ImagenPlano] = Field(default_factory=dict)
+    musica: str | None = None              # archivo de la cama musical, si la hay
+    musica_activa: bool = False
+    montajes: list[Montaje] = Field(default_factory=list)
 
     def concepto(self, cid: str) -> Concepto | None:
         return next((c for c in self.conceptos if c.id == cid), None)
