@@ -140,6 +140,8 @@ class PiezaDetalle(BaseModel):
 class EdicionDiapositiva(BaseModel):
     texto: str
     subtitulo: str | None = None          # solo la portada
+    firma_nombre: str | None = None       # la firma de la newsletter o la opinión, editada sobre la portada (7/11)
+    firma_cargo: str | None = None
 
 
 class EdicionPie(BaseModel):

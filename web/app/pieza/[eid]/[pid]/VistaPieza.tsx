@@ -157,8 +157,8 @@ export function VistaPieza() {
                       ancho={440} video={d.video_portada}
                       videos={Object.fromEntries((d.videos ?? []).map((v) => [v.n, v.url]))}
                       url={(n) => api.urlDiapositiva(eid, pid, n, d.version)}
-                      onEditar={async (n, texto, subtitulo) => {
-                        const r = await api.editarDiapositiva(eid, pid, n, texto, subtitulo);
+                      onEditar={async (n, texto, subtitulo, firma) => {
+                        const r = await api.editarDiapositiva(eid, pid, n, texto, subtitulo, firma);
                         setAvisosEdicion(r.avisos);
                         cargar();
                       }}

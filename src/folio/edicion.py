@@ -39,7 +39,7 @@ AVISO_CHAT = "Editada con el chat: comprueba los datos nuevos (no se han vuelto 
 class AccionImagen(BaseModel):
     """Un cambio en la imagen de la pieza, que aplica el código."""
     tipo: Literal["encuadre", "composicion", "usar_foto_autor", "usar_archivo", "buscar_archivo", "ilustrar",
-                  "buscar_retrato", "retrato_ilustrado", "recorte", "usar_material", "formato", "cubierta", "friso", "banda", "cambiar_libro", "libros", "fuente"] = Field(
+                  "buscar_retrato", "retrato_ilustrado", "recorte", "usar_material", "formato", "cubierta", "friso", "banda", "cambiar_libro", "libros", "fuente", "firma"] = Field(
         description="encuadre: mover el punto de interés de la imagen de portada; composicion: sangre, banda, caja o neon; "
                     "usar_foto_autor / usar_archivo: qué imagen va en la portada; buscar_archivo: otra imagen de archivo con "
                     "nuevas búsquedas; ilustrar: una ilustración editorial nueva con una escena (sin personas reales); "
@@ -57,7 +57,9 @@ class AccionImagen(BaseModel):
                     "libros: fijar la lista de libros de la pieza (añadir, quitar u ordenar), que el código verifica al momento, "
                     "sin dejarla pendiente: en el mismo turno puedes reescribir en `guion` las diapositivas que los nombran; "
                     "fuente: añadir a las fuentes de la pieza (colofón y «Lo cuentan») un enlace que da quien edita, aunque el "
-                    "código no lo haya podido leer (muro de pago): quien edita responde de él")
+                    "código no lo haya podido leer (muro de pago): quien edita responde de él; "
+                    "firma: el nombre o el cargo de quien firma, en el botón de arriba de la portada de la newsletter o la "
+                    "opinión (solo en esta pieza)")
     enfoque_x: int = Field(description="Solo encuadre: 0–100, dónde está lo importante en horizontal (50 = centro)")
     enfoque_y: int = Field(description="Solo encuadre: 0–100, en vertical (0 = arriba; para ver una cara entera, 20–35)")
     composicion: str = Field(description="Solo composicion: sangre, banda, caja o neon; si no, vacío")
@@ -81,6 +83,8 @@ class AccionImagen(BaseModel):
     fuente_url: str = Field(default="", description="Solo fuente: el enlace tal como lo pega quien edita; si no, vacío")
     fuente_medio: str = Field(default="", description="Solo fuente: el medio («Financial Times»); si no, vacío")
     fuente_titulo: str = Field(default="", description="Solo fuente: el título del artículo si lo sabes por la conversación o el material; si no, vacío")
+    firma_nombre: str = Field(default="", description="Solo firma: el nombre tal como debe salir; vacío, no se toca")
+    firma_cargo: str = Field(default="", description="Solo firma: el cargo tal como debe salir («Director de Producto de Alighieria»); vacío, no se toca")
     desde: int = Field(description="Solo banda: la primera de las tres diapositivas seguidas que cruza (la 4 cubre 4, 5 y 6); si no, 0")
 
 
@@ -349,7 +353,9 @@ def _bloque_pieza(p: Pieza) -> str:
     citas = "\n".join(f"- «{c.texto}»" for c in p.citas) or "(ninguna)"
     from folio.guion import linea_hoy
     return (f"<pieza>\n{linea_hoy(p.fecha)} La pieza se publica estos días.\nnoticia: {p.eleccion.titular}\nde qué se habla: {p.eleccion.de_que_se_habla}\n"
-            f"libros verificados (los únicos posibles):\n{libros}\ncitas verificadas (las únicas que pueden ir entre comillas):\n{citas}\n"
+            + (f"firma de la portada (botón de arriba): {p.firmante.nombre}" + (f", {p.firmante.cargo}" if p.firmante.cargo else "") + "\n"
+               if p.firmante else "")
+            + f"libros verificados (los únicos posibles):\n{libros}\ncitas verificadas (las únicas que pueden ir entre comillas):\n{citas}\n"
             f"guion actual (JSON):\n{p.guion.model_dump_json(indent=1)}\n</pieza>")
 
 
@@ -793,6 +799,14 @@ def aplicar_imagen(llm: LLM, cfg: Config, p: Pieza, a: AccionImagen) -> tuple[Pi
         return _libros(cfg, llm, nueva, a)
     if a.tipo == "fuente":
         return _fuente(nueva, a)
+    if a.tipo == "firma":
+        if formatos.de(nueva.eleccion.formato).propio != "newsletter":
+            return None, "(Solo la newsletter y las opiniones llevan firma en la portada.)"
+        if not (a.firma_nombre.strip() or a.firma_cargo.strip()):
+            return None, "(Dime cómo tiene que quedar la firma: el nombre, el cargo o los dos.)"
+        from folio import newsletter
+        nueva = newsletter.corregir_en_pieza(cfg, nueva, a.firma_nombre or None, a.firma_cargo or None)
+        return nueva, f"(Firma de la portada: {nueva.firmante.nombre}" + (f", {nueva.firmante.cargo}" if nueva.firmante.cargo else "") + ".)"
     if a.tipo == "encuadre":
         usa_retrato = retrato and ar.registro in (*CARAS, None) and ar.portada != "panorama"
         img, clave = (retrato, f"{p.id}-retrato") if usa_retrato else (archivo, p.id)

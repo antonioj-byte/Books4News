@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Diapositiva, VideoPortada } from "./Diapositiva";
-import { EditorDiapositiva } from "./EditorDiapositiva";
+import { EditorDiapositiva, type Firma } from "./EditorDiapositiva";
 
 // Carrusel de la pieza: diapositiva grande, flechas (también con el teclado) y miniaturas. Si hay
 // vídeo de portada, la diapositiva 1 grande es el vídeo (la miniatura sigue siendo la imagen). Con
@@ -10,7 +10,7 @@ import { EditorDiapositiva } from "./EditorDiapositiva";
 export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, editables, onEditar, onQuitar, extra, marcadas = [] }: {
   total: number; url: (n: number) => string; ancho: number; inicial?: number; video?: string | null;
   videos?: Record<number, string>; editables?: number;
-  onEditar?: (n: number, texto: string, subtitulo: string | null) => Promise<void>;
+  onEditar?: (n: number, texto: string, subtitulo: string | null, firma: Firma | null) => Promise<void>;
   // Quitar una diapositiva (6/11: «una X para eliminar diapos cuando no toque»): nunca la portada ni el colofón
   onQuitar?: (n: number) => Promise<void>;
   extra?: (n: number) => ReactNode;   // bajo la diapositiva grande: las notas de esa diapositiva (2/11)
@@ -57,7 +57,7 @@ export function Carrusel({ total, url, ancho, inicial = 1, video, videos = {}, e
         {!estrecho && anterior}
         {editando && onEditar
           ? <EditorDiapositiva src={url(actual)} ancho={grande} onCancelar={() => setEditando(false)}
-                               onGuardar={async (t, s) => { await onEditar(actual, t, s); setEditando(false); }} />
+                               onGuardar={async (t, s, f) => { await onEditar(actual, t, s, f); setEditando(false); }} />
           : (videos[actual] ?? (actual === 1 ? video : null))
             ? <VideoPortada src={(videos[actual] ?? video)!} ancho={grande} />
             : <Diapositiva src={url(actual)} ancho={grande} titulo={`Diapositiva ${actual}`} />}

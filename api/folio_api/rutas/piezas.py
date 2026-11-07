@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
-from folio import edicion, materiales
+from folio import edicion, formatos, materiales
 from folio.almacen import Evaluacion, MensajeChat, escribir_evaluacion_md
 from folio.llm import LLM, ErrorLLM
 from folio.modelos import InformeDiario
@@ -164,6 +164,10 @@ def editar_diapositiva(eid: int, pid: str, n: int, cambio: EdicionDiapositiva, c
     if not p.guion or not 1 <= n <= len(p.guion.diapositivas):
         raise HTTPException(404, "Diapositiva no encontrada")
     nueva, avisos = edicion.editar_diapositiva(ctx.cfg, p, n, cambio.texto, cambio.subtitulo)
+    if n == 1 and (cambio.firma_nombre is not None or cambio.firma_cargo is not None) \
+            and formatos.de(p.eleccion.formato).propio == "newsletter":
+        from folio import newsletter
+        nueva = newsletter.corregir_en_pieza(ctx.cfg, nueva, cambio.firma_nombre, cambio.firma_cargo)
     v = ctx.almacen.guardar_version(eid, pid, nueva, "manual", f"Diapositiva {n} editada a mano")
     return ResultadoEdicion(version=v, avisos=avisos)
 

@@ -7,7 +7,10 @@ import { mensajeError } from "@/lib/errores";
 // texto editables en el sitio. Las cursivas (<em>) vuelven a ser *así* al guardar.
 const ANCHO = 1080;
 const ALTO = 1350;
-const EDITABLES = ".titular, .subtitulo, p.texto";
+// La firma de la newsletter y la opinión (nombre y cargo) también se edita en el sitio (7/11)
+const EDITABLES = ".titular, .subtitulo, p.texto, .nl-firma__nombre, .nl-firma__cargo";
+
+export type Firma = { nombre: string; cargo: string };
 
 function aTexto(el: Element): string {
   const copia = el.cloneNode(true) as Element;
@@ -17,7 +20,7 @@ function aTexto(el: Element): string {
 
 export function EditorDiapositiva({ src, ancho, onGuardar, onCancelar }: {
   src: string; ancho: number;
-  onGuardar: (texto: string, subtitulo: string | null) => Promise<void>;
+  onGuardar: (texto: string, subtitulo: string | null, firma: Firma | null) => Promise<void>;
   onCancelar: () => void;
 }) {
   const marco = useRef<HTMLIFrameElement>(null);
@@ -50,8 +53,11 @@ export function EditorDiapositiva({ src, ancho, onGuardar, onCancelar }: {
     const parrafo = doc.querySelector("p.texto");
     const texto = golpe ? [parrafo ? aTexto(parrafo) : "", aTexto(golpe)].filter(Boolean).join(" ")
       : titular ? aTexto(titular) : aTexto(parrafo ?? doc.body);
+    const nombre = doc.querySelector(".nl-firma__nombre");
+    const cargo = doc.querySelector(".nl-firma__cargo");
+    const firma = nombre ? { nombre: aTexto(nombre), cargo: cargo ? aTexto(cargo) : "" } : null;
     setGuardando(true); setError("");
-    try { await onGuardar(texto, subtitulo ? aTexto(subtitulo) : null); }
+    try { await onGuardar(texto, subtitulo ? aTexto(subtitulo) : null, firma); }
     catch (e) { setError(`${mensajeError(e, "No se ha guardado.")} Tu texto sigue en la diapositiva: pulsa «Guardar texto» otra vez.`); }
     finally { setGuardando(false); }
   };

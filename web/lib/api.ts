@@ -102,8 +102,10 @@ export const api = {
     pedir<{ version: number; avisos: string[] }>(`/api/ejecuciones/${eid}/piezas/${encodeURIComponent(pid)}/diapositivas/${n}`, { method: "DELETE" }),
   restaurarVersion: (eid: number, pid: string, n: number) =>
     pedir<{ version: number; avisos: string[] }>(`/api/ejecuciones/${eid}/piezas/${encodeURIComponent(pid)}/versiones/${n}/restaurar`, { method: "POST" }),
-  editarDiapositiva: (eid: number, pid: string, n: number, texto: string, subtitulo?: string | null) =>
-    pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({ texto, subtitulo }) }),
+  editarDiapositiva: (eid: number, pid: string, n: number, texto: string, subtitulo?: string | null,
+                      firma?: { nombre: string; cargo: string } | null) =>
+    pedir<ResultadoEdicion>(`${pieza(eid, pid)}/diapositivas/${n}`, { method: "PUT", body: JSON.stringify({
+      texto, subtitulo, firma_nombre: firma?.nombre ?? null, firma_cargo: firma?.cargo ?? null }) }),
   editarPie: (eid: number, pid: string, pie: string) =>
     pedir<ResultadoEdicion>(`${pieza(eid, pid)}/pie`, { method: "PUT", body: JSON.stringify({ pie }) }),
   chat: (eid: number, pid: string) => pedir<MensajeChat[]>(`${pieza(eid, pid)}/chat`),

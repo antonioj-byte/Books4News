@@ -887,3 +887,11 @@
   patron: "«Tengo un problema que es que no puedo cambiar la firma: quiero que diga Producto (en mayúscula).»"
   propuesta: "Las firmas de opinión se corrigen desde la web y las piezas ya escritas toman la firma al día."
   evidencia: ["Conversación, 7/11: la opinión de Diego Álvarez"]
+
+- clave: firma-sobre-la-imagen
+  fecha: "2026-11-07"
+  destino: codigo
+  capa: marca
+  patron: "«Quiero editarla sobre la imagen, no quiero rehacer la pieza, solo editar la firma» (el chat ofrecía cambiar el subtítulo y el pie, no la firma de la portada)."
+  propuesta: "El nombre y el cargo de quien firma se editan sobre la portada como el titular, o pidiéndoselo al chat, solo en esa pieza."
+  evidencia: ["Conversación, 7/11: la opinión de Diego Álvarez"]

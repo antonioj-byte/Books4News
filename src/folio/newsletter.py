@@ -187,7 +187,23 @@ def firma_al_dia(cfg: Config, f: Firmante | None) -> Firmante:
     su copia y un cambio de cargo no llegaba); si ya no está, la que guardó la pieza."""
     if f is None:
         return de_la_casa(cfg)
+    if f.en_pieza:                      # corregida sobre la imagen, solo en esta pieza
+        return f
     return next((x for x in firmantes(cfg) if x.slug == f.slug), f)
+
+
+def corregir_en_pieza(cfg: Config, p: Pieza, nombre: str | None, cargo: str | None) -> Pieza:
+    """La firma de esta pieza corregida a mano, sobre la portada (7/11: «quiero editarla sobre la imagen, no quiero
+    rehacer la pieza, solo editar la firma»). Solo esta pieza; el registro de firmas no cambia."""
+    nueva = p.model_copy(deep=True)
+    f = firma_al_dia(cfg, p.firmante).model_copy()
+    if nombre is not None and " ".join(nombre.split()):
+        f.nombre = " ".join(nombre.split())
+    if cargo is not None:
+        f.cargo = " ".join(cargo.split())
+    f.en_pieza = True
+    nueva.firmante = f
+    return nueva
 
 
 def guardar_firmante(cfg: Config, nombre: str, cargo: str = "", publicacion: str = "", url: str = "",

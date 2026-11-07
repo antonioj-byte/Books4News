@@ -411,6 +411,7 @@ class Firmante(BaseModel):
     cargo: str = ""
     publicacion: str = ""              # «La newsletter de Folio», «el blog de Alighieria»… (vacío: solo aquí)
     url: str = ""                      # dónde se lee entero, sin https:// (vacío: no se invita a leerlo fuera)
+    en_pieza: bool = False             # corregida a mano en esta pieza: manda sobre el registro (7/11)
 
 
 class Pieza(BaseModel):

@@ -23,3 +23,13 @@ def test_la_fuente_de_la_redaccion_entra_en_el_colofon(cfg):
     sin_https = edicion.aplicar_imagen(None, cfg, p, _accion(tipo="fuente", fuente_url="ft.com/x"))[0]
     assert sin_https.fuentes[-1].url == "https://ft.com/x"                    # sin https, se le pone
     assert edicion.aplicar_imagen(None, cfg, p, _accion(tipo="fuente", fuente_url="no es un enlace"))[0] is None
+
+
+def test_el_chat_corrige_la_firma_de_una_opinion(cfg):
+    from folio import newsletter
+    from test_newsletter import TEXTO, _guion
+    f = newsletter.guardar_firmante(cfg, "Diego Prueba", "Director de producto")
+    p = newsletter.a_pieza(cfg, _guion(), "2026-11-07-3", "2026-11-07", TEXTO, firma=f, formato=newsletter.OPINION)
+    nueva, nota = edicion.aplicar_imagen(None, cfg, p, _accion(tipo="firma", firma_cargo="Director de Producto"))
+    assert nueva.firmante.cargo == "Director de Producto" and nueva.firmante.en_pieza and "Director de Producto" in nota
+    assert "firma de la portada" in edicion._bloque_pieza(p)

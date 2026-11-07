@@ -142,3 +142,18 @@ def test_corregir_la_firma_llega_a_las_piezas_ya_escritas(cfg_diseno):
     assert [x.slug for x in newsletter.firmantes(cfg)] == [newsletter.CASA, "diego-prueba"]   # la misma, corregida
     portada = render.Plantillas(cfg).html_diapositiva(p, 1)
     assert "Director de Producto de Alighieria" in portada and "Director de producto" not in portada
+
+
+def test_la_firma_se_edita_sobre_la_portada_solo_en_esa_pieza(cfg_diseno):
+    """7/11 («quiero editarla sobre la imagen, no quiero rehacer la pieza, solo editar la firma»)."""
+    cfg = cfg_diseno
+    f = newsletter.guardar_firmante(cfg, "Diego Prueba", "Director de producto de Alighieria")
+    p = newsletter.a_pieza(cfg, _guion(), "2026-11-07-3", "2026-11-07", TEXTO, firma=f, formato=newsletter.OPINION)
+    nueva = newsletter.corregir_en_pieza(cfg, p, "Diego Prueba", "Director de Producto")
+    pl = render.Plantillas(cfg)
+    portada = pl.html_diapositiva(nueva, 1)
+    assert 'nl-firma__cargo">Director de Producto<' in portada
+    assert newsletter.firmante(cfg, f.slug).cargo == "Director de producto de Alighieria"    # el registro no cambia
+    # Y la newsletter de la casa también
+    casa = newsletter.a_pieza(cfg, _guion(), "2026-11-07-4", "2026-11-07", TEXTO)
+    assert "Cargo nuevo" in pl.html_diapositiva(newsletter.corregir_en_pieza(cfg, casa, None, "Cargo nuevo"), 1)

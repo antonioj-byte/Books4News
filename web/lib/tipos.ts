@@ -1544,6 +1544,10 @@ export interface components {
             texto: string;
             /** Subtitulo */
             subtitulo?: string | null;
+            /** Firma Nombre */
+            firma_nombre?: string | null;
+            /** Firma Cargo */
+            firma_cargo?: string | null;
         };
         /** EdicionEspanola */
         EdicionEspanola: {
@@ -1858,6 +1862,11 @@ export interface components {
              * @default
              */
             url: string;
+            /**
+             * En Pieza
+             * @default false
+             */
+            en_pieza: boolean;
         };
         /** Fondo */
         Fondo: {
