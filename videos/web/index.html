@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alighieria · Vídeos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;700&family=EB+Garamond:ital,wght@1,500&family=Open+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="/web/estilos.css">
+</head>
+<body>
+<header class="cabecera">
+  <a class="marca" href="#">Alighieria <span>· Vídeos conceptuales</span> <em>beta</em></a>
+  <div id="simulado" class="simulado" hidden></div>
+</header>
+<nav id="pasos" class="pasos" aria-label="Pasos"></nav>
+<main class="cuerpo">
+  <section id="contenido" class="contenido" aria-live="polite"></section>
+  <aside id="chat" class="chat" hidden>
+    <h2 class="rotulo">Chat</h2>
+    <div id="chat-mensajes" class="chat-mensajes"></div>
+    <form id="chat-form" class="chat-form">
+      <label for="chat-texto" class="sr">Escribe al asistente</label>
+      <textarea id="chat-texto" rows="3" placeholder=""></textarea>
+      <button class="boton" type="submit">Enviar</button>
+    </form>
+  </aside>
+</main>
+<div id="aviso" class="aviso" role="status" hidden></div>
+<script src="/web/app.js"></script>
+</body>
+</html>
