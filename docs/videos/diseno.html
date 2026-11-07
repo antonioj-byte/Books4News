@@ -1,0 +1,242 @@
+<title>Vídeos conceptuales de Alighieria</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;700&family=EB+Garamond:ital,wght@0,400;1,400;1,500&family=Open+Sans:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Documento de diseño: una columna de lectura con tablas a lo ancho; la marca de Alighieria (papel, tinta, pluma, marcador solo como subrayado) */
+:root {
+  --papel: #F6F3EE; --tinta: #1C1618; --suave: #5E5457; --borde: #DDD5CC; --panel: #EFE9E1;
+  --pluma: #D40549; --marcador: #FFF500; --ok: #2F6B3A; --aviso: #8A5A00;
+  --display: "Alexandria", "Helvetica Neue", Arial, sans-serif;
+  --remate: "EB Garamond", Georgia, serif;
+  --texto: "Open Sans", "Segoe UI", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --papel: #161112; --tinta: #F2ECE6; --suave: #B6AAA6; --borde: #3A3134; --panel: #211A1C;
+  --pluma: #FF4D82; --marcador: #6B6600; --ok: #7FC48C; --aviso: #E3B25A; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --papel: #161112; --tinta: #F2ECE6; --suave: #B6AAA6; --borde: #3A3134; --panel: #211A1C;
+  --pluma: #FF4D82; --marcador: #6B6600; --ok: #7FC48C; --aviso: #E3B25A; color-scheme: dark }
+body { background: var(--papel); color: var(--tinta); font: 16px/1.6 var(--texto); }
+.envoltura { max-width: 860px; margin: 0 auto; padding-block: 48px 96px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.antetitulo { display: inline-block; border: 1px solid var(--tinta); border-radius: 999px; padding: 2px 12px;
+  font: 600 12px/1.6 var(--texto); letter-spacing: .08em; text-transform: uppercase; }
+h1 { font: 700 clamp(34px, 6vw, 56px)/1.02 var(--display); letter-spacing: -.05em; margin: 16px 0 12px; text-wrap: balance; }
+h1 em, h2 em { font-family: var(--remate); font-weight: 500; letter-spacing: -.01em; color: var(--pluma); }
+h2 { font: 700 28px/1.1 var(--display); letter-spacing: -.04em; margin: 56px 0 12px; text-wrap: balance; }
+h3 { font: 700 18px/1.3 var(--display); letter-spacing: -.02em; margin: 28px 0 6px; }
+p, li { max-width: 68ch; }
+.entradilla { font: italic 400 21px/1.45 var(--remate); color: var(--suave); max-width: 60ch; }
+.marca { background: linear-gradient(transparent 58%, var(--marcador) 58%); }
+code, .mono { font: 13.5px/1.5 var(--mono); }
+code { background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+.tabla { overflow-x: auto; margin: 16px 0; border-top: 2px solid var(--tinta); }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14.5px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--borde); }
+th { font: 600 12px/1.4 var(--texto); letter-spacing: .06em; text-transform: uppercase; color: var(--suave); }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; font: 600 11.5px/1.5 var(--texto); padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.chip.si { color: var(--ok); border: 1px solid var(--ok); }
+.chip.no { color: var(--pluma); border: 1px solid var(--pluma); }
+.chip.duda { color: var(--aviso); border: 1px solid var(--aviso); }
+pre { background: var(--panel); border-radius: 10px; padding: 16px; overflow-x: auto; font: 12.5px/1.55 var(--mono); }
+.flujo { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 20px 0; }
+.paso { border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.paso b { display: block; font: 700 14px/1.3 var(--display); letter-spacing: -.02em; }
+.paso span { font-size: 13px; color: var(--suave); }
+.paso.humano { border-color: var(--pluma); }
+.paso.humano b { color: var(--pluma); }
+.pregunta { border-left: 3px solid var(--pluma); padding: 4px 0 4px 16px; margin: 20px 0; }
+.pregunta h3 { margin-top: 0; }
+.pregunta .opciones { color: var(--suave); font-size: 14.5px; }
+.nota { font-size: 13.5px; color: var(--suave); }
+ol.orden li, ul.decisiones li { margin: 6px 0; }
+.zona { display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 24px; align-items: start; margin: 16px 0; }
+@media (max-width: 560px) { .zona { grid-template-columns: 1fr; } }
+.movil { width: 180px; max-width: 100%; aspect-ratio: 9/16; border: 2px solid var(--tinta); border-radius: 18px; position: relative; overflow: hidden; background: var(--panel); }
+.movil i { position: absolute; display: block; }
+.movil .arriba { left: 0; right: 0; top: 0; height: 11.5%; background: color-mix(in srgb, var(--pluma) 22%, transparent); }
+.movil .abajo { left: 0; right: 0; bottom: 0; height: 22%; background: color-mix(in srgb, var(--pluma) 22%, transparent); }
+.movil .dcha { right: 0; top: 11.5%; bottom: 22%; width: 13%; background: color-mix(in srgb, var(--pluma) 14%, transparent); }
+.movil .subs { left: 7%; right: 16%; top: 58%; height: 9%; border: 1.5px dashed var(--tinta); border-radius: 4px; }
+.movil .pant { left: 7%; right: 16%; top: 17%; height: 12%; border: 1.5px dashed var(--suave); border-radius: 4px; }
+a { color: var(--pluma); }
+a:focus-visible { outline: 2px solid var(--pluma); outline-offset: 2px; }
+</style>
+
+<div class="envoltura">
+  <span class="antetitulo">Alighieria · beta · diseño para validar</span>
+  <h1>Vídeos conceptuales <em>a partir de un libro</em></h1>
+  <p class="entradilla">Un libro entra y sale un vídeo vertical de 30 a 60 segundos construido sobre una sola idea del libro que dé ganas de mandar a alguien. Este documento fija qué ofrecen hoy Magnific y ElevenLabs, la arquitectura, el coste por vídeo y las preguntas que necesito que contestes antes de escribir código.</p>
+  <p class="nota">7 de noviembre de 2026. Documentación consultada hoy; lo que no he podido confirmar va marcado como «por medir».</p>
+
+  <div class="flujo" aria-label="Flujo">
+    <div class="paso"><b>1 · Libro</b><span>EPUB, PDF o TXT troceado por capítulos y páginas</span></div>
+    <div class="paso"><b>2 · Conceptos</b><span>5 ideas puntuadas, con su pasaje</span></div>
+    <div class="paso humano"><b>Aprobación 1</b><span>eliges una o pides otras</span></div>
+    <div class="paso"><b>3 · Guion</b><span>planos, con chat y edición directa</span></div>
+    <div class="paso humano"><b>Aprobación 2</b><span>el guion queda bloqueado</span></div>
+    <div class="paso"><b>4 · Estilo</b><span>biblia: 3 predefinidos o uno propio</span></div>
+    <div class="paso"><b>5 · Voz</b><span>ElevenLabs con tiempos por carácter</span></div>
+    <div class="paso"><b>6 · Imágenes</b><span>Magnific, 2 variantes por plano</span></div>
+    <div class="paso"><b>7 · Montaje</b><span>MP4 1080×1920 con subtítulos</span></div>
+    <div class="paso"><b>8 · Revisión</b><span>rehacer un plano sin tocar el resto</span></div>
+  </div>
+
+  <h2>Qué ofrecen hoy <em>las dos APIs</em></h2>
+  <div class="tabla"><table>
+    <thead><tr><th>Necesidad</th><th>Qué hay</th><th>Estado</th><th>Cómo afecta al diseño</th></tr></thead>
+    <tbody>
+      <tr><td>Imagen desde texto</td><td>Magnific: Flux 2 Pro, Flux 2 Turbo y Klein, Seedream 4.5, Mystic, RunWay y otros. Ya lo usamos en Folio (Flux 2 Pro, tamaño libre hasta 1440 px de lado).</td><td><span class="chip si">confirmado</span></td><td>Flux 2 Pro a 810×1440 (9:16) y se escala a 1080×1920 al montar. El estilo va delante del prompt, como en Folio, porque si no la escena manda sobre el estilo.</td></tr>
+      <tr><td>Imagen a vídeo</td><td>Magnific: Kling O1 Pro y Standard, Kling 2.1, 2.5 y 2.6 Pro, WAN 2.5, 2.6 y 2.7, MiniMax Hailuo, RunWay Gen4 Turbo, PixVerse V5, LTX 2 Fast, Veo 3.1. Kling O1 admite 9:16, primer y último fotograma, clips de 5 o 10 s.</td><td><span class="chip si">existe</span> <span class="chip duda">precio por medir</span></td><td>Los clips duran como mínimo 5 s y un plano dura menos de 3 s: se recorta el clip. Solo en los planos clave (gancho y giro); el resto, Ken Burns. Kling Pro admite 3 peticiones a la vez por usuario.</td></tr>
+      <tr><td>Voz con tiempos</td><td>ElevenLabs <code>POST /v1/text-to-speech/{voice_id}/with-timestamps</code>: audio en base64 y tiempos de inicio y fin de cada carácter (<code>alignment</code> y <code>normalized_alignment</code>). Admite <code>previous_text</code>/<code>next_text</code> y <code>seed</code>.</td><td><span class="chip si">confirmado</span></td><td>Los tiempos por carácter se agrupan en palabras y en planos. No hay estimación ni detección de pausas: cada plano empieza en el primer carácter de su locución.</td></tr>
+      <tr><td>Modelo de voz en español de España</td><td>Multilingual v2 (lista expresamente España y México; 10.000 caracteres), Eleven v3 (más expresiva, 5.000), v4 y v4 Turbo, Flash v2.5.</td><td><span class="chip si">v2 confirmado</span> <span class="chip duda">v3 sin confirmar</span></td><td>Empiezo con Multilingual v2. La documentación oficial no confirma los tiempos con v3: lo pruebo con una llamada cuando esté la clave y, si funciona, la comparamos.</td></tr>
+      <tr><td>Precio de la voz</td><td>0,08 $ por 1.000 caracteres en v2, v3 y v4; 0,04 $ en Flash y v4 Turbo. Planes desde 6 $/mes.</td><td><span class="chip si">confirmado</span></td><td>Un vídeo de 45 s son unos 700 caracteres, unos 0,06 $. Rehacer la voz no es lo caro.</td></tr>
+      <tr><td>Música</td><td>Magnific tiene generación de música (de ElevenLabs) y efectos de sonido por API.</td><td><span class="chip si">existe</span> <span class="chip duda">precio por medir</span></td><td>Cama musical opcional: subida por la redacción o generada. Ver pregunta 4.</td></tr>
+      <tr><td>Precios de Magnific</td><td>La API cobra por créditos; la página de créditos por modelo respondió 403 y no he insistido. En Folio medimos ~25 créditos por imagen (16.000 créditos = 16 €).</td><td><span class="chip duda">por medir</span></td><td>El vídeo de Kling hay que medirlo con una llamada antes de lanzar más (pregunta 3).</td></tr>
+    </tbody>
+  </table></div>
+  <p class="nota">Fuentes: <a href="https://docs.magnific.com/llms.txt">índice de la API de Magnific</a>, <a href="https://docs.magnific.com/api-reference/image-to-video/kling-o1-std.md">Kling O1 Standard</a>, <a href="https://docs.magnific.com/api-reference/image-to-video/kling-o1-pro.md">Kling O1 Pro</a>, <a href="https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps">ElevenLabs con tiempos</a>, <a href="https://elevenlabs.io/docs/models">modelos de ElevenLabs</a>, <a href="https://elevenlabs.io/pricing/api">precios de la API de ElevenLabs</a>.</p>
+
+  <h2>Donde está la <em>inteligencia</em></h2>
+  <p>El vídeo vale lo que vale la idea, así que el gasto de Claude va casi entero a los pasos 2 y 3.</p>
+  <h3>Conceptos</h3>
+  <ol class="orden">
+    <li><b>Lectura entera.</b> Opus lee el libro completo con la caché de prompts: la primera lectura cuesta lo que pesa el libro y cada «pide otros» lee de la caché a una vigésima parte del precio. Si un libro no cabe en la ventana del modelo, primero se hace un mapa por capítulos (resumen, tesis y pasajes candidatos) y Opus trabaja sobre el mapa y los capítulos que elija.</li>
+    <li><b>Doce candidatos, cinco propuestas.</b> Opus genera doce conceptos y en un segundo turno hace de editor escéptico: descarta resúmenes, citas bonitas, obviedades y lo que no se explica en un minuto, y se queda con cinco. Cada uno con título, gancho, por qué genera conversación, pasaje con capítulo y página y las cuatro notas.</li>
+    <li><b>El pasaje es literal.</b> El código comprueba que el pasaje aparece letra por letra en el texto del libro (salvo mayúsculas, tildes y signos, como en Folio) y guarda su capítulo y página. Si no aparece, el concepto vuelve al modelo con el motivo.</li>
+  </ol>
+  <h3>Gancho, juzgado aparte</h3>
+  <p>Un juez independiente (otro prompt, sin ver el razonamiento del guionista) puntúa el gancho de 1 a 10 en curiosidad, concreción, si se entiende sin contexto y si cabe en 2 segundos de voz (unas 6 palabras, que se comprueban en código). Por debajo de 8, lo reescribe con el motivo, como mucho dos veces, y enseña la versión ganadora con su nota.</p>
+  <h3>Guion</h3>
+  <p>Gancho → tensión o pregunta → desarrollo con el libro → giro → cierre que invite a comentar. Planos de como mucho 3 s de voz (unas 8 palabras); si el guionista escribe uno más largo, el código lo rechaza y le pide partirlo. Una cita del libro como mucho, literal, de 4 a 25 palabras y con su referencia en pantalla. Se edita por chat (devuelve el guion entero y el código vuelve a validar) o directamente en cada plano.</p>
+
+  <h2>Arquitectura</h2>
+  <h3>Stack y dónde vive</h3>
+  <ul class="decisiones">
+    <li><b>Python + uv</b>, paquete nuevo <code>videos/</code> en el repositorio de Folio, en <code>diseno/direcciones</code>, sin tocar Folio. Reutiliza el cliente de Anthropic (caché de prompts, reintentos, 429 sin reintentar), el de Magnific (sondeo, 403 y 429 que paran), la limpieza de claves en los errores y el registro de gasto.</li>
+    <li><b>API</b>: un router FastAPI <code>/api/videos</code> montado en la API de Folio para la beta (un solo proceso que arrancar); se separa en su propio servicio el día que sea producto.</li>
+    <li><b>Web</b>: un asistente en <code>/videos</code> dentro de la web de Next, con su propia cabecera de Alighieria y sin el menú de Folio. Seis pasos, barra de chat en conceptos y guion, reproductor en la revisión.</li>
+    <li><b>Ingesta</b>: <code>ebooklib</code> para EPUB (capítulos por el índice), <code>pypdf</code> para PDF (página real de cada fragmento), TXT por encabezados. El libro se guarda troceado con su capítulo y página.</li>
+    <li><b>Prompts</b> en <code>videos/prompts/</code>, uno por archivo y con versión en el nombre de cabecera (<code>conceptos.md</code>, <code>critico_conceptos.md</code>, <code>juez_gancho.md</code>, <code>guion.md</code>, <code>estilo.md</code>, <code>prompt_imagen.md</code>). Cada resultado guarda qué versión del prompt lo produjo.</li>
+  </ul>
+
+  <h3>Un JSON por vídeo</h3>
+  <p>Carpeta <code>data/videos/&lt;proyecto&gt;/</code> con <code>proyecto.json</code> y los archivos (libro troceado, audio, imágenes, clips, salidas). Cada etapa y cada plano tiene estado, y cada resultado guarda la huella de lo que lo produjo: si cambias la locución de un plano, solo ese plano se marca como desfasado.</p>
+<pre>{
+  "id": "2026-11-07-la-generacion-ansiosa",
+  "esquema": 1,
+  "libro": { "titulo": "…", "autor": "…", "archivo": "libro/original.epub", "huella": "sha256:…",
+             "capitulos": [{ "n": 3, "titulo": "…", "pagina": 61, "tokens": 9120 }] },
+  "etapas": {
+    "ingesta":   { "estado": "hecha" },
+    "conceptos": { "estado": "aprobada", "rondas": 2, "elegido": "c4" },
+    "guion":     { "estado": "bloqueado", "version": 5 },
+    "estilo":    { "estado": "hecha" },
+    "voz":       { "estado": "hecha" },
+    "imagenes":  { "estado": "en_curso", "trabajo": "img-p07" },
+    "montaje":   { "estado": "desfasada" }
+  },
+  "conceptos": [{ "id": "c4", "titulo": "…", "gancho": "…", "por_que": "…",
+                  "pasaje": { "texto": "…", "capitulo": 3, "pagina": 64, "verificado": true },
+                  "notas": { "sorpresa": 8, "utilidad": 7, "polemica": 6, "visualidad": 9 },
+                  "gancho_juez": { "nota": 8, "intentos": 2 }, "prompt": "conceptos@3" }],
+  "guion": { "planos": [{ "id": "p01", "rol": "gancho", "locucion": "…", "pantalla": "…",
+                          "visual": "…", "movimiento": "zoom lento hacia el centro",
+                          "duracion_estimada": 2.0, "cita": null }] },
+  "estilo": { "preset": "collage", "sufijo": "…", "paleta": ["#…"], "prohibido": ["texto", "logotipos"] },
+  "voz": { "modelo": "eleven_multilingual_v2", "voz": "…", "audio": "voz/v2.mp3",
+           "alineacion": "voz/v2.json", "huella": "sha256:…" },
+  "planos": { "p01": { "inicio": 0.00, "fin": 1.84, "prompt": "…",
+                       "variantes": ["img/p01-a.jpg", "img/p01-b.jpg"], "elegida": 1,
+                       "clip": null, "estado": "elegida", "huella": "sha256:…" } },
+  "montaje": { "salida": "salida/v3.mp4", "musica": null },
+  "gasto": [{ "etapa": "conceptos", "servicio": "anthropic", "usd": 0.71 }]
+}</pre>
+
+  <h3>Cola de trabajos y caché</h3>
+  <ul class="decisiones">
+    <li><b>Sin Redis ni Celery en la beta.</b> Un grupo de hilos en la API con un archivo por trabajo (estado, paso, inicio, fin, registro), el mismo patrón que ya usa Folio para «Proceder» y los temas: la web sigue el trabajo, se puede salir de la página y cancelar. Límites de concurrencia por servicio: Magnific 3, ElevenLabs 2, Anthropic 2. Un trabajo cortado por un reinicio queda «interrumpido» y se relanza a mano.</li>
+    <li><b>Caché por contenido.</b> Cada llamada de pago se guarda en <code>data/videos/cache/&lt;servicio&gt;/&lt;sha256 de los parámetros&gt;</code> (modelo, prompt, semilla, voz, texto, ajustes). Repetir lo mismo no se paga dos veces, también entre proyectos.</li>
+    <li><b>Modo simulado</b> (<code>VIDEOS_SIMULADO=1</code>, por defecto sin claves): imágenes de relleno dibujadas con Pillow (el número del plano y su prompt sobre un fondo del color del estilo), voz con un tono y tiempos sintéticos de 14 caracteres por segundo, con el mismo formato que devuelve ElevenLabs, y clips hechos con Ken Burns. Todo el montaje se prueba igual que con lo real.</li>
+  </ul>
+
+  <h3>Montaje: FFmpeg directo, no Remotion</h3>
+  <p>Elijo FFmpeg con libass. El FFmpeg de este entorno trae <code>ass</code> para los subtítulos, <code>zoompan</code> para el Ken Burns, <code>xfade</code> para las transiciones y <code>sidechaincompress</code> para bajar la música bajo la voz (comprobado).</p>
+  <ul class="decisiones">
+    <li><b>Los tiempos de ElevenLabs caen tal cual.</b> Los subtítulos palabra a palabra se escriben como eventos ASS con el inicio y el fin de cada palabra; el texto en pantalla, igual. No hay que traducir segundos a fotogramas de un componente.</li>
+    <li><b>Velocidad.</b> Un vídeo de 45 s se monta en segundos. Remotion pinta cada fotograma en un Chrome (1.350 fotogramas a 30 fps), que en Folio ya vimos que es lo lento.</li>
+    <li><b>Licencia y piezas.</b> Remotion pide licencia de empresa por encima de tres personas y añade Node y un Chrome al servicio. FFmpeg ya está.</li>
+    <li><b>Lo que se pierde:</b> animaciones de texto complejas. Si hacen falta, el camino es el de Folio: pintar solo los rótulos con Playwright y superponerlos con FFmpeg.</li>
+  </ul>
+
+  <h3>Legible en el móvil</h3>
+  <div class="zona">
+    <div class="movil" role="img" aria-label="Zonas seguras sobre un vídeo vertical"><i class="arriba"></i><i class="dcha"></i><i class="abajo"></i><i class="pant"></i><i class="subs"></i></div>
+    <div>
+      <p>Sobre 1080×1920, nada de texto en los 220 px de arriba (cabecera de Reels y TikTok), en los 420 px de abajo (pie, nombre y música) ni en los 140 px de la derecha (botones). El texto en pantalla va arriba, entre 320 y 560 px; los subtítulos, entre 1.110 y 1.290 px, de 64 a 74 px de cuerpo, en caja de como mucho dos líneas y con contorno para leerse sobre cualquier imagen. La palabra que suena se resalta.</p>
+      <p><b>Nunca más de 3 s quieto</b>: toda imagen fija lleva movimiento de cámara (Ken Burns con dirección según el plano) y, si un plano pasa de 3 s, se corta en la frontera de palabra más cercana y entra la segunda variante.</p>
+    </div>
+  </div>
+
+  <h3>Revisión: rehacer un plano</h3>
+  <p>Imagen: se generan otras dos variantes de ese plano y se vuelve a montar. Texto en pantalla: solo se vuelve a montar. Voz: se regenera la locución de ese plano con <code>previous_text</code> y <code>next_text</code> para que la entonación case, se empalma en su sitio y los planos siguientes se desplazan con los tiempos nuevos; sus imágenes no cambian.</p>
+
+  <h2>Coste y tiempo <em>de un vídeo de 45 s</em></h2>
+  <p>Supuestos: un libro de 300 páginas (unos 130.000 tokens), 15 planos, dos variantes por plano, dos clips de imagen a vídeo, una ronda de «pide otros» y tres turnos de chat. Precios de Claude, los que usa Folio en su configuración.</p>
+  <div class="tabla"><table>
+    <thead><tr><th>Paso</th><th>Qué se paga</th><th>Coste</th><th>Tiempo de máquina</th></tr></thead>
+    <tbody>
+      <tr><td>Conceptos</td><td>Opus lee el libro (con escritura de caché) y piensa doce; el crítico deja cinco</td><td class="num">~0,80 $</td><td class="num">1–3 min</td></tr>
+      <tr><td>Otra ronda de conceptos</td><td>El libro sale de la caché</td><td class="num">~0,20 $</td><td class="num">~1 min</td></tr>
+      <tr><td>Juez del gancho</td><td>Hasta tres rondas</td><td class="num">~0,05 $</td><td class="num">~20 s</td></tr>
+      <tr><td>Guion y chat</td><td>Primer guion y tres turnos</td><td class="num">~0,45 $</td><td class="num">1–2 min</td></tr>
+      <tr><td>Estilo y prompts de imagen</td><td>Biblia y quince prompts</td><td class="num">~0,10 $</td><td class="num">~30 s</td></tr>
+      <tr><td>Voz</td><td>~700 caracteres en Multilingual v2, más un plano rehecho</td><td class="num">~0,08 $</td><td class="num">10–20 s</td></tr>
+      <tr><td>Imágenes</td><td>30 imágenes × ~25 créditos = ~750 créditos</td><td class="num">~0,75 €</td><td class="num">1–2 min</td></tr>
+      <tr><td>Imagen a vídeo</td><td>2 clips de Kling O1 Standard, 5 s, 9:16</td><td class="num">por medir</td><td class="num">2–6 min</td></tr>
+      <tr><td>Montaje</td><td>FFmpeg en el servidor</td><td class="num">0</td><td class="num">20–60 s</td></tr>
+      <tr><th>Total</th><th>Sin los clips de vídeo</th><th class="num">~1,70 $ + 0,75 €</th><th class="num">7–12 min</th></tr>
+    </tbody>
+  </table></div>
+  <p class="nota">El tiempo de máquina no cuenta las dos aprobaciones ni la elección de variantes. Las imágenes y los clips van en paralelo, con el límite de concurrencia de cada servicio.</p>
+
+  <h2>Lo que decido yo <em>salvo que digas otra cosa</em></h2>
+  <ul class="decisiones">
+    <li>Opus 5.5 en conceptos, crítico, guion, juez del gancho y estilo; Haiku solo para el mapa de capítulos si el libro no cabe entero.</li>
+    <li>Flux 2 Pro para las imágenes; Kling O1 Standard para imagen a vídeo, solo en gancho y giro, con Ken Burns en lo demás.</li>
+    <li>Tres estilos predefinidos para elegir con muestras de verdad en una página antes de fijarlos: collage de papel rasgado (el de la casa), grabado en madera con dos tintas planas y fotografía cinematográfica en blanco y negro con grano. Más «define el tuyo».</li>
+    <li>Sin texto dentro de las imágenes (el texto lo pone el montaje); revisor de letras falsas con Haiku, como en Folio.</li>
+    <li>Ninguna cara real generada desde cero. Si el concepto pide al autor, va su foto con licencia o nada.</li>
+    <li>Subtítulos quemados en el vídeo y, además, un <code>.srt</code> descargable.</li>
+    <li>403 o 429 de cualquier servicio: el trabajo para y lo dice, sin reintentar.</li>
+    <li>El MP4 lleva al final una tarjeta de dos segundos con la cubierta, el título y el autor del libro.</li>
+  </ul>
+
+  <h2>Preguntas <em>que bloquean</em></h2>
+  <div class="pregunta">
+    <h3>1. ¿Qué libro usamos para la beta, y podemos mandar su texto entero a la API de Anthropic?</h3>
+    <p class="opciones">Necesito un EPUB o PDF del que tengáis los derechos. Que lo lea entero es lo que da buenas ideas; si algún contrato editorial lo impide, paso a mandar solo el mapa de capítulos y los pasajes, con peor resultado.</p>
+  </div>
+  <div class="pregunta">
+    <h3>2. ¿Qué voz?</h3>
+    <p class="opciones">Una voz de la biblioteca de ElevenLabs con acento de España (te preparo tres para escuchar), o una voz propia clonada de Alighieria. Y qué plan tenéis: los derechos de uso comercial dependen del plan de pago.</p>
+  </div>
+  <div class="pregunta">
+    <h3>3. ¿Me autorizas una llamada de prueba a Kling para medir su precio, y qué tope por vídeo pongo?</h3>
+    <p class="opciones">Un clip de 5 s en 9:16. Con ese dato fijo cuántos clips lleva cada vídeo (propongo dos) y un tope de créditos por vídeo, que la herramienta respeta.</p>
+  </div>
+  <div class="pregunta">
+    <h3>4. ¿Música?</h3>
+    <p class="opciones">Sin música en la beta, pistas que subáis vosotros con sus derechos, o generada con la música de Magnific (precio por medir).</p>
+  </div>
+
+  <h2>Orden de construcción</h2>
+  <ol class="orden">
+    <li><b>Libro → conceptos → guion aprobado</b>, en modo simulado y con Opus de verdad, probado con el libro de la beta. Aquí está el valor y aquí se itera.</li>
+    <li><b>Voz con tiempos</b>: una llamada para confirmar el formato y después el guion entero.</li>
+    <li><b>Estilo e imágenes</b>: la página de los tres estilos con muestras, y después las variantes por plano.</li>
+    <li><b>Montaje y revisión</b>: Ken Burns, subtítulos, texto en pantalla, música opcional y rehacer un plano.</li>
+  </ol>
+</div>
