@@ -94,7 +94,7 @@ seleccion:
   # curiosidad (1/11): una historia del cajón (config/cajon_curiosidades.yaml), sin percha y sin libro obligatorio
   # recomendado (1/11): una novedad de las editoriales independientes (catalogo, más abajo)
   reparto: {edicion: 2, dialogo: 1, lateral: 1, curiosidad: 1, recomendado: 1}   # 2/11: dos del mundo del libro, una de cada otro
-  desarrollar_al_inicio: 1       # 2/11 (a petición del usuario): solo se escribe de madrugada la primera, la que puede ser más viral
+  desarrollar_al_inicio: 0       # 7/11 (a petición del usuario: «se deja de escribir, sí»): de madrugada no se escribe ninguna; la redacción elige cuál con «Escribir»
   antiguedad_libros: 2          # novedad: libros publicados en los últimos 2 años (primera edición o edición española)
   solo_con_edicion_es: true      # 2/11 (a petición del usuario): «todos los libros tienen que tener radicalmente traducción al castellano»
   dias_curiosidades: 90         # una curiosidad del cajón no se repite en 90 días

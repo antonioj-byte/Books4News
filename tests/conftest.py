@@ -33,6 +33,7 @@ def cfg(tmp_path):
     c.pipeline.guion.lector_sin_contexto = False   # los modelos simulados de los tests no lo atienden (tiene su test)
     c.pipeline.seleccion.buscar_balda = False      # ni la búsqueda de la balda (tiene su test)
     c.pipeline.cinco.activo = False                # ni «Cinco del libro» (tiene su test)
+    c.pipeline.seleccion.desarrollar_al_inicio = 1  # los tests de la mesa escriben la primera (en producción, 0 desde el 7/11)
     c.google_books_api_key = None
     raiz_tmp = tmp_path / "repo"
     raiz_tmp.mkdir()

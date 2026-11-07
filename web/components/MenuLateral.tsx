@@ -10,7 +10,8 @@ import { Isotipo } from "@/components/Isotipo";
 // En la ficha de una pieza se encoge a iconos para dejar sitio al carrusel y al chat. En el móvil va arriba, en fila.
 const GRUPOS: { titulo: string | null; items: { href: string; texto: string; icono: string; activa: (p: string) => boolean }[] }[] = [
   { titulo: "Trabajo", items: [
-    { href: "/", texto: "Hoy", icono: "◉", activa: (p) => p === "/" || p.startsWith("/dia") || p.startsWith("/pieza") },
+    { href: "/", texto: "Portada", icono: "◇", activa: (p) => p === "/" },
+    { href: "/hoy", texto: "Hoy", icono: "◉", activa: (p) => p.startsWith("/hoy") || p.startsWith("/dia") || p.startsWith("/pieza") },
     { href: "/archivo", texto: "Archivo", icono: "▤", activa: (p) => p.startsWith("/archivo") },
     { href: "/fondo", texto: "Fondo", icono: "◫", activa: (p) => p.startsWith("/fondo") },
   ] },

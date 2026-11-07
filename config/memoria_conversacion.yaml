@@ -903,3 +903,11 @@
   patron: "«Tengo un repositorio que es un bot de Telegram que uso para las noticias literarias… mira a ver si se puede integrar, porque toda la parte de selección de noticias y búsqueda ya está montado aquí. Lo dejo en tus manos.»"
   propuesta: "Folio manda por Telegram cada mañana lo que ya ha seleccionado (lista de Cinco del libro, breves y mesa); el bot de publishing-monitor pasa a ser un canal de Folio en vez de un sistema aparte."
   evidencia: ["Conversación, 7/11"]
+
+- clave: portada-y-hoy-en-dos-pestanas
+  fecha: "2026-11-07"
+  destino: codigo
+  capa: marca
+  patron: "«No hay una URL principal… me gustaría un panel general» y «veo muy feo que presente las noticias con algunas diapositivas sí, otras no… primero tiene que presentar los temas sin un desarrollo, yo lo selecciono» (eligió la portada del día, dos pestañas y que se deje de escribir de madrugada)."
+  propuesta: "La web abre en una portada (lo más importante del libro hoy, lo que hay por publicar y por elegir); «Hoy» separa «Por elegir» (todo sin escribir, con una sola tarjeta) de «En la mesa» (lo escrito); de madrugada no se escribe ninguna pieza: la redacción elige cuáles."
+  evidencia: ["Conversación, 7/11: Artifact «La portada de Folio»"]

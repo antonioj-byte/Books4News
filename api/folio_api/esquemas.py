@@ -63,6 +63,7 @@ class PiezaResumen(BaseModel):
     radar: bool = False                   # tema del radar del libro: lista aparte, a un clic
     por_que: str = ""                     # por qué tiene gancho (lo que se ve en la lista de breves del radar)
     enlaces: list[Enlace] = []            # las noticias de origen (medio y URL): en los breves del radar, para leerlas
+    encargo: bool = False                 # la propuso la redacción (un tema; 7/11: se marca en «Por elegir»)
 
 
 class DiaDetalle(BaseModel):

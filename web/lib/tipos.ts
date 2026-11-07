@@ -2694,6 +2694,11 @@ export interface components {
              * @default []
              */
             enlaces: components["schemas"]["Enlace"][];
+            /**
+             * Encargo
+             * @default false
+             */
+            encargo: boolean;
         };
         /** Preparar */
         Preparar: {

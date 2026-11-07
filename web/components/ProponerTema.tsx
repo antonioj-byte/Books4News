@@ -8,6 +8,7 @@ import { PASOS_TEMA } from "@/components/Trabajando";
 import { api, type Tema, type TemaCreado } from "@/lib/api";
 import { conDeshacer } from "@/lib/avisos";
 import { mensajeError as fraseDeError } from "@/lib/errores";
+import { TarjetaPorElegir } from "@/components/TarjetaPorElegir";
 import { useDatos } from "@/lib/useDatos";
 
 const ESTADOS: Record<string, string> = {
@@ -82,7 +83,9 @@ function mensajeError(e: unknown): string {
 
 const MAX_NEWSLETTER = 40000;
 
-export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => void }) {
+// `modo` (7/11, «Hoy» en dos pestañas): «caja», solo el cuadro de arriba; «lista», solo los encargos, con la tarjeta
+// común de «Por elegir»; sin él, los dos (como antes)
+export function ProponerTema({ eid, onPieza, modo, onTema }: { eid?: number; onPieza: () => void; modo?: "caja" | "lista"; onTema?: () => void }) {
   const [texto, setTexto] = useState("");
   const [enlaces, setEnlaces] = useState("");
   const [enviando, setEnviando] = useState<"ahora" | "manana" | null>(null);
@@ -97,7 +100,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
   // aparte y la tarjeta de trabajo lo sigue; si se sale de la página, al volver se engancha desde la lista de temas
   const [siguiendo, setSiguiendo] = useState<number | null>(null);
   const alAcabar = (tid: number, r: TemaCreado | null) => {
-    setSiguiendo(null); recargar();
+    setSiguiendo(null); recargar(); onTema?.();
     if (!r) return;
     setAbierto(tid);
     setMensaje({ ok: true, texto: r.preguntas.length ? "El jefe necesita saber algo antes de proponer: contéstale abajo."
@@ -117,7 +120,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
       else setSiguiendo(r.tema.id);
     } catch (e) {
       setMensaje({ ok: false, texto: mensajeError(e) });
-    } finally { setEnviando(null); recargar(); }
+    } finally { setEnviando(null); recargar(); onTema?.(); }
   };
   // Descartar un tema: al momento en la lista, con «Deshacer» unos segundos (4/11, usabilidad; antes fallaba en silencio)
   const [ocultos, setOcultos] = useState<Set<number>>(new Set());
@@ -137,6 +140,22 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
   const pideAlgo = (t: Tema) => ["pregunta", "pendiente", "fallido"].includes(t.estado) || abierto === t.id;
   const aLaVista = recientes.filter((t) => pideAlgo(t) || t.creado_en.slice(0, 10) === hoy);
   const anteriores = recientes.filter((t) => !aLaVista.includes(t));
+
+  if (modo === "lista") {
+    // Los encargos de hoy y los que piden algo, como tarjetas; los que ya están en la mesa salen con su propuesta
+    const visibles = aLaVista.filter((t) => t.estado !== "en_mesa" || abierto === t.id);
+    return (
+      <>
+        {visibles.map(tarjeta)}
+        {anteriores.length > 0 && (
+          <details>
+            <summary className="dato cursor-pointer uppercase text-tinta-suave">Encargos anteriores · {anteriores.length}</summary>
+            <ul className="mt-1.5 flex flex-col gap-1 text-[13.5px] text-tinta-suave">{anteriores.map(fila)}</ul>
+          </details>
+        )}
+      </>
+    );
+  }
 
   // Arriba de la mesa y en compacto (3/11, «se está volviendo demasiado compleja la web»): una línea que se abre al escribir
   return (
@@ -192,7 +211,7 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
                                      onHecho={(r) => alAcabar(siguiendo, r as TemaCreado | null)} />}
         {mensaje && <p className={mensaje.ok ? "text-[14px]" : "text-[14px] text-carmesi"} role={mensaje.ok ? "status" : "alert"}>{mensaje.texto}</p>}
       </div>
-      {recientes.length > 0 && (
+      {modo !== "caja" && recientes.length > 0 && (
         <div className="mt-2 text-[13.5px]">
         {aLaVista.length > 0 && (
           <>
@@ -210,6 +229,30 @@ export function ProponerTema({ eid, onPieza }: { eid?: number; onPieza: () => vo
       )}
     </section>
   );
+
+  function tarjeta(t: Tema) {
+    const conversa = (t.estado === "pregunta" || t.estado === "en_mesa" || (t.estado === "fallido" && t.pieza_id)) && t.conversacion.length > 0;
+    return (
+      <TarjetaPorElegir key={t.id}
+        etiquetas={<><span className="chip bg-tinta text-papel">Encargo</span>
+          <span className={`chip ${t.estado === "pregunta" || t.estado === "fallido" ? "bg-carmesi text-papel" : "border border-borde"}`}>{ESTADOS[t.estado] ?? t.estado}</span></>}
+        titulo={<span className="line-clamp-3" title={t.texto}>{t.texto}</span>}
+        linea={t.nota && t.estado !== "en_mesa" ? (t.nota === "Ningún libro candidato se pudo verificar" ? "Ninguno de los libros del jefe pasó la verificación: replícale con otro." : t.nota) : undefined}
+        acciones={<>
+          {conversa && (
+            <button onClick={() => setAbierto(abierto === t.id ? null : t.id)} className="boton">
+              {abierto === t.id ? "Cerrar" : t.estado === "pregunta" ? "Contestar al jefe →" : "Replicar"}
+            </button>
+          )}
+          {t.estado === "pendiente" && <button onClick={() => descartar(t)} className="boton-suave">Descartar</button>}
+        </>}>
+        {t.estado === "pendiente" && t.cuando === "ahora" && t.id !== siguiendo && (
+          <SeguirTrabajo clave={`tema-${t.id}`} pasos={PASOS_TEMA} rotulo="El jefe piensa" onHecho={(r) => alAcabar(t.id, r as TemaCreado | null)} />
+        )}
+        {abierto === t.id && <Conversacion tema={t} eid={eid} onPieza={onPieza} onCambio={recargar} />}
+      </TarjetaPorElegir>
+    );
+  }
 
   function fila(t: Tema) {
     return (

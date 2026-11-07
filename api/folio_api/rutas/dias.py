@@ -43,6 +43,7 @@ def dia(fecha: str, ejecucion: int | None = None, ctx: Contexto = Depends(contex
         libros=lomos(ctx, p), formato=p.eleccion.formato, gancho=p.eleccion.gancho_libro,
         radar=p.radar, por_que=p.eleccion.por_que,
         enlaces=[Enlace(medio=f.medio, url=f.url) for f in p.fuentes[:3] if f.url],
+        encargo=p.historia_id.startswith("tema-"),
     ) for p, v in ctx.almacen.piezas(eid)]
     return DiaDetalle(fecha=fecha, ejecucion=next(e for e in ejecuciones if e.id == eid), ejecuciones=ejecuciones,
                       aviso_jefe=inf.seleccion.aviso if inf.seleccion else None, avisos=inf.avisos,

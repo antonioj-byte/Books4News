@@ -76,7 +76,7 @@ export function VistaPieza() {
   if (error) return (
     <div className="flex flex-col items-start gap-3 p-6">
       <p className="text-carmesi" role="alert">{error}</p>
-      <div className="flex gap-2"><button className="boton-suave" onClick={cargar}>Volver a intentarlo</button><Link href="/" className="boton-suave">Ir a la mesa de hoy</Link></div>
+      <div className="flex gap-2"><button className="boton-suave" onClick={cargar}>Volver a intentarlo</button><Link href="/hoy" className="boton-suave">Ir a la mesa de hoy</Link></div>
     </div>
   );
   if (!d) return <EsqueletoPieza />;
